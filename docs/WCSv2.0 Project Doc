@@ -1,0 +1,117 @@
+WCSv2.0 Project Doc
+Overall Outline
+This is the high-level view of the WCSv2.0 project, a youth basketball league website for your brother's Kansas organization. It's built from scratch with Next.js, focusing on efficiency (minimal deps, fast load), simplicity (clean code, intuitive UX), pro design (sporty, modern UI), and security (youth data protection, secure payments). The goal is a paid build/maintenance setup that's fair to both sides.
+
+Project Purpose: Official site to showcase teams, schedules, tournaments, coaches resources, and shop for merch. Empower kids, build character, generate revenue.
+Tech Stack: Next.js 15.5.2 (Webpack), Supabase (auth/DB/storage), Tailwind CSS 3.3.3, local fonts (Inter/Bebas Neue), Stripe/Printful for payments, Vercel for deployment.
+Key Guidelines: Lean code (no bloat), mobile-first, COPPA compliant, $800-1500 initial build, $50/month maintenance.
+Phases: Setup/Infrastructure (done), Core Features, Testing/Deployment, Maintenance/Scaling.
+
+Detailed Outline
+This expands on the outline with steps, deliverables, and checkpoints, based on our discussions. It's structured to be actionable, with progress tracking in mind. We prioritized core sections (Home, Teams, Schedules, Tournaments, Coaches, Shop) and deferred Parent Portal.
+1. Project Overview
+
+Description: Kansas youth basketball league site, focusing on kids 8-18, building skills/character. Features: team rosters, schedules, tournaments, coaches resources, shop for merch.
+Target Audience: Parents, coaches, kids, admins.
+Goals:
+
+Efficiency: Lazy-load components, server-side rendering, minimal deps.
+Simplicity: Utility-first CSS (Tailwind), modular components, intuitive nav.
+Design: Navy (#1C2526)/red (#D91E18)/white palette, Bebas Neue (headings)/Inter (body) fonts, Framer Motion animations, card-based layouts, mobile-first.
+Security: Supabase RLS, JWT auth, sanitize inputs, CSP headers, no CC storage (Stripe tokenization), COPPA consent forms.
+
+
+Deliverables: Live site on Vercel, GitHub repo, docs folder.
+Checkpoint: Review and approve this doc.
+
+2. Setup and Infrastructure
+
+Steps:
+
+Initialized Next.js with TypeScript, Tailwind, ESLint, App Router (done).
+Installed deps (Supabase, Stripe, Zustand, etc.) (done).
+Configured Tailwind/PostCSS/local fonts (done).
+Set up Supabase client, tested API route (done).
+Committed to GitHub, deployed to Vercel (done).
+Added security headers (CSP, HSTS, etc.) (done).
+
+
+Deliverables: Working base app with auth test, DB seeded with team_data.csv, RLS for public/coach access.
+Checkpoint: Local tests pass, Vercel deployment clean, no errors.
+
+3. Core Features
+
+Navbar:
+
+Steps: Build responsive nav with logo, links (Home, Teams, Schedules, Tournaments, Coaches, Shop), auth state (login/logout).
+Deliverables: src/components/Navbar.tsx, mobile hamburger menu, Tailwind styled.
+Checkpoint: Test on local/Vercel, push commit.
+
+
+Home:
+
+Steps: Build Hero (action shot, CTAs), team previews, news carousel.
+Deliverables: src/app/page.tsx, src/components/Hero.tsx, integrated with Supabase data.
+Checkpoint: Load data, animations work.
+
+
+Teams:
+
+Steps: Build list view (/teams), detail view (/teams/[id]), fetch from Supabase.
+Deliverables: src/components/TeamCard.tsx, dynamic routing.
+Checkpoint: Coach sees only their team, public sees all.
+
+
+Schedules:
+
+Steps: Build calendar or list view (/schedules), fetch events.
+Deliverables: src/components/ScheduleCard.tsx, color-coded events.
+Checkpoint: Real-time updates if needed (Supabase subs).
+
+
+Tournaments:
+
+Steps: Build list and signup form (/tournaments), custom form (no external deps).
+Deliverables: Form with validation (Zod), Supabase storage.
+Checkpoint: Signup works, secure.
+
+
+Coaches Corner:
+
+Steps: Build resource list (/coaches), PDF downloads, auth for uploads.
+Deliverables: src/components/ResourceList.tsx, coach dashboard.
+Checkpoint: Restricted access.
+
+
+Shop:
+
+Steps: Build product grid (/shop), Stripe checkout, Printful API (using fetch/axios).
+Deliverables: src/components/ProductCard.tsx, cart with Zustand.
+Checkpoint: Payment tokenization, no CC storage.
+
+
+
+4. Testing and Deployment
+
+Steps:
+
+Local: Test UI, auth, API, security (mock attacks).
+Vercel: Push updates, test live.
+Doc: Add test cases (auth flows, data fetch).
+
+
+Deliverables: Bug-free site, performance optimized.
+Checkpoint: Full end-to-end test, approve launch.
+
+5. Maintenance and Scaling
+
+Steps:
+
+Refinement: Feedback loop, tweaks (e.g., add Parent Portal).
+Maintenance: Monthly updates, fixes, hosting.
+Pricing: $800-1500 initial, $50/month (adjust based on effort).
+Contract: Simple template with milestones, scope.
+
+
+Deliverables: Docs for updates, roadmap for Phase 2.
+Checkpoint: Sign contract, launch site.
