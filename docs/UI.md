@@ -15,6 +15,13 @@
   - Props: date, location, type.
   - Styling: Color-coded (e.g., red for games).
 
+## Design Notes
+
+- Palette: Navy (#1C2526), Red (#D91E18), White (#FFFFFF), Accent (#002C51 light #004080).
+- Fonts: Bebas Neue (headings), Inter (body), local TTFs in public/fonts.
+- Animations: Framer Motion for Hero fade, TeamCard hover effects.
+- Layout: Card-based, mobile-first, 80% width max.
+
 ## Notes
 
 - Mobile-first approach.
