@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+import Hero from "@/components/Hero";
 import ValuesSection from "@/components/ValuesSection";
 import { FaFacebookF } from "react-icons/fa";
 import Link from "next/link";
@@ -19,7 +20,6 @@ const newsItems = [
 ];
 
 export default function Home() {
-  const { ref: heroRef, inView: heroInView } = useInView({ triggerOnce: true });
   const { ref: teamsRef, inView: teamsInView } = useInView({
     triggerOnce: true,
   });
@@ -32,51 +32,7 @@ export default function Home() {
   return (
     <div className="bg-navy min-h-screen text-white">
       {/* Hero Section */}
-      <motion.div
-        ref={heroRef}
-        initial={{ opacity: 0, y: 50 }}
-        animate={heroInView ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.8 }}
-        className="relative h-96 flex items-center justify-center overflow-hidden"
-      >
-        <img
-          src="/hero-basketball.jpg"
-          alt="Basketball action shot"
-          className="absolute top-0 left-0 w-full h-full object-cover"
-        />
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/20 via-black/10 to-black/40"></div>
-        <div className="text-center z-10">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-4xl font-bebas uppercase"
-          >
-            Welcome to WCS Youth Basketball
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl font-inter mt-2"
-          >
-            Empowering Kids 8-18 with Skills and Character
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="mt-4"
-          >
-            <Link
-              href="/register"
-              className="bg-red text-white font-bold px-6 py-3 rounded hover:bg-opacity-90 transition duration-300"
-            >
-              Join Now
-            </Link>
-          </motion.div>
-        </div>
-      </motion.div>
+      <Hero />
 
       {/* Values Section */}
       <ValuesSection />
