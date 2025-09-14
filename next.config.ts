@@ -3,7 +3,7 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value:
       "default-src 'self'; " +
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+      "script-src 'self'; " +
       "style-src 'self' 'unsafe-inline'; " +
       "font-src 'self' data:; " +
       "img-src 'self' data: https://*.supabase.co; " +
@@ -15,7 +15,9 @@ const securityHeaders = [
     value: "max-age=31536000; includeSubDomains; preload",
   },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-XSS-Protection", value: "1; mode=block" }, // Added for XSS prevention
+  { key: "X-XSS-Protection", value: "1; mode=block" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" }, // Added for XSS prevention
 ];
 
 module.exports = {
@@ -25,8 +27,8 @@ module.exports = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '*.supabase.co',
+        protocol: "https",
+        hostname: "*.supabase.co",
       },
     ],
   },

@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Team, SupabaseUser } from "@/types/supabase";
-import * as Sentry from '@sentry/nextjs';
+import * as Sentry from "@sentry/nextjs";
 
 export default function TestAuth() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -31,9 +31,17 @@ export default function TestAuth() {
 
   const signIn = async () => {
     try {
+      const email = prompt("Enter email:");
+      const password = prompt("Enter password:");
+
+      if (!email || !password) {
+        alert("Email and password are required");
+        return;
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
-        email: "testcoach@example.com",
-        password: "WCSv2Test123!",
+        email,
+        password,
       });
       if (error) throw error;
       window.location.reload();

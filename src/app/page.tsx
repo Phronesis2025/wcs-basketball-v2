@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import Hero from "@/components/Hero";
 import ValuesSection from "@/components/ValuesSection";
+import NewsCarousel from "@/components/NewsCarousel";
 import { FaFacebookF } from "react-icons/fa";
 import Link from "next/link";
 
@@ -13,17 +14,10 @@ const teams = [
   { name: "WCS Blue", ageGroup: "U10 Boys", logo: "/logos/blue.png" },
 ];
 
-const newsItems = [
-  "Game Day Announced for Sep 15, 2025",
-  "New Coaching Clinic This Weekend",
-  "Season Kickoff Party Details",
-];
-
 export default function Home() {
   const { ref: teamsRef, inView: teamsInView } = useInView({
     triggerOnce: true,
   });
-  const { ref: newsRef, inView: newsInView } = useInView({ triggerOnce: true });
   const { ref: coachesRef, inView: coachesInView } = useInView({
     triggerOnce: true,
   });
@@ -38,37 +32,7 @@ export default function Home() {
       <ValuesSection />
 
       {/* News Carousel */}
-      <div ref={newsRef} className="max-w-7xl mx-auto px-4 py-8 my-8">
-        <h2 className="text-3xl font-bebas text-center mb-6">Latest News</h2>
-        <div className="relative w-full overflow-hidden">
-          <div className="flex space-x-4 animate-scroll">
-            {newsItems.map((item, index) => (
-              <motion.div
-                key={item}
-                initial={{ opacity: 0, x: 50 }}
-                animate={newsInView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white text-navy p-4 rounded-lg shadow-md min-w-[300px] flex items-center justify-center"
-              >
-                <Link href="/news" className="font-inter text-lg">
-                  {item}
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-          <style>
-            {`
-              .animate-scroll {
-                animation: scroll 15s infinite linear;
-              }
-              @keyframes scroll {
-                0% { transform: translateX(0); }
-                100% { transform: translateX(-100%); }
-              }
-            `}
-          </style>
-        </div>
-      </div>
+      <NewsCarousel />
 
       {/* Team Previews */}
       <div ref={teamsRef} className="bg-gray-50 py-16 my-8">
@@ -111,9 +75,9 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bebas text-gray-900 mb-2">
+                  <h2 className="text-xl font-bebas text-gray-900 mb-2">
                     {team.name}
-                  </h3>
+                  </h2>
                   <p className="text-sm text-gray-600 font-inter mb-3">
                     {team.ageGroup}
                   </p>
