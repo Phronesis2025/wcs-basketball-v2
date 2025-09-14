@@ -1,9 +1,10 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa"; // Simple arrow icons
 
 interface Value {
   id: number;
@@ -33,7 +34,7 @@ export default function ValuesSection() {
       description:
         "Understanding the game, reading situations, and making smart decisions.",
       longDescription:
-        "Basketball IQ empowers players to read the court, anticipate plays, and make strategic decisions, fostering a deeper understanding of the game’s nuances and team dynamics.",
+        "Basketball IQ empowers players to read the court, anticipate plays, and make strategic decisions, fostering a deeper understanding of the game&apos;s nuances and team dynamics.",
       example:
         "A player recognizes a defensive gap and calls a play to exploit it, leading to an easy basket.",
       image: "/images/basketballiq.png",
@@ -77,7 +78,7 @@ export default function ValuesSection() {
       description:
         "Training the mind and body to stay focused, resilient, and coachable.",
       longDescription:
-        "Discipline strengthens players’ mental and physical resilience, ensuring they stay focused, follow coaching, and remain coachable under pressure, driving personal growth.",
+        "Discipline strengthens players&apos; mental and physical resilience, ensuring they stay focused, follow coaching, and remain coachable under pressure, driving personal growth.",
       example:
         "A player adheres to a strict training schedule, balancing schoolwork and practice to stay prepared.",
       image: "/images/discipline.png",
@@ -89,11 +90,12 @@ export default function ValuesSection() {
       longDescription:
         "Adaptability equips players to adjust to new strategies, overcome setbacks, and embrace feedback, fostering growth and versatility in dynamic game situations.",
       example:
-        "A player switches defensive roles mid-game to counter an opponent’s star player, adjusting seamlessly.",
+        "A player switches defensive roles mid-game to counter an opponent&apos;s star player, adjusting seamlessly.",
       image: "/images/adaptability.png",
     },
   ];
 
+  const [startIndex, setStartIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<Value | null>(null);
 
@@ -107,24 +109,28 @@ export default function ValuesSection() {
     setSelectedValue(null);
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-      },
-    },
+  const handlePrev = () => {
+    setStartIndex((prev) => (prev - 3 + values.length) % values.length);
   };
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+  const handleNext = () => {
+    setStartIndex((prev) => (prev + 3) % values.length);
+  };
+
+  const itemVariants: Variants = {
+    hidden: { opacity: 0, y: 15 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.5 },
+      transition: { duration: 0.4, ease: "easeOut" },
     },
   };
+
+  // Compute the 3 visible cards for the current page (wraps around)
+  const visibleValues: Value[] = [0, 1, 2].map((offset) => {
+    const valueIndex = (startIndex + offset) % values.length;
+    return values[valueIndex];
+  });
 
   return (
     <section className="py-16 bg-white">
@@ -137,58 +143,71 @@ export default function ValuesSection() {
             What we teach our young athletes goes beyond basketball
           </p>
         </div>
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-        >
-          {values.map((value) => (
-            <motion.div
-              key={value.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow duration-300"
-              variants={itemVariants}
-              onClick={() => openModal(value)}
-              onKeyDown={(e) => e.key === "Enter" && openModal(value)}
-              tabIndex={0}
-              role="button"
-              aria-label={`View details for ${value.title}`}
-            >
-              <div className="relative w-full h-48 overflow-hidden">
-                <Image
-                  src={value.image}
-                  alt={value.title}
-                  width={300}
-                  height={200}
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                  style={{ width: 'auto', height: 'auto' }}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/images/placeholder-team-default.jpg";
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-60" />
-              </div>
-              <div className="p-6">
-                <h3 className="font-bebas text-2xl mb-2 uppercase text-navy">
-                  {value.title}
-                </h3>
-                <p className="font-inter text-sm leading-relaxed text-gray-700 line-clamp-3">
-                  {value.description}
-                </p>
-                <Link
-                  href={`/about#${value.title
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")}`}
-                  className="mt-4 inline-block text-red font-bold hover:underline"
-                >
-                  Learn More
-                </Link>
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
+        <div className="relative">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-4">
+            {visibleValues.map((value) => (
+              <motion.div
+                key={value.id}
+                className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow duration-300"
+                variants={itemVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                onClick={() => openModal(value)}
+                onKeyDown={(e) => e.key === "Enter" && openModal(value)}
+                tabIndex={0}
+                role="button"
+                aria-label={`View details for ${value.title}`}
+              >
+                <div className="relative w-full h-48 overflow-hidden">
+                  <Image
+                    src={value.image}
+                    alt={value.title}
+                    width={300}
+                    height={200}
+                    className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                    style={{ width: "auto", height: "auto" }}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = "/images/placeholder-team-default.jpg";
+                    }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-60" />
+                </div>
+                <div className="p-6">
+                  <h3 className="font-bebas text-2xl mb-2 uppercase text-navy">
+                    {value.title}
+                  </h3>
+                  <p className="font-inter text-sm leading-relaxed text-gray-700 line-clamp-3">
+                    {value.description}
+                  </p>
+                  <Link
+                    href={`/about#${value.title
+                      .toLowerCase()
+                      .replace(/\s+/g, "-")}`}
+                    className="mt-4 inline-block text-red font-bold hover:underline"
+                  >
+                    Learn More
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          <button
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-red text-white p-2 rounded-full hover:bg-opacity-90 transition duration-300"
+            onClick={handlePrev}
+            aria-label="Previous values"
+          >
+            <FaArrowLeft />
+          </button>
+          <button
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-red text-white p-2 rounded-full hover:bg-opacity-90 transition duration-300"
+            onClick={handleNext}
+            aria-label="Next values"
+          >
+            <FaArrowRight />
+          </button>
+        </div>
 
         {isModalOpen && selectedValue && (
           <div
@@ -231,7 +250,7 @@ export default function ValuesSection() {
                   width={400}
                   height={300}
                   className="object-cover object-center"
-                  style={{ width: 'auto', height: 'auto' }}
+                  style={{ width: "auto", height: "auto" }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/images/placeholder-team-default.jpg";

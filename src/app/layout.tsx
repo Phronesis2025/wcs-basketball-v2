@@ -1,5 +1,6 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import ScrollToTop from "../components/ScrollToTop";
 
 export default function RootLayout({
   children,
@@ -9,6 +10,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <ScrollToTop />
         <Navbar />
         {children}
         <footer className="bg-navy py-4 text-center">
