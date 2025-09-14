@@ -23,6 +23,11 @@ module.exports = {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
   images: {
-    domains: ["*.supabase.co"],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+      },
+    ],
   },
 };

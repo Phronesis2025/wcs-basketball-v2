@@ -162,6 +162,7 @@ export default function ValuesSection() {
                   width={300}
                   height={200}
                   className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                  style={{ width: 'auto', height: 'auto' }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/images/placeholder-team-default.jpg";
@@ -230,6 +231,7 @@ export default function ValuesSection() {
                   width={400}
                   height={300}
                   className="object-cover object-center"
+                  style={{ width: 'auto', height: 'auto' }}
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/images/placeholder-team-default.jpg";
