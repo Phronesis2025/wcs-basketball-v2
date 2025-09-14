@@ -98,6 +98,9 @@ export default function ValuesSection() {
   const [startIndex, setStartIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<Value | null>(null);
+  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(
+    null
+  );
 
   const openModal = (value: Value) => {
     setSelectedValue(value);
@@ -110,20 +113,44 @@ export default function ValuesSection() {
   };
 
   const handlePrev = () => {
+    setSlideDirection("left");
     setStartIndex((prev) => (prev - 3 + values.length) % values.length);
   };
 
   const handleNext = () => {
+    setSlideDirection("right");
     setStartIndex((prev) => (prev + 3) % values.length);
   };
 
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.4, ease: "easeOut" },
-    },
+  const getItemVariants = (): Variants => {
+    if (slideDirection === "left") {
+      return {
+        hidden: { opacity: 0, x: -200 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          transition: { duration: 0.6, ease: "easeOut" },
+        },
+      };
+    } else if (slideDirection === "right") {
+      return {
+        hidden: { opacity: 0, x: 200 },
+        visible: {
+          opacity: 1,
+          x: 0,
+          transition: { duration: 0.6, ease: "easeOut" },
+        },
+      };
+    } else {
+      return {
+        hidden: { opacity: 0, y: 15 },
+        visible: {
+          opacity: 1,
+          y: 0,
+          transition: { duration: 0.4, ease: "easeOut" },
+        },
+      };
+    }
   };
 
   // Compute the 3 visible cards for the current page (wraps around)
@@ -144,22 +171,21 @@ export default function ValuesSection() {
           </p>
         </div>
         <div className="relative">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-4">
-            {visibleValues.map((value) => (
+          <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 pb-4">
+            {visibleValues.map((value, index) => (
               <motion.div
-                key={value.id}
+                key={`${value.id}-${startIndex}-${slideDirection}`}
                 className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow duration-300"
-                variants={itemVariants}
+                variants={getItemVariants()}
                 initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
+                animate="visible"
                 onClick={() => openModal(value)}
                 onKeyDown={(e) => e.key === "Enter" && openModal(value)}
                 tabIndex={0}
                 role="button"
                 aria-label={`View details for ${value.title}`}
               >
-                <div className="relative w-full h-48 overflow-hidden">
+                <div className="relative w-full h-32 sm:h-40 lg:h-48 overflow-hidden">
                   <Image
                     src={value.image}
                     alt={value.title}
@@ -174,18 +200,18 @@ export default function ValuesSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-60" />
                 </div>
-                <div className="p-6">
-                  <h3 className="font-bebas text-2xl mb-2 uppercase text-navy">
+                <div className="p-2 sm:p-4 lg:p-6">
+                  <h3 className="font-bebas text-sm sm:text-lg lg:text-2xl mb-1 sm:mb-2 uppercase text-navy">
                     {value.title}
                   </h3>
-                  <p className="font-inter text-sm leading-relaxed text-gray-700 line-clamp-3">
+                  <p className="font-inter text-xs sm:text-sm leading-relaxed text-gray-700 line-clamp-2 sm:line-clamp-3">
                     {value.description}
                   </p>
                   <Link
                     href={`/about#${value.title
                       .toLowerCase()
                       .replace(/\s+/g, "-")}`}
-                    className="mt-4 inline-block text-red font-bold hover:underline"
+                    className="mt-2 sm:mt-4 inline-block text-red font-bold hover:underline text-xs sm:text-sm"
                   >
                     Learn More
                   </Link>
