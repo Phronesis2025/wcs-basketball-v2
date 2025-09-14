@@ -1,15 +1,16 @@
 # WCSv2.0 Changelog
 
-## v2.1.0 - January 2025 (Current)
+## v2.2.0 - January 2025 (Current)
 
 ### 🎉 Major Features
 - **Hero Section**: Implemented rotating image carousel with Framer Motion animations
 - **Values Section**: Created interactive 3-card carousel with directional slide animations
 - **News Carousel**: Added Swiper.js-powered news section with modal details
-- **Team Previews**: Dynamic team cards with responsive design
+- **Team Previews**: Dynamic team cards with responsive design and gender-specific backgrounds
 - **Coaches Corner**: Staff profiles with hover effects
 - **Shop Section**: Merchandise preview with pricing and add-to-cart buttons
 - **User Authentication**: Complete registration and login system with Supabase
+- **Design Consistency**: Unified design language across all sections with consistent margins and typography
 
 ### 🔒 Security Enhancements
 - **Rate Limiting**: Client-side rate limiting for registration (5 attempts per 5 minutes)
@@ -26,12 +27,20 @@
 - **Image Optimization**: Next.js Image component with proper sizing
 - **Scroll-to-Top**: Automatic page positioning on load/refresh
 - **Loading States**: Proper loading indicators and error handling
+- **Teams Section**: Added subtitle for consistency with other sections
+- **Card Navigation**: Limited Teams section to 2 cards with swipe navigation
+- **Typography**: Unified font styles and sizing across all components
+- **Mobile Layout**: Enhanced responsive design for all card sections
+- **Background Images**: Gender-specific team card backgrounds (boys/girls)
 
 ### 🛠️ Technical Updates
-- **Dependencies**: Added Swiper.js, react-intersection-observer, react-icons
-- **Image Assets**: Added placeholder images for news and team content
+- **Dependencies**: Added Swiper.js, react-intersection-observer, react-icons, Shadcn UI components
+- **Image Assets**: Added placeholder images for news and team content, gender-specific team backgrounds
 - **TypeScript**: Enhanced type safety throughout the application
 - **Performance**: Optimized images and lazy loading
+- **Component Library**: Added Shadcn UI Button component for consistent styling
+- **PostCSS**: Added postcss-nesting for CSS nesting support
+- **Security Audit**: Zero vulnerabilities found in all dependencies
 
 ## v2.0.0 - September 09, 2025
 

@@ -30,7 +30,11 @@ export default function TeamCard({ team }: TeamCardProps) {
     >
       <div className="relative w-full h-48 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
         <Image
-          src={team.logo_url}
+          src={
+            team.gender.toLowerCase() === "boys"
+              ? "/teams/boys-team.png"
+              : "/teams/girls-team.png"
+          }
           alt={`${team.name} team photo`}
           fill
           priority

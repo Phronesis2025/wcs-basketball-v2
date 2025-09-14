@@ -34,13 +34,13 @@ export default function Teams({ initialTeams, error }: TeamsProps) {
   const handlePrev = () => {
     setSlideDirection("left");
     setStartIndex(
-      (prev) => (prev - 3 + initialTeams.length) % initialTeams.length
+      (prev) => (prev - 2 + initialTeams.length) % initialTeams.length
     );
   };
 
   const handleNext = () => {
     setSlideDirection("right");
-    setStartIndex((prev) => (prev + 3) % initialTeams.length);
+    setStartIndex((prev) => (prev + 2) % initialTeams.length);
   };
 
   const getItemVariants = (): Variants => {
@@ -74,8 +74,8 @@ export default function Teams({ initialTeams, error }: TeamsProps) {
     }
   };
 
-  // Compute the 3 visible teams for the current page (wraps around)
-  const visibleTeams: Team[] = [0, 1, 2].map((offset) => {
+  // Compute the 2 visible teams for the current page (wraps around)
+  const visibleTeams: Team[] = [0, 1].map((offset) => {
     const teamIndex = (startIndex + offset) % initialTeams.length;
     return initialTeams[teamIndex];
   });
@@ -106,11 +106,16 @@ export default function Teams({ initialTeams, error }: TeamsProps) {
   return (
     <section ref={ref} className="bg-[#002C51] py-12" aria-label="Our Teams">
       <div className="container mx-auto px-4">
-        <h2 className="text-4xl font-bebas text-white mb-4 text-center uppercase">
-          Our Teams
-        </h2>
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bebas text-white mb-4 text-center uppercase">
+            Our Teams
+          </h2>
+          <p className="text-lg text-white/80 font-inter">
+            Meet our talented players and dedicated teams
+          </p>
+        </div>
         <div className="relative">
-          <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 pb-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:gap-6 pb-4">
             {visibleTeams.map((team) => (
               <motion.div
                 key={`${team.id}-${startIndex}-${slideDirection}`}
