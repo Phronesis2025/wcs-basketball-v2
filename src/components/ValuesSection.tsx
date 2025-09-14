@@ -189,10 +189,9 @@ export default function ValuesSection() {
                   <Image
                     src={value.image}
                     alt={value.title}
-                    width={300}
-                    height={200}
+                    fill
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-300"
-                    style={{ width: "auto", height: "auto" }}
+                    sizes="(max-width: 768px) 33vw, (max-width: 1200px) 25vw, 20vw"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.src = "/images/placeholder-team-default.jpg";
@@ -273,10 +272,9 @@ export default function ValuesSection() {
                 <Image
                   src={selectedValue.image}
                   alt={selectedValue.title}
-                  width={400}
-                  height={300}
+                  fill
                   className="object-cover object-center"
-                  style={{ width: "auto", height: "auto" }}
+                  sizes="100vw"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.src = "/images/placeholder-team-default.jpg";

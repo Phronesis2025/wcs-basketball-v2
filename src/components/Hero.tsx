@@ -59,6 +59,7 @@ export default function Hero() {
           fill
           className="object-cover"
           priority={currentSlide === 0}
+          sizes="100vw"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = "/images/placeholder-team-default.jpg";
