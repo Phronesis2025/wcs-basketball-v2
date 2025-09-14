@@ -172,7 +172,7 @@ export default function ValuesSection() {
         </div>
         <div className="relative">
           <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 pb-4">
-            {visibleValues.map((value, index) => (
+            {visibleValues.map((value) => (
               <motion.div
                 key={`${value.id}-${startIndex}-${slideDirection}`}
                 className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow duration-300"

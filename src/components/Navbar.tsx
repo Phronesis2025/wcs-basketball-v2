@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false); // State for scroll detection
@@ -85,9 +86,11 @@ export default function Navbar() {
                   isScrolled ? "bg-transparent" : "bg-white/10 backdrop-blur-sm"
                 }`}
               >
-                <img
+                <Image
                   src="/logo4.png"
                   alt="WCS Basketball Logo"
+                  width={32}
+                  height={32}
                   className="h-8 w-auto"
                 />
               </div>

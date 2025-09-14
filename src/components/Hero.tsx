@@ -1,13 +1,12 @@
 "use client";
 
-import { motion, useAnimation } from "framer-motion";
+import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function Hero() {
-  const controls = useAnimation();
   const { ref, inView } = useInView({ triggerOnce: true });
   const [currentSlide, setCurrentSlide] = useState(0);
 

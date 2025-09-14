@@ -16,27 +16,32 @@ export default function Register() {
 
   // Generate CSRF token on component mount
   useEffect(() => {
-    const token = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    const token =
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
     setCsrfToken(token);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Rate limiting check
     const now = Date.now();
     const timeSinceLastAttempt = now - lastAttempt;
-    
-    if (attempts >= 5 && timeSinceLastAttempt < 300000) { // 5 minutes
-      setMessage("Too many attempts. Please wait 5 minutes before trying again.");
+
+    if (attempts >= 5 && timeSinceLastAttempt < 300000) {
+      // 5 minutes
+      setMessage(
+        "Too many attempts. Please wait 5 minutes before trying again."
+      );
       return;
     }
-    
+
     // Reset attempts if enough time has passed
     if (timeSinceLastAttempt >= 300000) {
       setAttempts(0);
     }
-    
+
     // CSRF token validation
     if (!csrfToken) {
       setMessage("Security token missing. Please refresh the page.");
@@ -71,7 +76,7 @@ export default function Register() {
       setMessage("Email address is too long");
       return;
     }
-    
+
     if (password.length > 128) {
       setMessage("Password is too long");
       return;
@@ -87,7 +92,7 @@ export default function Register() {
 
     setLoading(true);
     setMessage("");
-    setAttempts(prev => prev + 1);
+    setAttempts((prev) => prev + 1);
     setLastAttempt(Date.now());
 
     try {
@@ -108,7 +113,7 @@ export default function Register() {
       } else {
         setMessage("Check your email for the confirmation link!");
       }
-    } catch (error) {
+    } catch {
       setMessage("An unexpected error occurred. Please try again.");
     } finally {
       setLoading(false);

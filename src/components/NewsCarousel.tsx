@@ -5,7 +5,6 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation } from "swiper/modules";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import Link from "next/link";
 import "swiper/css";
 import "swiper/css/navigation";
 
@@ -114,7 +113,7 @@ export default function NewsCarousel() {
 
   return (
     <section className="py-16 bg-navy">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bebas uppercase text-white mb-2">
             Latest News
