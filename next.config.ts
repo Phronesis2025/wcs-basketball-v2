@@ -25,4 +25,9 @@ module.exports = {
   images: {
     domains: ["*.supabase.co"],
   },
+  sentry: {
+    hideSourceMaps: true,
+    autoInstrumentServerFunctions: true,
+    autoInstrumentClientSide: true,
+  },
 };

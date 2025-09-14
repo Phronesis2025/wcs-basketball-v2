@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Team, SupabaseUser } from "@/types/supabase";
+import * as Sentry from '@sentry/nextjs';
 
 export default function TestAuth() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -18,7 +19,10 @@ export default function TestAuth() {
           .from("teams")
           .select("name, age_group, gender")
           .eq("coach_email", user.email);
-        if (error) console.error("Error fetching teams:", error);
+        if (error) {
+          Sentry.captureException(error);
+          console.error("Error fetching teams:", error);
+        }
         setTeams(data || []);
       }
     };
@@ -26,18 +30,28 @@ export default function TestAuth() {
   }, []);
 
   const signIn = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: "testcoach@example.com",
-      password: "WCSv2Test123!",
-    });
-    if (error) console.error("Sign-in error:", error);
-    window.location.reload();
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: "testcoach@example.com",
+        password: "WCSv2Test123!",
+      });
+      if (error) throw error;
+      window.location.reload();
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error("Sign-in error:", error);
+    }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error("Sign-out error:", error);
-    window.location.reload(); // Reload to update state after logout
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      window.location.reload(); // Reload to update state after logout
+    } catch (error) {
+      Sentry.captureException(error);
+      console.error("Sign-out error:", error);
+    }
   };
 
   return (
