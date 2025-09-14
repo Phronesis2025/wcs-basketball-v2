@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import { useInView } from "react-intersection-observer";
+import ValuesSection from "@/components/ValuesSection";
 import { FaFacebookF } from "react-icons/fa";
+import Link from "next/link";
 
 const teams = [
   { name: "WCS Warriors", ageGroup: "U12 Boys", logo: "/logos/warriors.png" },
@@ -36,29 +37,28 @@ export default function Home() {
         initial={{ opacity: 0, y: 50 }}
         animate={heroInView ? { opacity: 1, y: 0 } : {}}
         transition={{ duration: 0.8 }}
-        className="relative h-screen flex items-center justify-center overflow-hidden"
+        className="relative h-96 flex items-center justify-center overflow-hidden"
       >
         <img
           src="/hero-basketball.jpg"
           alt="Basketball action shot"
           className="absolute top-0 left-0 w-full h-full object-cover"
         />
-        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/60 via-black/40 to-black/70"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-black/20 via-black/10 to-black/40"></div>
         <div className="text-center z-10">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-5xl md:text-5xl lg:text-7xl font-bebas uppercase leading-tight"
+            className="text-4xl font-bebas uppercase"
           >
-            <div>Welcome to WCS Youth</div>
-            <div className="text-5xl md:text-5xl lg:text-7xl">BASKETBALL</div>
+            Welcome to WCS Youth Basketball
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-2xl md:text-3xl font-inter mt-6 font-light"
+            className="text-xl font-inter mt-2"
           >
             Empowering Kids 8-18 with Skills and Character
           </motion.p>
@@ -66,7 +66,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={heroInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8, delay: 0.6 }}
-            className="mt-8"
+            className="mt-4"
           >
             <Link
               href="/register"
@@ -78,136 +78,8 @@ export default function Home() {
         </div>
       </motion.div>
 
-      {/* Our Values Section */}
-      <div className="bg-white py-16 my-8">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bebas text-gray-900 mb-4">
-              OUR VALUES
-            </h2>
-            <p className="text-base text-gray-600 font-inter">
-              What we teach our young athletes goes beyond basketball
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-10 h-10 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bebas text-gray-900 mb-3">
-                CHARACTER BUILDING
-              </h3>
-              <p className="text-gray-600 font-inter text-base leading-relaxed">
-                <Link
-                  href="/about"
-                  className="text-gray-600 hover:text-red transition duration-300"
-                >
-                  We instill values of respect, integrity, and sportsmanship in
-                  every player.
-                </Link>
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-10 h-10 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bebas text-gray-900 mb-3">
-                SKILL DEVELOPMENT
-              </h3>
-              <p className="text-gray-600 font-inter text-base leading-relaxed">
-                <Link
-                  href="/coaches"
-                  className="text-gray-600 hover:text-red transition duration-300"
-                >
-                  Expert coaching focused on fundamentals and advanced
-                  basketball techniques.
-                </Link>
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-10 h-10 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bebas text-gray-900 mb-3">
-                TEAMWORK
-              </h3>
-              <p className="text-gray-600 font-inter text-base leading-relaxed">
-                <Link
-                  href="/teams"
-                  className="text-gray-600 hover:text-red transition duration-300"
-                >
-                  Teaching collaboration, leadership, and communication through
-                  basketball.
-                </Link>
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg
-                  className="w-10 h-10 text-red-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bebas text-gray-900 mb-3">
-                EXCELLENCE
-              </h3>
-              <p className="text-gray-600 font-inter text-base leading-relaxed">
-                <Link
-                  href="/about"
-                  className="text-gray-600 hover:text-red transition duration-300"
-                >
-                  Striving for personal best both on and off the court.
-                </Link>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* Values Section */}
+      <ValuesSection />
 
       {/* News Carousel */}
       <div ref={newsRef} className="max-w-7xl mx-auto px-4 py-8 my-8">
@@ -253,7 +125,6 @@ export default function Home() {
               Meet our competitive youth basketball teams
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {teams.map((team, index) => (
               <motion.div
@@ -317,9 +188,7 @@ export default function Home() {
               Meet our experienced coaching staff
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Coach 1 */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={coachesInView ? { opacity: 1, x: 0 } : {}}
@@ -349,8 +218,6 @@ export default function Home() {
                 </p>
               </div>
             </motion.div>
-
-            {/* Coach 2 */}
             <motion.div
               initial={{ opacity: 0, x: 0 }}
               animate={coachesInView ? { opacity: 1, x: 0 } : {}}
@@ -380,8 +247,6 @@ export default function Home() {
                 </p>
               </div>
             </motion.div>
-
-            {/* Coach 3 */}
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={coachesInView ? { opacity: 1, x: 0 } : {}}
@@ -424,9 +289,7 @@ export default function Home() {
               Get your WCS Basketball gear and equipment
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Product 1 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={shopInView ? { opacity: 1, y: 0 } : {}}
@@ -466,8 +329,6 @@ export default function Home() {
                 </div>
               </div>
             </motion.div>
-
-            {/* Product 2 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={shopInView ? { opacity: 1, y: 0 } : {}}
@@ -505,8 +366,6 @@ export default function Home() {
                 </div>
               </div>
             </motion.div>
-
-            {/* Product 3 */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={shopInView ? { opacity: 1, y: 0 } : {}}
