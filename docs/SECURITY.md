@@ -2,10 +2,18 @@
 
 ## Security Measures
 
-- **Content-Security-Policy (CSP)**: Restricts scripts, styles, fonts to 'self', allows Supabase (see `next.config.ts`).
-- **X-Frame-Options**: DENY to prevent clickjacking.
-- **HSTS**: 1 year, subdomains, preload for HTTPS.
-- **X-Content-Type-Options**: nosniff to prevent MIME type sniffing.
+- **Content-Security-Policy (CSP)**: Restricts scripts, styles, fonts, images, and connections to trusted sources (self, Supabase).
+- **X-Frame-Options**: DENY prevents clickjacking.
+- **Strict-Transport-Security (HSTS)**: Enforces HTTPS for 1 year, subdomains, preload.
+- **X-Content-Type-Options**: nosniff blocks MIME type sniffing.
+- **X-XSS-Protection**: 1; mode=block mitigates XSS attacks.
+
+## Security Headers
+- **Content-Security-Policy (CSP)**: Restricts scripts, styles, fonts, images, and connections to trusted sources (self, Supabase).
+- **X-Frame-Options**: DENY prevents clickjacking.
+- **Strict-Transport-Security (HSTS)**: Enforces HTTPS for 1 year, subdomains, preload.
+- **X-Content-Type-Options**: nosniff blocks MIME type sniffing.
+- **X-XSS-Protection**: 1; mode=block mitigates XSS attacks.
 
 ## Future Plans
 
