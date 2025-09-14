@@ -22,8 +22,7 @@ export default function Navbar() {
           } else if (scrollY <= 20) {
             setIsScrolled(false);
           }
-          // Debug log
-          console.log("Scroll Y:", scrollY, "isScrolled:", scrollY > 30);
+          // Scroll handling complete
           ticking = false;
         });
         ticking = true;
@@ -57,7 +56,7 @@ export default function Navbar() {
   };
 
   const navLinks = [
-    { name: "Home", href: "/home" },
+    { name: "Home", href: "/" },
     { name: "About", href: "/about" },
     { name: "Teams", href: "/teams" },
     { name: "Schedules", href: "/schedules" },
@@ -65,8 +64,7 @@ export default function Navbar() {
     { name: "Shop", href: "/shop" },
   ];
 
-  // Debug log for isScrolled state
-  console.log("Navbar render - isScrolled:", isScrolled);
+  // Navbar render complete
 
   return (
     <>
