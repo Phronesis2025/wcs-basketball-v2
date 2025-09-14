@@ -1,13 +1,56 @@
-import { supabase } from "@/lib/supabaseClient";
 import { NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import { supabase } from "@/lib/supabaseClient";
 
-export async function GET() {
+// Configure Redis client (use your Upstash URL and token from .env.local)
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL || "",
+  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
+});
+
+// Rate limit: 5 requests per minute per IP
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(5, "1 m"),
+  analytics: true,
+});
+
+export async function GET(request: Request) {
+  // Extract IP address from request headers
+  const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
+
+  // Check rate limit for this IP
+  const { success, limit, reset, remaining } = await ratelimit.limit(ip);
+
+  // If rate limit exceeded, return 429 status
+  if (!success) {
+    return NextResponse.json(
+      {
+        error: "Too many requests",
+        limit,
+        reset,
+        remaining,
+      },
+      { status: 429 }
+    );
+  }
+
+  // If within rate limit, proceed with database query
   const { data, error } = await supabase
     .from("teams")
     .select("name, age_group, gender")
-    .limit(5); // Query teams table (assume it's seeded in Supabase)
+    .limit(5);
+
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 }); // Handle errors gracefully
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
-  return NextResponse.json({ teams: data });
+
+  // Return data with rate limit info
+  return NextResponse.json({
+    teams: data,
+    limit,
+    reset,
+    remaining,
+  });
 }

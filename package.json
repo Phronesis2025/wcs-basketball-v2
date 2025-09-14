@@ -12,6 +12,8 @@
     "@sentry/nextjs": "^10.11.0",
     "@stripe/stripe-js": "^7.9.0",
     "@supabase/supabase-js": "^2.57.4",
+    "@upstash/ratelimit": "^2.0.6",
+    "@upstash/redis": "^1.35.3",
     "framer-motion": "^12.23.12",
     "next": "15.5.2",
     "react": "19.1.0",
