@@ -17,6 +17,14 @@ const ratelimit = new Ratelimit({
 });
 
 export async function GET(request: Request) {
+  // Security: Additional validation for production
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { error: "API endpoint not available in production" },
+      { status: 403 }
+    );
+  }
+
   // Extract IP address from request headers
   const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
 

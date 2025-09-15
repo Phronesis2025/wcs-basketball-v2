@@ -49,17 +49,19 @@ export default function Shop() {
   }, []);
 
   return (
-    <section ref={ref} className="bg-white py-12" aria-label="Gear">
+    <section ref={ref} className="bg-navy py-12" aria-label="Gear">
       <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-navy text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
+        <h2 className="text-white text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
           Gear
         </h2>
-        <p className="text-gray-600 text-lg font-inter mb-8 text-center">
+        <p className="text-white text-lg font-inter mb-8 text-center">
           Get your WCS Basketball gear and equipment.
         </p>
         <div
           className={
-            isMobile ? "space-y-4" : "grid grid-cols-1 md:grid-cols-3 gap-8"
+            isMobile
+              ? "space-y-4 mx-6"
+              : "grid grid-cols-1 md:grid-cols-3 gap-8"
           }
         >
           {shopItems.map((item, index) => (

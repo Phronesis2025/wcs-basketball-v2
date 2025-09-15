@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabaseClient";
-import * as Sentry from "@sentry/nextjs";
 
 export async function fetchTeams() {
   try {

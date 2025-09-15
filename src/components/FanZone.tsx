@@ -5,6 +5,7 @@ import { useInView } from "react-intersection-observer";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import * as Sentry from "@sentry/nextjs";
+import { devLog, devError } from "@/lib/security";
 
 // Removed unused interfaces
 
@@ -63,7 +64,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
   if (teamsError || coachesError) {
     Sentry.captureMessage(`Fan Zone error: ${teamsError || coachesError}`);
     return (
-      <section className="bg-navy py-12" aria-label="Fan Zone">
+      <section className="bg-black py-12" aria-label="Fan Zone">
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-white text-base font-inter text-center">
             {teamsError || coachesError}
@@ -74,7 +75,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
   }
 
   return (
-    <section ref={ref} className="bg-navy py-12" aria-label="Fan Zone">
+    <section ref={ref} className="bg-black py-12" aria-label="Fan Zone">
       <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-white text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
           Fan Zone
@@ -85,7 +86,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
         <div
           className={
             isMobile
-              ? "space-y-4"
+              ? "space-y-4 mx-6"
               : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
           }
         >
@@ -117,11 +118,13 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
                       "video"
                     ) as HTMLVideoElement;
                     if (video) {
-                      console.log("Hovering over video container:", card.video);
-                      console.log("Video element:", video);
-                      console.log("Video readyState:", video.readyState);
+                      // Security: Use secure logging utility
+                      devLog("Hovering over video container", card.video);
+                      devLog("Video element", video);
+                      devLog("Video readyState", video.readyState);
+
                       video.play().catch((error) => {
-                        console.error("Video play failed:", error);
+                        devError("Video play failed", error);
                         // Fallback to poster image if video fails to play
                         video.style.display = "none";
                       });
@@ -159,13 +162,13 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
                       video.parentNode?.appendChild(posterImg);
                     }}
                     onLoadStart={() => {
-                      console.log("Video load started:", card.video);
+                      devLog("Video load started", card.video);
                     }}
                     onCanPlay={() => {
-                      console.log("Video can play:", card.video);
+                      devLog("Video can play", card.video);
                     }}
                     onLoadedData={() => {
-                      console.log("Video data loaded:", card.video);
+                      devLog("Video data loaded", card.video);
                     }}
                   >
                     <source src={card.video} type="video/mp4" />

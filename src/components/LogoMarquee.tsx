@@ -22,22 +22,25 @@ export default function LogoMarquee() {
   const [isPaused, setIsPaused] = useState(false);
 
   return (
-    <section className="bg-navy py-8 overflow-hidden" aria-label="Team Logos">
+    <section
+      className="bg-navy/80 py-8 overflow-hidden"
+      aria-label="Team Logos"
+    >
       <motion.div
         className="flex items-center"
         animate={{ x: ["0%", "-100%"] }}
-        transition={{ duration: 30, ease: "linear", repeat: Infinity }}
+        transition={{ duration: 45, ease: "linear", repeat: Infinity }}
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         style={{ animationPlayState: isPaused ? "paused" : "running" }}
       >
         {[...logos, ...logos].map((logo, index) => (
-          <div key={index} className="flex-shrink-0 mx-8">
+          <div key={index} className="flex-shrink-0 mx-12">
             <Image
               src={logo}
               alt={`Team logo ${index + 1}`}
-              width={80}
-              height={40}
+              width={60}
+              height={30}
               className="object-contain"
               style={{ width: "auto", height: "auto" }}
               onError={(e) => {

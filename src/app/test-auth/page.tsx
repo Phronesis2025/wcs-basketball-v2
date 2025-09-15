@@ -3,12 +3,18 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Team, SupabaseUser } from "@/types/supabase";
 import * as Sentry from "@sentry/nextjs";
+import { isProduction } from "@/lib/security";
 
 export default function TestAuth() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
 
   useEffect(() => {
+    // Security: Block access in production environment
+    if (isProduction()) {
+      return;
+    }
+
     const fetchUser = async () => {
       const {
         data: { user },
@@ -28,6 +34,20 @@ export default function TestAuth() {
     };
     fetchUser();
   }, []);
+
+  // Security: Block access in production environment
+  if (isProduction()) {
+    return (
+      <div className="bg-navy min-h-screen text-white flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-4xl font-bebas mb-4">Access Denied</h1>
+          <p className="text-lg mb-6">
+            This page is not available in production.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const signIn = async () => {
     try {
