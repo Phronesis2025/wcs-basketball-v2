@@ -4,35 +4,30 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 
 export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false); // State for scroll detection
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu
-  const [user, setUser] = useState<string | null>(null); // State for logged-in user email
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<string | null>(null);
 
   useEffect(() => {
-    let ticking = false;
-
     const handleScroll = () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          const scrollY = window.scrollY;
-          // Smooth transition with hysteresis to prevent flickering
-          if (scrollY > 30) {
-            setIsScrolled(true);
-          } else if (scrollY <= 20) {
-            setIsScrolled(false);
-          }
-          // Scroll handling complete
-          ticking = false;
-        });
-        ticking = true;
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        setIsVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        setIsVisible(true);
       }
+      setIsScrolled(currentScrollY > 30);
+      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [lastScrollY]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -47,13 +42,13 @@ export default function Navbar() {
         setUser(session?.user.email || null);
       }
     );
-    return () => authListener.subscription.unsubscribe(); // Cleanup listener
+    return () => authListener.subscription.unsubscribe();
   }, []);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
-    window.location.href = "/"; // Redirect to home on logout
+    window.location.href = "/";
   };
 
   const navLinks = [
@@ -62,28 +57,26 @@ export default function Navbar() {
     { name: "Teams", href: "/teams" },
     { name: "Schedules", href: "/schedules" },
     { name: "Coaches", href: "/coaches" },
-    { name: "Shop", href: "/shop" },
+    { name: "Gear", href: "/shop" },
   ];
-
-  // Navbar render complete
 
   return (
     <>
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-out ${
+      <motion.nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
           isScrolled
             ? "bg-white/95 backdrop-blur-md shadow-lg"
             : "bg-transparent"
         }`}
+        animate={{ y: isVisible ? 0 : -100 }}
+        transition={{ duration: 0.3 }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-1">
-          {/* Reduced py-2 to py-1 for slimmer mobile */}
           <div className="flex items-center justify-between h-12">
-            {/* Logo and Text */}
             <div className="flex items-center gap-2">
               <div
-                className={`p-1 rounded-md transition-all duration-700 ease-out ${
-                  isScrolled ? "bg-transparent" : "bg-white/10 backdrop-blur-sm"
+                className={`p-1 rounded-md transition-all duration-300 ease-out ${
+                  isScrolled ? "bg-transparent" : "bg-navy/10 backdrop-blur-sm"
                 }`}
               >
                 <Image
@@ -92,64 +85,58 @@ export default function Navbar() {
                   width={32}
                   height={32}
                   className="h-8 w-auto"
+                  style={{ width: "auto", height: "auto" }}
                 />
               </div>
-              {/* Mobile brand text */}
               <span
-                className={`md:hidden font-bebas text-lg transition-colors duration-700 ease-out ${
+                className={`md:hidden font-bebas text-lg transition-colors duration-300 ease-out ${
                   isScrolled ? "text-navy" : "text-white drop-shadow-lg"
                 }`}
               >
                 World Class
               </span>
               <span
-                className={`hidden md:inline font-bebas text-lg transition-colors duration-700 ease-out ${
+                className={`hidden md:inline font-bebas text-lg transition-colors duration-300 ease-out ${
                   isScrolled ? "text-navy" : "text-white drop-shadow-lg"
                 }`}
               >
                 WCS BASKETBALL
               </span>
             </div>
-
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
               {navLinks.map((link) => (
                 <Link
                   key={link.name}
                   href={link.href}
-                  className={`font-inter font-medium text-sm transition-all duration-700 ease-out hover:text-red ${
+                  className={`font-inter font-medium text-sm transition-all duration-300 ease-out hover:text-red ${
                     isScrolled ? "text-navy" : "text-white drop-shadow-lg"
                   }`}
                 >
                   {link.name}
                 </Link>
               ))}
-
-              {/* Register Button for Desktop */}
               {user ? (
                 <button
                   onClick={handleSignOut}
-                  className="bg-[#002C51] text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
+                  className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
                 >
                   Sign Out
                 </button>
               ) : (
                 <Link
                   href="/register"
-                  className="bg-[#002C51] text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
+                  className="bg-red text-white font-bold px-4 py-2 rounded hover:bg-red-700 transition duration-300 text-sm"
                 >
                   Register
                 </Link>
               )}
             </div>
-
-            {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`md:hidden p-2 rounded-md transition-all duration-700 ease-out ${
+              className={`md:hidden p-2 rounded-md transition-all duration-300 ease-out ${
                 isScrolled
                   ? "text-navy hover:bg-gray-100"
-                  : "text-white hover:bg-white/20"
+                  : "text-white hover:bg-navy/20"
               }`}
               aria-label="Toggle mobile menu"
             >
@@ -168,70 +155,55 @@ export default function Navbar() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth="2"
-                  d="M4 6h16M4 12h16m-7 6h7"
+                  d={
+                    isMobileMenuOpen
+                      ? "M6 18L18 6M6 6l12 12"
+                      : "M4 6h16M4 12h16m-7 6h7"
+                  }
                 />
               </svg>
             </button>
           </div>
         </div>
-      </nav>
-
-      {/* Mobile Menu Overlay - slide-in panel */}
+      </motion.nav>
       <div
-        className={`fixed inset-0 z-[60] md:hidden transition-opacity duration-300 ${
+        className={`fixed top-12 left-0 right-0 z-50 md:hidden transition-all duration-300 ease-out ${
           isMobileMenuOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
         }`}
       >
-        {/* Backdrop */}
-        <div
-          className={`absolute inset-0 bg-navy/95 backdrop-blur-md transition-opacity duration-300 ${
-            isMobileMenuOpen ? "opacity-100" : "opacity-0"
-          }`}
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-        {/* Sliding drawer */}
-        <div
-          className={`absolute top-0 right-0 h-full w-3/4 max-w-xs bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
-            isMobileMenuOpen ? "translate-x-0" : "translate-x-full"
-          }`}
-        >
-          <div className="p-6 space-y-4">
-            {/* Register link at top */}
+        <div className="bg-white shadow-lg">
+          <div className="p-4 space-y-2">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-3 py-2 transition-all duration-200"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {link.name}
+              </Link>
+            ))}
             {user ? (
               <button
                 onClick={() => {
                   handleSignOut();
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full bg-[#002C51] text-white font-bold text-sm px-4 py-2 rounded hover:bg-opacity-90 transition duration-300"
+                className="w-full text-left text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-3 py-2 transition-all duration-200"
               >
                 Sign Out
               </button>
             ) : (
               <Link
                 href="/register"
-                className="w-full bg-[#002C51] text-white font-bold text-sm px-4 py-2 rounded hover:bg-opacity-90 transition duration-300"
+                className="block bg-red text-white font-bold text-base hover:bg-red-700 rounded-md px-3 py-2 transition-all duration-200 text-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Register
               </Link>
             )}
-
-            {/* Other links */}
-            <div className="pt-2 space-y-1">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="block w-full text-left px-4 py-2 font-inter font-medium text-navy hover:text-red hover:bg-gray-100 rounded-lg transition-all duration-200"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
           </div>
         </div>
       </div>

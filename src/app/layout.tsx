@@ -1,3 +1,5 @@
+"use client";
+
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
@@ -11,8 +13,8 @@ export default function RootLayout({
       <body>
         <Navbar />
         {children}
-        <footer className="bg-navy py-4 text-center">
-          <p className="text-base">
+        <footer className="bg-navy py-4 text-center text-white">
+          <p className="text-base font-inter">
             © 2025 WCS Basketball | Contact: info@wcsbasketball.com
           </p>
         </footer>

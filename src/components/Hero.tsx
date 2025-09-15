@@ -1,104 +1,57 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
-import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function Hero() {
-  const { ref, inView } = useInView({ triggerOnce: true });
-  const [currentSlide, setCurrentSlide] = useState(0);
-
-  const slides = [
-    {
-      id: 1,
-      image: "/images/girls free throw.jpg",
-      alt: "Girls free throw shot",
-    },
-    { id: 2, image: "/images/boys team.jpg", alt: "Boys team huddle" },
-    { id: 3, image: "/images/girls rebound.jpg", alt: "Girls rebound action" },
-    {
-      id: 4,
-      image: "/images/girls jump.jpg",
-      alt: "Girls jump shot",
-    },
-    { id: 5, image: "/images/boys team2.jpg", alt: "Boys team second huddle" },
-  ];
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (inView) {
-      interval = setInterval(() => {
-        setCurrentSlide((prev) => (prev + 1) % slides.length);
-      }, 3000); // 3-second transition
-    }
-    return () => clearInterval(interval);
-  }, [inView, slides.length]);
-
   return (
-    <motion.div
-      ref={ref}
-      className="relative h-[500px] overflow-hidden"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.8 }}
+    <section
+      className="relative w-full h-[80vh] flex items-center justify-center overflow-hidden bg-navy"
+      aria-label="Hero"
+      style={{
+        backgroundImage: 'url("/hero-basketball.jpg")',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     >
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute top-0 left-0 w-full h-full object-cover"
+        style={{ objectPosition: "top" }}
+        src="/video/hero.mp4"
+        poster="/hero-basketball.jpg"
+        onError={(e) => {
+          const target = e.target as HTMLVideoElement;
+          target.style.display = "none";
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/90" />
       <motion.div
-        key={currentSlide}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative w-full h-full"
+        className="relative z-20 text-center text-white px-4"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        style={{ zIndex: 20 }}
       >
-        <Image
-          src={slides[currentSlide].image}
-          alt={slides[currentSlide].alt}
-          fill
-          className="object-cover"
-          priority={currentSlide === 0}
-          sizes="100vw"
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = "/images/placeholder-team-default.jpg";
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/80" />
+        <h1 className="text-[clamp(2.5rem,6vw,4.5rem)] font-bebas font-bold uppercase leading-tight drop-shadow-lg">
+          WELCOME TO WCS YOUTH BASKETBALL
+        </h1>
+        <p className="text-lg font-inter mt-4 max-w-2xl mx-auto drop-shadow-lg">
+          Empowering Kids 8-18 with Skills and Character
+        </p>
+        <Button
+          asChild
+          className="mt-6 bg-red text-white font-inter font-medium rounded-md hover:bg-red-700 hover:scale-105 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-base px-6 py-3 uppercase"
+        >
+          <Link href="/register" className="no-underline">
+            Join Now
+          </Link>
+        </Button>
       </motion.div>
-      <div className="absolute inset-0 flex items-center justify-center z-10">
-        <div className="text-center">
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-4xl font-bebas uppercase text-white"
-          >
-            Welcome to WCS Youth Basketball
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="text-xl font-inter mt-2 text-white"
-          >
-            Empowering Kids 8-18 with Skills and Character
-          </motion.p>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="mt-4"
-          >
-            <Link
-              href="/register"
-              className="bg-red text-white font-bold px-6 py-3 rounded hover:bg-opacity-90 transition duration-300"
-            >
-              Join Now
-            </Link>
-          </motion.div>
-        </div>
-      </div>
-    </motion.div>
+    </section>
   );
 }
