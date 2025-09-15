@@ -2,28 +2,31 @@
 
 ## Overview
 
-Official website for a youth basketball league in Kansas, managed for Phronesis2025's brother. Built to empower kids (8-18), build character, and generate revenue via merch sales. Features a modern, responsive design with comprehensive security measures and interactive components.
+Official website for a youth basketball league in Kansas, managed for Phronesis2025's brother. Built to empower kids (8-18), build character, and generate revenue via merch sales. Features a modern, responsive design with comprehensive security measures, enhanced mobile experience, and interactive components.
 
 ## Tech Stack
 
 - **Frontend**: Next.js 15.5.2, Tailwind CSS 3.3.3, TypeScript, Framer Motion
 - **UI Components**: Swiper.js, React Icons, react-intersection-observer
 - **Backend**: Supabase (auth, DB, storage), Rate limiting with Upstash Redis
-- **Security**: Sentry monitoring, comprehensive CSP headers, input sanitization
+- **Security**: Sentry monitoring, comprehensive CSP headers, input sanitization, security utilities
 - **Deployment**: Vercel with automatic deployments
 - **Fonts**: Local Inter, Bebas Neue
 
 ## Features
 
-- **Hero Section**: Rotating image carousel with call-to-action
+- **Hero Section**: Enhanced responsive design with mobile-optimized text sizing and positioning
 - **Values Section**: Interactive 3-card carousel showcasing league values
 - **News Carousel**: Swipeable news section with modal details
 - **Team Previews**: Dynamic team cards with logos and information
 - **Coaches Corner**: Staff profiles and information
-- **Shop Section**: Merchandise preview with pricing
-- **User Authentication**: Secure registration and login system
-- **Responsive Design**: Mobile-first approach with smooth animations
-- **Security**: Rate limiting, input validation, CSP headers, error monitoring
+- **Shop Section**: Merchandise preview with pricing and mobile-optimized margins
+- **Fan Zone**: Interactive video cards with mobile-responsive layout
+- **User Authentication**: Secure registration and login system with rate limiting
+- **Responsive Design**: Mobile-first approach with enhanced mobile experience
+- **Security**: Comprehensive security utilities, rate limiting, input validation, CSP headers
+- **Scroll Management**: Automatic scroll-to-top functionality
+- **Logo Marquee**: Animated team logos with enhanced spacing and opacity
 
 ## Setup Instructions
 
@@ -40,17 +43,29 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 4. Run locally: `npm run dev`
 5. Build: `npm run build`
 
+## Security Features
+
+- **Security Headers**: Comprehensive CSP, HSTS, X-Frame-Options, and more
+- **Input Validation**: Email format, password strength, length validation
+- **Rate Limiting**: Client-side protection against brute force attacks
+- **CSRF Protection**: Token-based form protection
+- **Input Sanitization**: XSS prevention for user-generated content
+- **Environment Validation**: Secure environment variable handling
+- **Production Security**: Test endpoints disabled in production
+- **Error Monitoring**: Sentry integration for production monitoring
+
 ## Live Site
 
 - **Production**: https://wcs-basketball-v2.vercel.app
-- **Status**: ✅ Active and deployed
+- **Status**: ✅ Active and deployed with enhanced security
 
 ## Contribution Guide
 
 - Use feature branches (e.g., `feature/navbar`)
 - Commit messages: `[type] short description` (e.g., `[feat] add hero carousel`)
 - Push to GitHub, create PR for review
+- Follow security best practices for all new features
 
 ## Version
 
-- v2.1.0 (Current - Full UI implementation with security measures)
+- v2.2.0 (Current - Enhanced security, mobile UI improvements, and build fixes)

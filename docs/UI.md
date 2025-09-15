@@ -36,12 +36,15 @@
 ### 2. Hero Section
 - **Location**: `src/components/Hero.tsx`
 - **Features**:
-  - Rotating image carousel (5 images, 3-second intervals)
+  - Enhanced responsive design with mobile-optimized text sizing
+  - Split text layout: "More Than Basketball" and "We are World Class"
   - Framer Motion fade transitions
-  - Call-to-action button
+  - Call-to-action button with enhanced styling
   - Dark gradient overlay for text readability
-- **Styling**: Full-width, 500px height, centered text
+  - Mobile-first responsive design
+- **Styling**: Full-width, full-height (h-screen), left-aligned text
 - **Images**: Basketball action shots from `/public/images/`
+- **Mobile**: Optimized text sizing and positioning for mobile devices
 
 ### 3. Values Section
 - **Location**: `src/components/ValuesSection.tsx`
@@ -93,11 +96,42 @@
 - **Styling**: White background, bordered cards
 - **Products**: Jersey, Basketball, Team Hat
 
-### 8. ScrollToTop Component
+### 8. Fan Zone Component
+- **Location**: `src/components/FanZone.tsx`
+- **Features**:
+  - Interactive video cards with hover effects
+  - Mobile-responsive layout with enhanced margins
+  - Black background for better contrast
+  - Video playback on hover
+- **Styling**: Black background, white cards, mobile-optimized margins
+- **Content**: 4 fan zone cards with videos and descriptions
+
+### 9. Shop Component
+- **Location**: `src/components/Shop.tsx`
+- **Features**:
+  - Product preview cards with pricing
+  - Navy background for better visual hierarchy
+  - Mobile-optimized margins matching Fan Zone
+  - Enhanced responsive design
+- **Styling**: Navy background, white cards, mobile-optimized margins
+- **Products**: Jersey, Basketball, Team Hat with pricing
+
+### 10. Logo Marquee Component
+- **Location**: `src/components/LogoMarquee.tsx`
+- **Features**:
+  - Animated team logos with enhanced spacing
+  - Smaller logo sizes for better visual balance
+  - Slower animation speed for better readability
+  - Semi-transparent background with opacity
+- **Styling**: Navy background with opacity, smaller logos, enhanced spacing
+- **Content**: Team logos from `/public/logos/`
+
+### 11. ScrollToTop Component
 - **Location**: `src/components/ScrollToTop.tsx`
 - **Features**:
-  - Automatic scroll to top on page load
-  - Visibility change handling
+  - Enhanced automatic scroll to top functionality
+  - Multiple event listeners for better reliability
+  - Visibility change and focus event handling
   - No visual element (utility component)
 
 ## 🎭 Animations & Interactions
@@ -123,15 +157,25 @@
 
 ## 📱 Mobile Optimization
 
-### Touch Interactions
-- **Swipe Support**: News carousel and values section
+### Enhanced Mobile Experience
+- **Hero Section**: Mobile-optimized text sizing and positioning
+- **Split Text Layout**: "More Than Basketball" split into two lines on mobile
+- **Responsive Margins**: Enhanced mobile margins for Fan Zone and Shop sections
+- **Touch Interactions**: Swipe support for news carousel and values section
 - **Touch Targets**: Minimum 44px for all interactive elements
 - **Gesture Support**: Native swipe gestures for carousels
+
+### Mobile-Specific Features
+- **Text Sizing**: Optimized font sizes for mobile readability
+- **Layout Adjustments**: Mobile-first responsive design
+- **Margin Consistency**: Uniform mobile margins across all sections
+- **Background Colors**: Enhanced contrast with black Fan Zone and navy Shop
 
 ### Performance
 - **Image Optimization**: Next.js Image component with proper sizing
 - **Lazy Loading**: Intersection Observer for animations
-- **Bundle Size**: Optimized with code splitting
+- **Bundle Size**: Optimized with code splitting (163 kB First Load JS)
+- **Build Time**: Optimized to ~6.5 seconds
 
 ## 🎯 Accessibility Features
 
