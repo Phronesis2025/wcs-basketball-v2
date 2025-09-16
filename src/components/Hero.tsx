@@ -29,7 +29,17 @@ export default function Hero() {
           target.style.display = "none";
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/90 via-black/85 to-black/95" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80 sm:from-black/80 sm:via-black/65 sm:to-black/90" />
+
+      {/* Basketball Flames Video - Desktop Only */}
+      <div className="hidden sm:block absolute right-40 top-1/2 transform -translate-y-1/2 z-10">
+        <img
+          src="/video/basketball-flames.gif"
+          alt="Basketball flames animation"
+          className="w-96 h-96 object-contain"
+        />
+      </div>
+
       <motion.div
         className="relative z-20 text-white flex flex-col items-start justify-between w-full h-screen px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16"
         initial={{ opacity: 0, y: 20 }}
@@ -38,26 +48,34 @@ export default function Hero() {
         style={{ zIndex: 20 }}
       >
         {/* Top: Headline */}
-        <div className="text-left pt-8 sm:pt-4">
+        <div className="text-left pt-8 sm:pt-0">
           <h1 className="text-[clamp(6rem,18vw,7rem)] sm:text-[clamp(2.2rem,6vw,4.5rem)] font-bebas font-bold uppercase leading-tight drop-shadow-lg">
-            <span className="block font-inter text-xl sm:text-xl font-medium mb-1 sm:hidden">
-              More Than
-            </span>
-            <span className="block font-inter text-xl sm:text-xl font-medium mb-2 sm:hidden">
-              Basketball
-            </span>
-            <span className="hidden sm:block font-inter text-xl font-medium mb-1">
+            <span className="block font-inter text-xl sm:text-xl font-medium mb-1 sm:hidden normal-case">
               More Than Basketball
             </span>
-            <span className="block">We are World Class</span>
+            <span className="hidden sm:block font-inter text-xl font-medium mb-1 normal-case">
+              More Than Basketball
+            </span>
+            <span className="block text-[clamp(4rem,12vw,5rem)] sm:text-[clamp(6rem,18vw,7rem)] leading-none sm:leading-none sm:mb-10">
+              We are <br></br>World Class
+            </span>
           </h1>
+        </div>
+
+        {/* Basketball Flames Video - Mobile Only */}
+        <div className="sm:hidden flex justify-center mb-6 pl-6">
+          <img
+            src="/video/basketball-flames.gif"
+            alt="Basketball flames animation"
+            className="w-92 h-92 object-contain"
+          />
         </div>
 
         {/* Bottom: Button then Tagline */}
         <div className="text-left -mb-4 sm:-mb-6">
           <Button
             asChild
-            className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-6"
+            className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-3"
           >
             <Link href="/register" className="no-underline">
               Join Now
