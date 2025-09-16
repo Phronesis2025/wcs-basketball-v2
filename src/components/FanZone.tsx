@@ -49,6 +49,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
   const { ref, inView } = useInView({ triggerOnce: true });
   const [isMobile, setIsMobile] = useState(false);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -60,6 +61,55 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
 
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  // Set up intersection observer for mobile video playing
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const cardIndex = parseInt(
+            entry.target.getAttribute("data-card-index") || "0"
+          );
+          const video = videoRefs.current[cardIndex];
+
+          if (entry.isIntersecting) {
+            // Card is in view - play video
+            if (video) {
+              devLog("Card in view, playing video", cardIndex);
+              video.play().catch((error) => {
+                devError("Mobile video play failed", error);
+                video.style.display = "none";
+              });
+            }
+          } else {
+            // Card is out of view - pause video
+            if (video) {
+              devLog("Card out of view, pausing video", cardIndex);
+              video.pause();
+              video.currentTime = 0;
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.5, // Play when 50% of the card is visible
+        rootMargin: "0px 0px -10% 0px", // Start playing slightly before fully in view
+      }
+    );
+
+    // Observe all card elements
+    cardRefs.current.forEach((cardRef) => {
+      if (cardRef) {
+        observer.observe(cardRef);
+      }
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isMobile]);
 
   if (teamsError || coachesError) {
     Sentry.captureMessage(`Fan Zone error: ${teamsError || coachesError}`);
@@ -93,6 +143,10 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
           {cards.map((card, index) => (
             <motion.div
               key={card.title}
+              ref={(el) => {
+                cardRefs.current[index] = el;
+              }}
+              data-card-index={index}
               initial={{ opacity: 0, y: 40 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{
@@ -114,6 +168,9 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
                 <div
                   className="relative h-48 bg-gray-200 overflow-hidden"
                   onMouseEnter={(e) => {
+                    // Only handle hover on desktop
+                    if (isMobile) return;
+
                     const video = e.currentTarget.querySelector(
                       "video"
                     ) as HTMLVideoElement;
@@ -131,6 +188,9 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
                     }
                   }}
                   onMouseLeave={(e) => {
+                    // Only handle hover on desktop
+                    if (isMobile) return;
+
                     const video = e.currentTarget.querySelector(
                       "video"
                     ) as HTMLVideoElement;

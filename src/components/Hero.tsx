@@ -63,7 +63,7 @@ export default function Hero() {
         </div>
 
         {/* Basketball Flames Video - Mobile Only */}
-        <div className="sm:hidden flex justify-center mb-6 pl-6">
+        <div className="sm:hidden flex justify-center mb-6 pl-4">
           <img
             src="/video/basketball-flames.gif"
             alt="Basketball flames animation"
