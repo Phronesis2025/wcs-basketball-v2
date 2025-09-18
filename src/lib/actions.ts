@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabaseClient";
+import { devLog } from "@/lib/security";
 
 export async function fetchTeams() {
   try {
@@ -9,13 +10,13 @@ export async function fetchTeams() {
       .order("name");
 
     if (error) {
-      console.warn("Supabase teams query error:", error);
+      devLog("Supabase teams query error:", error);
       return { data: [], error: null }; // Return empty data instead of error to prevent retries
     }
 
     return { data: data || [], error: null };
   } catch (error) {
-    console.warn("Failed to fetch teams:", error);
+    devLog("Failed to fetch teams:", error);
     return { data: [], error: null }; // Return empty data instead of error to prevent retries
   }
 }
@@ -29,13 +30,13 @@ export async function fetchCoaches() {
       .order("last_name");
 
     if (error) {
-      console.warn("Supabase coaches query error:", error);
+      devLog("Supabase coaches query error:", error);
       return { data: [], error: null }; // Return empty data instead of error to prevent retries
     }
 
     return { data: data || [], error: null };
   } catch (error) {
-    console.warn("Failed to fetch coaches:", error);
+    devLog("Failed to fetch coaches:", error);
     return { data: [], error: null }; // Return empty data instead of error to prevent retries
   }
 }

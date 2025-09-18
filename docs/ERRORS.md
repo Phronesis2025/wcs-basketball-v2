@@ -7,7 +7,9 @@ January 2025, Current Status
 ## ✅ Resolved Issues
 
 ### Initial Setup Issues (September 2025)
+
 - **Tailwind Export Error**:
+
   - **Date**: September 2025 (initial setup)
   - **Description**: "Package path ./components is not exported from package .../node_modules/tailwindcss" during `npm run build`
   - **Cause**: Tailwind v4+ export restrictions, possibly from plugins
@@ -15,6 +17,7 @@ January 2025, Current Status
   - **Status**: ✅ Resolved in fresh setup
 
 - **Geist Font Error**:
+
   - **Date**: September 2025
   - **Description**: "Unknown font `Geist`" in `layout.tsx`, 500 error on `/`
   - **Cause**: Next.js default template or cache clash with local fonts
@@ -22,12 +25,14 @@ January 2025, Current Status
   - **Status**: ✅ Resolved
 
 - **Hydration Mismatch**:
+
   - **Date**: September 2025
   - **Description**: Browser extension added `className="translated-ltr"` to `<html>`, breaking SSR
   - **Fix**: Tested in incognito, suggested disabling extensions
   - **Status**: ✅ Resolved
 
 - **EBUSY Error**:
+
   - **Date**: September 2025
   - **Description**: "EBUSY: resource busy or locked" during build cleanup
   - **Cause**: File lock in .next/export (Explorer/antivirus)
@@ -42,7 +47,9 @@ January 2025, Current Status
   - **Status**: ✅ Resolved
 
 ### Recent Development Issues (January 2025)
+
 - **CSP Violation Errors**:
+
   - **Date**: January 2025
   - **Description**: "Refused to execute inline script because it violates the following Content Security Policy directive: script-src 'self'"
   - **Cause**: CSP too restrictive, blocking Next.js inline scripts
@@ -50,6 +57,7 @@ January 2025, Current Status
   - **Status**: ✅ Resolved
 
 - **Image Loading Issues**:
+
   - **Date**: January 2025
   - **Description**: Images not displaying in Hero and Values sections
   - **Cause**: Incorrect Next.js Image component configuration
@@ -57,6 +65,7 @@ January 2025, Current Status
   - **Status**: ✅ Resolved
 
 - **Development Server Permission Error**:
+
   - **Date**: January 2025
   - **Description**: "Error: EPERM: operation not permitted, open '.next/trace'"
   - **Cause**: File permission issues with .next directory
@@ -64,6 +73,7 @@ January 2025, Current Status
   - **Status**: ✅ Resolved
 
 - **Duplicate Key Warnings**:
+
   - **Date**: January 2025
   - **Description**: "Encountered two children with the same key" in ValuesSection
   - **Cause**: Duplicate keys in mapped components
@@ -71,20 +81,46 @@ January 2025, Current Status
   - **Status**: ✅ Resolved
 
 - **LCP Warning**:
+
   - **Date**: January 2025
   - **Description**: "Image with src '/images/girls free throw.jpg' was detected as the Largest Contentful Paint (LCP)"
   - **Cause**: Missing priority prop on first image
   - **Fix**: Added `priority={currentSlide === 0}` to Hero images
   - **Status**: ✅ Resolved
 
+- **Supabase Import Error**:
+
+  - **Date**: January 2025
+  - **Description**: "Module '@/lib/supabaseClient' declares 'createClient' locally, but it is not exported"
+  - **Cause**: Incorrect import of createClient function from supabaseClient.ts
+  - **Fix**: Changed import to use exported 'supabase' instance instead of 'createClient' function
+  - **Status**: ✅ Resolved
+
+- **Image 404 Errors**:
+
+  - **Date**: January 2025
+  - **Description**: Continuous 404 errors for "/images/shop-teaser.png" causing performance issues
+  - **Cause**: File extension mismatch - code referenced .png but file was .jpg, plus browser caching
+  - **Fix**: Updated image references to correct .jpg extension and cleared build cache
+  - **Status**: ✅ Resolved
+
+- **Sentry Dependency Issues**:
+  - **Date**: January 2025
+  - **Description**: Unnecessary Sentry dependency in actions.ts causing build complexity
+  - **Cause**: Sentry was imported but not needed for simple error logging
+  - **Fix**: Removed Sentry import and replaced with console.warn for development debugging
+  - **Status**: ✅ Resolved
+
 ## 🔍 Current Error Monitoring
 
 ### Production Monitoring
+
 - **Sentry Integration**: Active error tracking and performance monitoring
 - **Vercel Analytics**: Traffic and performance metrics
 - **Console Monitoring**: Regular security header validation
 
 ### Common Error Patterns
+
 - **Image Loading**: Fallback to placeholder images for missing assets
 - **Network Errors**: Graceful handling of API failures
 - **Validation Errors**: User-friendly error messages for form inputs
@@ -92,13 +128,15 @@ January 2025, Current Status
 ## 📊 Error Statistics
 
 ### Resolved Issues
-- **Total Issues**: 10
+
+- **Total Issues**: 14
 - **Critical**: 0
-- **High**: 2 (CSP violations, Image loading)
-- **Medium**: 4 (Font errors, Hydration, Build issues)
-- **Low**: 4 (Warnings, Minor fixes)
+- **High**: 3 (CSP violations, Image loading, Image 404 errors)
+- **Medium**: 5 (Font errors, Hydration, Build issues, Supabase import, Sentry dependency)
+- **Low**: 6 (Warnings, Minor fixes)
 
 ### Current Status
+
 - **Open Issues**: 0
 - **Production Errors**: 0
 - **Security Vulnerabilities**: 0
@@ -107,16 +145,19 @@ January 2025, Current Status
 ## 🛠️ Error Prevention
 
 ### Code Quality
+
 - **TypeScript**: Strict type checking to catch errors early
 - **ESLint**: Code quality and consistency checks
 - **Pre-commit Hooks**: Automated linting before commits
 
 ### Testing
+
 - **Build Testing**: Regular `npm run build` validation
 - **Local Testing**: Development server testing
 - **Production Testing**: Vercel deployment validation
 
 ### Monitoring
+
 - **Real-time Alerts**: Sentry notifications for critical errors
 - **Performance Tracking**: Regular performance audits
 - **Security Scanning**: Automated vulnerability detection
@@ -124,6 +165,7 @@ January 2025, Current Status
 ## 📝 Error Reporting Process
 
 ### For Developers
+
 1. Check console for error details
 2. Verify error in both development and production
 3. Document error with reproduction steps
@@ -131,6 +173,7 @@ January 2025, Current Status
 5. Update this log with resolution details
 
 ### For Users
+
 - **Contact**: phronesis2025@example.com
 - **Response Time**: 24-48 hours
 - **Severity**: Critical issues addressed immediately
@@ -138,11 +181,13 @@ January 2025, Current Status
 ## 🔄 Ongoing Maintenance
 
 ### Regular Checks
+
 - **Weekly**: Console error review
 - **Monthly**: Security vulnerability scan
 - **Quarterly**: Performance audit and optimization
 
 ### Prevention Measures
+
 - **Dependency Updates**: Regular security patch updates
 - **Code Reviews**: Peer review for all changes
 - **Automated Testing**: CI/CD pipeline for error detection

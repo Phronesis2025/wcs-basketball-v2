@@ -1,8 +1,9 @@
 # WCSv2.0 Changelog
 
-## v2.2.0 - January 2025 (Current)
+## v2.2.1 - January 2025 (Current)
 
 ### 🎉 Major Features
+
 - **Hero Section**: Enhanced responsive design with mobile-optimized text sizing and positioning
 - **Values Section**: Interactive 3-card carousel with directional slide animations
 - **News Carousel**: Swiper.js-powered news section with modal details
@@ -14,6 +15,7 @@
 - **Design Consistency**: Unified design language across all sections with consistent margins and typography
 
 ### 🔒 Security Enhancements
+
 - **Security Utilities**: Comprehensive security utility functions (src/lib/security.ts)
 - **Rate Limiting**: Client-side rate limiting for registration (5 attempts per 5 minutes)
 - **Input Validation**: Comprehensive email format, password strength, and length validation
@@ -27,6 +29,7 @@
 - **Security Logging**: Development-only logging utilities for secure debugging
 
 ### 🎨 UI/UX Improvements
+
 - **Mobile Hero**: Enhanced mobile layout with split text and optimized sizing
 - **Responsive Design**: Mobile-first approach with Tailwind CSS
 - **Animations**: Smooth transitions with Framer Motion
@@ -43,6 +46,7 @@
 - **Shop Section**: Navy background with mobile-optimized margins
 
 ### 🛠️ Technical Updates
+
 - **Dependencies**: Added Swiper.js, react-intersection-observer, react-icons, Shadcn UI components
 - **Image Assets**: Added placeholder images for news and team content, gender-specific team backgrounds
 - **TypeScript**: Enhanced type safety throughout the application
@@ -53,6 +57,23 @@
 - **Build System**: Fixed React hooks rules violations and TypeScript errors
 - **Code Quality**: Removed unused imports and improved code organization
 - **Documentation**: Added comprehensive environment setup guide
+
+## v2.2.1 - January 2025 (Latest)
+
+### 🔧 Bug Fixes & Improvements
+
+- **Supabase Integration**: Fixed createClient import issue in actions.ts
+- **Error Handling**: Improved error handling in fetchTeams() and fetchCoaches() functions
+- **Image Loading**: Resolved shop-teaser image 404 errors and improved fallback handling
+- **Shop Content**: Updated shop section text from "jerseys, balls" to "t-shirts, hats" for better product representation
+- **Code Optimization**: Removed Sentry dependency from actions.ts for cleaner error handling
+- **Build Cache**: Cleared Next.js build cache to resolve persistent image loading issues
+
+### 🎨 UI/UX Updates
+
+- **Shop Section**: Enhanced product description with more relevant merchandise items
+- **Image Fallbacks**: Improved error handling for missing images with proper fallback chains
+- **Error Logging**: Replaced Sentry error logging with console.warn for development debugging
 
 ## v2.0.0 - September 09, 2025
 

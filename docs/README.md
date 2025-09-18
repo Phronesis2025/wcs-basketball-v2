@@ -20,7 +20,7 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **News Carousel**: Swipeable news section with modal details
 - **Team Previews**: Dynamic team cards with logos and information
 - **Coaches Corner**: Staff profiles and information
-- **Shop Section**: Merchandise preview with pricing and mobile-optimized margins
+- **Shop Section**: Merchandise preview with updated product descriptions and mobile-optimized margins
 - **Fan Zone**: Interactive video cards with mobile-responsive layout
 - **User Authentication**: Secure registration and login system with rate limiting
 - **Responsive Design**: Mobile-first approach with enhanced mobile experience
@@ -68,4 +68,4 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 
 ## Version
 
-- v2.2.0 (Current - Enhanced security, mobile UI improvements, and build fixes)
+- v2.2.1 (Current - Bug fixes, code optimization, and image loading improvements)
