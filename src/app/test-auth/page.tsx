@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Team, SupabaseUser } from "@/types/supabase";
 import * as Sentry from "@sentry/nextjs";
-import { isProduction } from "@/lib/security";
+import { isProduction, devError } from "@/lib/security";
 
 export default function TestAuth() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
@@ -27,7 +27,7 @@ export default function TestAuth() {
           .eq("coach_email", user.email);
         if (error) {
           Sentry.captureException(error);
-          console.error("Error fetching teams:", error);
+          devError("Error fetching teams:", error);
         }
         setTeams(data || []);
       }
@@ -67,7 +67,7 @@ export default function TestAuth() {
       window.location.reload();
     } catch (error) {
       Sentry.captureException(error);
-      console.error("Sign-in error:", error);
+      devError("Sign-in error:", error);
     }
   };
 
@@ -78,7 +78,7 @@ export default function TestAuth() {
       window.location.reload(); // Reload to update state after logout
     } catch (error) {
       Sentry.captureException(error);
-      console.error("Sign-out error:", error);
+      devError("Sign-out error:", error);
     }
   };
 

@@ -68,4 +68,4 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 
 ## Version
 
-- v2.2.1 (Current - Bug fixes, code optimization, and image loading improvements)
+- v2.2.2 (Current - UI/UX improvements, security enhancements, and About page optimization)

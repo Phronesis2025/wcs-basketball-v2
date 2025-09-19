@@ -212,7 +212,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
                     preload="metadata"
                     onError={(e) => {
                       const video = e.target as HTMLVideoElement;
-                      console.error("Video load error:", card.video, e);
+                      devError("Video load error:", e);
                       video.style.display = "none";
                       // Show poster image as fallback
                       const posterImg = document.createElement("img");

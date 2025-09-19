@@ -58,7 +58,23 @@
 - **Code Quality**: Removed unused imports and improved code organization
 - **Documentation**: Added comprehensive environment setup guide
 
-## v2.2.1 - January 2025 (Latest)
+## v2.2.2 - January 2025 (Latest)
+
+### 🔧 Bug Fixes & Improvements
+
+- **About Page**: Removed 'Learn More' buttons from value cards for cleaner design
+- **Console Security**: Replaced all production console.error with secure devError utility
+- **Error Handling**: Enhanced error handling in FanZone and test-auth components
+- **Code Cleanup**: Removed unused Button and Link imports from About page
+- **UI Simplification**: Streamlined About page cards to focus on content without navigation
+
+### 🎨 UI/UX Updates
+
+- **About Page**: Cleaner card design with title and description only
+- **Value Cards**: Simplified layout focusing on core message delivery
+- **Security Logging**: All console statements now use development-only logging utilities
+
+## v2.2.1 - January 2025
 
 ### 🔧 Bug Fixes & Improvements
 
