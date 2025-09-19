@@ -1,9 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Link from "next/link";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 
 /**
  * Team data interface representing a basketball team
@@ -68,23 +66,14 @@ export default function TeamCard({
       : "/logos/logo-red.png";
   };
 
-  /**
-   * Handles card click navigation to team detail page
-   * Uses window.location.href for client-side navigation
-   */
-  const handleCardClick = (): void => {
-    window.location.href = `/teams/${team.id}`;
-  };
-
   return (
     <motion.div
-      className="relative rounded-lg shadow-md overflow-hidden cursor-pointer group"
+      className="relative rounded-lg shadow-md overflow-hidden group"
       whileHover={
         isMobile
           ? {}
           : { y: -8, transition: { duration: 0.3, ease: "easeOut" } }
       }
-      onClick={handleCardClick}
     >
       {/* Team Image Section */}
       <div className="relative h-48 bg-gray-200 overflow-hidden">
@@ -134,16 +123,9 @@ export default function TeamCard({
         <p className="text-gray-600 font-inter text-sm mb-4">
           Coach: {team.coach_names.join(", ") || "TBD"}
         </p>
-        <Button
-          asChild
-          variant="default"
-          className="bg-red text-white font-medium font-inter rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-sm px-5 py-2.5 uppercase w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Link href={`/teams/${team.id}`} className="no-underline">
-            View Team
-          </Link>
-        </Button>
+        <div className="bg-red text-white font-medium font-inter rounded-md text-sm px-5 py-2.5 uppercase w-full text-center">
+          {team.name}
+        </div>
       </div>
     </motion.div>
   );
