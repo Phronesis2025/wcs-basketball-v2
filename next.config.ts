@@ -16,14 +16,14 @@ const cspDev = [
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
 ].join("; ");
 
-// Production CSP - strict security policy
+// Production CSP - strict security policy with analytics support
 const cspProd = [
   "default-src 'self'",
-  "script-src 'self'", // No unsafe-inline or unsafe-eval in production
+  "script-src 'self' 'unsafe-inline' https://*.vercel-analytics.com https://*.vercel-speed-insights.com", // Allow Vercel Analytics with inline scripts
   "style-src 'self' 'unsafe-inline'", // Still needed for Tailwind CSS
   "font-src 'self' data:",
   "img-src 'self' data: https://*.supabase.co",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com", // Allow Vercel Analytics connections
 ].join("; ");
 
 // Security headers configuration
