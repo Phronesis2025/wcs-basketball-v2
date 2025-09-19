@@ -5,10 +5,11 @@
 ### Security Headers (Active)
 
 - **Content-Security-Policy (CSP)**: Restricts scripts, styles, fonts, images, and connections to trusted sources
-  - `script-src 'self' 'unsafe-inline' 'unsafe-eval'` (Next.js compatibility)
+  - **Development**: `script-src 'self' 'unsafe-inline' 'unsafe-eval'` (Next.js compatibility)
+  - **Production**: `script-src 'self' 'unsafe-inline' https://*.vercel-analytics.com https://*.vercel-speed-insights.com` (Analytics support)
   - `style-src 'self' 'unsafe-inline'` (Tailwind CSS compatibility)
   - `img-src 'self' data: https://*.supabase.co` (Image sources)
-  - `connect-src 'self' https://*.supabase.co wss://*.supabase.co` (API connections)
+  - `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com` (API + Analytics connections)
 - **X-Frame-Options**: `DENY` prevents clickjacking attacks
 - **Strict-Transport-Security (HSTS)**: Enforces HTTPS for 1 year with subdomains and preload
 - **X-Content-Type-Options**: `nosniff` blocks MIME type sniffing
