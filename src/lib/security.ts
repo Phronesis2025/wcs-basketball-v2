@@ -111,3 +111,102 @@ export function containsMaliciousContent(input: string): boolean {
 
   return maliciousPatterns.some((pattern) => pattern.test(input));
 }
+
+/**
+ * Generate a CSRF token for form protection
+ * @returns A cryptographically secure random token
+ */
+export function generateCSRFToken(): string {
+  // Use crypto.getRandomValues if available (browser), otherwise fallback to Math.random
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    const array = new Uint8Array(32);
+    crypto.getRandomValues(array);
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
+      ""
+    );
+  } else {
+    // Fallback for server-side or environments without crypto.getRandomValues
+    return (
+      Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15) +
+      Date.now().toString(36)
+    );
+  }
+}
+
+/**
+ * Validate a CSRF token
+ * @param token - The token to validate
+ * @param sessionToken - The expected token from session
+ * @returns True if tokens match, false otherwise
+ */
+export function validateCSRFToken(
+  token: string,
+  sessionToken: string
+): boolean {
+  if (!token || !sessionToken) {
+    return false;
+  }
+
+  // Use constant-time comparison to prevent timing attacks
+  if (token.length !== sessionToken.length) {
+    return false;
+  }
+
+  let result = 0;
+  for (let i = 0; i < token.length; i++) {
+    result |= token.charCodeAt(i) ^ sessionToken.charCodeAt(i);
+  }
+
+  return result === 0;
+}
+
+/**
+ * Get CSRF token from cookies (client-side)
+ * @returns The CSRF token from cookies or null if not found
+ */
+export function getCSRFTokenFromCookies(): string | null {
+  if (typeof document === "undefined") {
+    return null; // Server-side
+  }
+
+  const cookies = document.cookie.split(";").reduce((acc, cookie) => {
+    const [key, value] = cookie.trim().split("=");
+    acc[key] = decodeURIComponent(value);
+    return acc;
+  }, {} as Record<string, string>);
+
+  return cookies["csrf-token"] || null;
+}
+
+/**
+ * Set CSRF token in cookies (server-side helper)
+ * @param token - The CSRF token to set
+ * @param options - Cookie options
+ * @returns Cookie string
+ */
+export function createCSRFCookie(
+  token: string,
+  options: {
+    maxAge?: number;
+    httpOnly?: boolean;
+    secure?: boolean;
+    sameSite?: "strict" | "lax" | "none";
+  } = {}
+): string {
+  const {
+    maxAge = 3600, // 1 hour
+    httpOnly = false,
+    secure = process.env.NODE_ENV === "production",
+    sameSite = "strict",
+  } = options;
+
+  let cookie = `csrf-token=${encodeURIComponent(token)}`;
+  cookie += `; Max-Age=${maxAge}`;
+  cookie += `; Path=/`;
+  cookie += secure ? "; Secure" : "";
+  cookie += `; SameSite=${sameSite}`;
+  cookie += httpOnly ? "; HttpOnly" : "";
+
+  return cookie;
+}

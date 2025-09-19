@@ -4,10 +4,13 @@ import { supabase } from "@/lib/supabaseClient";
 import { Team, SupabaseUser } from "@/types/supabase";
 import * as Sentry from "@sentry/nextjs";
 import { isProduction, devError } from "@/lib/security";
+import { useCSRF } from "@/hooks/useCSRF";
+import { validateCSRFToken } from "@/lib/security";
 
 export default function TestAuth() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
+  const { csrfToken, isLoading: csrfLoading, error: csrfError } = useCSRF();
 
   useEffect(() => {
     // Security: Block access in production environment
@@ -51,11 +54,37 @@ export default function TestAuth() {
 
   const signIn = async () => {
     try {
+      // CSRF Protection: Validate token before proceeding
+      if (!csrfToken) {
+        alert("CSRF token not available. Please try again.");
+        return;
+      }
+
       const email = prompt("Enter email:");
       const password = prompt("Enter password:");
 
       if (!email || !password) {
         alert("Email and password are required");
+        return;
+      }
+
+      // Validate CSRF token before authentication
+      const expectedToken = document.cookie
+        .split(";")
+        .find((c) => c.trim().startsWith("csrf-token="))
+        ?.split("=")[1];
+
+      if (!expectedToken) {
+        alert("CSRF token not found. Please refresh and try again.");
+        return;
+      }
+
+      const isValidToken = validateCSRFToken(
+        csrfToken,
+        decodeURIComponent(expectedToken)
+      );
+      if (!isValidToken) {
+        alert("Security validation failed. Please refresh and try again.");
         return;
       }
 
@@ -73,6 +102,32 @@ export default function TestAuth() {
 
   const signOut = async () => {
     try {
+      // CSRF Protection: Validate token before proceeding
+      if (!csrfToken) {
+        alert("CSRF token not available. Please try again.");
+        return;
+      }
+
+      // Validate CSRF token before sign out
+      const expectedToken = document.cookie
+        .split(";")
+        .find((c) => c.trim().startsWith("csrf-token="))
+        ?.split("=")[1];
+
+      if (!expectedToken) {
+        alert("CSRF token not found. Please refresh and try again.");
+        return;
+      }
+
+      const isValidToken = validateCSRFToken(
+        csrfToken,
+        decodeURIComponent(expectedToken)
+      );
+      if (!isValidToken) {
+        alert("Security validation failed. Please refresh and try again.");
+        return;
+      }
+
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       window.location.reload(); // Reload to update state after logout
@@ -84,6 +139,27 @@ export default function TestAuth() {
 
   return (
     <div className="bg-navy p-4 min-h-screen">
+      {/* CSRF Status Indicator */}
+      <div className="mb-4 p-2 bg-gray-800 rounded text-sm">
+        <div className="flex items-center gap-2">
+          <span className="text-white">CSRF Protection:</span>
+          {csrfLoading ? (
+            <span className="text-yellow-400">Loading...</span>
+          ) : csrfError ? (
+            <span className="text-red-400">Error: {csrfError}</span>
+          ) : csrfToken ? (
+            <span className="text-green-400">Active ✓</span>
+          ) : (
+            <span className="text-red-400">Inactive</span>
+          )}
+        </div>
+        {csrfToken && (
+          <div className="text-xs text-gray-400 mt-1">
+            Token: {csrfToken.substring(0, 16)}...
+          </div>
+        )}
+      </div>
+
       {user ? (
         <div>
           <h1 className="text-2xl font-bebas text-white">

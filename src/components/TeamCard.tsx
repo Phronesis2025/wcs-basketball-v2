@@ -1,69 +1,149 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
+/**
+ * Team data interface representing a basketball team
+ */
 interface Team {
   id: string;
   name: string;
   age_group: string;
   gender: string;
-  coach_email: string;
   grade_level: string;
   logo_url: string;
+  coach_names: string[];
+  video_url: string;
 }
 
+/**
+ * Props interface for the TeamCard component
+ */
 interface TeamCardProps {
   team: Team;
+  index: number;
+  isMobile: boolean;
 }
 
-export default function TeamCard({ team }: TeamCardProps) {
+/**
+ * TeamCard component displays individual team information in a card format
+ * Features hover animations, team-specific logos, and responsive design
+ *
+ * @param team - Team data object containing all team information
+ * @param index - Index of the team in the list (used for animations)
+ * @param isMobile - Boolean indicating if the device is mobile
+ */
+export default function TeamCard({
+  team,
+  index: _index,
+  isMobile,
+}: TeamCardProps) {
+  /**
+   * Maps team names to their corresponding logo files
+   * Uses case-insensitive matching to find team-specific logos
+   * Falls back to gender-based default logos if no match found
+   *
+   * @param teamName - The name of the team to get logo for
+   * @returns Path to the appropriate logo file
+   */
+  const getTeamLogo = (teamName: string): string => {
+    const name = teamName.toLowerCase();
+
+    // Team-specific logo mapping
+    if (name.includes("dupy")) return "/logos/logo-dupy.png";
+    if (name.includes("legends")) return "/logos/logo-legends.png";
+    if (name.includes("potter")) return "/logos/logo-potter.png";
+    if (name.includes("sharks")) return "/logos/logo-sharks.png";
+    if (name.includes("swish")) return "/logos/logo-swish.png";
+    if (name.includes("vipers")) return "/logos/logo-vipers.png";
+    if (name.includes("warriors")) return "/logos/logo-warriors.png";
+    if (name.includes("williams")) return "/logos/logo-williams.png";
+
+    // Default logos based on gender
+    return team.gender === "Boys"
+      ? "/logos/logo-blue.png"
+      : "/logos/logo-red.png";
+  };
+
+  /**
+   * Handles card click navigation to team detail page
+   * Uses window.location.href for client-side navigation
+   */
+  const handleCardClick = (): void => {
+    window.location.href = `/teams/${team.id}`;
+  };
+
   return (
     <motion.div
-      className={cn(
-        "bg-black rounded-[15px] shadow-md overflow-hidden mx-auto flex flex-col",
-        "drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)]"
-      )}
-      whileHover={{ scale: 1.05 }}
-      transition={{ duration: 0.3 }}
+      className="relative rounded-lg shadow-md overflow-hidden cursor-pointer group"
+      whileHover={
+        isMobile
+          ? {}
+          : { y: -8, transition: { duration: 0.3, ease: "easeOut" } }
+      }
+      onClick={handleCardClick}
     >
-      <div className="relative w-full h-48 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">
+      {/* Team Image Section */}
+      <div className="relative h-48 bg-gray-200 overflow-hidden">
         <Image
           src={
-            team.gender.toLowerCase() === "boys"
+            team.gender === "Boys"
               ? "/teams/boys-team.png"
               : "/teams/girls-team.png"
           }
-          alt={`${team.name} team photo`}
+          alt={`${team.name} team`}
           fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           priority
-          className="object-cover object-center"
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = "/images/placeholder-team-default.jpg";
           }}
         />
-        <div className="absolute bottom-[-50px] left-1/2 transform -translate-x-1/2 w-[100px] h-[100px] rounded-full border-8 border-[#002C51]">
-          <Image
-            src={team.logo_url}
-            alt={`${team.name} logo`}
-            fill
-            className="object-contain rounded-full"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = "/images/placeholder-team-default.jpg";
-            }}
-          />
-        </div>
+        {/* Dark gradient overlay for better visual hierarchy */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/60 group-hover:from-black/30 group-hover:via-black/50 group-hover:to-black/70 transition-all duration-300" />
       </div>
-      <div className="pt-[60px] p-6 flex flex-col flex-grow text-center shadow-[0_5px_15px_rgba(0,0,0,0.2)]">
-        <h3 className="text-white font-bebas text-sm sm:text-lg lg:text-2xl mb-1 sm:mb-2 uppercase">
+
+      {/* Circular Team Logo - positioned to overlap image and content */}
+      <div className="absolute top-[152px] left-1/2 transform -translate-x-1/2 w-[120px] h-[120px] rounded-full border-8 border-black bg-white z-[9999] opacity-100">
+        <Image
+          src={getTeamLogo(team.name)}
+          alt={`${team.name} logo`}
+          fill
+          sizes="120px"
+          className="object-contain rounded-full"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/logos/logo2.png";
+          }}
+        />
+      </div>
+
+      {/* Team Information Section */}
+      <div className="relative bg-white pt-[80px] p-6 z-10 text-center">
+        <h4 className="text-xl font-bebas text-navy mb-2 group-hover:text-red transition-colors duration-300">
           {team.name}
-        </h3>
-        <p className="text-white text-sm font-inter">
-          {team.age_group} {team.gender}
+        </h4>
+        <p className="text-gray-600 font-inter text-sm mb-2">
+          {team.age_group} {team.gender} - Grade {team.grade_level}
         </p>
+        <p className="text-gray-600 font-inter text-sm mb-4">
+          Coach: {team.coach_names.join(", ") || "TBD"}
+        </p>
+        <Button
+          asChild
+          variant="default"
+          className="bg-red text-white font-medium font-inter rounded-md hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-sm px-5 py-2.5 uppercase w-full"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Link href={`/teams/${team.id}`} className="no-underline">
+            View Team
+          </Link>
+        </Button>
       </div>
     </motion.div>
   );

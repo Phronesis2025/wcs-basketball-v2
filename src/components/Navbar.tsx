@@ -57,7 +57,7 @@ export default function Navbar() {
     { name: "Teams", href: "/teams" },
     { name: "Schedules", href: "/schedules" },
     { name: "Coaches", href: "/coaches" },
-    { name: "Gear", href: "/shop" },
+    { name: "Shop", href: "/shop" },
   ];
 
   return (
@@ -75,17 +75,17 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-12">
             <div className="flex items-center gap-2">
               <div
-                className={`p-1 rounded-md transition-all duration-300 ease-out ${
+                className={`p-1 rounded-md transition-all duration-300 ease-out w-16 h-8 relative ${
                   isScrolled ? "bg-transparent" : "bg-navy/10 backdrop-blur-sm"
                 }`}
               >
                 <Image
                   src="/logo4.png"
                   alt="WCS Basketball Logo"
-                  width={32}
-                  height={32}
-                  className="h-8 w-auto"
-                  style={{ width: "auto", height: "auto" }}
+                  fill
+                  sizes="64px"
+                  className="object-contain"
+                  priority
                 />
               </div>
               <span
@@ -125,7 +125,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   href="/register"
-                  className="bg-red text-white font-bold px-4 py-2 rounded hover:bg-red-700 transition duration-300 text-sm"
+                  className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
                 >
                   Register
                 </Link>
@@ -198,7 +198,7 @@ export default function Navbar() {
             ) : (
               <Link
                 href="/register"
-                className="block bg-red text-white font-bold text-base hover:bg-red-700 rounded-md px-3 py-2 transition-all duration-200 text-center"
+                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-3 py-2 transition-all duration-200"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Register

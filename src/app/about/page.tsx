@@ -1,9 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
-import { useMediaQuery } from "react-responsive";
 
+/**
+ * Core values data for the About page
+ * Each value represents a key principle of WCS Basketball
+ */
 const values = [
   {
     title: "Fundamentals First",
@@ -53,9 +57,13 @@ const values = [
   },
 ];
 
+/**
+ * About page component displaying WCS Basketball information and core values
+ * Features responsive design with scroll-based animations
+ */
 export default function About() {
+  // Intersection observer for scroll-based animations
   const { ref, inView } = useInView({ triggerOnce: true });
-  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
 
   return (
     <div className="bg-navy min-h-screen text-white">
@@ -89,13 +97,7 @@ export default function About() {
             <h2 className="text-white text-[clamp(2rem,4vw,2.5rem)] font-bebas font-bold mb-8 text-center uppercase">
               Our Values
             </h2>
-            <div
-              className={
-                isMobile
-                  ? "space-y-4"
-                  : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
-              }
-            >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {values.map((value, index) => (
                 <motion.div
                   key={value.title}
@@ -103,13 +105,15 @@ export default function About() {
                   animate={inView ? { opacity: 1, y: 0 } : {}}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="bg-white rounded-lg shadow-md overflow-hidden"
-                  whileHover={isMobile ? {} : { scale: 1.05 }}
+                  whileHover={{ scale: 1.05 }}
                 >
-                  <div className="h-48 bg-gray-200">
-                    <img
+                  <div className="h-48 bg-gray-200 relative">
+                    <Image
                       src={value.image}
                       alt={value.title}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.src = "/images/placeholder-value.png";

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -33,10 +34,13 @@ export default function Hero() {
 
       {/* Basketball Flames Video - Desktop Only */}
       <div className="hidden sm:block absolute right-40 top-1/2 transform -translate-y-1/2 z-10">
-        <img
+        <Image
           src="/video/basketball-flames.gif"
           alt="Basketball flames animation"
+          width={384}
+          height={384}
           className="w-96 h-96 object-contain"
+          unoptimized
         />
       </div>
 
@@ -64,10 +68,13 @@ export default function Hero() {
 
         {/* Basketball Flames Video - Mobile Only */}
         <div className="sm:hidden flex justify-center mb-6 pl-4">
-          <img
+          <Image
             src="/video/basketball-flames.gif"
             alt="Basketball flames animation"
+            width={368}
+            height={368}
             className="w-92 h-92 object-contain"
+            unoptimized
           />
         </div>
 

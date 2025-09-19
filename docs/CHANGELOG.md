@@ -1,6 +1,6 @@
 # WCSv2.0 Changelog
 
-## v2.2.1 - January 2025 (Current)
+## v2.3.0 - January 2025 (Current)
 
 ### 🎉 Major Features
 
@@ -14,15 +14,18 @@
 - **User Authentication**: Complete registration and login system with Supabase
 - **Design Consistency**: Unified design language across all sections with consistent margins and typography
 
-### 🔒 Security Enhancements
+### 🔒 Advanced Security Enhancements
 
+- **CSRF Protection System**: Cryptographically secure token generation and validation
+- **Row Level Security (RLS)**: Database-level access control with comprehensive policies
+- **Enhanced Security Headers**: Added X-XSS-Protection and X-Permitted-Cross-Domain-Policies
+- **Audit Logging**: Security event tracking and monitoring system
 - **Security Utilities**: Comprehensive security utility functions (src/lib/security.ts)
 - **Rate Limiting**: Client-side rate limiting for registration (5 attempts per 5 minutes)
 - **Input Validation**: Comprehensive email format, password strength, and length validation
-- **CSRF Protection**: Token-based protection for forms
 - **Input Sanitization**: XSS prevention for user-generated content
 - **Enhanced CSP**: Updated Content Security Policy for Next.js compatibility
-- **Security Headers**: Added Referrer-Policy and Permissions-Policy headers
+- **Security Headers**: Complete set of security headers including HSTS, CSP, and more
 - **Error Handling**: Generic error messages to prevent information disclosure
 - **Environment Validation**: Enhanced environment variable validation with detailed error messages
 - **Production Security**: Test endpoints disabled in production environment
@@ -41,7 +44,11 @@
 - **Typography**: Unified font styles and sizing across all components
 - **Mobile Layout**: Enhanced responsive design for all card sections
 - **Background Images**: Gender-specific team card backgrounds (boys/girls)
-- **Logo Marquee**: Smaller logos with enhanced spacing and opacity
+- **Logo Marquee**: Optimized logo sizes (100px → 140px) with enhanced spacing and opacity
+- **Image Optimization**: Fixed Next.js Image warnings and improved performance
+- **LCP Optimization**: Added priority props to critical images for better Core Web Vitals
+- **Hydration Fixes**: Resolved server/client hydration mismatches on About page
+- **Smooth Scrolling**: Fixed Next.js scroll behavior warnings
 - **Fan Zone**: Black background with improved mobile margins
 - **Shop Section**: Navy background with mobile-optimized margins
 
@@ -90,6 +97,13 @@
 - **Shop Section**: Enhanced product description with more relevant merchandise items
 - **Image Fallbacks**: Improved error handling for missing images with proper fallback chains
 - **Error Logging**: Replaced Sentry error logging with console.warn for development debugging
+
+### 🛠️ Build Optimization & Code Quality
+
+- **Image Optimization**: Replaced all `<img>` tags with Next.js `<Image>` components for better performance
+- **Code Cleanup**: Removed unused imports and variables, improved code quality
+- **Build Performance**: Optimized build process with cleaner warnings and faster compilation
+- **ESLint Compliance**: Fixed all actionable linting warnings and unused variable issues
 
 ## v2.0.0 - September 09, 2025
 

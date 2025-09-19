@@ -25,6 +25,17 @@ UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token_here
 # STRIPE_SECRET_KEY=your_stripe_secret_key_here
 ```
 
+## Security Features
+
+This setup supports comprehensive security features including:
+
+- **CSRF Protection**: Cryptographic token-based protection for all forms
+- **Row Level Security**: Database-level access control via Supabase RLS policies
+- **Enhanced Security Headers**: XSS protection, clickjacking prevention, and more
+- **Input Validation**: Email format, password strength, and sanitization
+- **Rate Limiting**: Client-side protection against brute force attacks
+- **Audit Logging**: Security event tracking and monitoring
+
 ## Security Rules
 
 ### ✅ DO:

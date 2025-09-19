@@ -35,14 +35,16 @@ export default function LogoMarquee() {
         style={{ animationPlayState: isPaused ? "paused" : "running" }}
       >
         {[...logos, ...logos].map((logo, index) => (
-          <div key={index} className="flex-shrink-0 mx-12">
+          <div
+            key={index}
+            className="flex-shrink-0 mx-12 w-[140px] h-[70px] relative"
+          >
             <Image
               src={logo}
               alt={`Team logo ${index + 1}`}
-              width={60}
-              height={30}
+              fill
+              sizes="140px"
               className="object-contain"
-              style={{ width: "auto", height: "auto" }}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = "/images/placeholder-logo.png";
