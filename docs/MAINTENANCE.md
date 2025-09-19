@@ -128,7 +128,7 @@ January 2025, Current Status
 
 - **Sentry**: Error tracking and performance monitoring
 - **Vercel Analytics**: Web analytics and traffic metrics
-- **Vercel Speed Insights**: Core Web Vitals and performance monitoring
+- **Vercel Speed Insights**: Core Web Vitals and performance monitoring (10% sample rate)
 - **Supabase Dashboard**: Database performance and usage
 - **GitHub Actions**: Automated testing and deployment
 
@@ -138,7 +138,7 @@ January 2025, Current Status
 
 - **Sentry Alerts**: Real-time error notifications
 - **Vercel Analytics**: Web analytics and traffic tracking
-- **Vercel Speed Insights**: Core Web Vitals monitoring
+- **Vercel Speed Insights**: Core Web Vitals monitoring (10% sample rate for optimal performance)
 - **GitHub Dependabot**: Automated dependency updates
 - **Vercel Deployments**: Automatic deployment on push
 

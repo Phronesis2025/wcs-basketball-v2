@@ -105,7 +105,7 @@
 - **Build Performance**: Optimized build process with cleaner warnings and faster compilation
 - **ESLint Compliance**: Fixed all actionable linting warnings and unused variable issues
 - **Vercel Analytics**: Implemented web analytics for user behavior tracking
-- **Vercel Speed Insights**: Added Core Web Vitals monitoring and performance tracking
+- **Vercel Speed Insights**: Added Core Web Vitals monitoring with 10% sample rate for optimal performance tracking
 - **CSP Updates**: Fixed Content Security Policy to allow Vercel Analytics domains and inline scripts
 
 ## v2.0.0 - September 09, 2025

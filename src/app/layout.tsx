@@ -22,8 +22,13 @@ export default function RootLayout({
             © 2025 WCS Basketball | Contact: info@wcsbasketball.com
           </p>
         </footer>
+        {/* Vercel Analytics for user behavior tracking */}
         <Analytics />
-        <SpeedInsights />
+
+        {/* Vercel Speed Insights for Core Web Vitals monitoring */}
+        <SpeedInsights
+          sampleRate={0.1}
+        />
       </body>
     </html>
   );
