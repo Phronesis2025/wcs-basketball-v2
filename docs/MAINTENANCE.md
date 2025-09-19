@@ -127,7 +127,8 @@ January 2025, Current Status
 ### Monitoring Tools
 
 - **Sentry**: Error tracking and performance monitoring
-- **Vercel Analytics**: Traffic and performance metrics
+- **Vercel Analytics**: Web analytics and traffic metrics
+- **Vercel Speed Insights**: Core Web Vitals and performance monitoring
 - **Supabase Dashboard**: Database performance and usage
 - **GitHub Actions**: Automated testing and deployment
 
@@ -136,7 +137,8 @@ January 2025, Current Status
 ### Automated Monitoring
 
 - **Sentry Alerts**: Real-time error notifications
-- **Vercel Analytics**: Performance tracking
+- **Vercel Analytics**: Web analytics and traffic tracking
+- **Vercel Speed Insights**: Core Web Vitals monitoring
 - **GitHub Dependabot**: Automated dependency updates
 - **Vercel Deployments**: Automatic deployment on push
 

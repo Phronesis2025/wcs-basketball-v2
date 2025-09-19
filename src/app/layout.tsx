@@ -3,6 +3,8 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import ScrollToTop from "@/components/ScrollToTop";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export default function RootLayout({
   children,
@@ -20,6 +22,8 @@ export default function RootLayout({
             © 2025 WCS Basketball | Contact: info@wcsbasketball.com
           </p>
         </footer>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
