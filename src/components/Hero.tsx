@@ -52,7 +52,7 @@ export default function Hero() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        style={{ zIndex: 20 }}
+        style={{ zIndex: 20, minHeight: '100vh' }}
       >
         {/* Top: Headline */}
         <div className="text-left pt-8 sm:pt-0">
@@ -84,17 +84,17 @@ export default function Hero() {
         </div>
 
         {/* Bottom: Button then Tagline */}
-        <div className="text-left w-full">
+        <div className="text-left w-full pb-4 sm:pb-0">
           <Button
             asChild
-            className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-3"
+            className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-lg sm:text-lg px-8 sm:px-8 py-4 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-3 block w-full sm:w-auto"
           >
             <Link href="/register" className="no-underline">
               Join Now
             </Link>
           </Button>
 
-          <p className="text-xl sm:text-xl font-inter drop-shadow-lg font-medium">
+          <p className="text-lg sm:text-xl font-inter drop-shadow-lg font-medium">
             Basketball excellence that extends beyond the game
           </p>
         </div>
