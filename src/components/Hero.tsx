@@ -14,7 +14,6 @@ export default function Hero() {
         backgroundImage: 'url("/hero-basketball.jpg")',
         backgroundSize: "cover",
         backgroundPosition: "center",
-        minHeight: "100vh",
         minHeight: "100dvh", // Dynamic viewport height for mobile
       }}
     >
