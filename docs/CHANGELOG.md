@@ -1,6 +1,17 @@
 # WCSv2.0 Changelog
 
-## v2.3.0 - January 2025 (Current)
+## v2.3.1 - January 2025 (Current)
+
+### 🔧 Bug Fixes & Improvements
+
+- **Favicon Loading**: Fixed favicon.ico and icon files not loading correctly
+  - Moved favicon.ico to correct Next.js App Router location (`src/app/`)
+  - Moved PNG icons to public directory for proper static serving
+  - Added comprehensive favicon metadata with proper MIME types and sizes
+  - Fixed console security by replacing production console.warn with devError
+- **Build Optimization**: Resolved TypeScript compilation errors and ESLint warnings
+- **Security Headers**: Updated CSP to allow Vercel Analytics scripts
+- **Database Timeouts**: Added timeout protection to prevent hanging requests
 
 ### 🎉 Major Features
 
