@@ -36,9 +36,8 @@ interface TeamCardProps {
  */
 export default function TeamCard({
   team,
-  index: _index,
   isMobile,
-}: TeamCardProps) {
+}: Omit<TeamCardProps, "index">) {
   /**
    * Maps team names to their corresponding logo files
    * Uses case-insensitive matching to find team-specific logos

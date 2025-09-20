@@ -108,7 +108,7 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
                       }
                 }
               >
-                <TeamCard team={team} index={index} isMobile={isMobile} />
+                <TeamCard team={team} isMobile={isMobile} />
               </motion.div>
             ))}
           </div>

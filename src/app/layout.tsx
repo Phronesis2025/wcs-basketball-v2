@@ -1,10 +1,31 @@
-"use client";
-
+﻿import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+export const metadata: Metadata = {
+  title: "WCS Basketball - Where Champions Start",
+  description:
+    "Westside Christian School Basketball - Developing champions on and off the court",
+  keywords: "basketball, youth sports, Christian school, athletics, WCS",
+  authors: [{ name: "WCS Basketball" }],
+  robots: "index, follow",
+  openGraph: {
+    title: "WCS Basketball - Where Champions Start",
+    description:
+      "Westside Christian School Basketball - Developing champions on and off the court",
+    type: "website",
+    locale: "en_US",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function RootLayout({
   children,
@@ -17,18 +38,12 @@ export default function RootLayout({
         <ScrollToTop />
         <Navbar />
         {children}
-        <footer className="bg-navy py-4 text-center text-white">
-          <p className="text-base font-inter">
-            © 2025 WCS Basketball | Contact: info@wcsbasketball.com
-          </p>
-        </footer>
+        <Footer />
         {/* Vercel Analytics for user behavior tracking */}
         <Analytics />
 
         {/* Vercel Speed Insights for Core Web Vitals monitoring */}
-        <SpeedInsights
-          sampleRate={0.1}
-        />
+        <SpeedInsights sampleRate={0.1} />
       </body>
     </html>
   );

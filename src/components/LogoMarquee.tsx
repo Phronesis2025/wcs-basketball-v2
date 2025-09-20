@@ -37,19 +37,24 @@ export default function LogoMarquee() {
         {[...logos, ...logos].map((logo, index) => (
           <div
             key={index}
-            className="flex-shrink-0 mx-12 w-[140px] h-[70px] relative"
+            className="flex-shrink-0 mx-12 w-[100px] h-[100px] relative flex items-center justify-center"
           >
-            <Image
-              src={logo}
-              alt={`Team logo ${index + 1}`}
-              fill
-              sizes="140px"
-              className="object-contain"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "/images/placeholder-logo.png";
-              }}
-            />
+            {/* Black circle background */}
+            <div className="absolute inset-0 bg-black rounded-full"></div>
+            {/* Logo container - keeping the same size as before */}
+            <div className="relative w-[140px] h-[70px] z-10">
+              <Image
+                src={logo}
+                alt={`Team logo ${index + 1}`}
+                fill
+                sizes="140px"
+                className="object-contain"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "/images/placeholder-logo.png";
+                }}
+              />
+            </div>
           </div>
         ))}
       </motion.div>

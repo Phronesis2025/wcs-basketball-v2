@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { devError } from "@/lib/security";
 
 /**
  * Supabase client configuration and initialization
@@ -15,10 +16,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   if (!supabaseUrl) missingVars.push("NEXT_PUBLIC_SUPABASE_URL");
   if (!supabaseAnonKey) missingVars.push("NEXT_PUBLIC_SUPABASE_ANON_KEY");
 
-  throw new Error(
+  devError(
     `Missing required environment variables: ${missingVars.join(", ")}. ` +
       "Please check your .env.local file and ensure all required variables are set. " +
-      "See docs/ENVIRONMENT_SETUP.md for setup instructions."
+      "See docs/ENVIRONMENT_SETUP.md for setup instructions. " +
+      "Using placeholder values for development."
   );
 }
 
@@ -27,6 +29,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
  * Configured with session persistence for user authentication
  * Used throughout the application for database operations
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: { persistSession: true }, // Persist session for user auth across pages
-});
+export const supabase = createClient(
+  supabaseUrl || "https://placeholder.supabase.co",
+  supabaseAnonKey || "placeholder_key",
+  {
+    auth: { persistSession: true }, // Persist session for user auth across pages
+  }
+);

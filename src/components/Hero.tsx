@@ -40,6 +40,8 @@ export default function Hero() {
           width={384}
           height={384}
           className="w-96 h-96 object-contain"
+          style={{ width: "auto", height: "auto" }}
+          priority
           unoptimized
         />
       </div>
@@ -74,6 +76,8 @@ export default function Hero() {
             width={368}
             height={368}
             className="w-92 h-92 object-contain"
+            style={{ width: "auto", height: "auto" }}
+            priority
             unoptimized
           />
         </div>

@@ -2,6 +2,17 @@ import { supabase } from "@/lib/supabaseClient";
 import * as Sentry from "@sentry/nextjs";
 import { devError } from "@/lib/security";
 
+// Type for the team data from Supabase
+interface TeamData {
+  id: string;
+  name: string;
+  age_group: string;
+  gender: string;
+  grade_level: string;
+  logo_url: string | null;
+  coaches_emails: string | null;
+}
+
 /**
  * Fetches teams data from Supabase database
  * Includes coach information lookup and fallback team data
@@ -10,8 +21,13 @@ import { devError } from "@/lib/security";
  */
 export async function fetchTeams() {
   try {
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Database timeout")), 5000)
+    );
+
     // Fetch teams from database for current season
-    const { data, error } = await supabase
+    const teamsPromise = supabase
       .from("teams")
       .select(
         "id, name, age_group, gender, grade_level, logo_url, coaches_emails"
@@ -19,11 +35,21 @@ export async function fetchTeams() {
       .eq("season", "2025-2026")
       .order("name");
 
+    const { data, error } = (await Promise.race([
+      teamsPromise,
+      timeoutPromise,
+    ])) as { data: TeamData[] | null; error: Error | null };
+
     if (error) throw error;
+
+    // Handle case where data is null
+    if (!data) {
+      return { data: [], error: "No teams data available" };
+    }
 
     // Process each team to include coach information
     const teamsWithCoaches = await Promise.all(
-      data.map(async (team) => {
+      data.map(async (team: TeamData) => {
         // Handle TBD teams with default values
         if (team.name.includes("TBD")) {
           return {
@@ -39,8 +65,12 @@ export async function fetchTeams() {
 
         // Look up coach names for teams with coach emails
         if (team.coaches_emails && team.coaches_emails.length > 0) {
+          // Parse coaches_emails string as array
+          const emails = team.coaches_emails
+            .split(",")
+            .map((email) => email.trim());
           const coachNames = await Promise.all(
-            team.coaches_emails.map(async (email: string) => {
+            emails.map(async (email: string) => {
               const { data: userData, error: userError } = await supabase
                 .from("users")
                 .select("first_name, last_name")

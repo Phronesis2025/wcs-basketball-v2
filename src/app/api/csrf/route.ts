@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { generateCSRFToken, createCSRFCookie } from "@/lib/security";
+import { generateCSRFToken, createCSRFCookie, devError } from "@/lib/security";
 
 /**
  * API endpoint to generate and return CSRF tokens
  * GET: Generate a new CSRF token and set it in cookies
  */
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     // Generate a new CSRF token
     const csrfToken = generateCSRFToken();
@@ -29,7 +29,7 @@ export async function GET(_request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Error generating CSRF token:", error);
+    devError("Error generating CSRF token:", error);
     return NextResponse.json(
       { error: "Failed to generate CSRF token" },
       { status: 500 }
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       message: "CSRF token is valid",
     });
   } catch (error) {
-    console.error("Error validating CSRF token:", error);
+    devError("Error validating CSRF token:", error);
     return NextResponse.json(
       { error: "Failed to validate CSRF token" },
       { status: 500 }

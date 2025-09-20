@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCSRFTokenFromCookies } from "@/lib/security";
+import { getCSRFTokenFromCookies, devError } from "@/lib/security";
 
 /**
  * Custom hook for CSRF token management
@@ -46,7 +46,7 @@ export function useCSRF() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
       setError(errorMessage);
-      console.error("Error fetching CSRF token:", err);
+      devError("Error fetching CSRF token:", err);
     } finally {
       setIsLoading(false);
     }
@@ -69,7 +69,7 @@ export function useCSRF() {
       const data = await response.json();
       return data.valid === true;
     } catch (err) {
-      console.error("Error validating CSRF token:", err);
+      devError("Error validating CSRF token:", err);
       return false;
     }
   };
