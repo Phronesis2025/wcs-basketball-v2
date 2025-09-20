@@ -51,6 +51,27 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
+      <head>
+        {/* Additional favicon meta tags for mobile devices */}
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png" />
+        
+        {/* iOS specific meta tags */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="WCS Basketball" />
+        
+        {/* Android specific meta tags */}
+        <meta name="theme-color" content="#1e40af" />
+        <meta name="msapplication-TileColor" content="#1e40af" />
+        <meta name="msapplication-TileImage" content="/android-chrome-192x192.png" />
+        
+        {/* Web App Manifest */}
+        <link rel="manifest" href="/site.webmanifest" />
+      </head>
       <body>
         <ScrollToTop />
         <Navbar />
