@@ -48,7 +48,7 @@ export default function Hero() {
       </div>
 
       <motion.div
-        className="relative z-20 text-white flex flex-col items-start justify-start w-full h-screen px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16 sm:justify-between"
+        className="relative z-20 text-white flex flex-col items-start justify-between w-full h-screen px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
@@ -84,7 +84,7 @@ export default function Hero() {
         </div>
 
         {/* Bottom: Button then Tagline */}
-        <div className="text-left -mb-4 sm:-mb-6 mt-auto sm:mt-0">
+        <div className="text-left w-full">
           <Button
             asChild
             className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-3"
@@ -94,7 +94,7 @@ export default function Hero() {
             </Link>
           </Button>
 
-          <p className="text-2xl sm:text-xl font-inter drop-shadow-lg font-medium">
+          <p className="text-xl sm:text-xl font-inter drop-shadow-lg font-medium">
             Basketball excellence that extends beyond the game
           </p>
         </div>
