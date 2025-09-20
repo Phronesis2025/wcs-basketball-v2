@@ -48,11 +48,11 @@ export default function Hero() {
       </div>
 
       <motion.div
-        className="relative z-20 text-white flex flex-col items-start justify-between w-full h-screen px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16"
+        className="relative z-20 text-white flex flex-col items-start justify-start w-full h-screen px-4 sm:px-6 md:px-8 py-8 sm:py-12 md:py-16 sm:justify-between"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        style={{ zIndex: 20, minHeight: '100vh' }}
+        style={{ zIndex: 20, minHeight: "100vh" }}
       >
         {/* Top: Headline */}
         <div className="text-left pt-8 sm:pt-0">
@@ -70,13 +70,13 @@ export default function Hero() {
         </div>
 
         {/* Basketball Flames Video - Mobile Only */}
-        <div className="sm:hidden flex justify-center mb-6 pl-4">
+        <div className="sm:hidden flex justify-center mb-4 pl-4">
           <Image
             src="/video/basketball-flames.gif"
             alt="Basketball flames animation"
-            width={368}
-            height={368}
-            className="w-92 h-92 object-contain"
+            width={280}
+            height={280}
+            className="w-70 h-70 object-contain"
             style={{ width: "auto", height: "auto" }}
             priority
             unoptimized
@@ -84,7 +84,7 @@ export default function Hero() {
         </div>
 
         {/* Bottom: Button then Tagline */}
-        <div className="text-left w-full pb-4 sm:pb-0">
+        <div className="text-left w-full pb-4 sm:pb-0 mt-auto sm:mt-0">
           <Button
             asChild
             className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-lg sm:text-lg px-8 sm:px-8 py-4 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-3 block w-full sm:w-auto"
