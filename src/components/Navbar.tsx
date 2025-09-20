@@ -71,11 +71,11 @@ export default function Navbar() {
         animate={{ y: isVisible ? 0 : -100 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-1">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 py-1">
           <div className="flex items-center justify-between h-12">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <div
-                className={`p-1 rounded-md transition-all duration-300 ease-out w-16 h-8 relative ${
+                className={`p-1 rounded-md transition-all duration-300 ease-out w-14 h-7 sm:w-16 sm:h-8 relative ${
                   isScrolled ? "bg-transparent" : "bg-navy/10 backdrop-blur-sm"
                 }`}
               >
@@ -83,13 +83,13 @@ export default function Navbar() {
                   src="/logo4.png"
                   alt="WCS Basketball Logo"
                   fill
-                  sizes="64px"
+                  sizes="(max-width: 640px) 56px, 64px"
                   className="object-contain"
                   priority
                 />
               </div>
               <span
-                className={`md:hidden font-bebas text-lg transition-colors duration-300 ease-out ${
+                className={`md:hidden font-bebas text-base sm:text-lg transition-colors duration-300 ease-out ${
                   isScrolled ? "text-navy" : "text-white drop-shadow-lg"
                 }`}
               >
@@ -174,12 +174,12 @@ export default function Navbar() {
         }`}
       >
         <div className="bg-white shadow-lg">
-          <div className="p-4 space-y-2">
+          <div className="px-4 py-3 space-y-1">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-3 py-2 transition-all duration-200"
+                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.name}
@@ -191,14 +191,14 @@ export default function Navbar() {
                   handleSignOut();
                   setIsMobileMenuOpen(false);
                 }}
-                className="w-full text-left text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-3 py-2 transition-all duration-200"
+                className="w-full text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
               >
                 Sign Out
               </button>
             ) : (
               <Link
                 href="/register"
-                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-3 py-2 transition-all duration-200"
+                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Register

@@ -9,7 +9,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 export const metadata: Metadata = {
   title: "WCS Basketball - Where Champions Start",
   description:
-    "Westside Christian School Basketball - Developing champions on and off the court",
+    "World Class Sports Basketball - Developing champions on and off the court",
   keywords: "basketball, youth sports, Christian school, athletics, WCS",
   authors: [{ name: "WCS Basketball" }],
   robots: "index, follow",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "WCS Basketball - Where Champions Start",
     description:
-      "Westside Christian School Basketball - Developing champions on and off the court",
+      "World Class Sports Basketball - Developing champions on and off the court",
     type: "website",
     locale: "en_US",
   },
