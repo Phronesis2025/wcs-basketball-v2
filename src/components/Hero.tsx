@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function Hero() {
@@ -85,14 +84,13 @@ export default function Hero() {
 
         {/* Bottom: Button then Tagline */}
         <div className="text-left w-full pb-4 sm:pb-0 mt-auto sm:mt-0">
-          <Button
-            asChild
-            className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-lg sm:text-lg px-8 sm:px-8 py-4 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-3 block w-full sm:w-auto"
+          <Link
+            href="/register"
+            role="button"
+            className="block w-full sm:w-auto no-underline bg-red text-white font-bebas font-bold rounded-lg uppercase shadow-2xl hover:shadow-red-500/25 transition-all duration-300 hover:bg-red-700 hover:scale-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 inline-flex items-center justify-center px-8 sm:px-8 py-4 sm:py-4 text-lg"
           >
-            <Link href="/register" className="no-underline">
-              Join Now
-            </Link>
-          </Button>
+            Join Now
+          </Link>
 
           <p className="text-lg sm:text-xl font-inter drop-shadow-lg font-medium">
             Basketball excellence that extends beyond the game
