@@ -73,7 +73,10 @@ export default function Navbar() {
       >
         <div className="max-w-7xl mx-auto px-2 sm:px-6 py-1">
           <div className="flex items-center justify-between h-12">
-            <div className="flex items-center gap-1 sm:gap-2">
+            <Link
+              href="/"
+              className="flex items-center gap-1 sm:gap-2 hover:opacity-80 transition-opacity duration-300"
+            >
               <div
                 className={`p-1 rounded-md transition-all duration-300 ease-out w-14 h-7 sm:w-16 sm:h-8 relative ${
                   isScrolled ? "bg-transparent" : "bg-navy/10 backdrop-blur-sm"
@@ -102,7 +105,7 @@ export default function Navbar() {
               >
                 WCS BASKETBALL
               </span>
-            </div>
+            </Link>
             <div className="hidden md:flex items-center gap-6">
               {navLinks.map((link) => (
                 <Link

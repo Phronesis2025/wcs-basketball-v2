@@ -16,13 +16,6 @@ export default function Footer() {
     { name: "News", href: "/news" },
   ];
 
-  const legalLinks = [
-    { name: "Privacy Policy", href: "/privacy" },
-    { name: "Terms of Service", href: "/terms" },
-    { name: "Code of Conduct", href: "/code-of-conduct" },
-    { name: "Refund Policy", href: "/refund-policy" },
-  ];
-
   const socialLinks = [
     {
       name: "Facebook",
@@ -55,76 +48,112 @@ export default function Footer() {
   return (
     <footer className="bg-navy text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-1">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-6 relative">
-                <Image
-                  src="/logo4.png"
-                  alt="WCS Basketball Logo"
-                  fill
-                  sizes="48px"
-                  className="object-contain"
-                />
-              </div>
-              <span className="font-bebas text-xl">WCS BASKETBALL</span>
-            </div>
-            <p className="text-gray-300 text-sm font-inter mb-4">
-              Developing world-class basketball players through fundamentals,
-              discipline, and character building. Join our community of
-              champions.
-            </p>
-            <div className="space-y-2">
-              <p className="text-sm font-inter">
-                <span className="font-semibold">Email:</span>{" "}
-                {contactInfo.email}
-              </p>
-              <p className="text-sm font-inter">
-                <span className="font-semibold">Phone:</span>{" "}
-                {contactInfo.phone}
-              </p>
-              <p className="text-sm font-inter">
-                <span className="font-semibold">Address:</span>{" "}
-                {contactInfo.address}
-              </p>
+        {/* Mobile Layout */}
+        <div className="md:hidden space-y-8">
+          {/* Logo - Centered at top */}
+          <div className="flex justify-center">
+            <div className="w-48 h-24 relative">
+              <Image
+                src="/logo.png"
+                alt="WCS Basketball Logo"
+                fill
+                sizes="192px"
+                className="object-contain"
+              />
             </div>
           </div>
 
-          <div>
-            <h3 className="font-bebas text-lg mb-4">Quick Links</h3>
-            <ul className="space-y-2">
+          {/* Quick Links - Centered */}
+          <div className="text-center">
+            <h3 className="font-bebas text-lg mb-4 text-white">QUICK LINKS</h3>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2 max-w-xs mx-auto justify-items-center">
               {navLinks.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-inter"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-inter"
+                >
+                  {link.name}
+                </Link>
               ))}
-            </ul>
+            </div>
           </div>
 
-          <div>
-            <h3 className="font-bebas text-lg mb-4">Legal</h3>
-            <ul className="space-y-2">
-              {legalLinks.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-gray-300 hover:text-white transition-colors duration-200 text-sm font-inter"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+          {/* Stay Updated Text and Button - Centered */}
+          <div className="text-center">
+            <p className="text-white font-inter text-sm mb-4">
+              Stay updated with the latest WCS news and events.
+            </p>
+            <Link
+              href="/register"
+              className="inline-block bg-red text-white px-6 py-3 rounded hover:bg-red/90 transition-colors duration-200 text-sm font-medium"
+            >
+              Join Our Community
+            </Link>
           </div>
 
+          {/* Follow Us - Centered */}
+          <div className="text-center">
+            <h3 className="font-bebas text-lg mb-4 text-white">FOLLOW US</h3>
+            <div className="flex justify-center space-x-4">
+              {socialLinks.map((social) => (
+                <a
+                  key={social.name}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-300 hover:text-white transition-colors duration-200"
+                  aria-label={`Follow us on ${social.name}`}
+                >
+                  <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors duration-200">
+                    <span className="text-sm font-bold">
+                      {social.icon === "facebook" && "f"}
+                      {social.icon === "instagram" && "ig"}
+                      {social.icon === "twitter" && "t"}
+                      {social.icon === "youtube" && "yt"}
+                    </span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Layout */}
+        <div className="hidden md:grid grid-cols-3 gap-8 items-center">
+          {/* Quick Links - Left */}
           <div>
-            <h3 className="font-bebas text-lg mb-4">Follow Us</h3>
-            <div className="flex space-x-4 mb-4">
+            <h3 className="font-bebas text-lg mb-4 text-white">QUICK LINKS</h3>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-inter"
+                >
+                  {link.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Logo - Center */}
+          <div className="flex justify-center">
+            <div className="w-40 h-20 relative">
+              <Image
+                src="/logo.png"
+                alt="WCS Basketball Logo"
+                fill
+                sizes="160px"
+                className="object-contain"
+              />
+            </div>
+          </div>
+
+          {/* Follow Us - Right */}
+          <div className="text-right">
+            <h3 className="font-bebas text-lg mb-4 text-white">FOLLOW US</h3>
+            <div className="flex justify-end space-x-3 mb-4">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
@@ -145,10 +174,12 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-            <div className="text-sm text-gray-300 font-inter">
+            <div className="text-sm text-white font-inter mb-4">
               <p className="mb-2">
-                Stay updated with our latest news and events!
+                Stay updated with the latest WCS news and events.
               </p>
+            </div>
+            <div className="flex justify-end">
               <Link
                 href="/register"
                 className="inline-block bg-red text-white px-4 py-2 rounded hover:bg-red/90 transition-colors duration-200 text-sm font-medium"

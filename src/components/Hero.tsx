@@ -33,7 +33,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80 sm:from-black/80 sm:via-black/65 sm:to-black/90" />
 
       {/* Basketball Flames Video - Desktop Only */}
-      <div className="hidden sm:block absolute right-40 top-1/2 transform -translate-y-1/2 z-10">
+      <div className="hidden sm:block absolute right-4 sm:right-60 lg:right-80 xl:right-96 top-1/2 transform -translate-y-1/2 translate-x-1/2 z-10">
         <Image
           src="/video/basketball-flames.gif"
           alt="Basketball flames animation"
