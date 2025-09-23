@@ -1,6 +1,32 @@
 # WCSv2.0 Changelog
 
-## v2.3.1 - January 2025 (Current)
+## v2.3.2 - January 2025 (Current)
+
+### 🔧 Bug Fixes & Improvements
+
+- **Favicon Conflict Resolution**: Fixed favicon.ico 500 error by removing duplicate file
+  - Removed conflicting favicon.ico from `src/app/` directory
+  - Kept favicon.ico in `public/` directory for proper Next.js App Router handling
+  - Resolved "conflicting public file and page file" error
+- **Footer Design Overhaul**: Complete mobile and desktop footer redesign
+  - Mobile layout: Logo → Quick Links → Stay Updated → Follow Us
+  - Desktop layout: 3-column horizontal layout with proper alignment
+  - Centered quick links in two columns under title
+  - Removed legal links for cleaner appearance
+  - Added proper responsive design and visual hierarchy
+- **Navigation Enhancement**: Made navbar logo and text clickable
+  - Added Link wrapper around logo and "WCS BASKETBALL" text
+  - Implemented hover effects with opacity transition
+  - Improved user experience with clear navigation cues
+- **Hero Component Fix**: Corrected flaming basketball positioning
+  - Fixed desktop positioning to move basketball further left
+  - Maintained mobile landscape positioning
+  - Improved responsive design consistency
+- **Build Optimization**: Resolved TypeScript compilation errors and ESLint warnings
+- **Security Headers**: Updated CSP to allow Vercel Analytics scripts
+- **Database Timeouts**: Added timeout protection to prevent hanging requests
+
+## v2.3.1 - January 2025
 
 ### 🔧 Bug Fixes & Improvements
 
@@ -9,9 +35,6 @@
   - Moved PNG icons to public directory for proper static serving
   - Added comprehensive favicon metadata with proper MIME types and sizes
   - Fixed console security by replacing production console.warn with devError
-- **Build Optimization**: Resolved TypeScript compilation errors and ESLint warnings
-- **Security Headers**: Updated CSP to allow Vercel Analytics scripts
-- **Database Timeouts**: Added timeout protection to prevent hanging requests
 
 ### 🎉 Major Features
 

@@ -30,6 +30,8 @@
   - Logo display with fallback
   - Authentication state management
   - Smooth mobile menu transitions
+  - **Clickable logo and text** - Logo and "WCS BASKETBALL" text are now clickable links to home page
+  - **Hover effects** - Opacity transition on hover for better user feedback
 - **Styling**: Navy background, white text, Bebas font
 - **Props**: None (self-contained)
 
@@ -42,6 +44,8 @@
   - Call-to-action button with enhanced styling
   - Dark gradient overlay for text readability
   - Mobile-first responsive design
+  - **Flaming basketball positioning** - Fixed desktop positioning to move basketball further left
+  - **Responsive basketball** - Maintains proper positioning on mobile landscape view
 - **Styling**: Full-width, full-height (h-screen), left-aligned text
 - **Images**: Basketball action shots from `/public/images/`
 - **Mobile**: Optimized text sizing and positioning for mobile devices
@@ -126,7 +130,21 @@
 - **Styling**: Navy background with opacity, smaller logos, enhanced spacing
 - **Content**: Team logos from `/public/logos/`
 
-### 11. ScrollToTop Component
+### 11. Footer Component
+- **Location**: `src/components/Footer.tsx`
+- **Features**:
+  - **Complete redesign** - Mobile and desktop layouts completely overhauled
+  - **Mobile layout**: Logo → Quick Links → Stay Updated → Follow Us
+  - **Desktop layout**: 3-column horizontal layout with proper alignment
+  - **Centered quick links** - Two columns centered under "QUICK LINKS" title
+  - **Clean design** - Removed legal links for cleaner appearance
+  - **Responsive design** - Proper mobile and desktop layouts
+  - **Social media icons** - Circular icons with hover effects
+  - **Join Our Community button** - Call-to-action with proper styling
+- **Styling**: Navy background, white text, centered mobile layout
+- **Content**: Navigation links, social media, contact information
+
+### 12. ScrollToTop Component
 - **Location**: `src/components/ScrollToTop.tsx`
 - **Features**:
   - Enhanced automatic scroll to top functionality
