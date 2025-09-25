@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 
 /**
  * Team data interface representing a basketball team
@@ -12,9 +13,10 @@ interface Team {
   age_group: string;
   gender: string;
   grade_level: string;
-  logo_url: string;
+  logo_url: string | null;
+  season: string;
   coach_names: string[];
-  video_url: string;
+  video_url: string | null;
 }
 
 /**
@@ -122,9 +124,12 @@ export default function TeamCard({
         <p className="text-gray-600 font-inter text-sm mb-4">
           Coach: {team.coach_names.join(", ") || "TBD"}
         </p>
-        <div className="bg-red text-white font-medium font-inter rounded-md text-sm px-5 py-2.5 uppercase w-full text-center">
-          {team.name}
-        </div>
+        <Link
+          href={`/teams/${team.id}`}
+          className="block bg-red text-white font-medium font-inter rounded-md text-sm px-5 py-2.5 uppercase w-full text-center hover:bg-red/90 transition-colors duration-200"
+        >
+          View Team Details
+        </Link>
       </div>
     </motion.div>
   );

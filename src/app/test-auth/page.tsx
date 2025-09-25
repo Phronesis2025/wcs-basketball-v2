@@ -26,13 +26,22 @@ export default function TestAuth() {
       if (user) {
         const { data, error } = await supabase
           .from("teams")
-          .select("name, age_group, gender")
+          .select(
+            "id, name, age_group, gender, grade_level, logo_url, season, coach_names, video_url, team_image"
+          )
           .eq("coach_email", user.email);
         if (error) {
           Sentry.captureException(error);
           devError("Error fetching teams:", error);
         }
-        setTeams(data || []);
+        setTeams(
+          (data || []).map((team) => ({
+            ...team,
+            coach_names: team.coach_names || [],
+            video_url: team.video_url || null,
+            team_image: team.team_image || null,
+          }))
+        );
       }
     };
     fetchUser();

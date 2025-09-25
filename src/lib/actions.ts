@@ -1,150 +1,157 @@
+// src/lib/actions.ts
 import { supabase } from "@/lib/supabaseClient";
-import * as Sentry from "@sentry/nextjs";
-import { devError } from "@/lib/security";
+import {
+  Team,
+  Coach,
+  Schedule,
+  PracticeDrill,
+  TeamUpdate,
+} from "@/types/supabase";
 
-// Type for the team data from Supabase
-interface TeamData {
-  id: string;
-  name: string;
-  age_group: string;
-  gender: string;
-  grade_level: string;
-  logo_url: string | null;
-  coaches_emails: string | null;
+export async function fetchTeams(): Promise<Team[]> {
+  const { data, error } = await supabase
+    .from("teams")
+    .select("*")
+    .order("name", { ascending: true });
+  if (error) throw new Error(error.message);
+
+  // Transform data to include required fields
+  return (data || []).map((team) => ({
+    ...team,
+    coach_names: team.coach_names || [],
+    video_url: team.video_url || null,
+  }));
 }
 
-/**
- * Fetches teams data from Supabase database
- * Includes coach information lookup and fallback team data
- *
- * @returns Promise containing teams data and error state
- */
-export async function fetchTeams() {
-  try {
-    // Add timeout to prevent hanging
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Database timeout")), 5000)
-    );
+export async function fetchTeamById(id: string): Promise<Team | null> {
+  const { data, error } = await supabase
+    .from("teams")
+    .select("*, team_image") // Updated to include team_image
+    .eq("id", id)
+    .single();
+  if (error) throw new Error(error.message);
 
-    // Fetch teams from database for current season
-    const teamsPromise = supabase
-      .from("teams")
-      .select(
-        "id, name, age_group, gender, grade_level, logo_url, coaches_emails"
-      )
-      .eq("season", "2025-2026")
-      .order("name");
+  if (!data) return null;
 
-    const { data, error } = (await Promise.race([
-      teamsPromise,
-      timeoutPromise,
-    ])) as { data: TeamData[] | null; error: Error | null };
+  // Transform data to include required fields
+  return {
+    ...data,
+    coach_names: data.coach_names || [],
+    video_url: data.video_url || null,
+  };
+}
 
-    if (error) throw error;
+export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
+  const { data, error } = await supabase
+    .from("team_coaches")
+    .select("coaches(id, first_name, last_name, email, bio, image_url, quote)")
+    .eq("team_id", teamId);
+  if (error) throw new Error(error.message);
+  return data?.map((item: any) => item.coaches) || [];
+}
 
-    // Handle case where data is null
-    if (!data) {
-      return { data: [], error: "No teams data available" };
-    }
+export async function fetchSchedulesByTeamId(
+  teamId: string
+): Promise<Schedule[]> {
+  const { data, error } = await supabase
+    .from("schedules")
+    .select("*")
+    .eq("team_id", teamId)
+    .order("date_time", { ascending: true });
+  if (error) throw new Error(error.message);
+  return data || [];
+}
 
-    // Process each team to include coach information
-    const teamsWithCoaches = await Promise.all(
-      data.map(async (team: TeamData) => {
-        // Handle TBD teams with default values
-        if (team.name.includes("TBD")) {
-          return {
-            ...team,
-            coach_names: ["TBD"],
-            logo_url: "/logos/logo2.png",
-            video_url:
-              team.gender === "Boys"
-                ? "/video/boys-team.mp4"
-                : "/video/girls-team.mp4",
-          };
-        }
+export async function fetchPracticeDrills(
+  teamId?: string
+): Promise<PracticeDrill[]> {
+  let query = supabase.from("practice_drills").select("*");
+  if (teamId) query = query.eq("team_id", teamId);
+  const { data, error } = await query.order("created_at", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data || [];
+}
 
-        // Look up coach names for teams with coach emails
-        if (team.coaches_emails && team.coaches_emails.length > 0) {
-          // Parse coaches_emails string as array
-          const emails = team.coaches_emails
-            .split(",")
-            .map((email) => email.trim());
-          const coachNames = await Promise.all(
-            emails.map(async (email: string) => {
-              const { data: userData, error: userError } = await supabase
-                .from("users")
-                .select("first_name, last_name")
-                .eq("email", email)
-                .single();
+export async function fetchTeamUpdates(teamId: string): Promise<TeamUpdate[]> {
+  const { data, error } = await supabase
+    .from("team_updates")
+    .select("*")
+    .eq("team_id", teamId)
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if (error) throw new Error(error.message);
+  return data || [];
+}
 
-              if (userError) {
-                Sentry.captureException(userError);
-                return "TBD";
-              }
+export async function addSchedule(
+  data: {
+    event_type: string;
+    date_time: string;
+    location: string;
+    team_id: string;
+  },
+  userId: string
+): Promise<Schedule> {
+  const { data: result, error } = await supabase
+    .from("schedules")
+    .insert({ ...data, created_by: userId })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return result;
+}
 
-              return userData
-                ? `${userData.first_name} ${userData.last_name}`
-                : "TBD";
-            })
-          );
-
-          return {
-            ...team,
-            coach_names:
-              coachNames.filter((name) => name !== "TBD").length > 0
-                ? coachNames
-                : ["TBD"],
-            logo_url: team.logo_url || "/logos/logo2.png",
-            video_url:
-              team.gender === "Boys"
-                ? "/video/boys-team.mp4"
-                : "/video/girls-team.mp4",
-          };
-        }
-
-        // Default team configuration
-        return {
-          ...team,
-          coach_names: ["TBD"],
-          logo_url: team.logo_url || "/logos/logo2.png",
-          video_url:
-            team.gender === "Boys"
-              ? "/video/boys-team.mp4"
-              : "/video/girls-team.mp4",
-        };
-      })
-    );
-
-    // Add fallback teams for missing grades
-    const allTeams = [
-      ...teamsWithCoaches,
-      {
-        id: "tbd-boys-3rd",
-        name: "3rd Grade Boys TBD",
-        age_group: "U8",
-        gender: "Boys",
-        grade_level: "3rd",
-        logo_url: "/logos/logo2.png",
-        coach_names: ["TBD"],
-        video_url: "/video/boys-team.mp4",
-      },
-      {
-        id: "tbd-girls-3rd",
-        name: "3rd Grade Girls TBD",
-        age_group: "U8",
-        gender: "Girls",
-        grade_level: "3rd",
-        logo_url: "/logos/logo2.png",
-        coach_names: ["TBD"],
-        video_url: "/video/girls-team.mp4",
-      },
-    ];
-
-    return { data: allTeams, error: null };
-  } catch (error) {
-    // Log error and return safe fallback
-    Sentry.captureException(error);
-    devError("Failed to fetch teams:", error);
-    return { data: [], error: "Failed to load teams. Please try again later." };
+export async function addDrill(
+  data: Omit<
+    PracticeDrill,
+    "id" | "created_at" | "created_by" | "image_url"
+  > & { image?: File },
+  userId: string
+): Promise<PracticeDrill> {
+  let imagePath: string | undefined;
+  if (data.image) {
+    const fileName = `${Date.now()}-${data.image.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from("drills")
+      .upload(fileName, data.image);
+    if (uploadError) throw new Error(uploadError.message);
+    const { data: urlData } = supabase.storage
+      .from("drills")
+      .getPublicUrl(fileName);
+    imagePath = urlData.publicUrl;
   }
+  const { data: result, error } = await supabase
+    .from("practice_drills")
+    .insert({ ...data, created_by: userId, image_url: imagePath })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return result;
+}
+
+export async function addUpdate(
+  data: Omit<TeamUpdate, "id" | "created_at" | "created_by" | "image_url"> & {
+    image?: File;
+  },
+  userId: string
+): Promise<TeamUpdate> {
+  let imagePath: string | undefined;
+  if (data.image) {
+    const fileName = `${Date.now()}-${data.image.name}`;
+    const { error: uploadError } = await supabase.storage
+      .from("updates")
+      .upload(fileName, data.image);
+    if (uploadError) throw new Error(uploadError.message);
+    const { data: urlData } = supabase.storage
+      .from("updates")
+      .getPublicUrl(fileName);
+    imagePath = urlData.publicUrl;
+  }
+  const { data: result, error } = await supabase
+    .from("team_updates")
+    .insert({ ...data, created_by: userId, image_url: imagePath })
+    .select()
+    .single();
+  if (error) throw new Error(error.message);
+  return result;
 }

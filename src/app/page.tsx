@@ -5,7 +5,12 @@ import Shop from "@/components/Shop";
 import { fetchTeams } from "@/lib/actions";
 
 export default async function Home() {
-  const { error: teamsError } = await fetchTeams();
+  let teamsError: string | null = null;
+  try {
+    await fetchTeams();
+  } catch (error) {
+    teamsError = error instanceof Error ? error.message : "Unknown error";
+  }
   // Temporarily disable coaches fetching due to database schema issue
   const coachesError = null;
 

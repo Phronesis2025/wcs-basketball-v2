@@ -16,9 +16,10 @@ interface Team {
   age_group: string;
   gender: string;
   grade_level: string;
-  logo_url: string;
+  logo_url: string | null;
+  season: string;
   coach_names: string[];
-  video_url: string;
+  video_url: string | null;
 }
 
 /**
