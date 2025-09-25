@@ -8,8 +8,14 @@ interface DialogProps {
   className?: string;
 }
 
+interface DialogTriggerProps {
+  children: ReactNode;
+  className?: string;
+  onClick?: () => void;
+}
+
 interface DialogComponent extends React.FC<DialogProps> {
-  Trigger: React.FC<{ children: ReactNode; className?: string }>;
+  Trigger: React.FC<DialogTriggerProps>;
   Content: React.FC<{ children: ReactNode; className?: string }>;
   Header: React.FC<{ children: ReactNode }>;
   Title: React.FC<{ children: ReactNode }>;
@@ -22,12 +28,15 @@ const Dialog: DialogComponent = ({ children, className }) => {
     <div className={className}>
       {React.Children.map(children, (child) =>
         React.isValidElement(child) && child.type === Dialog.Trigger
-          ? React.cloneElement(child as React.ReactElement<any>, {
-              onClick: () => setIsOpen(true),
-              className: `bg-red text-white font-bebas rounded p-2 hover:bg-red/80 focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-2 ${
-                (child.props as any).className || ""
-              }`,
-            })
+          ? React.cloneElement(
+              child as React.ReactElement<DialogTriggerProps>,
+              {
+                onClick: () => setIsOpen(true),
+                className: `bg-red text-white font-bebas rounded p-2 hover:bg-red/80 focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-2 ${
+                  (child.props as DialogTriggerProps).className || ""
+                }`,
+              }
+            )
           : null
       )}
       {isOpen && (
@@ -67,21 +76,40 @@ const Dialog: DialogComponent = ({ children, className }) => {
   );
 };
 
-Dialog.Trigger = ({ children, className }) => (
-  <button className={className} aria-label="Open dialog">
+const DialogTrigger: React.FC<DialogTriggerProps> = ({
+  children,
+  className,
+  onClick,
+}) => (
+  <button className={className} onClick={onClick} aria-label="Open dialog">
     {children}
   </button>
 );
+DialogTrigger.displayName = "DialogTrigger";
 
-Dialog.Content = ({ children, className }) => (
-  <div className={`space-y-4 ${className}`}>{children}</div>
+Dialog.Trigger = DialogTrigger;
+
+const DialogContent: React.FC<{ children: ReactNode; className?: string }> = ({
+  children,
+  className,
+}) => <div className={`space-y-4 ${className}`}>{children}</div>;
+DialogContent.displayName = "DialogContent";
+
+Dialog.Content = DialogContent;
+
+const DialogHeader: React.FC<{ children: ReactNode }> = ({ children }) => (
+  <div className="mb-4">{children}</div>
 );
+DialogHeader.displayName = "DialogHeader";
 
-Dialog.Header = ({ children }) => <div className="mb-4">{children}</div>;
+Dialog.Header = DialogHeader;
 
-Dialog.Title = ({ children }) => (
+const DialogTitle: React.FC<{ children: ReactNode }> = ({ children }) => (
   <h2 className="text-2xl font-bebas text-white">{children}</h2>
 );
+DialogTitle.displayName = "DialogTitle";
+
+Dialog.Title = DialogTitle;
 
 Dialog.displayName = "Dialog";
 export default Dialog;

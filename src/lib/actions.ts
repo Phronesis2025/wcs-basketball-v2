@@ -47,7 +47,7 @@ export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
     .select("coaches(id, first_name, last_name, email, bio, image_url, quote)")
     .eq("team_id", teamId);
   if (error) throw new Error(error.message);
-  return data?.map((item: any) => item.coaches) || [];
+  return data?.map((item: { coaches: Coach[] }) => item.coaches).flat() || [];
 }
 
 export async function fetchSchedulesByTeamId(

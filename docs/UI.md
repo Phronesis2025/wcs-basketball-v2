@@ -3,6 +3,7 @@
 ## 🎨 Design System
 
 ### Color Palette
+
 - **Primary Navy**: `#1C2526` - Main background and text
 - **Accent Red**: `#D91E18` - CTAs, highlights, and interactive elements
 - **White**: `#FFFFFF` - Cards, contrast text
@@ -11,11 +12,13 @@
 - **Gray Scale**: Various shades for text hierarchy and borders
 
 ### Typography
+
 - **Headings**: Bebas Neue (local TTF) - Bold, uppercase styling
 - **Body Text**: Inter (local TTF) - Clean, readable font
 - **Font Weights**: 400 (regular), 600 (semibold), 700 (bold)
 
 ### Spacing & Layout
+
 - **Container**: Max-width 7xl (1280px) with responsive padding
 - **Grid System**: CSS Grid and Flexbox with Tailwind utilities
 - **Mobile-First**: Responsive breakpoints (sm, md, lg, xl)
@@ -24,8 +27,9 @@
 ## 🧩 Implemented Components
 
 ### 1. Navbar Component
+
 - **Location**: `src/components/Navbar.tsx`
-- **Features**: 
+- **Features**:
   - Responsive navigation with mobile hamburger menu
   - Logo display with fallback
   - Authentication state management
@@ -36,6 +40,7 @@
 - **Props**: None (self-contained)
 
 ### 2. Hero Section
+
 - **Location**: `src/components/Hero.tsx`
 - **Features**:
   - Enhanced responsive design with mobile-optimized text sizing
@@ -51,6 +56,7 @@
 - **Mobile**: Optimized text sizing and positioning for mobile devices
 
 ### 3. Values Section
+
 - **Location**: `src/components/ValuesSection.tsx`
 - **Features**:
   - Interactive 3-card carousel with navigation
@@ -61,6 +67,7 @@
 - **Values**: 7 core values with images and descriptions
 
 ### 4. News Carousel
+
 - **Location**: `src/components/NewsCarousel.tsx`
 - **Features**:
   - Swiper.js-powered carousel
@@ -71,6 +78,7 @@
 - **Content**: 3 news items with images and descriptions
 
 ### 5. Team Previews
+
 - **Location**: `src/app/page.tsx` (inline)
 - **Features**:
   - Dynamic team cards with logos
@@ -81,6 +89,7 @@
 - **Data**: 3 teams with logos from `/public/logos/`
 
 ### 6. Coaches Corner
+
 - **Location**: `src/app/page.tsx` (inline)
 - **Features**:
   - Staff profile cards
@@ -90,7 +99,25 @@
 - **Styling**: Gray background, white cards
 - **Content**: 3 coaches with initials and descriptions
 
+### 7. Dialog Component (UI Library)
+
+- **Location**: `src/components/ui/dialog.tsx`
+- **Features**:
+  - **TypeScript Type Safety**: Complete type safety with proper interfaces
+  - **DialogTriggerProps Interface**: Proper typing for trigger component with onClick support
+  - **Display Names**: All sub-components have proper display names for debugging
+  - **React.cloneElement Fix**: Properly typed cloneElement calls for better type safety
+  - **Component Composition**: Modular design with Trigger, Content, Header, and Title components
+  - **Accessibility**: ARIA labels and keyboard navigation support
+- **Styling**: Navy background with red accents, rounded corners, overlay backdrop
+- **Props**:
+  - `DialogTriggerProps`: `{ children: ReactNode; className?: string; onClick?: () => void }`
+  - `DialogContentProps`: `{ children: ReactNode; className?: string }`
+  - `DialogHeaderProps`: `{ children: ReactNode }`
+  - `DialogTitleProps`: `{ children: ReactNode }`
+
 ### 7. Shop Section
+
 - **Location**: `src/app/page.tsx` (inline)
 - **Features**:
   - Product preview cards
@@ -101,6 +128,7 @@
 - **Products**: Jersey, Basketball, Team Hat
 
 ### 8. Fan Zone Component
+
 - **Location**: `src/components/FanZone.tsx`
 - **Features**:
   - Interactive video cards with hover effects
@@ -111,6 +139,7 @@
 - **Content**: 4 fan zone cards with videos and descriptions
 
 ### 9. Shop Component
+
 - **Location**: `src/components/Shop.tsx`
 - **Features**:
   - Product preview cards with pricing
@@ -121,6 +150,7 @@
 - **Products**: Jersey, Basketball, Team Hat with pricing
 
 ### 10. Logo Marquee Component
+
 - **Location**: `src/components/LogoMarquee.tsx`
 - **Features**:
   - Animated team logos with enhanced spacing
@@ -131,6 +161,7 @@
 - **Content**: Team logos from `/public/logos/`
 
 ### 11. Footer Component
+
 - **Location**: `src/components/Footer.tsx`
 - **Features**:
   - **Complete redesign** - Mobile and desktop layouts completely overhauled
@@ -145,6 +176,7 @@
 - **Content**: Navigation links, social media, contact information
 
 ### 12. ScrollToTop Component
+
 - **Location**: `src/components/ScrollToTop.tsx`
 - **Features**:
   - Enhanced automatic scroll to top functionality
@@ -155,6 +187,7 @@
 ## 🎭 Animations & Interactions
 
 ### Framer Motion Animations
+
 - **Hero Text**: Fade in with staggered delays
 - **Values Cards**: Directional slide animations
 - **Team Cards**: Hover scale effects
@@ -162,12 +195,14 @@
 - **Page Transitions**: Smooth fade effects
 
 ### Hover Effects
+
 - **Cards**: Scale (1.02x) and shadow changes
 - **Buttons**: Opacity and color transitions
 - **Images**: Scale effects on hover
 - **Navigation**: Color and background changes
 
 ### Responsive Behavior
+
 - **Mobile**: Single column layouts, touch-friendly buttons
 - **Tablet**: 2-column grids, medium spacing
 - **Desktop**: 3-column grids, full spacing
@@ -176,6 +211,7 @@
 ## 📱 Mobile Optimization
 
 ### Enhanced Mobile Experience
+
 - **Hero Section**: Mobile-optimized text sizing and positioning
 - **Split Text Layout**: "More Than Basketball" split into two lines on mobile
 - **Responsive Margins**: Enhanced mobile margins for Fan Zone and Shop sections
@@ -184,12 +220,14 @@
 - **Gesture Support**: Native swipe gestures for carousels
 
 ### Mobile-Specific Features
+
 - **Text Sizing**: Optimized font sizes for mobile readability
 - **Layout Adjustments**: Mobile-first responsive design
 - **Margin Consistency**: Uniform mobile margins across all sections
 - **Background Colors**: Enhanced contrast with black Fan Zone and navy Shop
 
 ### Performance
+
 - **Image Optimization**: Next.js Image component with proper sizing
 - **Lazy Loading**: Intersection Observer for animations
 - **Bundle Size**: Optimized with code splitting (163 kB First Load JS)
@@ -198,16 +236,19 @@
 ## 🎯 Accessibility Features
 
 ### ARIA Labels
+
 - **Navigation**: Proper ARIA labels for screen readers
 - **Buttons**: Descriptive labels for all interactive elements
 - **Modals**: Proper dialog roles and focus management
 
 ### Keyboard Navigation
+
 - **Tab Order**: Logical tab sequence through all elements
 - **Focus States**: Visible focus indicators
 - **Modal Trapping**: Focus management in modals
 
 ### Screen Reader Support
+
 - **Alt Text**: Descriptive alt text for all images
 - **Semantic HTML**: Proper heading hierarchy and landmarks
 - **Form Labels**: Associated labels for all form inputs
@@ -215,17 +256,20 @@
 ## 🔧 Technical Implementation
 
 ### State Management
+
 - **React Hooks**: useState, useEffect for component state
 - **Context**: No global state management (component-level state)
 - **Props**: Minimal prop drilling, self-contained components
 
 ### Styling Approach
+
 - **Tailwind CSS**: Utility-first styling
 - **Custom Classes**: Minimal custom CSS
 - **Responsive**: Mobile-first breakpoint system
 - **Dark Mode**: Not implemented (future consideration)
 
 ### Performance Optimizations
+
 - **Image Loading**: Next.js Image with priority loading
 - **Code Splitting**: Automatic with Next.js
 - **Bundle Analysis**: Regular bundle size monitoring

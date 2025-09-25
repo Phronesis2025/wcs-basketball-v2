@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { supabase } from "@/lib/supabaseClient";
+import { devError } from "@/lib/security";
 
 type TeamPageProps = { params: Promise<{ id: string }> };
 
@@ -190,7 +191,7 @@ export default function TeamPage({ params }: TeamPageProps) {
               className="rounded-full object-cover"
               priority
               onError={(e) => {
-                console.error(
+                devError(
                   `Image load error for ${team.name} logo: ${team.logo_url}`
                 );
                 Sentry.captureMessage(
@@ -221,7 +222,7 @@ export default function TeamPage({ params }: TeamPageProps) {
             className="w-full h-64 object-cover rounded-lg lg:h-80"
             priority
             onError={(e) => {
-              console.error(
+              devError(
                 `Image load error for ${team.name} photo: ${team.team_image}`
               );
               Sentry.captureMessage(
@@ -249,7 +250,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                     height={80}
                     className="rounded-full mb-2"
                     onError={(e) => {
-                      console.error(
+                      devError(
                         `Image load error for coach ${coach.first_name} ${coach.last_name}: ${coach.image_url}`
                       );
                       Sentry.captureMessage(
@@ -303,7 +304,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                             sizes="100vw"
                             className="w-full h-auto mt-4 rounded-lg"
                             onError={(e) => {
-                              console.error(
+                              devError(
                                 `Image load error for update ${update.title}: ${update.image_url}`
                               );
                               Sentry.captureMessage(

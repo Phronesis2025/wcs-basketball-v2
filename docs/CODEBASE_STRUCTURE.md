@@ -4,12 +4,13 @@
 
 This is a **Next.js 15.5.2** application for World Class Sports Basketball, built with TypeScript, Tailwind CSS, and Supabase integration.
 
-**Latest Updates (v2.3.2):**
-- Complete footer redesign with mobile and desktop layouts
-- Navigation enhancements with clickable logo and text
-- Favicon conflict resolution
-- Hero component flaming basketball positioning fix
-- Enhanced responsive design and visual hierarchy
+**Latest Updates (v2.3.3):**
+
+- Build system fixes with zero TypeScript errors
+- Dialog component TypeScript type safety improvements
+- Console security enhancements with devError utilities
+- Fixed coaches array type mapping in database queries
+- Clean build process with all linting warnings resolved
 
 ## 🏗️ Root Directory Structure
 

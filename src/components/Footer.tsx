@@ -39,11 +39,7 @@ export default function Footer() {
     },
   ];
 
-  const contactInfo = {
-    email: "info@wcsbasketball.com",
-    phone: "(555) 123-4567",
-    address: "123 Basketball Court, Sports City, SC 12345",
-  };
+  // Removed unused contactInfo variable
 
   return (
     <footer className="bg-navy text-white">

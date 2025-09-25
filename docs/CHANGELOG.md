@@ -1,6 +1,39 @@
 # WCSv2.0 Changelog
 
-## v2.3.2 - January 2025 (Current)
+## v2.3.3 - January 2025 (Current)
+
+### 🔧 Bug Fixes & Build Improvements
+
+- **Build System Fixes**: Resolved all TypeScript compilation errors and ESLint warnings
+  - Fixed unused imports in schedules page (`fetchSchedulesByTeamId`, `fetchTeamById`)
+  - Removed unused `contactInfo` variable in Footer component
+  - Fixed TypeScript `any` types in dialog component with proper interfaces
+  - Added display names to all dialog components for better debugging
+  - Fixed coaches array type mapping in actions.ts
+- **Dialog Component Enhancement**: Complete TypeScript type safety improvements
+  - Created proper `DialogTriggerProps` interface with `onClick` support
+  - Replaced all `any` types with proper TypeScript types
+  - Added display names to all dialog sub-components
+  - Fixed `React.cloneElement` type issues for better type safety
+- **Console Security**: Replaced all `console.error` with `devError` in teams page
+  - Enhanced image error logging with development-only utilities
+  - Improved security by preventing production console output
+- **Type Safety**: Fixed coaches array type mapping in database queries
+  - Corrected type from `{ coaches: Coach }` to `{ coaches: Coach[] }`
+  - Added `.flat()` method to properly flatten coaches array
+- **Build Success**: Achieved zero TypeScript errors and clean build process
+  - All linting warnings resolved
+  - Type checking passes successfully
+  - Static generation completes without errors
+
+### 🎨 UI/UX Improvements
+
+- **Code Quality**: Enhanced code formatting and consistency
+  - Improved dialog component formatting for better readability
+  - Standardized component prop destructuring
+  - Enhanced code organization and maintainability
+
+## v2.3.2 - January 2025
 
 ### 🔧 Bug Fixes & Improvements
 
