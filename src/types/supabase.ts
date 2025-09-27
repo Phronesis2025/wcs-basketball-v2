@@ -1,11 +1,4 @@
 // src/types/supabase.ts
-export type SupabaseUser = {
-  id: string;
-  email?: string;
-  created_at: string;
-  updated_at?: string;
-};
-
 export type Team = {
   id: string;
   name: string;
@@ -14,9 +7,8 @@ export type Team = {
   grade_level: string;
   logo_url: string | null;
   season: string;
-  team_image: string | null; // Added for team photo
-  coach_names: string[];
-  video_url: string | null;
+  team_image: string | null;
+  coach_names: string[]; // Changed to array for multiple coaches
 };
 
 export type Coach = {
@@ -67,4 +59,15 @@ export type TeamUpdate = {
   image_url: string | null;
   created_by: string;
   created_at: string;
+};
+
+export type SupabaseUser = {
+  id: string;
+  email?: string;
+  user_metadata: {
+    first_name?: string;
+    last_name?: string;
+  };
+  created_at: string;
+  updated_at?: string;
 };

@@ -16,7 +16,7 @@ import { useEffect, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import Autoplay from "embla-carousel-autoplay";
 import { supabase } from "@/lib/supabaseClient";
-import { devError } from "@/lib/security";
+import { devLog, devError } from "@/lib/security";
 
 type TeamPageProps = { params: Promise<{ id: string }> };
 
@@ -49,17 +49,89 @@ export default function TeamPage({ params }: TeamPageProps) {
           return;
         }
 
+        // Debug: Log team data (development only)
+        devLog("Team Data:", {
+          id: teamData.id,
+          name: teamData.name,
+          logo_url: teamData.logo_url,
+          team_image: teamData.team_image,
+          coach_names: teamData.coach_names,
+        });
+
         const [coachesData, schedulesData, updatesData] = await Promise.all([
           fetchCoachesByTeamId(resolvedParams.id),
           fetchSchedulesByTeamId(resolvedParams.id),
           fetchTeamUpdates(resolvedParams.id),
         ]);
 
+        // Debug: Log coaches (development only)
+        devLog(
+          "Coaches:",
+          coachesData.map((c) => ({
+            id: c.id,
+            name: `${c.first_name} ${c.last_name}`,
+            image_url: c.image_url,
+          }))
+        );
+
         setTeam(teamData);
         setCoaches(coachesData);
         setSchedules(schedulesData);
         setUpdates(updatesData);
+
+        // Subscriptions for real-time updates
+        const scheduleChannel = supabase
+          .channel("schedules")
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "schedules",
+              filter: `team_id=eq.${resolvedParams.id}`,
+            },
+            (payload) => {
+              setSchedules((prev) =>
+                [...prev, payload.new as Schedule].sort(
+                  (a, b) =>
+                    new Date(a.date_time).getTime() -
+                    new Date(b.date_time).getTime()
+                )
+              );
+            }
+          )
+          .subscribe();
+
+        const updateChannel = supabase
+          .channel("team_updates")
+          .on(
+            "postgres_changes",
+            {
+              event: "INSERT",
+              schema: "public",
+              table: "team_updates",
+              filter: `team_id=eq.${resolvedParams.id}`,
+            },
+            (payload) => {
+              setUpdates((prev) =>
+                [...prev, payload.new as TeamUpdate]
+                  .sort(
+                    (a, b) =>
+                      new Date(b.created_at).getTime() -
+                      new Date(a.created_at).getTime()
+                  )
+                  .slice(0, 5)
+              );
+            }
+          )
+          .subscribe();
+
+        return () => {
+          supabase.removeChannel(scheduleChannel);
+          supabase.removeChannel(updateChannel);
+        };
       } catch (err) {
+        devError("Fetch error:", err);
         Sentry.captureException(err);
         setError("Failed to fetch team data");
       } finally {
@@ -68,58 +140,6 @@ export default function TeamPage({ params }: TeamPageProps) {
     };
 
     fetchData();
-
-    // Subscriptions for real-time updates
-    const scheduleChannel = supabase
-      .channel("schedules")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "schedules",
-          filter: `team_id=eq.${params.then((p) => p.id)}`,
-        },
-        (payload) => {
-          setSchedules((prev) =>
-            [...prev, payload.new as Schedule].sort(
-              (a, b) =>
-                new Date(a.date_time).getTime() -
-                new Date(b.date_time).getTime()
-            )
-          );
-        }
-      )
-      .subscribe();
-
-    const updateChannel = supabase
-      .channel("team_updates")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "team_updates",
-          filter: `team_id=eq.${params.then((p) => p.id)}`,
-        },
-        (payload) => {
-          setUpdates((prev) =>
-            [...prev, payload.new as TeamUpdate]
-              .sort(
-                (a, b) =>
-                  new Date(b.created_at).getTime() -
-                  new Date(a.created_at).getTime()
-              )
-              .slice(0, 5)
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(scheduleChannel);
-      supabase.removeChannel(updateChannel);
-    };
   }, [params]);
 
   if (loading) {
@@ -169,20 +189,12 @@ export default function TeamPage({ params }: TeamPageProps) {
       }
     >
       <div className="max-w-7xl mx-auto">
-        <Link
-          href="/teams"
-          className="text-red hover:underline text-lg font-bebas mb-6 inline-block"
-          aria-label="Back to all teams"
-        >
-          ← Back to Teams
-        </Link>
-
-        {/* Top Section (Team Identity) */}
+        {/* Team Identity (Logo and Name) - Side by Side, Centered */}
         <section
-          className="mb-8 flex flex-col lg:flex-row gap-6"
+          className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-6"
           aria-label="Team Identity"
         >
-          <div className="flex-1">
+          <div className="flex-shrink-0">
             <Image
               src={team.logo_url || "/logos/logo2.png"}
               alt={`${team.name} logo`}
@@ -191,7 +203,7 @@ export default function TeamPage({ params }: TeamPageProps) {
               className="rounded-full object-cover"
               priority
               onError={(e) => {
-                devError(
+                console.error(
                   `Image load error for ${team.name} logo: ${team.logo_url}`
                 );
                 Sentry.captureMessage(
@@ -201,7 +213,7 @@ export default function TeamPage({ params }: TeamPageProps) {
               }}
             />
           </div>
-          <div className="flex-1">
+          <div className="text-center sm:text-left">
             <h1 className="text-4xl sm:text-5xl font-bebas uppercase">
               {team.name}
             </h1>
@@ -211,76 +223,114 @@ export default function TeamPage({ params }: TeamPageProps) {
           </div>
         </section>
 
-        {/* Team Photo (Right on Desktop, Full-Width on Mobile) */}
-        <section className="mb-8 lg:ml-auto lg:w-1/2" aria-label="Team Photo">
-          <Image
-            src={team.team_image || "/logos/logo2.png"}
-            alt={`${team.name} team photo`}
-            width={0}
-            height={0}
-            sizes="100vw"
-            className="w-full h-64 object-cover rounded-lg lg:h-80"
-            priority
-            onError={(e) => {
-              devError(
-                `Image load error for ${team.name} photo: ${team.team_image}`
-              );
-              Sentry.captureMessage(
-                `Failed to load team image for ${team.name}: ${team.team_image}`
-              );
-              e.currentTarget.src = "/logos/logo2.png";
-            }}
-          />
-        </section>
+        {/* Mobile Team Photo - Shows under logo and team name on mobile */}
+        <div className="lg:hidden mb-8">
+          <section aria-label="Team Photo">
+            <Image
+              src={team.team_image || "/logos/logo2.png"}
+              alt={`${team.name} team photo`}
+              width={0}
+              height={0}
+              sizes="100vw"
+              className="w-full h-64 object-cover rounded-lg"
+              priority
+              onError={(e) => {
+                console.error(
+                  `Image load error for ${team.name} photo: ${team.team_image}`
+                );
+                Sentry.captureMessage(
+                  `Failed to load team image for ${team.name}: ${team.team_image}`
+                );
+                e.currentTarget.src = "/logos/logo2.png";
+              }}
+            />
+          </section>
+        </div>
 
-        {/* Coaches */}
-        <section className="mb-12" aria-label="Coaches">
-          <h2 className="text-2xl font-bebas uppercase mb-4">Coaches</h2>
-          <div className="flex flex-col gap-4">
-            {coaches.length > 0 ? (
-              coaches.map((coach) => (
-                <div
-                  key={coach.id}
-                  className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 flex flex-col items-center"
-                >
-                  <Image
-                    src={coach.image_url || "/logos/logo2.png"}
-                    alt={`${coach.first_name} ${coach.last_name}`}
-                    width={80}
-                    height={80}
-                    className="rounded-full mb-2"
-                    onError={(e) => {
-                      devError(
-                        `Image load error for coach ${coach.first_name} ${coach.last_name}: ${coach.image_url}`
-                      );
-                      Sentry.captureMessage(
-                        `Failed to load coach image for ${coach.first_name} ${coach.last_name}: ${coach.image_url}`
-                      );
-                      e.currentTarget.src = "/logos/logo2.png";
-                    }}
-                  />
-                  <h3 className="text-xl font-bebas text-center">
-                    {coach.first_name} {coach.last_name}
-                  </h3>
+        {/* Two Column Layout for Desktop - Coaches and Team Photo */}
+        <div className="lg:grid lg:grid-cols-2 lg:gap-8 mb-12 lg:items-center">
+          {/* Left Column - Coaches Only */}
+          <div className="flex flex-col justify-center">
+            {/* Coaches */}
+            <section aria-label="Coaches">
+              <h2 className="text-2xl font-bebas uppercase mb-6 text-center">
+                Coaches
+              </h2>
+              <div className="flex flex-col gap-4">
+                {coaches.length > 0 ? (
+                  coaches.map((coach) => (
+                    <div
+                      key={coach.id}
+                      className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 flex items-start gap-4"
+                    >
+                      <Image
+                        src={coach.image_url || "/logos/logo2.png"}
+                        alt={`${coach.first_name} ${coach.last_name}`}
+                        width={70}
+                        height={70}
+                        className="rounded-full flex-shrink-0"
+                        onError={(e) => {
+                          console.error(
+                            `Image load error for coach ${coach.first_name} ${coach.last_name}: ${coach.image_url}`
+                          );
+                          Sentry.captureMessage(
+                            `Failed to load coach image for ${coach.first_name} ${coach.last_name}: ${coach.image_url}`
+                          );
+                          e.currentTarget.src = "/logos/logo2.png";
+                        }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-bebas text-white mb-2">
+                          {coach.first_name} {coach.last_name}
+                        </h3>
+                        <p className="text-gray-300 font-inter text-sm leading-relaxed mb-2">
+                          {coach.bio}
+                        </p>
+                        <p className="text-red font-inter italic text-sm">
+                          &ldquo;{coach.quote}&rdquo;
+                        </p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
                   <p className="text-gray-300 font-inter text-center">
-                    {coach.bio}
+                    No coaches assigned.
                   </p>
-                  <p className="text-red font-inter italic mt-2 text-center">
-                    “{coach.quote}”
-                  </p>
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-300 font-inter text-center">
-                No coaches assigned.
-              </p>
-            )}
+                )}
+              </div>
+            </section>
           </div>
-        </section>
 
-        {/* Team Updates */}
+          {/* Right Column - Team Photo (Desktop Only) */}
+          <div className="lg:flex hidden justify-center">
+            <section aria-label="Team Photo" className="w-full">
+              <Image
+                src={team.team_image || "/logos/logo2.png"}
+                alt={`${team.name} team photo`}
+                width={0}
+                height={0}
+                sizes="100vw"
+                className="w-full h-96 object-cover rounded-lg"
+                priority
+                onError={(e) => {
+                  console.error(
+                    `Image load error for ${team.name} photo: ${team.team_image}`
+                  );
+                  Sentry.captureMessage(
+                    `Failed to load team image for ${team.name}: ${team.team_image}`
+                  );
+                  e.currentTarget.src = "/logos/logo2.png";
+                }}
+              />
+            </section>
+          </div>
+        </div>
+
+        {/* Team Updates - Full Width */}
         <section className="mb-12" aria-label="Team Updates">
-          <h2 className="text-2xl font-bebas uppercase mb-4">Team Updates</h2>
+          <h2 className="text-2xl font-bebas uppercase mb-4 text-center">
+            Team Updates
+          </h2>
           {updates.length > 0 ? (
             <div className="relative">
               <div className="overflow-hidden" ref={emblaRef}>
@@ -304,7 +354,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                             sizes="100vw"
                             className="w-full h-auto mt-4 rounded-lg"
                             onError={(e) => {
-                              devError(
+                              console.error(
                                 `Image load error for update ${update.title}: ${update.image_url}`
                               );
                               Sentry.captureMessage(
@@ -321,13 +371,17 @@ export default function TeamPage({ params }: TeamPageProps) {
               </div>
             </div>
           ) : (
-            <p className="text-gray-300 font-inter">No updates available.</p>
+            <p className="text-gray-300 font-inter text-center">
+              No updates available.
+            </p>
           )}
         </section>
 
-        {/* Game Schedule */}
+        {/* Game Schedule - Full Width */}
         <section className="mb-12" aria-label="Game Schedule">
-          <h2 className="text-2xl font-bebas uppercase mb-4">Game Schedule</h2>
+          <h2 className="text-2xl font-bebas uppercase mb-4 text-center">
+            Game Schedule
+          </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left font-inter">
               <thead className="bg-gray-900/50">
@@ -372,16 +426,16 @@ export default function TeamPage({ params }: TeamPageProps) {
           </div>
           <Link
             href="/schedules"
-            className="text-red hover:underline mt-4 inline-block"
+            className="text-red hover:underline mt-4 inline-block text-center w-full"
             aria-label="View all schedules"
           >
             View All Schedules
           </Link>
         </section>
 
-        {/* Practice Schedule */}
+        {/* Practice Schedule - Full Width */}
         <section aria-label="Practice Schedule">
-          <h2 className="text-2xl font-bebas uppercase mb-4">
+          <h2 className="text-2xl font-bebas uppercase mb-4 text-center">
             Practice Schedule
           </h2>
           <div className="overflow-x-auto">
@@ -428,12 +482,23 @@ export default function TeamPage({ params }: TeamPageProps) {
           </div>
           <Link
             href="/schedules"
-            className="text-red hover:underline mt-4 inline-block"
+            className="text-red hover:underline mt-4 inline-block text-center w-full"
             aria-label="View all schedules"
           >
             View All Schedules
           </Link>
         </section>
+
+        {/* Back Link - Bottom of Page */}
+        <div className="text-center mt-12">
+          <Link
+            href="/teams"
+            className="text-red hover:underline text-lg font-bebas inline-block"
+            aria-label="Back to all teams"
+          >
+            ← Back to Teams
+          </Link>
+        </div>
       </div>
     </motion.div>
   );

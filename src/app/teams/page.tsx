@@ -1,22 +1,19 @@
+// src/app/teams/page.tsx
 import ClientTeams from "@/components/ClientTeams";
 import { fetchTeams } from "@/lib/actions";
 import { Team } from "@/types/supabase";
+import * as Sentry from "@sentry/nextjs";
 
-/**
- * Teams page - Server component that fetches team data
- * Passes data to ClientTeams component for client-side rendering
- */
 export default async function Teams() {
-  // Fetch teams data on the server
   let teams: Team[] = [];
   let error: string | null = null;
 
   try {
     teams = await fetchTeams();
   } catch (err) {
+    Sentry.captureException(err);
     error = err instanceof Error ? err.message : "Unknown error";
   }
 
-  // Pass data to client component
   return <ClientTeams initialTeams={teams} error={error} />;
 }

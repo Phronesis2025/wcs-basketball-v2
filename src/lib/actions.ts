@@ -1,4 +1,5 @@
 // src/lib/actions.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from "@/lib/supabaseClient";
 import {
   Team,
@@ -8,37 +9,71 @@ import {
   TeamUpdate,
 } from "@/types/supabase";
 
+// Type definitions for Supabase query results
+
+type TeamCoachRelation = {
+  coaches: any;
+};
+
 export async function fetchTeams(): Promise<Team[]> {
   const { data, error } = await supabase
     .from("teams")
-    .select("*")
+    .select(
+      `
+      id,
+      name,
+      age_group,
+      gender,
+      grade_level,
+      logo_url,
+      season,
+      team_image,
+      team_coaches(coaches(first_name, last_name))
+    `
+    )
     .order("name", { ascending: true });
+
   if (error) throw new Error(error.message);
 
-  // Transform data to include required fields
-  return (data || []).map((team) => ({
-    ...team,
-    coach_names: team.coach_names || [],
-    video_url: team.video_url || null,
-  }));
+  return (
+    data?.map((team: any) => ({
+      ...team,
+      coach_names:
+        team.team_coaches?.map(
+          (tc: any) => `${tc.coaches.first_name} ${tc.coaches.last_name}`
+        ) || [],
+    })) || []
+  );
 }
 
 export async function fetchTeamById(id: string): Promise<Team | null> {
   const { data, error } = await supabase
     .from("teams")
-    .select("*, team_image") // Updated to include team_image
+    .select(
+      `
+      id,
+      name,
+      age_group,
+      gender,
+      grade_level,
+      logo_url,
+      season,
+      team_image,
+      team_coaches(coaches(first_name, last_name))
+    `
+    )
     .eq("id", id)
     .single();
   if (error) throw new Error(error.message);
-
-  if (!data) return null;
-
-  // Transform data to include required fields
-  return {
-    ...data,
-    coach_names: data.coach_names || [],
-    video_url: data.video_url || null,
-  };
+  return data
+    ? {
+        ...data,
+        coach_names:
+          data.team_coaches?.map(
+            (tc: any) => `${tc.coaches.first_name} ${tc.coaches.last_name}`
+          ) || [],
+      }
+    : null;
 }
 
 export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
@@ -47,7 +82,7 @@ export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
     .select("coaches(id, first_name, last_name, email, bio, image_url, quote)")
     .eq("team_id", teamId);
   if (error) throw new Error(error.message);
-  return data?.map((item: { coaches: Coach[] }) => item.coaches).flat() || [];
+  return data?.map((item: TeamCoachRelation) => item.coaches) || [];
 }
 
 export async function fetchSchedulesByTeamId(
