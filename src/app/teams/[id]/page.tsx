@@ -203,7 +203,7 @@ export default function TeamPage({ params }: TeamPageProps) {
               className="rounded-full object-cover"
               priority
               onError={(e) => {
-                console.error(
+                devError(
                   `Image load error for ${team.name} logo: ${team.logo_url}`
                 );
                 Sentry.captureMessage(
@@ -235,7 +235,7 @@ export default function TeamPage({ params }: TeamPageProps) {
               className="w-full h-64 object-cover rounded-lg"
               priority
               onError={(e) => {
-                console.error(
+                devError(
                   `Image load error for ${team.name} photo: ${team.team_image}`
                 );
                 Sentry.captureMessage(
@@ -270,7 +270,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                         height={70}
                         className="rounded-full flex-shrink-0"
                         onError={(e) => {
-                          console.error(
+                          devError(
                             `Image load error for coach ${coach.first_name} ${coach.last_name}: ${coach.image_url}`
                           );
                           Sentry.captureMessage(
@@ -313,7 +313,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                 className="w-full h-96 object-cover rounded-lg"
                 priority
                 onError={(e) => {
-                  console.error(
+                  devError(
                     `Image load error for ${team.name} photo: ${team.team_image}`
                   );
                   Sentry.captureMessage(
@@ -354,7 +354,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                             sizes="100vw"
                             className="w-full h-auto mt-4 rounded-lg"
                             onError={(e) => {
-                              console.error(
+                              devError(
                                 `Image load error for update ${update.title}: ${update.image_url}`
                               );
                               Sentry.captureMessage(
@@ -497,6 +497,17 @@ export default function TeamPage({ params }: TeamPageProps) {
             aria-label="Back to all teams"
           >
             ← Back to Teams
+          </Link>
+        </div>
+
+        {/* Coaches Dashboard Button - Bottom of Page */}
+        <div className="text-center mt-8">
+          <Link
+            href="/coaches/login"
+            className="inline-block bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+            aria-label="Access coaches dashboard"
+          >
+            Coaches Dashboard
           </Link>
         </div>
       </div>
