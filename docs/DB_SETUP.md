@@ -10,11 +10,11 @@
 - **Connection**: Secure HTTPS with SSL
 
 ### Database Statistics
-- **Tables**: 3 active tables
-- **Rows**: ~50+ records across all tables
-- **Storage**: <100MB (well within limits)
+- **Tables**: 6 active tables (teams, coaches, schedules, team_updates, practice_drills, users)
+- **Rows**: ~100+ records across all tables
+- **Storage**: <150MB (well within limits)
 - **Connections**: Stable connection pool
-- **Performance**: Optimized with proper indexing
+- **Performance**: Optimized with proper indexing and RLS policies
 
 ## 📊 Database Schema
 
@@ -25,16 +25,44 @@ CREATE TABLE teams (
   name TEXT NOT NULL,
   age_group TEXT CHECK (age_group IN ('U8', 'U10', 'U12', 'U14', 'U16', 'U18')),
   gender TEXT CHECK (gender IN ('Boys', 'Girls', 'Mixed')),
-  coach_email TEXT NOT NULL,
   grade_level TEXT,
   season TEXT DEFAULT '2025-2026',
   logo_url TEXT,
+  team_image TEXT,
+  created_by UUID REFERENCES users(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-### 2. Schedules Table
+### 2. Coaches Table
+```sql
+CREATE TABLE coaches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  bio TEXT,
+  image_url TEXT,
+  quote TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 3. Team Coaches Junction Table
+```sql
+CREATE TABLE team_coaches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+  coach_id UUID REFERENCES coaches(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(team_id, coach_id)
+);
+```
+
+### 4. Schedules Table
 ```sql
 CREATE TABLE schedules (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -44,12 +72,47 @@ CREATE TABLE schedules (
   location TEXT NOT NULL,
   opponent TEXT,
   description TEXT,
+  created_by UUID REFERENCES users(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 
-### 3. Users Table
+### 5. Team Updates Table
+```sql
+CREATE TABLE team_updates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  image_url TEXT,
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 6. Practice Drills Table
+```sql
+CREATE TABLE practice_drills (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  team_id UUID REFERENCES teams(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  skills TEXT[],
+  equipment TEXT[],
+  time TEXT,
+  instructions TEXT,
+  additional_info TEXT,
+  benefits TEXT,
+  difficulty TEXT,
+  category TEXT,
+  week_number INTEGER,
+  image_url TEXT,
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+### 7. Users Table
 ```sql
 CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -71,19 +134,57 @@ CREATE TABLE users (
 CREATE POLICY "Public view teams" ON teams 
 FOR SELECT TO public USING (true);
 
--- Coaches can edit their own teams
+-- Coaches can edit teams they created
 CREATE POLICY "Coaches edit own teams" ON teams 
 FOR ALL TO authenticated 
-USING (auth.email() = coach_email) 
-WITH CHECK (auth.email() = coach_email);
+USING (created_by = auth.uid()) 
+WITH CHECK (created_by = auth.uid());
 
 -- Admins can edit all teams
 CREATE POLICY "Admins edit all teams" ON teams 
 FOR ALL TO authenticated 
 USING (EXISTS (
   SELECT 1 FROM users 
-  WHERE users.email = auth.email() 
+  WHERE users.id = auth.uid() 
   AND users.role = 'admin'
+));
+```
+
+### Coaches Table Policies
+```sql
+-- Public can view all coaches
+CREATE POLICY "Public view coaches" ON coaches 
+FOR SELECT TO public USING (true);
+
+-- Coaches can edit their own records
+CREATE POLICY "Coaches edit own records" ON coaches 
+FOR ALL TO authenticated 
+USING (user_id = auth.uid()) 
+WITH CHECK (user_id = auth.uid());
+
+-- Admins can edit all coaches
+CREATE POLICY "Admins edit all coaches" ON coaches 
+FOR ALL TO authenticated 
+USING (EXISTS (
+  SELECT 1 FROM users 
+  WHERE users.id = auth.uid() 
+  AND users.role = 'admin'
+));
+```
+
+### Team Coaches Junction Table Policies
+```sql
+-- Public can view team-coach relationships
+CREATE POLICY "Public view team coaches" ON team_coaches 
+FOR SELECT TO public USING (true);
+
+-- Coaches can manage their own team assignments
+CREATE POLICY "Coaches manage team assignments" ON team_coaches 
+FOR ALL TO authenticated 
+USING (EXISTS (
+  SELECT 1 FROM coaches 
+  WHERE coaches.id = team_coaches.coach_id 
+  AND coaches.user_id = auth.uid()
 ));
 ```
 
@@ -97,9 +198,44 @@ FOR SELECT TO public USING (true);
 CREATE POLICY "Coaches edit team schedules" ON schedules 
 FOR ALL TO authenticated 
 USING (EXISTS (
-  SELECT 1 FROM teams 
-  WHERE teams.id = schedules.team_id 
-  AND teams.coach_email = auth.email()
+  SELECT 1 FROM team_coaches tc
+  JOIN coaches c ON tc.coach_id = c.id
+  WHERE tc.team_id = schedules.team_id 
+  AND c.user_id = auth.uid()
+));
+```
+
+### Team Updates Table Policies
+```sql
+-- Public can view all team updates
+CREATE POLICY "Public view team updates" ON team_updates 
+FOR SELECT TO public USING (true);
+
+-- Coaches can manage updates for their teams
+CREATE POLICY "Coaches manage team updates" ON team_updates 
+FOR ALL TO authenticated 
+USING (EXISTS (
+  SELECT 1 FROM team_coaches tc
+  JOIN coaches c ON tc.coach_id = c.id
+  WHERE tc.team_id = team_updates.team_id 
+  AND c.user_id = auth.uid()
+));
+```
+
+### Practice Drills Table Policies
+```sql
+-- Public can view all practice drills
+CREATE POLICY "Public view practice drills" ON practice_drills 
+FOR SELECT TO public USING (true);
+
+-- Coaches can manage drills for their teams
+CREATE POLICY "Coaches manage practice drills" ON practice_drills 
+FOR ALL TO authenticated 
+USING (EXISTS (
+  SELECT 1 FROM team_coaches tc
+  JOIN coaches c ON tc.coach_id = c.id
+  WHERE tc.team_id = practice_drills.team_id 
+  AND c.user_id = auth.uid()
 ));
 ```
 

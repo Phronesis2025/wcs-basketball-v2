@@ -4,13 +4,16 @@
 
 This is a **Next.js 15.5.2** application for World Class Sports Basketball, built with TypeScript, Tailwind CSS, and Supabase integration.
 
-**Latest Updates (v2.3.3):**
+**Latest Updates (v2.4.0):**
 
-- Build system fixes with zero TypeScript errors
-- Dialog component TypeScript type safety improvements
-- Console security enhancements with devError utilities
-- Fixed coaches array type mapping in database queries
-- Clean build process with all linting warnings resolved
+- Team page layout optimization with centered logo/name and side-by-side coaches/team image
+- Mobile layout improvements with team image under logo and coaches below
+- Full-width team updates and schedules for better content display
+- Security enhancements with devLog/devError utilities replacing all console statements
+- Real-time subscription security fixes with proper parameter handling
+- React unescaped entities fixes for proper HTML rendering
+- Build system optimization with zero errors and clean compilation
+- Enhanced responsive design with improved mobile and desktop layouts
 
 ## 🏗️ Root Directory Structure
 
@@ -48,7 +51,9 @@ src/app/
 ├── 📁 shop/                    # Merchandise shop
 │   └── page.tsx
 ├── 📁 teams/                   # Teams page
-│   └── page.tsx
+│   ├── page.tsx               # Teams listing page
+│   └── [id]/                  # Dynamic team detail pages
+│       └── page.tsx           # Individual team page with coaches, schedules, updates
 ├── 📁 test-auth/               # Authentication testing
 │   └── page.tsx
 ├── 📄 page.tsx                 # Home page
@@ -180,9 +185,11 @@ Comprehensive project documentation:
 
 ### 🎯 Core Functionality
 
-- **Team Management** - Boys and girls basketball teams
-- **Coach Profiles** - Coach information and bios
-- **Game Schedules** - Upcoming games and events
+- **Team Management** - Boys and girls basketball teams with detailed team pages
+- **Coach Profiles** - Coach information, bios, and quotes with responsive layouts
+- **Game Schedules** - Upcoming games and events with full-width display
+- **Team Updates** - Latest team news with carousel display
+- **Practice Schedules** - Practice times and locations
 - **News & Updates** - Latest team news
 - **Shop** - Merchandise and team gear
 - **User Registration** - Member signup system
@@ -196,10 +203,13 @@ Comprehensive project documentation:
 
 ### 🎨 UI/UX Features
 
-- **Responsive Design** - Mobile-first approach
-- **Custom Animations** - Framer Motion integration
+- **Responsive Design** - Mobile-first approach with optimized layouts
+- **Custom Animations** - Framer Motion integration with smooth transitions
 - **Video Backgrounds** - Engaging hero sections
 - **Team Branding** - Custom logos and color schemes
+- **Team Detail Pages** - Comprehensive team information with coaches, schedules, and updates
+- **Mobile Optimization** - Optimized mobile layouts with proper content flow
+- **Full-Width Content** - Schedules and updates extend across full screen width
 
 ## 🚀 Technology Stack
 

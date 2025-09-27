@@ -1,6 +1,55 @@
 # WCSv2.0 Changelog
 
-## v2.3.3 - January 2025 (Current)
+## v2.4.0 - January 2025 (Current)
+
+### 🎨 Team Page Layout Optimization
+
+- **Team Page Redesign**: Complete overhaul of team detail page layout
+  - Centered logo and team name side-by-side above content
+  - Two-column desktop layout: coaches (left) and team image (right)
+  - Full-width team updates and schedules for better content display
+  - Mobile-optimized layout with team image under logo and coaches below
+- **Coach Cards Enhancement**: Improved coach information display
+  - Compact horizontal layout with smaller images (70x70px)
+  - Better spacing and typography for improved readability
+  - Enhanced mobile responsiveness
+- **Content Layout**: Optimized content organization
+  - Full-width schedules and updates for better readability
+  - Improved visual hierarchy and content flow
+  - Better use of screen real estate
+
+### 🔒 Security Enhancements
+
+- **Console Security**: Replaced all console statements with secure utilities
+  - Replaced `console.log` with `devLog` for development-only logging
+  - Replaced `console.error` with `devError` for secure error handling
+  - Enhanced security by preventing production console output
+- **Real-time Subscriptions**: Fixed security vulnerabilities
+  - Fixed parameter handling in real-time subscriptions
+  - Prevented potential injection vulnerabilities
+  - Enhanced error handling and security practices
+- **Code Quality**: Improved code structure and maintainability
+  - Fixed React unescaped entities in coach quotes
+  - Removed unused ESLint directives
+  - Enhanced TypeScript type safety
+  - Clean build process with zero errors
+
+### 🎯 UI/UX Improvements
+
+- **Mobile Optimization**: Enhanced mobile experience
+  - Team image displays under logo on mobile
+  - Coaches section appears below team image
+  - Improved content flow and readability
+- **Responsive Design**: Better desktop and mobile layouts
+  - Optimized two-column layout for desktop
+  - Full-width content sections for better display
+  - Improved spacing and visual hierarchy
+- **Visual Enhancements**: Better design consistency
+  - Centered team identity section
+  - Improved coach card design
+  - Better content organization
+
+## v2.3.3 - January 2025
 
 ### 🔧 Bug Fixes & Build Improvements
 

@@ -6,6 +6,10 @@
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE teams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE coaches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_coaches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_updates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE practice_drills ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
 -- USERS TABLE POLICIES
@@ -45,16 +49,11 @@ CREATE POLICY "Coaches can create teams" ON teams
     )
   );
 
--- Coaches can update teams they created or are assigned to
+-- Coaches can update teams they created
 CREATE POLICY "Coaches can update their teams" ON teams
   FOR UPDATE USING (
     auth.role() = 'authenticated' AND
-    (
-      created_by = auth.uid() OR
-      coach_email IN (
-        SELECT email FROM users WHERE users.id = auth.uid()
-      )
-    )
+    created_by = auth.uid()
   );
 
 -- Only admins can delete teams
@@ -72,29 +71,15 @@ CREATE POLICY "Admins can delete teams" ON teams
 -- COACHES TABLE POLICIES
 -- ===========================================
 
--- Coaches can view their own records
-CREATE POLICY "Coaches can view own records" ON coaches
-  FOR SELECT USING (
-    auth.role() = 'authenticated' AND
-    user_id = auth.uid()
-  );
+-- Public can view all coaches
+CREATE POLICY "Public can view coaches" ON coaches
+  FOR SELECT USING (true);
 
 -- Coaches can update their own records
 CREATE POLICY "Coaches can update own records" ON coaches
   FOR UPDATE USING (
     auth.role() = 'authenticated' AND
     user_id = auth.uid()
-  );
-
--- Admins can view all coach records
-CREATE POLICY "Admins can view all coaches" ON coaches
-  FOR SELECT USING (
-    auth.role() = 'authenticated' AND
-    EXISTS (
-      SELECT 1 FROM users
-      WHERE users.id = auth.uid()
-      AND users.role = 'admin'
-    )
   );
 
 -- Admins can manage all coach records
@@ -105,6 +90,85 @@ CREATE POLICY "Admins can manage coaches" ON coaches
       SELECT 1 FROM users
       WHERE users.id = auth.uid()
       AND users.role = 'admin'
+    )
+  );
+
+-- ===========================================
+-- TEAM COACHES JUNCTION TABLE POLICIES
+-- ===========================================
+
+-- Public can view team-coach relationships
+CREATE POLICY "Public can view team coaches" ON team_coaches
+  FOR SELECT USING (true);
+
+-- Coaches can manage their own team assignments
+CREATE POLICY "Coaches manage team assignments" ON team_coaches
+  FOR ALL USING (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM coaches
+      WHERE coaches.id = team_coaches.coach_id
+      AND coaches.user_id = auth.uid()
+    )
+  );
+
+-- ===========================================
+-- SCHEDULES TABLE POLICIES
+-- ===========================================
+
+-- Public can view all schedules
+CREATE POLICY "Public can view schedules" ON schedules
+  FOR SELECT USING (true);
+
+-- Coaches can manage schedules for their teams
+CREATE POLICY "Coaches manage team schedules" ON schedules
+  FOR ALL USING (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM team_coaches tc
+      JOIN coaches c ON tc.coach_id = c.id
+      WHERE tc.team_id = schedules.team_id
+      AND c.user_id = auth.uid()
+    )
+  );
+
+-- ===========================================
+-- TEAM UPDATES TABLE POLICIES
+-- ===========================================
+
+-- Public can view all team updates
+CREATE POLICY "Public can view team updates" ON team_updates
+  FOR SELECT USING (true);
+
+-- Coaches can manage updates for their teams
+CREATE POLICY "Coaches manage team updates" ON team_updates
+  FOR ALL USING (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM team_coaches tc
+      JOIN coaches c ON tc.coach_id = c.id
+      WHERE tc.team_id = team_updates.team_id
+      AND c.user_id = auth.uid()
+    )
+  );
+
+-- ===========================================
+-- PRACTICE DRILLS TABLE POLICIES
+-- ===========================================
+
+-- Public can view all practice drills
+CREATE POLICY "Public can view practice drills" ON practice_drills
+  FOR SELECT USING (true);
+
+-- Coaches can manage drills for their teams
+CREATE POLICY "Coaches manage practice drills" ON practice_drills
+  FOR ALL USING (
+    auth.role() = 'authenticated' AND
+    EXISTS (
+      SELECT 1 FROM team_coaches tc
+      JOIN coaches c ON tc.coach_id = c.id
+      WHERE tc.team_id = practice_drills.team_id
+      AND c.user_id = auth.uid()
     )
   );
 
