@@ -10,14 +10,8 @@ import {
   generateCSRFToken,
   validateCSRFToken,
 } from "@/lib/security";
-import {
-  addSchedule,
-  addUpdate,
-  addDrill,
-} from "@/lib/actions";
-import {
-  Team,
-} from "@/types/supabase";
+import { addSchedule, addUpdate, addDrill } from "@/lib/actions";
+import { Team } from "@/types/supabase";
 
 export default function CoachesDashboard() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -84,9 +78,7 @@ export default function CoachesDashboard() {
         let teamsData: Team[] = [];
         if (admin) {
           // Admins see all teams
-          const { data, error } = await supabase
-            .from("teams")
-            .select("*");
+          const { data, error } = await supabase.from("teams").select("*");
           if (error) throw error;
           teamsData = data || [];
         } else {
@@ -191,8 +183,8 @@ export default function CoachesDashboard() {
           {
             team_id: selectedTeam,
             title: drillTitle,
-            skills: drillSkills.split(",").map(s => s.trim()),
-            equipment: drillEquipment.split(",").map(s => s.trim()),
+            skills: drillSkills.split(",").map((s) => s.trim()),
+            equipment: drillEquipment.split(",").map((s) => s.trim()),
             time: drillTime,
             instructions: drillInstructions,
             additional_info: drillAdditionalInfo,

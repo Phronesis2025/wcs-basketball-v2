@@ -20,6 +20,9 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **News Carousel**: Swipeable news section with modal details
 - **Team Previews**: Dynamic team cards with logos and information
 - **Coaches Corner**: Staff profiles and information
+- **Coaches Dashboard**: Complete team management interface with schedule creation, drill management, and team updates
+- **Practice Drills**: Comprehensive drill library with filtering by time, skill level, and difficulty
+- **Coaches Authentication**: Secure login system with role-based access control
 - **Shop Section**: Merchandise preview with updated product descriptions and mobile-optimized margins
 - **Fan Zone**: Interactive video cards with mobile-responsive layout
 - **Footer**: Complete redesign with mobile and desktop layouts, centered quick links, clean design
@@ -29,6 +32,7 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **Security**: Comprehensive security utilities, rate limiting, input validation, CSP headers
 - **Scroll Management**: Automatic scroll-to-top functionality
 - **Logo Marquee**: Animated team logos with enhanced spacing and opacity
+- **UI Components**: Enhanced component library with dialog, input, and select components
 
 ## Setup Instructions
 

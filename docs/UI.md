@@ -184,6 +184,43 @@
   - Visibility change and focus event handling
   - No visual element (utility component)
 
+### 13. Dialog Component (NEW)
+
+- **Location**: `src/components/ui/dialog.tsx`
+- **Features**:
+  - Modal system with Framer Motion animations
+  - Accessible modal dialogs with proper ARIA labels
+  - Smooth animations with reduced motion support
+  - Customizable styling with consistent design system
+  - Trigger-based activation system
+  - Focus management and keyboard navigation
+- **Styling**: Navy background, red accents, rounded corners
+- **Props**: `children`, `className`
+
+### 14. Input Component (NEW)
+
+- **Location**: `src/components/ui/input.tsx`
+- **Features**:
+  - Standardized form inputs with consistent styling
+  - Focus states and accessibility features
+  - Error state handling and validation
+  - Customizable className support
+  - Forward ref support for form libraries
+- **Styling**: Navy background, gray borders, red focus states
+- **Props**: Standard HTML input props + `className`
+
+### 15. Select Component (NEW)
+
+- **Location**: `src/components/ui/select.tsx`
+- **Features**:
+  - Dropdown selection interface with consistent theming
+  - Accessibility features and keyboard navigation
+  - Customizable options and styling
+  - Form integration support
+  - Forward ref support for form libraries
+- **Styling**: Navy background, gray borders, red focus states
+- **Props**: Standard HTML select props + `className`
+
 ## 🎭 Animations & Interactions
 
 ### Framer Motion Animations
