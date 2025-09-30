@@ -1,8 +1,9 @@
-import Hero from "@/components/Hero";
-import LogoMarquee from "@/components/LogoMarquee";
-import FanZone from "@/components/FanZone";
-import Shop from "@/components/Shop";
-import { fetchTeams } from "@/lib/actions";
+import React from "react";
+import Hero from "../components/Hero";
+import LogoMarquee from "../components/LogoMarquee";
+import FanZone from "../components/FanZone";
+import Shop from "../components/Shop";
+import { fetchTeams } from "../lib/actions";
 
 export default async function Home() {
   let teamsError: string | null = null;

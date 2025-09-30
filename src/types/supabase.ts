@@ -8,7 +8,7 @@ export type Team = {
   logo_url: string | null;
   season: string;
   team_image: string | null;
-  coach_names: string[]; // Changed to array for multiple coaches
+  coach_names: string[];
 };
 
 export type Coach = {
@@ -31,6 +31,7 @@ export type Schedule = {
   description: string | null;
   created_by: string;
   created_at: string;
+  deleted_at: string | null;
 };
 
 export type PracticeDrill = {
@@ -59,6 +60,18 @@ export type TeamUpdate = {
   image_url: string | null;
   created_by: string;
   created_at: string;
+  deleted_at: string | null;
+};
+
+export type News = {
+  id: string;
+  team_id: string;
+  title: string;
+  content: string;
+  image_url: string | null;
+  created_by: string;
+  created_at: string;
+  deleted_at: string | null;
 };
 
 export type SupabaseUser = {

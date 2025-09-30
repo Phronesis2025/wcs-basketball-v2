@@ -11,6 +11,7 @@ import {
   generateCSRFToken,
   validateCSRFToken,
 } from "@/lib/security";
+import { getUserRole, updatePasswordReset } from "@/lib/actions"; // Ensure actions.ts exports these
 
 export default function CoachesLogin() {
   const [email, setEmail] = useState("");
@@ -26,12 +27,12 @@ export default function CoachesLogin() {
   const router = useRouter();
 
   useEffect(() => {
-    // Generate CSRF token
+    // Generate CSRF token for form security (best practice to prevent CSRF attacks)
     const token = generateCSRFToken();
     setCsrfToken(token);
     document.cookie = `csrf-token=${token}; Path=/; SameSite=Strict`;
 
-    // Client-side rate limiting (5 attempts/5 minutes)
+    // Client-side rate limiting to prevent brute-force (5 attempts/5 min)
     const storedAttempts = localStorage.getItem("login_attempts");
     const storedTimestamp = localStorage.getItem("login_timestamp");
     const now = Date.now();
@@ -56,7 +57,7 @@ export default function CoachesLogin() {
     setLoading(true);
     setError(null);
 
-    // Validate CSRF
+    // Validate CSRF token (security best practice)
     const storedCsrf = document.cookie
       .split("; ")
       .find((row) => row.startsWith("csrf-token="))
@@ -67,12 +68,12 @@ export default function CoachesLogin() {
       return;
     }
 
-    // Sanitize inputs
+    // Sanitize inputs to prevent injection (best practice)
     const sanitizedEmail = sanitizeInput(email);
     const sanitizedPassword = sanitizeInput(password);
 
     try {
-      // Sign in with Supabase Auth
+      // Sign in with Supabase Auth (client-side, anon key ok)
       const { data: authData, error: signInError } =
         await supabase.auth.signInWithPassword({
           email: sanitizedEmail,
@@ -83,24 +84,39 @@ export default function CoachesLogin() {
         throw new Error("Invalid email or password");
       }
 
-      // Check user role
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select("role, password_reset")
-        .eq("id", authData.user.id)
-        .single();
+      // Debug: Confirm user ID before server action call
+      devLog("Calling getUserRole with ID:", authData.user.id);
 
-      if (
-        userError ||
-        !userData ||
-        !["coach", "admin"].includes(userData.role)
-      ) {
-        // Sign out if not authorized
+      // Call server action for role check (secure, server-side)
+      const userData = await getUserRole(authData.user.id);
+
+      if (!userData || !["coach", "admin"].includes(userData.role)) {
+        // Sign out if not authorized (security best practice)
         await supabase.auth.signOut();
         throw new Error("Unauthorized: Only coaches and admins can log in");
       }
 
-      // Increment login attempts
+      // Increment login attempts (rate limiting continuation)
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      localStorage.setItem("login_attempts", newAttempts.toString());
+      localStorage.setItem("login_timestamp", Date.now().toString());
+
+      // Clear attempts on successful login
+      if (newAttempts >= 5) {
+        localStorage.removeItem("login_attempts");
+        localStorage.removeItem("login_timestamp");
+      }
+
+      // Check password reset flag
+      if (userData.password_reset) {
+        setShowReset(true);
+      } else {
+        router.push("/coaches/dashboard");
+      }
+    } catch (err: unknown) {
+      devError("Login error:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       localStorage.setItem("login_attempts", newAttempts.toString());
@@ -108,93 +124,68 @@ export default function CoachesLogin() {
       if (newAttempts >= 5) {
         setIsLocked(true);
         setError("Too many login attempts. Please try again in 5 minutes.");
-        setLoading(false);
-        return;
       }
-
-      devLog("Login successful for", sanitizedEmail);
-
-      // Check if password reset is required
-      if (userData.password_reset) {
-        setShowReset(true);
-        setLoading(false);
-        return;
-      }
-
-      // Clear rate limiting on success
-      localStorage.removeItem("login_attempts");
-      localStorage.removeItem("login_timestamp");
-      router.push("/coaches/dashboard");
-    } catch (err) {
-      devError("Login error:", err);
-      setError((err as Error).message || "Invalid email or password");
+    } finally {
       setLoading(false);
     }
   };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    // Validate CSRF token
+    const storedCsrf = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("csrf-token="))
+      ?.split("=")[1];
+    if (!validateCSRFToken(csrfToken, storedCsrf || "")) {
+      setError("Invalid CSRF token");
+      setLoading(false);
+      return;
+    }
+
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match");
-      return;
-    }
-    if (
-      newPassword.length < 8 ||
-      !/[A-Z]/.test(newPassword) ||
-      !/[0-9]/.test(newPassword)
-    ) {
-      setError("Password must be 8+ characters with uppercase and numbers");
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
     try {
-      // Update Supabase Auth password
-      const { error: authError } = await supabase.auth.updateUser({
+      // Update password (client-side auth)
+      const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
-      if (authError) {
-        throw new Error("Failed to update password: " + authError.message);
+
+      if (updateError) throw updateError;
+
+      // Get user ID from session (client-side)
+      const { data: session } = await supabase.auth.getSession();
+      if (session && session.session) {
+        const userId = session.session.user.id;
+        // Call server action for DB update (secure)
+        await updatePasswordReset(userId);
+        router.push("/coaches/dashboard");
+      } else {
+        throw new Error("Session not found");
       }
-
-      // Update password_reset flag
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user) {
-        throw new Error("No authenticated user found");
-      }
-      const { error: updateError } = await supabase
-        .from("users")
-        .update({ password_reset: false })
-        .eq("id", user.user.id);
-
-      if (updateError) {
-        throw new Error(
-          "Failed to update password_reset: " + updateError.message
-        );
-      }
-
-      devLog("Password reset successful for", email);
-
-      // Clear rate limiting
-      localStorage.removeItem("login_attempts");
-      localStorage.removeItem("login_timestamp");
-      router.push("/coaches/dashboard");
-    } catch (err) {
+    } catch (err: unknown) {
       devError("Password reset error:", err);
-      setError((err as Error).message || "Failed to reset password");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred during password reset"
+      );
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-navy text-white py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <div className="max-w-md w-full bg-gray-900/50 border border-red-500/50 rounded-lg p-6">
-        <h1 className="text-3xl font-bebas uppercase text-center mb-6">
-          Coaches Login
-        </h1>
-        {error && (
-          <p className="text-red font-inter text-center mb-4">{error}</p>
-        )}
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8">
+        {error && <p className="text-red font-inter text-center">{error}</p>}
         {!showReset ? (
           <form onSubmit={handleLogin} className="space-y-4">
             <input type="hidden" name="csrf-token" value={csrfToken} />
