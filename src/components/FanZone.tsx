@@ -116,9 +116,17 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
     return (
       <section className="bg-black py-12" aria-label="Fan Zone">
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-          <p className="text-white text-base font-inter text-center">
-            {teamsError || coachesError}
-          </p>
+          <h2 className="text-white text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
+            Fan Zone
+          </h2>
+          <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-6 text-center">
+            <p className="text-red-200 text-lg font-inter mb-4">
+              {teamsError || coachesError}
+            </p>
+            <p className="text-gray-300 text-sm font-inter">
+              Please check your environment configuration or contact support.
+            </p>
+          </div>
         </div>
       </section>
     );

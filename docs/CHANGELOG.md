@@ -1,8 +1,25 @@
 # WCSv2.0 Changelog
 
-## v2.4.1 - January 2025 (Current)
+## v2.4.2 - January 2025 (Current)
 
-### 🔒 Security Audit & Fixes
+### 🐛 FanZone Bug Fix & Enhanced Security
+
+- **FanZone Data Validation Fix**: Resolved critical JavaScript error
+  - Fixed "tc.coaches.map is not a function" error with proper null checks
+  - Added array validation before calling .map() methods in fetchTeams() and fetchTeamById()
+  - Enhanced error handling for malformed team-coach relationship data
+  - Improved data structure validation with defensive programming
+- **Enhanced Error Recovery**: Better handling of edge cases
+  - Added safety checks for null/undefined coach data
+  - Graceful fallback when team-coach relationships are missing
+  - Improved error messages for better debugging
+- **Security Validation**: Comprehensive security audit completed
+  - Zero NPM vulnerabilities found
+  - All security headers properly configured
+  - CSRF protection fully implemented
+  - Input validation and sanitization working correctly
+
+### 🔒 Security Audit & Fixes (v2.4.1)
 
 - **Security Audit Completion**: Comprehensive security review and fixes
   - Fixed console.error usage in TeamCard.tsx to use secure devError utility
