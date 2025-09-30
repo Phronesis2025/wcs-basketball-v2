@@ -3,6 +3,7 @@
 import { Team } from "@/types/supabase";
 import Image from "next/image";
 import Link from "next/link";
+import { devError } from "@/lib/security";
 
 interface TeamCardProps {
   team: Team;
@@ -18,9 +19,7 @@ export default function TeamCard({ team }: TeamCardProps) {
         height={100}
         className="rounded-full object-cover mb-4 flex-shrink-0"
         onError={(e) => {
-          console.error(
-            `Image load error for ${team.name} logo: ${team.logo_url}`
-          );
+          devError(`Image load error for ${team.name} logo: ${team.logo_url}`);
           e.currentTarget.src = "/logos/logo2.png";
         }}
       />
