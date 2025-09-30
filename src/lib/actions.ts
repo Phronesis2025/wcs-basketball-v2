@@ -35,38 +35,58 @@ type TeamWithCoaches = {
 
 // Fetch teams
 export async function fetchTeams(): Promise<Team[]> {
-  const { data, error } = await supabase
-    .from("teams")
-    .select(
+  try {
+    const { data, error } = await supabase
+      .from("teams")
+      .select(
+        `
+        id,
+        name,
+        age_group,
+        gender,
+        grade_level,
+        logo_url,
+        season,
+        team_image,
+        team_coaches(coaches(first_name, last_name))
       `
-      id,
-      name,
-      age_group,
-      gender,
-      grade_level,
-      logo_url,
-      season,
-      team_image,
-      team_coaches(coaches(first_name, last_name))
-    `
-    )
-    .order("name", { ascending: true });
+      )
+      .order("name", { ascending: true });
 
-  if (error) throw new Error(error.message);
+    if (error) {
+      devError("Supabase teams fetch error:", error);
+      throw new Error(error.message);
+    }
 
-  return (
-    data?.map((team: TeamWithCoaches) => ({
-      ...team,
-      coach_names:
-        team.team_coaches
-          ?.map((tc) =>
-            tc.coaches
-              .map((coach) => `${coach.first_name} ${coach.last_name}`)
-              .join(", ")
-          )
-          .flat() || [],
-    })) || []
-  );
+    // Handle case where data is null or undefined
+    if (!data) {
+      devLog("No teams data returned from Supabase");
+      return [];
+    }
+
+    return (
+      data?.map((team: TeamWithCoaches) => ({
+        ...team,
+        coach_names:
+          team.team_coaches
+            ?.map((tc) => {
+              // Add safety check for tc.coaches
+              if (!tc.coaches || !Array.isArray(tc.coaches)) {
+                return [];
+              }
+              return tc.coaches
+                .map((coach) => `${coach.first_name} ${coach.last_name}`)
+                .join(", ");
+            })
+            .flat() || [],
+      })) || []
+    );
+  } catch (err: unknown) {
+    devError("Fetch teams error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch teams";
+    throw new Error(errorMessage);
+  }
 }
 
 // Fetch team by ID
@@ -99,11 +119,15 @@ export async function fetchTeamById(id: string): Promise<Team | null> {
           ...data,
           coach_names:
             data.team_coaches
-              ?.map((tc) =>
-                tc.coaches
+              ?.map((tc) => {
+                // Add safety check for tc.coaches
+                if (!tc.coaches || !Array.isArray(tc.coaches)) {
+                  return [];
+                }
+                return tc.coaches
                   .map((coach) => `${coach.first_name} ${coach.last_name}`)
-                  .join(", ")
-              )
+                  .join(", ");
+              })
               .flat() || [],
         }
       : null;

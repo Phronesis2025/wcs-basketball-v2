@@ -10,7 +10,18 @@ export default async function Home() {
   try {
     await fetchTeams();
   } catch (error) {
-    teamsError = error instanceof Error ? error.message : "Unknown error";
+    // Check if it's a missing environment variables error
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    if (
+      errorMessage.includes("placeholder") ||
+      errorMessage.includes("Missing required environment variables")
+    ) {
+      teamsError =
+        "Database connection not configured. Please set up environment variables.";
+    } else {
+      teamsError = errorMessage;
+    }
   }
   // Temporarily disable coaches fetching due to database schema issue
   const coachesError = null;
