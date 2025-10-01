@@ -1,5 +1,17 @@
 # WCSv2.0 Database Setup
 
+## 📝 Schema Updates (v2.4.2)
+
+**Last Updated**: January 2025 - Updated to reflect current production database schema
+
+### Key Changes:
+- **Soft Deletes**: Added `deleted_at` columns to `schedules`, `team_updates`, and `news` tables
+- **Enhanced Event Types**: Schedules now support 'Tournament' and 'Meeting' event types
+- **User References**: Updated foreign key references from `coaches(id)` to `users(id)` for better consistency
+- **News Team Association**: Added `team_id` to news table for team-specific news
+- **Password Reset Tracking**: Added `last_password_reset` timestamp to users table
+- **Array Types**: Updated practice drills to use generic `ARRAY` type instead of `TEXT[]`
+
 ## 🗄️ Current Database Status
 
 ### Supabase Configuration
@@ -26,8 +38,8 @@
 CREATE TABLE teams (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name TEXT NOT NULL UNIQUE,
-  age_group TEXT CHECK (age_group IN ('U10', 'U12', 'U14', 'U16', 'U18')),
-  gender TEXT CHECK (gender IN ('Boys', 'Girls')),
+  age_group TEXT CHECK (age_group = ANY (ARRAY['U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
+  gender TEXT CHECK (gender = ANY (ARRAY['Boys'::text, 'Girls'::text])),
   coach_email TEXT NOT NULL,
   grade_level TEXT,
   season TEXT,
@@ -42,9 +54,10 @@ CREATE TABLE teams (
 CREATE TABLE users (
   id UUID PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
-  role TEXT CHECK (role IN ('coach', 'parent', 'admin')),
+  role TEXT CHECK (role = ANY (ARRAY['coach'::text, 'parent'::text, 'admin'::text])),
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
-  password_reset BOOLEAN DEFAULT true
+  password_reset BOOLEAN DEFAULT true,
+  last_password_reset TIMESTAMP WITH TIME ZONE
 );
 ```
 
@@ -82,12 +95,14 @@ CREATE TABLE team_coaches (
 CREATE TABLE schedules (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   team_id UUID REFERENCES teams(id),
-  event_type TEXT CHECK (event_type IN ('Game', 'Practice')),
+  event_type TEXT CHECK (event_type = ANY (ARRAY['Game'::text, 'Practice'::text, 'Tournament'::text, 'Meeting'::text])),
   date_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
   location TEXT,
   opponent TEXT,
+  description TEXT,
   created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
-  created_by UUID REFERENCES coaches(id)
+  created_by UUID REFERENCES users(id),
+  deleted_at TIMESTAMP WITH TIME ZONE
 );
 ```
 
@@ -100,8 +115,9 @@ CREATE TABLE team_updates (
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   image_url TEXT,
-  created_by UUID REFERENCES coaches(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  created_by UUID REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  deleted_at TIMESTAMP WITH TIME ZONE
 );
 ```
 
@@ -112,8 +128,8 @@ CREATE TABLE practice_drills (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id UUID REFERENCES teams(id),
   title TEXT NOT NULL,
-  skills TEXT[] NOT NULL,
-  equipment TEXT[] NOT NULL,
+  skills ARRAY NOT NULL,
+  equipment ARRAY NOT NULL,
   time TEXT NOT NULL,
   instructions TEXT NOT NULL,
   additional_info TEXT,
@@ -122,7 +138,7 @@ CREATE TABLE practice_drills (
   category TEXT NOT NULL,
   week_number INTEGER NOT NULL,
   image_url TEXT,
-  created_by UUID REFERENCES coaches(id),
+  created_by UUID REFERENCES users(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 ```
@@ -135,8 +151,10 @@ CREATE TABLE news (
   title TEXT NOT NULL,
   content TEXT NOT NULL,
   image_url TEXT,
+  team_id UUID REFERENCES teams(id),
   created_by UUID REFERENCES users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  deleted_at TIMESTAMP WITH TIME ZONE
 );
 ```
 
@@ -264,9 +282,7 @@ USING (EXISTS (
   JOIN coaches c ON tc.coach_id = c.id
   WHERE tc.team_id = schedules.team_id
   AND c.user_id = auth.uid()
-) OR created_by IN (
-  SELECT id FROM coaches WHERE user_id = auth.uid()
-));
+) OR created_by = auth.uid());
 ```
 
 ### Team Updates Table Policies
@@ -284,9 +300,7 @@ USING (EXISTS (
   JOIN coaches c ON tc.coach_id = c.id
   WHERE tc.team_id = team_updates.team_id
   AND c.user_id = auth.uid()
-) OR created_by IN (
-  SELECT id FROM coaches WHERE user_id = auth.uid()
-));
+) OR created_by = auth.uid());
 ```
 
 ### Practice Drills Table Policies
@@ -304,9 +318,7 @@ USING (EXISTS (
   JOIN coaches c ON tc.coach_id = c.id
   WHERE tc.team_id = practice_drills.team_id
   AND c.user_id = auth.uid()
-) OR created_by IN (
-  SELECT id FROM coaches WHERE user_id = auth.uid()
-));
+) OR created_by = auth.uid());
 ```
 
 ### Users Table Policies
