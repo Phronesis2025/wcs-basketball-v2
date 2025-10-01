@@ -1,5 +1,6 @@
 // src/app/schedules/page.tsx
 "use client";
+import React from "react";
 // Removed unused imports: fetchSchedulesByTeamId, fetchTeamById
 import { Team, Schedule } from "@/types/supabase";
 import * as Sentry from "@sentry/nextjs";
