@@ -28,8 +28,14 @@ const mockCreateClient = () => ({
     select: mockFn().mockReturnThis(),
     eq: mockFn().mockReturnThis(),
     single: mockFn().mockReturnThis(),
-    insert: mockFn().mockResolvedValue({ data: [{ id: "new-id" }], error: null }), // Mock successful insert
-    update: mockFn().mockResolvedValue({ data: [{ id: "updated-id" }], error: null }), // Mock update
+    insert: mockFn().mockResolvedValue({
+      data: [{ id: "new-id" }],
+      error: null,
+    }), // Mock successful insert
+    update: mockFn().mockResolvedValue({
+      data: [{ id: "updated-id" }],
+      error: null,
+    }), // Mock update
     delete: mockFn().mockResolvedValue({ error: null }), // Mock delete (soft delete)
     // Mock initial data from DB_SETUP.md for team_updates
     // Expand this as needed for specific tests

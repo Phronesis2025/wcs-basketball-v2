@@ -16,6 +16,13 @@ type TeamCoachRelation = {
   coaches: Coach[];
 };
 
+type TeamCoachData = {
+  coaches: {
+    first_name: string;
+    last_name: string;
+  }[];
+};
+
 type TeamWithCoaches = {
   id: string;
   name: string;
@@ -25,12 +32,7 @@ type TeamWithCoaches = {
   logo_url: string | null;
   season: string;
   team_image: string | null;
-  team_coaches?: Array<{
-    coaches: {
-      first_name: string;
-      last_name: string;
-    }[];
-  }>;
+  team_coaches?: TeamCoachData[];
 };
 
 // Fetch teams
@@ -58,7 +60,6 @@ export async function fetchTeams(): Promise<Team[]> {
       throw new Error(error.message);
     }
 
-    // Handle case where data is null or undefined
     if (!data) {
       devLog("No teams data returned from Supabase");
       return [];
@@ -69,13 +70,15 @@ export async function fetchTeams(): Promise<Team[]> {
         ...team,
         coach_names:
           team.team_coaches
-            ?.map((tc) => {
-              // Add safety check for tc.coaches
+            ?.map((tc: TeamCoachData) => {
               if (!tc.coaches || !Array.isArray(tc.coaches)) {
                 return [];
               }
               return tc.coaches
-                .map((coach) => `${coach.first_name} ${coach.last_name}`)
+                .map(
+                  (coach: { first_name: string; last_name: string }) =>
+                    `${coach.first_name} ${coach.last_name}`
+                )
                 .join(", ");
             })
             .flat() || [],
@@ -105,313 +108,384 @@ export async function fetchTeamById(id: string): Promise<Team | null> {
         season,
         team_image,
         team_coaches(coaches(first_name, last_name))
-        `
+      `
       )
       .eq("id", id)
       .single();
+
     if (error) {
-      devLog("Fetch team error:", error);
+      devError("Supabase team fetch error:", error);
       throw new Error(error.message);
     }
-    devLog("Fetched team data:", data);
-    return data
-      ? {
-          ...data,
-          coach_names:
-            data.team_coaches
-              ?.map((tc) => {
-                // Add safety check for tc.coaches
-                if (!tc.coaches || !Array.isArray(tc.coaches)) {
-                  return [];
-                }
-                return tc.coaches
-                  .map((coach) => `${coach.first_name} ${coach.last_name}`)
-                  .join(", ");
-              })
-              .flat() || [],
-        }
-      : null;
+
+    if (!data) {
+      devLog("No team data returned for ID:", id);
+      return null;
+    }
+
+    return {
+      ...data,
+      coach_names:
+        data.team_coaches
+          ?.map((tc: TeamCoachData) => {
+            if (!tc.coaches || !Array.isArray(tc.coaches)) {
+              return [];
+            }
+            return tc.coaches
+              .map(
+                (coach: { first_name: string; last_name: string }) =>
+                  `${coach.first_name} ${coach.last_name}`
+              )
+              .join(", ");
+          })
+          .flat() || [],
+    };
   } catch (err: unknown) {
-    devError("Fetch team by ID error:", err);
+    devError("Fetch team error:", err);
     const errorMessage =
-      err instanceof Error ? err.message : "Failed to fetch team data";
+      err instanceof Error ? err.message : "Failed to fetch team";
     throw new Error(errorMessage);
   }
 }
 
 // Fetch coaches by team ID
 export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
-  const { data, error } = await supabase
-    .from("team_coaches")
-    .select("coaches(id, first_name, last_name, email, bio, image_url, quote)")
-    .eq("team_id", teamId);
-  if (error) throw new Error(error.message);
-  return data?.map((item: TeamCoachRelation) => item.coaches).flat() || [];
+  try {
+    const { data, error } = await supabase
+      .from("team_coaches")
+      .select("coaches(*)")
+      .eq("team_id", teamId);
+
+    if (error) {
+      devError("Supabase coaches fetch error:", error);
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      devLog("No coaches data returned for team ID:", teamId);
+      return [];
+    }
+
+    return data.map((item: TeamCoachRelation) => item.coaches).flat();
+  } catch (err: unknown) {
+    devError("Fetch coaches error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch coaches";
+    throw new Error(errorMessage);
+  }
 }
 
 // Fetch schedules by team ID
 export async function fetchSchedulesByTeamId(
   teamId: string
 ): Promise<Schedule[]> {
-  const { data, error } = await supabase
-    .from("schedules")
-    .select("*")
-    .eq("team_id", teamId)
-    .is("deleted_at", null)
-    .order("date_time", { ascending: true });
-  if (error) throw new Error(error.message);
-  return data || [];
-}
+  try {
+    const { data, error } = await supabase
+      .from("schedules")
+      .select("*")
+      .eq("team_id", teamId)
+      .is("deleted_at", null)
+      .order("date_time", { ascending: true });
 
-// Fetch practice drills
-export async function fetchPracticeDrills(
-  teamId?: string
-): Promise<PracticeDrill[]> {
-  let query = supabase.from("practice_drills").select("*");
-  if (teamId) query = query.eq("team_id", teamId);
-  const { data, error } = await query.order("created_at", { ascending: false });
-  if (error) throw new Error(error.message);
-  return data || [];
+    if (error) {
+      devError("Supabase schedules fetch error:", error);
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (err: unknown) {
+    devError("Fetch schedules error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch schedules";
+    throw new Error(errorMessage);
+  }
 }
 
 // Fetch team updates
 export async function fetchTeamUpdates(teamId: string): Promise<TeamUpdate[]> {
-  const { data, error } = await supabase
-    .from("team_updates")
-    .select("*")
-    .eq("team_id", teamId)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(5);
-  if (error) throw new Error(error.message);
-  return data || [];
+  try {
+    const { data, error } = await supabase
+      .from("team_updates")
+      .select("*")
+      .eq("team_id", teamId)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      devError("Supabase team updates fetch error:", error);
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (err: unknown) {
+    devError("Fetch team updates error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch team updates";
+    throw new Error(errorMessage);
+  }
 }
 
 // Fetch news
-export async function fetchNews(teamId: string): Promise<News[]> {
-  const { data, error } = await supabase
-    .from("news")
-    .select("*")
-    .eq("team_id", teamId)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(5);
-  if (error) throw new Error(error.message);
-  return data || [];
+export async function fetchNews(teamId?: string): Promise<News[]> {
+  try {
+    let query = supabase
+      .from("news")
+      .select("*")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+
+    if (teamId) {
+      query = query.eq("team_id", teamId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      devError("Supabase news fetch error:", error);
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (err: unknown) {
+    devError("Fetch news error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch news";
+    throw new Error(errorMessage);
+  }
+}
+
+// Fetch practice drills
+export async function fetchPracticeDrills(): Promise<PracticeDrill[]> {
+  try {
+    const { data, error } = await supabase
+      .from("practice_drills")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      devError("Supabase practice drills fetch error:", error);
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (err: unknown) {
+    devError("Fetch practice drills error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch practice drills";
+    throw new Error(errorMessage);
+  }
 }
 
 // Add schedule
-export async function addSchedule(
-  data: {
-    event_type: string;
-    date_time: string;
-    location: string;
-    team_id: string;
-    opponent?: string;
-    description?: string;
-  },
-  userId: string
-): Promise<Schedule> {
-  // Validate date_time
-  if (
-    !data.date_time ||
-    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(data.date_time)
-  ) {
-    throw new Error("Invalid date/time format (use YYYY-MM-DDTHH:MM)");
+export async function addSchedule(data: {
+  team_id: string;
+  event_type: "Game" | "Practice" | "Tournament" | "Meeting";
+  date_time: string;
+  location: string;
+  opponent?: string;
+  description?: string;
+}): Promise<Schedule> {
+  try {
+    const { data: result, error } = await supabase
+      .from("schedules")
+      .insert(data)
+      .select()
+      .single();
+
+    if (error) {
+      devError("Supabase schedule insert error:", error);
+      throw new Error(error.message);
+    }
+
+    return result;
+  } catch (err: unknown) {
+    devError("Add schedule error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to add schedule";
+    throw new Error(errorMessage);
   }
-  devLog("Add schedule input:", { data, userId }); // Debug: Log input
-  if (!supabaseAdmin) throw new Error("Supabase admin client not available");
-  const { data: result, error } = await supabaseAdmin // Bypass RLS
-    .from("schedules")
-    .insert({ ...data, created_by: userId })
-    .select()
-    .single();
-  if (error) {
-    devLog("Add schedule error:", error);
-    throw new Error(error.message);
-  }
-  return result;
 }
 
 // Update schedule
 export async function updateSchedule(
   id: string,
   data: {
-    event_type?: string;
-    date_time?: string;
-    location?: string;
+    event_type: "Game" | "Practice" | "Tournament" | "Meeting";
+    date_time: string;
+    location: string;
     opponent?: string;
     description?: string;
   }
 ): Promise<Schedule> {
-  if (
-    data.date_time &&
-    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?([+-]\d{2}:\d{2}|Z)?$/.test(
-      data.date_time
-    )
-  ) {
-    throw new Error(
-      "Invalid date/time format (use YYYY-MM-DDTHH:MM or datetime-local format)"
-    );
+  try {
+    const { data: result, error } = await supabase
+      .from("schedules")
+      .update(data)
+      .eq("id", id)
+      .is("deleted_at", null)
+      .select()
+      .single();
+
+    if (error) {
+      devError("Supabase schedule update error:", error);
+      throw new Error(error.message);
+    }
+
+    return result;
+  } catch (err: unknown) {
+    devError("Update schedule error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to update schedule";
+    throw new Error(errorMessage);
   }
-  devLog("Update schedule input:", { id, data }); // Debug: Log input
-  if (!supabaseAdmin) throw new Error("Supabase admin client not available");
-  const { data: result, error } = await supabaseAdmin // Bypass RLS
-    .from("schedules")
-    .update(data)
-    .eq("id", id)
-    .is("deleted_at", null)
-    .select()
-    .single();
-  if (error) {
-    devLog("Update schedule error:", error);
-    throw new Error(error.message);
-  }
-  return result;
 }
 
 // Delete schedule
 export async function deleteSchedule(id: string): Promise<void> {
-  devLog("Delete schedule input:", { id }); // Debug: Log input
-  if (!supabaseAdmin) throw new Error("Supabase admin client not available");
-  const { error } = await supabaseAdmin // Bypass RLS
-    .from("schedules")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) {
-    devLog("Delete schedule error:", error);
-    throw new Error(error.message);
+  try {
+    const { error } = await supabase
+      .from("schedules")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+
+    if (error) {
+      devError("Supabase schedule delete error:", error);
+      throw new Error(error.message);
+    }
+  } catch (err: unknown) {
+    devError("Delete schedule error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to delete schedule";
+    throw new Error(errorMessage);
   }
 }
 
-// Add drill
-export async function addDrill(
-  data: Omit<
-    PracticeDrill,
-    "id" | "created_at" | "created_by" | "image_url"
-  > & { image?: File },
-  userId: string
-): Promise<PracticeDrill> {
-  let imagePath: string | undefined;
-  if (data.image) {
-    const fileName = `${Date.now()}-${data.image.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("drills")
-      .upload(fileName, data.image);
-    if (uploadError) throw new Error(uploadError.message);
-    const { data: urlData } = supabase.storage
-      .from("drills")
-      .getPublicUrl(fileName);
-    imagePath = urlData.publicUrl;
+// Add team update
+export async function addUpdate(data: {
+  team_id: string;
+  title: string;
+  content: string;
+  image_url?: string;
+  created_by: string;
+}): Promise<TeamUpdate> {
+  try {
+    devLog("Adding team update:", { ...data, created_by: "***" });
+
+    if (!supabaseAdmin) {
+      throw new Error("Admin client not available");
+    }
+
+    const insertData = {
+      ...data,
+      created_by: data.created_by,
+    };
+
+    const { data: result, error } = await supabaseAdmin
+      .from("team_updates")
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) {
+      devError("Team update insert error:", error);
+      throw new Error(error.message);
+    }
+    return result;
+  } catch (err: unknown) {
+    devError("Add team update error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to add team update";
+    throw new Error(errorMessage);
   }
-  const { data: result, error } = await supabase
-    .from("practice_drills")
-    .insert({ ...data, created_by: userId, image_url: imagePath })
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return result;
 }
 
-// Add update
-export async function addUpdate(
-  data: Omit<TeamUpdate, "id" | "created_at" | "created_by" | "image_url"> & {
-    image?: File;
-  },
-  userId: string
-): Promise<TeamUpdate> {
-  let imagePath: string | undefined;
-  if (data.image) {
-    const fileName = `${Date.now()}-${data.image.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("updates")
-      .upload(fileName, data.image);
-    if (uploadError) throw new Error(uploadError.message);
-    const { data: urlData } = supabase.storage
-      .from("updates")
-      .getPublicUrl(fileName);
-    imagePath = urlData.publicUrl;
-  }
-  const { data: result, error } = await supabase
-    .from("team_updates")
-    .insert({ ...data, created_by: userId, image_url: imagePath })
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return result;
-}
-
-// Update update
+// Update team update
 export async function updateUpdate(
   id: string,
   data: {
     title?: string;
     content?: string;
-    image?: File;
+    image_url?: string;
+    updated_by: string;
   }
 ): Promise<TeamUpdate> {
-  let imagePath: string | undefined;
-  if (data.image) {
-    const fileName = `${Date.now()}-${data.image.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("updates")
-      .upload(fileName, data.image);
-    if (uploadError) throw new Error(uploadError.message);
-    const { data: urlData } = supabase.storage
-      .from("updates")
-      .getPublicUrl(fileName);
-    imagePath = urlData.publicUrl;
+  try {
+    devLog("Updating team update:", { id, data });
+
+    if (!supabaseAdmin) {
+      throw new Error("Admin client not available");
+    }
+
+    const updateData = {
+      ...data,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data: result, error } = await supabaseAdmin
+      .from("team_updates")
+      .update(updateData)
+      .eq("id", id)
+      .is("deleted_at", null)
+      .select()
+      .single();
+
+    if (error) {
+      devError("Team update update error:", error);
+      throw new Error(error.message);
+    }
+    return result;
+  } catch (err: unknown) {
+    devError("Update team update error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to update team update";
+    throw new Error(errorMessage);
   }
-  const updateData = { ...data, image_url: imagePath };
-  const { data: result, error } = await supabase
-    .from("team_updates")
-    .update(updateData)
-    .eq("id", id)
-    .is("deleted_at", null)
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return result;
 }
 
-// Delete update
+// Delete team update
 export async function deleteUpdate(id: string): Promise<void> {
-  const { error } = await supabase
-    .from("team_updates")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  try {
+    const { error } = await supabase
+      .from("team_updates")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      devError("Supabase team update delete error:", error);
+      throw new Error(error.message);
+    }
+  } catch (err: unknown) {
+    devError("Delete team update error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to delete team update";
+    throw new Error(errorMessage);
+  }
 }
 
 // Add news
-export async function addNews(
-  data: {
-    title: string;
-    content: string;
-    team_id: string;
-    image?: File;
-  },
-  userId: string
-): Promise<News> {
-  let imagePath: string | undefined;
-  if (data.image) {
-    const fileName = `${Date.now()}-${data.image.name}`;
-    const { error: uploadError } = await supabase.storage
+export async function addNews(data: {
+  team_id: string;
+  title: string;
+  content: string;
+  image_url?: string;
+}): Promise<News> {
+  try {
+    const insertData = { ...data };
+    const { data: result, error } = await supabase
       .from("news")
-      .upload(fileName, data.image);
-    if (uploadError) throw new Error(uploadError.message);
-    const { data: urlData } = supabase.storage
-      .from("news")
-      .getPublicUrl(fileName);
-    imagePath = urlData.publicUrl;
+      .insert(insertData)
+      .select()
+      .single();
+    if (error) {
+      devError("Supabase news insert error:", error);
+      throw new Error(error.message);
+    }
+    return result;
+  } catch (err: unknown) {
+    devError("Add news error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to add news";
+    throw new Error(errorMessage);
   }
-  const { data: result, error } = await supabase
-    .from("news")
-    .insert({ ...data, created_by: userId, image_url: imagePath })
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return result;
 }
 
 // Update news
@@ -420,40 +494,48 @@ export async function updateNews(
   data: {
     title?: string;
     content?: string;
-    image?: File;
+    image_url?: string;
   }
 ): Promise<News> {
-  let imagePath: string | undefined;
-  if (data.image) {
-    const fileName = `${Date.now()}-${data.image.name}`;
-    const { error: uploadError } = await supabase.storage
+  try {
+    const updateData = { ...data };
+    const { data: result, error } = await supabase
       .from("news")
-      .upload(fileName, data.image);
-    if (uploadError) throw new Error(uploadError.message);
-    const { data: urlData } = supabase.storage
-      .from("news")
-      .getPublicUrl(fileName);
-    imagePath = urlData.publicUrl;
+      .update(updateData)
+      .eq("id", id)
+      .is("deleted_at", null)
+      .select()
+      .single();
+    if (error) {
+      devError("Supabase news update error:", error);
+      throw new Error(error.message);
+    }
+    return result;
+  } catch (err: unknown) {
+    devError("Update news error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to update news";
+    throw new Error(errorMessage);
   }
-  const updateData = { ...data, image_url: imagePath };
-  const { data: result, error } = await supabase
-    .from("news")
-    .update(updateData)
-    .eq("id", id)
-    .is("deleted_at", null)
-    .select()
-    .single();
-  if (error) throw new Error(error.message);
-  return result;
 }
 
 // Delete news
 export async function deleteNews(id: string): Promise<void> {
-  const { error } = await supabase
-    .from("news")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
-  if (error) throw new Error(error.message);
+  try {
+    const { error } = await supabase
+      .from("news")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) {
+      devError("Supabase news delete error:", error);
+      throw new Error(error.message);
+    }
+  } catch (err: unknown) {
+    devError("Delete news error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to delete news";
+    throw new Error(errorMessage);
+  }
 }
 
 // Role check
@@ -467,13 +549,16 @@ export async function getUserRole(userId: string) {
       .single();
 
     if (error) {
+      devError("Supabase user role fetch error:", error);
       throw new Error(error.message);
     }
 
     return data;
   } catch (err: unknown) {
     devError("Role check error:", err);
-    throw err;
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to check user role";
+    throw new Error(errorMessage);
   }
 }
 
@@ -490,10 +575,13 @@ export async function updatePasswordReset(userId: string) {
       .eq("id", userId);
 
     if (error) {
+      devError("Supabase password reset update error:", error);
       throw new Error(error.message);
     }
   } catch (err: unknown) {
     devError("Password reset DB update error:", err);
-    throw err;
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to update password reset";
+    throw new Error(errorMessage);
   }
 }

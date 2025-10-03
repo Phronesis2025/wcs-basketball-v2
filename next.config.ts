@@ -22,7 +22,7 @@ const cspDev = [
 const cspProd = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics with inline scripts
-  "style-src 'self' 'unsafe-inline'", // Still needed for Tailwind CSS
+  "style-src 'self' 'unsafe-inline'", // Allows Tailwind CSS
   "font-src 'self' data:",
   "img-src 'self' data: https://htgkddahhgugesktujds.supabase.co",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics connections
@@ -60,7 +60,17 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "htgkddahhgugesktujds.supabase.co",
-        pathname: "/storage/v1/object/images/**", // Specific to images bucket
+        pathname: "/storage/v1/object/images/**",
+      },
+      {
+        protocol: "https",
+        hostname: "htgkddahhgugesktujds.supabase.co",
+        pathname: "/storage/v1/object/team-updates/**",
+      },
+      {
+        protocol: "https",
+        hostname: "htgkddahhgugesktujds.supabase.co",
+        pathname: "/storage/v1/object/public/team-updates/**",
       },
     ],
   },
