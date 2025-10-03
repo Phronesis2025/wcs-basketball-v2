@@ -1,16 +1,19 @@
 # WCSv2.0 Database Setup
 
-## 📝 Schema Updates (v2.4.2)
+## 📝 Schema Updates (v2.5.0)
 
 **Last Updated**: January 2025 - Updated to reflect current production database schema
 
 ### Key Changes:
+
+- **Audit Logging**: Added comprehensive `audit_logs` table for security monitoring
 - **Soft Deletes**: Added `deleted_at` columns to `schedules`, `team_updates`, and `news` tables
 - **Enhanced Event Types**: Schedules now support 'Tournament' and 'Meeting' event types
 - **User References**: Updated foreign key references from `coaches(id)` to `users(id)` for better consistency
 - **News Team Association**: Added `team_id` to news table for team-specific news
 - **Password Reset Tracking**: Added `last_password_reset` timestamp to users table
 - **Array Types**: Updated practice drills to use generic `ARRAY` type instead of `TEXT[]`
+- **Security Enhancements**: Added audit triggers and comprehensive logging
 
 ## 🗄️ Current Database Status
 
@@ -35,168 +38,217 @@
 ### 1. Teams Table
 
 ```sql
-CREATE TABLE teams (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL UNIQUE,
-  age_group TEXT CHECK (age_group = ANY (ARRAY['U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
-  gender TEXT CHECK (gender = ANY (ARRAY['Boys'::text, 'Girls'::text])),
-  coach_email TEXT NOT NULL,
-  grade_level TEXT,
-  season TEXT,
-  logo_url TEXT,
-  team_image TEXT
+CREATE TABLE public.teams (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL UNIQUE,
+  age_group text CHECK (age_group = ANY (ARRAY['U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
+  gender text CHECK (gender = ANY (ARRAY['Boys'::text, 'Girls'::text])),
+  coach_email text NOT NULL,
+  grade_level text,
+  season text,
+  logo_url text,
+  team_image text,
+  CONSTRAINT teams_pkey PRIMARY KEY (id)
 );
 ```
 
 ### 2. Users Table
 
 ```sql
-CREATE TABLE users (
-  id UUID PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  role TEXT CHECK (role = ANY (ARRAY['coach'::text, 'parent'::text, 'admin'::text])),
-  created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
-  password_reset BOOLEAN DEFAULT true,
-  last_password_reset TIMESTAMP WITH TIME ZONE
+CREATE TABLE public.users (
+  id uuid NOT NULL,
+  email text NOT NULL UNIQUE,
+  role text CHECK (role = ANY (ARRAY['coach'::text, 'parent'::text, 'admin'::text])),
+  created_at timestamp without time zone DEFAULT now(),
+  password_reset boolean DEFAULT true,
+  last_password_reset timestamp with time zone,
+  CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 ```
 
 ### 3. Coaches Table
 
 ```sql
-CREATE TABLE coaches (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  first_name TEXT NOT NULL,
-  last_name TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  bio TEXT,
-  image_url TEXT,
-  quote TEXT,
-  user_id UUID REFERENCES users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+CREATE TABLE public.coaches (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  first_name text NOT NULL,
+  last_name text NOT NULL,
+  email text NOT NULL UNIQUE,
+  bio text,
+  created_at timestamp with time zone DEFAULT now(),
+  image_url text,
+  quote text,
+  user_id uuid,
+  CONSTRAINT coaches_pkey PRIMARY KEY (id),
+  CONSTRAINT coaches_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 ```
 
 ### 4. Team Coaches Junction Table
 
 ```sql
-CREATE TABLE team_coaches (
-  team_id UUID NOT NULL,
-  coach_id UUID NOT NULL,
-  PRIMARY KEY (coach_id, team_id),
-  FOREIGN KEY (team_id) REFERENCES teams(id),
-  FOREIGN KEY (coach_id) REFERENCES coaches(id)
+CREATE TABLE public.team_coaches (
+  team_id uuid NOT NULL,
+  coach_id uuid NOT NULL,
+  CONSTRAINT team_coaches_pkey PRIMARY KEY (coach_id, team_id),
+  CONSTRAINT team_coaches_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
+  CONSTRAINT team_coaches_coach_id_fkey FOREIGN KEY (coach_id) REFERENCES public.coaches(id)
 );
 ```
 
 ### 5. Schedules Table
 
 ```sql
-CREATE TABLE schedules (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  team_id UUID REFERENCES teams(id),
-  event_type TEXT CHECK (event_type = ANY (ARRAY['Game'::text, 'Practice'::text, 'Tournament'::text, 'Meeting'::text])),
-  date_time TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-  location TEXT,
-  opponent TEXT,
-  description TEXT,
-  created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now(),
-  created_by UUID REFERENCES users(id),
-  deleted_at TIMESTAMP WITH TIME ZONE
+CREATE TABLE public.schedules (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  team_id uuid,
+  event_type text CHECK (event_type = ANY (ARRAY['Game'::text, 'Practice'::text, 'Tournament'::text, 'Meeting'::text])),
+  date_time timestamp without time zone NOT NULL,
+  location text,
+  opponent text,
+  created_at timestamp without time zone DEFAULT now(),
+  created_by uuid,
+  deleted_at timestamp with time zone,
+  description text,
+  CONSTRAINT schedules_pkey PRIMARY KEY (id),
+  CONSTRAINT schedules_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
+  CONSTRAINT schedules_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 ```
 
 ### 6. Team Updates Table
 
 ```sql
-CREATE TABLE team_updates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  team_id UUID REFERENCES teams(id),
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  image_url TEXT,
-  created_by UUID REFERENCES users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  deleted_at TIMESTAMP WITH TIME ZONE
+CREATE TABLE public.team_updates (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  team_id uuid,
+  title text NOT NULL,
+  content text NOT NULL,
+  image_url text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  deleted_at timestamp with time zone,
+  CONSTRAINT team_updates_pkey PRIMARY KEY (id),
+  CONSTRAINT team_updates_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
+  CONSTRAINT team_updates_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 ```
 
 ### 7. Practice Drills Table
 
 ```sql
-CREATE TABLE practice_drills (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  team_id UUID REFERENCES teams(id),
-  title TEXT NOT NULL,
+CREATE TABLE public.practice_drills (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  team_id uuid,
+  title text NOT NULL,
   skills ARRAY NOT NULL,
   equipment ARRAY NOT NULL,
-  time TEXT NOT NULL,
-  instructions TEXT NOT NULL,
-  additional_info TEXT,
-  benefits TEXT NOT NULL,
-  difficulty TEXT NOT NULL,
-  category TEXT NOT NULL,
-  week_number INTEGER NOT NULL,
-  image_url TEXT,
-  created_by UUID REFERENCES users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  time text NOT NULL,
+  instructions text NOT NULL,
+  additional_info text,
+  benefits text NOT NULL,
+  difficulty text NOT NULL,
+  category text NOT NULL,
+  week_number integer NOT NULL,
+  image_url text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT practice_drills_pkey PRIMARY KEY (id),
+  CONSTRAINT practice_drills_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
+  CONSTRAINT practice_drills_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 ```
 
 ### 8. News Table
 
 ```sql
-CREATE TABLE news (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  content TEXT NOT NULL,
-  image_url TEXT,
-  team_id UUID REFERENCES teams(id),
-  created_by UUID REFERENCES users(id),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  deleted_at TIMESTAMP WITH TIME ZONE
+CREATE TABLE public.news (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  content text NOT NULL,
+  image_url text,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  team_id uuid,
+  deleted_at timestamp with time zone,
+  CONSTRAINT news_pkey PRIMARY KEY (id),
+  CONSTRAINT news_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
+  CONSTRAINT news_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 ```
 
 ### 9. Products Table
 
 ```sql
-CREATE TABLE products (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
-  description TEXT,
-  price NUMERIC NOT NULL,
-  printful_id TEXT,
-  image_url TEXT
+CREATE TABLE public.products (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  description text,
+  price numeric NOT NULL,
+  printful_id text,
+  image_url text,
+  CONSTRAINT products_pkey PRIMARY KEY (id)
 );
 ```
 
 ### 10. Resources Table
 
 ```sql
-CREATE TABLE resources (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  title TEXT NOT NULL,
-  description TEXT,
-  file_url TEXT,
-  coach_email TEXT NOT NULL,
-  created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now()
+CREATE TABLE public.resources (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  title text NOT NULL,
+  description text,
+  file_url text,
+  coach_email text NOT NULL,
+  created_at timestamp without time zone DEFAULT now(),
+  CONSTRAINT resources_pkey PRIMARY KEY (id)
 );
 ```
 
 ### 11. Audit Logs Table
 
 ```sql
-CREATE TABLE audit_logs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  table_name TEXT NOT NULL,
-  operation TEXT NOT NULL,
-  user_id UUID REFERENCES users(id),
-  old_data JSONB,
-  new_data JSONB,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+CREATE TABLE public.audit_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  table_name text NOT NULL,
+  operation text NOT NULL,
+  user_id uuid,
+  old_data jsonb,
+  new_data jsonb,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT audit_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT audit_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 ```
+
+## 🔍 Audit Logging System
+
+### Overview
+
+The audit logging system provides comprehensive security monitoring and change tracking across all critical database tables.
+
+### Features
+
+- **Automatic Logging**: All INSERT, UPDATE, and DELETE operations are automatically logged
+- **Change Tracking**: Captures both old and new data for each operation
+- **User Attribution**: Links each change to the authenticated user
+- **Security Monitoring**: Enables detection of unauthorized access or suspicious activity
+
+### Audit Log Structure
+
+- **table_name**: The table that was modified
+- **operation**: The type of operation (INSERT, UPDATE, DELETE)
+- **user_id**: The user who performed the operation
+- **old_data**: Previous state of the record (for UPDATE/DELETE)
+- **new_data**: New state of the record (for INSERT/UPDATE)
+- **created_at**: Timestamp of the operation
+
+### Security Benefits
+
+- **Compliance**: Meets audit requirements for data governance
+- **Forensics**: Enables investigation of security incidents
+- **Monitoring**: Provides real-time visibility into database changes
+- **Accountability**: Ensures all changes are attributable to specific users
 
 ## 🔐 Row Level Security (RLS)
 
@@ -413,6 +465,79 @@ USING (EXISTS (
 ));
 ```
 
+### Audit Triggers and Functions
+
+```sql
+-- Function to automatically log changes
+CREATE OR REPLACE FUNCTION audit_trigger_function()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO audit_logs (table_name, operation, user_id, old_data, new_data)
+  VALUES (
+    TG_TABLE_NAME,
+    TG_OP,
+    auth.uid(),
+    CASE WHEN TG_OP = 'DELETE' THEN row_to_json(OLD) ELSE NULL END,
+    CASE WHEN TG_OP != 'DELETE' THEN row_to_json(NEW) ELSE NULL END
+  );
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create triggers for audit logging on critical tables
+CREATE TRIGGER audit_users_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON users
+  FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+
+CREATE TRIGGER audit_teams_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON teams
+  FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+
+CREATE TRIGGER audit_coaches_trigger
+  AFTER INSERT OR UPDATE OR DELETE ON coaches
+  FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
+```
+
+### Helper Functions
+
+```sql
+-- Function to check if user is admin
+CREATE OR REPLACE FUNCTION is_admin(user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM users
+    WHERE id = user_id
+    AND role = 'admin'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to check if user is coach
+CREATE OR REPLACE FUNCTION is_coach(user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM users
+    WHERE id = user_id
+    AND role = 'coach'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to check if user owns team
+CREATE OR REPLACE FUNCTION owns_team(user_id UUID, team_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM teams
+    WHERE id = team_id
+    AND created_by = user_id
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+```
+
 ## 📝 Sample Data
 
 ### Teams Data
@@ -465,9 +590,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# Optional for admin operations
+# Required for admin operations and RLS bypass
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ```
+
+### Service Role Key Usage
+
+The `SUPABASE_SERVICE_ROLE_KEY` is essential for:
+
+- **Server Actions**: Bypassing RLS in server-side operations
+- **Admin Operations**: Managing users, teams, and system data
+- **Audit Logging**: Recording system-level changes
+- **Data Migration**: Bulk operations and maintenance tasks
+
+**Security Note**: Never expose the service role key to client-side code. It should only be used in server-side operations.
 
 ## 📈 Performance Optimization
 
@@ -497,6 +633,7 @@ CREATE INDEX idx_users_role ON users(role);
 - **Connection Count**: Stable connection pool usage
 - **Storage Usage**: <100MB (well within limits)
 - **Error Rate**: <0.1% (excellent)
+- **Audit Logs**: Real-time change tracking and security monitoring
 
 ### Monitoring Tools
 
@@ -504,6 +641,8 @@ CREATE INDEX idx_users_role ON users(role);
 - **Query Performance**: Built-in query analysis
 - **Error Tracking**: Database error monitoring
 - **Usage Analytics**: Connection and query analytics
+- **Audit Logs**: Security event monitoring and change tracking
+- **RLS Policy Monitoring**: Row-level security policy effectiveness
 
 ## 🛠️ Maintenance Procedures
 
@@ -513,13 +652,15 @@ CREATE INDEX idx_users_role ON users(role);
 - **Performance Review**: Check query performance
 - **Error Monitoring**: Review any database errors
 - **Backup Verification**: Ensure backups are working
+- **Audit Log Review**: Check for suspicious activity or unauthorized access
 
 ### Weekly Tasks
 
 - **Index Analysis**: Review and optimize indexes
 - **Query Optimization**: Analyze slow queries
 - **Storage Monitoring**: Check storage usage
-- **Security Review**: Review access logs
+- **Security Review**: Review access logs and audit trail
+- **Audit Log Analysis**: Review audit logs for patterns and anomalies
 
 ### Monthly Tasks
 
@@ -527,6 +668,7 @@ CREATE INDEX idx_users_role ON users(role);
 - **Security Audit**: Review RLS policies and access
 - **Data Cleanup**: Remove old or unused data
 - **Backup Testing**: Test backup restoration
+- **Audit Log Cleanup**: Archive old audit logs and maintain retention policy
 
 ## 🚨 Backup & Recovery
 
@@ -536,6 +678,7 @@ CREATE INDEX idx_users_role ON users(role);
 - **Point-in-Time Recovery**: Available for last 7 days
 - **Geographic Redundancy**: Multi-region backup storage
 - **Retention Policy**: 30-day retention for automated backups
+- **Audit Log Retention**: 90-day retention for audit logs (configurable)
 
 ### Recovery Procedures
 
@@ -543,6 +686,7 @@ CREATE INDEX idx_users_role ON users(role);
 2. **Corruption**: Use point-in-time recovery
 3. **Accidental Deletion**: Restore from backup
 4. **Security Breach**: Isolate and restore from clean backup
+5. **Audit Log Recovery**: Restore audit logs for forensic analysis
 
 ## 📞 Support & Resources
 
@@ -557,3 +701,5 @@ CREATE INDEX idx_users_role ON users(role);
 - **PostgreSQL Docs**: https://www.postgresql.org/docs/
 - **Supabase Guides**: https://supabase.com/docs/guides
 - **RLS Documentation**: https://supabase.com/docs/guides/auth/row-level-security
+- **Audit Logging**: https://supabase.com/docs/guides/database/audit-logs
+- **Security Best Practices**: https://supabase.com/docs/guides/database/security

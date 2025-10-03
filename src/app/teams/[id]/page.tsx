@@ -13,10 +13,9 @@ import { motion, Variants } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import useEmblaCarousel from "embla-carousel-react";
-import Autoplay from "embla-carousel-autoplay";
 import { supabase } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import TeamUpdates from "@/components/TeamUpdates";
 
 type TeamPageProps = { params: Promise<{ id: string }> };
 
@@ -32,11 +31,6 @@ export default function TeamPage({ params }: TeamPageProps) {
   const [updates, setUpdates] = useState<TeamUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Embla Carousel setup
-  const [emblaRef] = useEmblaCarousel({ loop: true }, [
-    Autoplay({ delay: 5000 }),
-  ]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -327,55 +321,9 @@ export default function TeamPage({ params }: TeamPageProps) {
         </div>
 
         {/* Team Updates - Full Width */}
-        <section className="mb-12" aria-label="Team Updates">
-          <h2 className="text-2xl font-bebas uppercase mb-4 text-center">
-            Team Updates
-          </h2>
-          {updates.length > 0 ? (
-            <div className="relative">
-              <div className="overflow-hidden" ref={emblaRef}>
-                <div className="flex">
-                  {updates.map((update) => (
-                    <div
-                      key={update.id}
-                      className="flex-[0_0_100%] min-w-0 px-2"
-                    >
-                      <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4">
-                        <h3 className="text-xl font-bebas">{update.title}</h3>
-                        <p className="text-gray-300 font-inter">
-                          {update.content}
-                        </p>
-                        {update.image_url && (
-                          <Image
-                            src={update.image_url}
-                            alt={update.title}
-                            width={0}
-                            height={0}
-                            sizes="100vw"
-                            className="w-full h-auto mt-4 rounded-lg"
-                            onError={(e) => {
-                              devError(
-                                `Image load error for update ${update.title}: ${update.image_url}`
-                              );
-                              Sentry.captureMessage(
-                                `Failed to load update image for ${update.title}: ${update.image_url}`
-                              );
-                              e.currentTarget.src = "/logos/logo2.png";
-                            }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-300 font-inter text-center">
-              No updates available.
-            </p>
-          )}
-        </section>
+        <div className="mb-12">
+          <TeamUpdates team={team} updates={updates} />
+        </div>
 
         {/* Game Schedule - Full Width */}
         <section className="mb-12" aria-label="Game Schedule">

@@ -10,7 +10,6 @@ export default async function Home() {
   try {
     await fetchTeams();
   } catch (error) {
-    // Check if it's a missing environment variables error
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
     if (
