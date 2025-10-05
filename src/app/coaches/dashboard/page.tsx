@@ -33,7 +33,8 @@ import { Team, Schedule, TeamUpdate, News } from "@/types/supabase";
 export default function CoachesDashboard() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("");
-  const [, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [userName, setUserName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [csrfToken, setCsrfToken] = useState("");
@@ -117,6 +118,9 @@ export default function CoachesDashboard() {
         }
 
         setUserId(user.user.id); // Set user ID for created_by
+        setUserName(
+          user.user.user_metadata?.first_name || user.user.email || ""
+        );
 
         const userData = await getUserRole(user.user.id);
         if (!userData) {
@@ -145,10 +149,14 @@ export default function CoachesDashboard() {
 
     const loadTeamData = async () => {
       try {
+        const teamIdForFetch =
+          selectedTeam === "__GLOBAL__" ? "__GLOBAL__" : selectedTeam;
         const [schedulesData, updatesData, newsData] = await Promise.all([
-          fetchSchedulesByTeamId(selectedTeam),
-          fetchTeamUpdates(selectedTeam),
-          fetchNews(selectedTeam),
+          fetchSchedulesByTeamId(teamIdForFetch),
+          fetchTeamUpdates(teamIdForFetch),
+          teamIdForFetch === "__GLOBAL__"
+            ? Promise.resolve([])
+            : fetchNews(teamIdForFetch),
         ]);
         setSchedules(schedulesData);
         setUpdates(updatesData);
@@ -171,7 +179,7 @@ export default function CoachesDashboard() {
           event: "*",
           schema: "public",
           table: "schedules",
-          filter: `team_id=eq.${selectedTeam}`,
+          filter: selectedTeam === "__GLOBAL__" ? `is_global=eq.true` : `team_id=eq.${selectedTeam}`,
         },
         () => loadTeamData()
       )
@@ -181,7 +189,7 @@ export default function CoachesDashboard() {
           event: "*",
           schema: "public",
           table: "team_updates",
-          filter: `team_id=eq.${selectedTeam}`,
+          filter: selectedTeam === "__GLOBAL__" ? `is_global=eq.true` : `team_id=eq.${selectedTeam}`,
         },
         () => loadTeamData()
       )
@@ -208,6 +216,7 @@ export default function CoachesDashboard() {
       toast.error("Please select a team");
       return;
     }
+    // For program-wide schedules, we'll use a placeholder team_id and set is_global=true
 
     // Client-side validation
     if (!scheduleEventType) {
@@ -252,7 +261,7 @@ export default function CoachesDashboard() {
         setEditing(null);
       } else {
         const newSchedule = await addSchedule({
-          team_id: selectedTeam,
+          team_id: selectedTeam === "__GLOBAL__" ? "00000000-0000-0000-0000-000000000000" : selectedTeam,
           event_type: scheduleEventType as
             | "Game"
             | "Practice"
@@ -262,6 +271,7 @@ export default function CoachesDashboard() {
           location: scheduleLocation,
           opponent: scheduleOpponent || undefined,
           description: scheduleDescription || undefined,
+          is_global: selectedTeam === "__GLOBAL__",
         });
         setSchedules((prev) => [...prev, newSchedule]);
         toast.success("Schedule created!");
@@ -336,10 +346,11 @@ export default function CoachesDashboard() {
         toast.success("Team update updated!");
       } else {
         const newUpdate = await addUpdate({
-          team_id: selectedTeam,
+          team_id: selectedTeam === "__GLOBAL__" ? "GLOBAL" : selectedTeam,
           title: sanitizeInput(updateTitle),
           content: sanitizeInput(updateContent),
           image_url: imagePath,
+          is_global: selectedTeam === "__GLOBAL__",
           created_by: userId,
         });
         setUpdates((prev) => [...prev, newUpdate]);
@@ -406,6 +417,12 @@ export default function CoachesDashboard() {
     e.preventDefault();
     if (!selectedTeam) {
       toast.error("Please select a team");
+      return;
+    }
+    if (selectedTeam === "__GLOBAL__") {
+      toast.error(
+        "Program-wide selection is only for Updates. Choose a team for news."
+      );
       return;
     }
     if (!userId) {
@@ -489,12 +506,19 @@ export default function CoachesDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6">
+    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 pt-20 sm:pt-24">
       <Toaster position="top-right" />
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bebas uppercase mb-6">
-          Coaches Dashboard
-        </h1>
+        <div className="flex flex-col items-center gap-2 mb-8">
+          <h1 className="text-[clamp(2rem,4vw,2.5rem)] font-bebas uppercase text-center">
+            Coaches Dashboard
+          </h1>
+          {userName && (
+            <p className="text-sm text-gray-300 font-inter">
+              Signed in as <span className="text-red">{userName}</span>
+            </p>
+          )}
+        </div>
         {error && <p className="text-red-500 mb-4">Error: {error}</p>}
         <div className="mb-6">
           <label
@@ -510,6 +534,9 @@ export default function CoachesDashboard() {
             className="w-full p-2 bg-gray-800 text-white rounded-md border border-gray-700"
           >
             <option value="">Select a team</option>
+            {isAdmin && (
+              <option value="__GLOBAL__">All teams (program-wide)</option>
+            )}
             {teams.map((team) => (
               <option key={team.id} value={team.id}>
                 {team.name}
@@ -520,234 +547,236 @@ export default function CoachesDashboard() {
         {selectedTeam ? (
           <>
             <section className="space-y-4 mb-8">
-              <h2 className="text-2xl font-bebas uppercase">Schedules</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <form onSubmit={handleSchedule} className="space-y-4">
-                  <input type="hidden" name="csrf-token" value={csrfToken} />
-                  <div>
-                    <label
-                      htmlFor="event-type"
-                      className="block text-sm font-inter"
-                    >
-                      Event Type
-                    </label>
-                    <select
-                      id="event-type"
-                      value={scheduleEventType}
-                      onChange={(e) => setScheduleEventType(e.target.value)}
-                      className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                      required
-                    >
-                      <option value="">Select event type</option>
-                      <option value="Game">Game</option>
-                      <option value="Practice">Practice</option>
-                      <option value="Tournament">Tournament</option>
-                      <option value="Meeting">Meeting</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="date-time"
-                      className="block text-sm font-inter"
-                    >
-                      Date & Time
-                    </label>
-                    <input
-                      id="date-time"
-                      type="datetime-local"
-                      value={scheduleDateTime}
-                      onChange={(e) => setScheduleDateTime(e.target.value)}
-                      className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="location"
-                      className="block text-sm font-inter"
-                    >
-                      Location
-                    </label>
-                    <input
-                      id="location"
-                      type="text"
-                      value={scheduleLocation}
-                      onChange={(e) => setScheduleLocation(e.target.value)}
-                      className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="opponent"
-                      className="block text-sm font-inter"
-                    >
-                      Opponent (optional)
-                    </label>
-                    <input
-                      id="opponent"
-                      type="text"
-                      value={scheduleOpponent}
-                      onChange={(e) => setScheduleOpponent(e.target.value)}
-                      className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="description"
-                      className="block text-sm font-inter"
-                    >
-                      Description (optional)
-                    </label>
-                    <textarea
-                      id="description"
-                      value={scheduleDescription}
-                      onChange={(e) => setScheduleDescription(e.target.value)}
-                      className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <svg
-                        className="animate-spin h-5 w-5 text-white mr-2"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
+              <h2 className="text-2xl font-bebas uppercase">
+                {selectedTeam === "__GLOBAL__" ? "Program-Wide Schedules" : "Schedules"}
+              </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <form onSubmit={handleSchedule} className="space-y-4">
+                    <input type="hidden" name="csrf-token" value={csrfToken} />
+                    <div>
+                      <label
+                        htmlFor="event-type"
+                        className="block text-sm font-inter"
                       >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="#D91E18"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="#FFFFFF"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                    ) : editing && editing.type === "schedule" ? (
-                      "Update Schedule"
-                    ) : (
-                      "Add Schedule"
-                    )}
-                  </button>
-                </form>
-                <div className="space-y-4">
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bebas text-white">
-                        Recent Schedules
-                      </h3>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={prevSchedule}
-                          disabled={scheduleCarouselIndex === 0}
-                          className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-                          aria-label="Previous schedules"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 19l-7-7 7-7"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={nextSchedule}
-                          disabled={
-                            scheduleCarouselIndex >=
-                            Math.max(0, schedules.length - 3)
-                          }
-                          className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-                          aria-label="Next schedules"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </button>
-                      </div>
+                        Event Type
+                      </label>
+                      <select
+                        id="event-type"
+                        value={scheduleEventType}
+                        onChange={(e) => setScheduleEventType(e.target.value)}
+                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                        required
+                      >
+                        <option value="">Select event type</option>
+                        <option value="Game">Game</option>
+                        <option value="Practice">Practice</option>
+                        <option value="Tournament">Tournament</option>
+                        <option value="Meeting">Meeting</option>
+                      </select>
                     </div>
-
-                    {getCarouselSchedules().length > 0 ? (
-                      <div className="space-y-3">
-                        {getCarouselSchedules().map((schedule) => (
-                          <div
-                            key={schedule.id}
-                            className="bg-gray-900/50 border border-red-500/50 rounded-lg p-3"
+                    <div>
+                      <label
+                        htmlFor="date-time"
+                        className="block text-sm font-inter"
+                      >
+                        Date & Time
+                      </label>
+                      <input
+                        id="date-time"
+                        type="datetime-local"
+                        value={scheduleDateTime}
+                        onChange={(e) => setScheduleDateTime(e.target.value)}
+                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="location"
+                        className="block text-sm font-inter"
+                      >
+                        Location
+                      </label>
+                      <input
+                        id="location"
+                        type="text"
+                        value={scheduleLocation}
+                        onChange={(e) => setScheduleLocation(e.target.value)}
+                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="opponent"
+                        className="block text-sm font-inter"
+                      >
+                        Opponent (optional)
+                      </label>
+                      <input
+                        id="opponent"
+                        type="text"
+                        value={scheduleOpponent}
+                        onChange={(e) => setScheduleOpponent(e.target.value)}
+                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="description"
+                        className="block text-sm font-inter"
+                      >
+                        Description (optional)
+                      </label>
+                      <textarea
+                        id="description"
+                        value={scheduleDescription}
+                        onChange={(e) => setScheduleDescription(e.target.value)}
+                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <svg
+                          className="animate-spin h-5 w-5 text-white mr-2"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="#D91E18"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="#FFFFFF"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                      ) : editing && editing.type === "schedule" ? (
+                        "Update Schedule"
+                      ) : (
+                        "Add Schedule"
+                      )}
+                    </button>
+                  </form>
+                  <div className="space-y-4">
+                    <div className="bg-gray-800/50 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bebas text-white">
+                          Recent Schedules
+                        </h3>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={prevSchedule}
+                            disabled={scheduleCarouselIndex === 0}
+                            className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                            aria-label="Previous schedules"
                           >
-                            <h4 className="text-base font-bebas text-white line-clamp-1">
-                              {schedule.event_type}:{" "}
-                              {schedule.opponent || "N/A"}
-                            </h4>
-                            <p className="text-gray-300 font-inter text-sm mt-1">
-                              {new Date(schedule.date_time).toLocaleString()}
-                            </p>
-                            <p className="text-gray-300 font-inter text-sm">
-                              {schedule.location}
-                            </p>
-                            {schedule.description && (
-                              <p className="text-gray-300 font-inter text-sm line-clamp-1 mt-1">
-                                {schedule.description}
-                              </p>
-                            )}
-                            <div className="mt-2 flex space-x-2">
-                              <button
-                                onClick={() =>
-                                  setEditing({
-                                    id: schedule.id,
-                                    type: "schedule",
-                                    data: schedule,
-                                  })
-                                }
-                                className="bg-gray-700 text-white font-inter rounded px-2 py-1 text-xs hover:bg-gray-600"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleDeleteSchedule(schedule.id)
-                                }
-                                className="bg-red-600 text-white font-inter rounded px-2 py-1 text-xs hover:bg-red-700"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15 19l-7-7 7-7"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={nextSchedule}
+                            disabled={
+                              scheduleCarouselIndex >=
+                              Math.max(0, schedules.length - 3)
+                            }
+                            className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                            aria-label="Next schedules"
+                          >
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
-                    ) : (
-                      <p className="text-gray-400 font-inter text-sm">
-                        No schedules available
-                      </p>
-                    )}
+
+                      {getCarouselSchedules().length > 0 ? (
+                        <div className="space-y-3">
+                          {getCarouselSchedules().map((schedule) => (
+                            <div
+                              key={schedule.id}
+                              className="bg-gray-900/50 border border-red-500/50 rounded-lg p-3"
+                            >
+                              <h4 className="text-base font-bebas text-white line-clamp-1">
+                                {schedule.is_global ? "Program-Wide " : ""}{schedule.event_type}:{" "}
+                                {schedule.opponent || "N/A"}
+                              </h4>
+                              <p className="text-gray-300 font-inter text-sm mt-1">
+                                {new Date(schedule.date_time).toLocaleString()}
+                              </p>
+                              <p className="text-gray-300 font-inter text-sm">
+                                {schedule.location}
+                              </p>
+                              {schedule.description && (
+                                <p className="text-gray-300 font-inter text-sm line-clamp-1 mt-1">
+                                  {schedule.description}
+                                </p>
+                              )}
+                              <div className="mt-2 flex space-x-2">
+                                <button
+                                  onClick={() =>
+                                    setEditing({
+                                      id: schedule.id,
+                                      type: "schedule",
+                                      data: schedule,
+                                    })
+                                  }
+                                  className="bg-gray-700 text-white font-inter rounded px-2 py-1 text-xs hover:bg-gray-600"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteSchedule(schedule.id)
+                                  }
+                                  className="bg-red-600 text-white font-inter rounded px-2 py-1 text-xs hover:bg-red-700"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-400 font-inter text-sm">
+                          No schedules available
+                        </p>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
+              </section>
 
             {/* Divider */}
             <div className="border-t border-gray-700 my-8"></div>
@@ -945,136 +974,142 @@ export default function CoachesDashboard() {
             </section>
 
             {/* Divider */}
-            <div className="border-t border-gray-700 my-8"></div>
+            {selectedTeam !== "__GLOBAL__" && (
+              <div className="border-t border-gray-700 my-8"></div>
+            )}
 
-            <section className="space-y-4">
-              <h2 className="text-2xl font-bebas uppercase">News</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <form onSubmit={handleNews} className="space-y-4">
-                  <input type="hidden" name="csrf-token" value={csrfToken} />
-                  <div>
-                    <label
-                      htmlFor="news-title"
-                      className="block text-sm font-inter"
-                    >
-                      Title
-                    </label>
-                    <input
-                      id="news-title"
-                      type="text"
-                      value={newsTitle}
-                      onChange={(e) => setNewsTitle(e.target.value)}
-                      className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="news-content"
-                      className="block text-sm font-inter"
-                    >
-                      Content
-                    </label>
-                    <textarea
-                      id="news-content"
-                      value={newsContent}
-                      onChange={(e) => setNewsContent(e.target.value)}
-                      className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="news-image"
-                      className="block text-sm font-inter"
-                    >
-                      Image (optional)
-                    </label>
-                    <input
-                      id="news-image"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) =>
-                        setNewsImage(e.target.files?.[0] || null)
-                      }
-                      className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      <svg
-                        className="animate-spin h-5 w-5 text-white mr-2"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
+            {selectedTeam !== "__GLOBAL__" && (
+              <section className="space-y-4">
+                <h2 className="text-2xl font-bebas uppercase">News</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <form onSubmit={handleNews} className="space-y-4">
+                    <input type="hidden" name="csrf-token" value={csrfToken} />
+                    <div>
+                      <label
+                        htmlFor="news-title"
+                        className="block text-sm font-inter"
                       >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="#D91E18"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="#FFFFFF"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                    ) : editing && editing.type === "news" ? (
-                      "Update News"
-                    ) : (
-                      "Add News"
-                    )}
-                  </button>
-                </form>
-                <div className="space-y-4">
-                  {newsList.map((news) => (
-                    <div
-                      key={news.id}
-                      className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4"
-                    >
-                      <h3 className="text-lg font-bebas">{news.title}</h3>
-                      <p className="text-gray-300 font-inter">{news.content}</p>
-                      {news.image_url && (
-                        <Image
-                          src={news.image_url}
-                          alt={news.title}
-                          width={400}
-                          height={200}
-                          className="w-full h-auto mt-2 rounded"
-                        />
-                      )}
-                      <div className="mt-2 flex space-x-2">
-                        <button
-                          onClick={() =>
-                            setEditing({
-                              id: news.id,
-                              type: "news",
-                              data: news,
-                            })
-                          }
-                          className="bg-gray-700 text-white font-inter rounded p-2 text-sm"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDeleteNews(news.id)}
-                          className="bg-red-600 text-white font-inter rounded p-2 text-sm hover:bg-red-700"
-                        >
-                          Delete
-                        </button>
-                      </div>
+                        Title
+                      </label>
+                      <input
+                        id="news-title"
+                        type="text"
+                        value={newsTitle}
+                        onChange={(e) => setNewsTitle(e.target.value)}
+                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                        required
+                      />
                     </div>
-                  ))}
+                    <div>
+                      <label
+                        htmlFor="news-content"
+                        className="block text-sm font-inter"
+                      >
+                        Content
+                      </label>
+                      <textarea
+                        id="news-content"
+                        value={newsContent}
+                        onChange={(e) => setNewsContent(e.target.value)}
+                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="news-image"
+                        className="block text-sm font-inter"
+                      >
+                        Image (optional)
+                      </label>
+                      <input
+                        id="news-image"
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) =>
+                          setNewsImage(e.target.files?.[0] || null)
+                        }
+                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <svg
+                          className="animate-spin h-5 w-5 text-white mr-2"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="#D91E18"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="#FFFFFF"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                      ) : editing && editing.type === "news" ? (
+                        "Update News"
+                      ) : (
+                        "Add News"
+                      )}
+                    </button>
+                  </form>
+                  <div className="space-y-4">
+                    {newsList.map((news) => (
+                      <div
+                        key={news.id}
+                        className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4"
+                      >
+                        <h3 className="text-lg font-bebas">{news.title}</h3>
+                        <p className="text-gray-300 font-inter">
+                          {news.content}
+                        </p>
+                        {news.image_url && (
+                          <Image
+                            src={news.image_url}
+                            alt={news.title}
+                            width={400}
+                            height={200}
+                            className="w-full h-auto mt-2 rounded"
+                          />
+                        )}
+                        <div className="mt-2 flex space-x-2">
+                          <button
+                            onClick={() =>
+                              setEditing({
+                                id: news.id,
+                                type: "news",
+                                data: news,
+                              })
+                            }
+                            className="bg-gray-700 text-white font-inter rounded p-2 text-sm"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteNews(news.id)}
+                            className="bg-red-600 text-white font-inter rounded p-2 text-sm hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </section>
+              </section>
+            )}
 
             <section className="space-y-4">
               <h2 className="text-2xl font-bebas uppercase">Practice Drills</h2>

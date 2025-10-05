@@ -29,6 +29,7 @@ export type Schedule = {
   location: string;
   opponent: string | null;
   description: string | null;
+  is_global?: boolean; // Added for program-wide schedules
   created_by: string;
   created_at: string;
   deleted_at: string | null;
@@ -58,6 +59,8 @@ export type TeamUpdate = {
   title: string;
   content: string;
   image_url: string | null;
+  // Program-wide flag (requires DB column team_updates.is_global boolean DEFAULT false)
+  is_global?: boolean;
   created_by: string;
   created_at: string;
   deleted_at: string | null;

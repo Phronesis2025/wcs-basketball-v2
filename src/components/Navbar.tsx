@@ -103,7 +103,7 @@ export default function Navbar() {
                   isScrolled ? "text-navy" : "text-white drop-shadow-lg"
                 }`}
               >
-                WCS BASKETBALL
+                World Class
               </span>
             </Link>
             <div className="hidden md:flex items-center gap-6">

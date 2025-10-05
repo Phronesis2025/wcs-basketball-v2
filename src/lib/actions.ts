@@ -180,12 +180,15 @@ export async function fetchSchedulesByTeamId(
   teamId: string
 ): Promise<Schedule[]> {
   try {
-    const { data, error } = await supabase
-      .from("schedules")
-      .select("*")
-      .eq("team_id", teamId)
-      .is("deleted_at", null)
-      .order("date_time", { ascending: true });
+    let query = supabase.from("schedules").select("*").is("deleted_at", null);
+
+    if (teamId === "__GLOBAL__") {
+      query = query.eq("is_global", true);
+    } else {
+      query = query.or(`team_id.eq.${teamId},is_global.eq.true`);
+    }
+
+    const { data, error } = await query.order("date_time", { ascending: true });
 
     if (error) {
       devError("Supabase schedules fetch error:", error);
@@ -204,10 +207,15 @@ export async function fetchSchedulesByTeamId(
 // Fetch team updates
 export async function fetchTeamUpdates(teamId: string): Promise<TeamUpdate[]> {
   try {
+    // Return team-specific updates plus any program-wide updates (is_global=true)
+    const orFilter =
+      teamId === "__GLOBAL__"
+        ? `is_global.eq.true`
+        : `team_id.eq.${teamId},is_global.eq.true`;
     const { data, error } = await supabase
       .from("team_updates")
       .select("*")
-      .eq("team_id", teamId)
+      .or(orFilter)
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
@@ -284,6 +292,7 @@ export async function addSchedule(data: {
   location: string;
   opponent?: string;
   description?: string;
+  is_global?: boolean;
 }): Promise<Schedule> {
   try {
     const { data: result, error } = await supabase
@@ -366,6 +375,7 @@ export async function addUpdate(data: {
   title: string;
   content: string;
   image_url?: string;
+  is_global?: boolean;
   created_by: string;
 }): Promise<TeamUpdate> {
   try {
