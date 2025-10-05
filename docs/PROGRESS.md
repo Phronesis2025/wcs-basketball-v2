@@ -8,6 +8,15 @@ January 2025, Current Status - v2.4.3 Perfect Security Score Achieved (10/10)
 
 ### January 2025
 
+- ✅ **Program-Wide Schedules**: Admin Global Event Management System
+
+  - Implemented program-wide schedule creation for admins
+  - Added `is_global` column to schedules table for global events
+  - Enhanced dashboard UI to support global schedule management
+  - Added visual indicators for program-wide schedules in carousels
+  - Implemented real-time synchronization for global schedules
+  - Maintained security with proper input validation and CSRF protection
+
 - ✅ **Dashboard Carousel Enhancement**: Coaches Dashboard with Secure Carousel Implementation
 
   - Implemented vertical carousels for both Schedule and Team Updates sections

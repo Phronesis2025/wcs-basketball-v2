@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { useInView } from "react-intersection-observer";
 
 /**
  * Core values data for the About page
@@ -62,19 +61,11 @@ const values = [
  * Features responsive design with scroll-based animations
  */
 export default function About() {
-  // Intersection observer for scroll-based animations
-  const { ref, inView } = useInView({ triggerOnce: true });
-
   return (
     <div className="bg-navy min-h-screen text-white">
       <section className="py-12" aria-label="About WCS Basketball">
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
+          <div className="text-center">
             <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 uppercase">
               About World Class Sports Kansas
             </h1>
@@ -92,8 +83,8 @@ export default function About() {
               skill-building, teamwork, and leadership, inspiring the next
               generation of athletes and leaders both on and off the court.
             </p>
-          </motion.div>
-          <div ref={ref}>
+          </div>
+          <div>
             <h2 className="text-white text-[clamp(2rem,4vw,2.5rem)] font-bebas font-bold mb-8 text-center uppercase">
               Our Values
             </h2>
@@ -101,9 +92,6 @@ export default function About() {
               {values.map((value, index) => (
                 <motion.div
                   key={value.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={inView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="bg-white rounded-lg shadow-md overflow-hidden"
                   whileHover={{ scale: 1.05 }}
                 >

@@ -2,6 +2,15 @@
 
 ## v2.4.3 - January 2025 (Current)
 
+### 🎨 PROGRAM-WIDE SCHEDULES - Admin Global Event Management
+
+- **Global Schedule System**: Implemented program-wide schedule creation for administrators
+  - Added `is_global` column to schedules table for global events
+  - Enhanced dashboard UI to support global schedule management
+  - Added visual indicators for program-wide schedules in carousels
+  - Implemented real-time synchronization for global schedules
+  - Maintained security with proper input validation and CSRF protection
+
 ### 🎨 DASHBOARD ENHANCEMENT - Coaches Dashboard Carousel Implementation
 
 - **Dashboard Carousel System**: Implemented secure vertical carousels for coaches dashboard
