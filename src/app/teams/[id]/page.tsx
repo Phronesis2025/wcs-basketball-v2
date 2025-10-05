@@ -1,21 +1,22 @@
 // src/app/teams/[id]/page.tsx
 "use client";
+import React from "react";
 import { notFound } from "next/navigation";
 import {
   fetchTeamById,
   fetchCoachesByTeamId,
   fetchSchedulesByTeamId,
   fetchTeamUpdates,
-} from "@/lib/actions";
-import { Team, Coach, Schedule, TeamUpdate } from "@/types/supabase";
+} from "../../../lib/actions";
+import { Team, Coach, Schedule, TeamUpdate } from "../../../types/supabase";
 import * as Sentry from "@sentry/nextjs";
 import { motion, Variants } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { devLog, devError } from "@/lib/security";
-import TeamUpdates from "@/components/TeamUpdates";
+import { supabase } from "../../../lib/supabaseClient";
+import { devLog, devError } from "../../../lib/security";
+import TeamUpdates from "../../../components/TeamUpdates";
 
 type TeamPageProps = { params: Promise<{ id: string }> };
 

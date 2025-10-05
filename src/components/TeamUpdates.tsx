@@ -1,17 +1,8 @@
 // src/components/TeamUpdates.tsx
-"use client";
-import { useState, useRef, useEffect } from "react";
-import {
-  motion,
-  Variants,
-  useMotionValue,
-  useTransform,
-  PanInfo,
-} from "framer-motion";
-import Image from "next/image";
-import Link from "next/link";
-import { Team, TeamUpdate } from "@/types/supabase";
-import { sanitizeInput } from "@/lib/security";
+import React, { useState, useRef, useEffect } from "react";
+import { motion, Variants, PanInfo } from "framer-motion";
+import { Team, TeamUpdate } from "../types/supabase";
+import { sanitizeInput } from "../lib/security";
 
 interface TeamUpdatesProps {
   team: Team;
@@ -32,15 +23,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
-
-  // Swipe functionality
-  const x = useMotionValue(0);
-  const opacity = useTransform(x, [-100, -50, 0, 50, 100], [0, 1, 1, 1, 0]);
-  const scale = useTransform(
-    x,
-    [-100, -50, 0, 50, 100],
-    [0.95, 0.98, 1, 0.98, 0.95]
-  );
+  const [isDragging, setIsDragging] = useState(false);
 
   // Calculate how many cards to show based on screen size
   const getCardsToShow = () => {
@@ -49,6 +32,9 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
   };
 
   const [cardsToShow, setCardsToShow] = useState(getCardsToShow);
+
+  // Calculate maxIndex early
+  const maxIndex = Math.max(0, updates.length - cardsToShow);
 
   // Update cards to show on resize and track container width
   useEffect(() => {
@@ -68,6 +54,22 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
     }
   }, []);
 
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (updates.length <= cardsToShow) return;
+
+      if (event.key === "ArrowLeft" && currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      } else if (event.key === "ArrowRight" && currentIndex < maxIndex) {
+        setCurrentIndex(currentIndex + 1);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentIndex, maxIndex, updates.length, cardsToShow]);
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (selectedUpdate) {
@@ -84,21 +86,21 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
     };
   }, [selectedUpdate]);
 
-  const maxIndex = Math.max(0, updates.length - cardsToShow);
-
   const handleDragEnd = (event: unknown, info: PanInfo) => {
-    const threshold = 50;
+    setIsDragging(false);
+    const threshold = 75; // Increased threshold for more intentional swipes
 
     if (info.offset.x > threshold && currentIndex > 0) {
       // Swipe right - go to previous
-      setCurrentIndex(Math.max(0, currentIndex - 1));
+      setCurrentIndex(currentIndex - 1);
     } else if (info.offset.x < -threshold && currentIndex < maxIndex) {
       // Swipe left - go to next
-      setCurrentIndex(Math.min(maxIndex, currentIndex + 1));
+      setCurrentIndex(currentIndex + 1);
     }
+  };
 
-    // Reset position
-    x.set(0);
+  const handleDragStart = () => {
+    setIsDragging(true);
   };
 
   // Calculate the translateX value in pixels for smooth one-card-at-a-time movement
@@ -114,85 +116,154 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
         Team Updates
       </h2>
       {updates.length > 0 ? (
-        <div className="relative overflow-hidden">
+        <div className="relative overflow-hidden group">
+          {/* Left Arrow */}
+          {updates.length > cardsToShow && currentIndex > 0 && (
+            <button
+              onClick={() => setCurrentIndex(Math.max(0, currentIndex - 1))}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+              aria-label="Previous updates"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
+          )}
+
+          {/* Right Arrow */}
+          {updates.length > cardsToShow && currentIndex < maxIndex && (
+            <button
+              onClick={() =>
+                setCurrentIndex(Math.min(maxIndex, currentIndex + 1))
+              }
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+              aria-label="Next updates"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          )}
+
           <motion.div
             ref={containerRef}
-            className="flex"
-            style={{ x }}
+            className="flex cursor-grab active:cursor-grabbing"
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.1}
+            onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             animate={{ x: getTranslateX() }}
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            transition={{
+              type: "spring",
+              stiffness: 400,
+              damping: 35,
+              mass: 0.8,
+            }}
           >
             {updates.map((update) => (
-              <motion.div
+              <div
                 key={update.id}
                 className={`flex-shrink-0 ${
                   cardsToShow === 3 ? "w-1/3" : "w-1/2"
-                } px-2 box-border`}
-                style={{ opacity, scale }}
+                } p-3 box-border`}
               >
                 <div
-                  className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 shadow-sm h-[28rem] flex flex-col w-full"
+                  className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 shadow-sm h-[28rem] flex flex-col w-full"
                   role="group"
                   aria-label={`${team.name} update card`}
                 >
-                  <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
-                    {team.name} News
-                  </h4>
-                  <h3 className="text-3xl font-bebas mt-2 text-white line-clamp-2">
-                    {sanitizeInput(update.title)}
-                  </h3>
-                  <p
-                    className="text-gray-300 font-inter leading-tight mt-4 flex-grow text-sm lg:text-base overflow-hidden"
-                    style={{
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      lineHeight: "1.2em",
-                      maxHeight: "2.4em",
-                    }}
-                  >
-                    {sanitizeInput(update.content)}
-                  </p>
-                  <div className="mt-2 flex-shrink-0">
-                    {update.image_url ? (
-                      <Image
-                        src={update.image_url}
-                        alt={update.title}
-                        width={400}
-                        height={200}
-                        className="w-full h-32 lg:h-48 object-cover rounded-md"
-                        sizes="(max-width: 1024px) 50vw, 33vw"
-                      />
-                    ) : (
-                      <div className="w-full h-32 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
-                        <span className="text-gray-500 text-sm">No Image</span>
-                      </div>
-                    )}
+                  <div className="flex-shrink-0">
+                    <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
+                      {team.name} News
+                    </h4>
+                    <h3 className="text-3xl font-bebas mt-2 text-white line-clamp-2">
+                      {sanitizeInput(update.title)}
+                    </h3>
+                    <p
+                      className="text-gray-300 font-inter leading-tight mt-4 text-sm lg:text-base overflow-hidden"
+                      style={{
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        lineHeight: "1.2em",
+                        maxHeight: "2.4em",
+                      }}
+                    >
+                      {sanitizeInput(update.content)}
+                    </p>
                   </div>
-                  <button
-                    onClick={() => setSelectedUpdate(update)}
-                    className="mt-4 w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
-                    aria-label={`View details for ${update.title}`}
-                  >
-                    View Update
-                  </button>
+
+                  <div className="flex-1 flex flex-col mt-4">
+                    <div className="flex-shrink-0 mb-4">
+                      {update.image_url ? (
+                        <img
+                          src={update.image_url}
+                          alt={update.title}
+                          className="w-full h-32 lg:h-48 object-cover rounded-md"
+                        />
+                      ) : (
+                        <div className="w-full h-32 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
+                          <span className="text-gray-500 text-sm">
+                            No Image
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="py-2">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isDragging) {
+                            setSelectedUpdate(update);
+                          }
+                        }}
+                        className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                        aria-label={`Read more about ${update.title}`}
+                        type="button"
+                      >
+                        Read more
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </motion.div>
 
-          {/* Navigation indicators */}
+          {/* Carousel indicators */}
           {updates.length > cardsToShow && (
-            <div className="flex justify-center mt-4 space-x-2">
+            <div className="flex justify-center mt-6 space-x-3">
               {Array.from({ length: maxIndex + 1 }, (_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-colors ${
-                    i === currentIndex ? "bg-red-500" : "bg-gray-500"
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                    i === currentIndex
+                      ? "bg-red-500 scale-110"
+                      : "bg-gray-400 hover:bg-gray-300"
                   }`}
                   aria-label={`Go to slide ${i + 1}`}
                 />
@@ -203,17 +274,6 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
       ) : (
         <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
           <p className="text-gray-300 font-inter">No updates available</p>
-        </div>
-      )}
-      {updates.length > cardsToShow && (
-        <div className="text-center mt-4">
-          <Link
-            href="/updates"
-            className="text-red-600 hover:underline text-base font-bebas"
-            aria-label="View all team updates"
-          >
-            View All Updates
-          </Link>
         </div>
       )}
       {selectedUpdate && (
@@ -227,7 +287,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
           onClick={() => setSelectedUpdate(null)}
         >
           <motion.div
-            className="bg-black border border-red-500/50 rounded-lg p-4 w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl"
+            className="bg-black border border-red-500/50 rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex-shrink-0">
@@ -247,13 +307,10 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                 {sanitizeInput(selectedUpdate.content)}
               </p>
               {selectedUpdate.image_url && (
-                <Image
+                <img
                   src={selectedUpdate.image_url}
                   alt={selectedUpdate.title}
-                  width={600}
-                  height={256}
                   className="w-full h-auto max-h-64 sm:max-h-80 object-contain rounded-md mt-4"
-                  sizes="(max-width: 390px) 100vw, 600px"
                 />
               )}
             </div>
