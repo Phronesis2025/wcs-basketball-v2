@@ -28,7 +28,9 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
   // Calculate how many cards to show based on screen size
   const getCardsToShow = () => {
     if (typeof window === "undefined") return 3; // SSR fallback
-    return window.innerWidth >= 1024 ? 3 : 2; // lg breakpoint
+    if (window.innerWidth >= 1024) return 3; // Desktop: lg breakpoint
+    if (window.innerWidth >= 768) return 2; // Tablet: md breakpoint
+    return 1; // Mobile: default
   };
 
   const [cardsToShow, setCardsToShow] = useState(getCardsToShow);
@@ -185,7 +187,11 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
               <div
                 key={update.id}
                 className={`flex-shrink-0 ${
-                  cardsToShow === 3 ? "w-1/3" : "w-1/2"
+                  cardsToShow === 3
+                    ? "w-1/3"
+                    : cardsToShow === 2
+                    ? "w-1/2"
+                    : "w-full"
                 } p-3 box-border`}
               >
                 <div
@@ -220,10 +226,10 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                         <img
                           src={update.image_url}
                           alt={update.title}
-                          className="w-full h-32 lg:h-48 object-cover rounded-md"
+                          className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
                         />
                       ) : (
-                        <div className="w-full h-32 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
+                        <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
                           <span className="text-gray-500 text-sm">
                             No Image
                           </span>
