@@ -1,6 +1,6 @@
 // src/app/coaches/dashboard/page.tsx
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -69,6 +69,39 @@ export default function CoachesDashboard() {
     type: "schedule" | "update" | "news";
     data: Schedule | TeamUpdate | News;
   } | null>(null);
+
+  // Carousel state for updates and schedules
+  const [updateCarouselIndex, setUpdateCarouselIndex] = useState(0);
+  const [scheduleCarouselIndex, setScheduleCarouselIndex] = useState(0);
+
+  // Carousel navigation functions
+  const nextUpdate = () => {
+    const maxIndex = Math.max(0, updates.length - 3);
+    setUpdateCarouselIndex((prev) => Math.min(prev + 1, maxIndex));
+  };
+
+  const prevUpdate = () => {
+    setUpdateCarouselIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  const nextSchedule = () => {
+    const maxIndex = Math.max(0, schedules.length - 3);
+    setScheduleCarouselIndex((prev) => Math.min(prev + 1, maxIndex));
+  };
+
+  const prevSchedule = () => {
+    setScheduleCarouselIndex((prev) => Math.max(prev - 1, 0));
+  };
+
+  // Get the last 3 updates for carousel
+  const getCarouselUpdates = () => {
+    return updates.slice(updateCarouselIndex, updateCarouselIndex + 3);
+  };
+
+  // Get the last 3 schedules for carousel
+  const getCarouselSchedules = () => {
+    return schedules.slice(scheduleCarouselIndex, scheduleCarouselIndex + 3);
+  };
 
   useEffect(() => {
     const token = generateCSRFToken();
@@ -607,54 +640,121 @@ export default function CoachesDashboard() {
                   </button>
                 </form>
                 <div className="space-y-4">
-                  {schedules.map((schedule) => (
-                    <div
-                      key={schedule.id}
-                      className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4"
-                    >
-                      <h3 className="text-lg font-bebas">
-                        {schedule.event_type}: {schedule.opponent || "N/A"}
+                  <div className="bg-gray-800/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bebas text-white">
+                        Recent Schedules
                       </h3>
-                      <p className="text-gray-300 font-inter">
-                        {new Date(schedule.date_time).toLocaleString()}
-                      </p>
-                      <p className="text-gray-300 font-inter">
-                        {schedule.location}
-                      </p>
-                      {schedule.description && (
-                        <p className="text-gray-300 font-inter">
-                          {schedule.description}
-                        </p>
-                      )}
-                      <div className="mt-2 flex space-x-2">
+                      <div className="flex space-x-2">
                         <button
-                          onClick={() =>
-                            setEditing({
-                              id: schedule.id,
-                              type: "schedule",
-                              data: schedule,
-                            })
-                          }
-                          className="bg-gray-700 text-white font-inter rounded p-2 text-sm"
+                          onClick={prevSchedule}
+                          disabled={scheduleCarouselIndex === 0}
+                          className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                          aria-label="Previous schedules"
                         >
-                          Edit
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 19l-7-7 7-7"
+                            />
+                          </svg>
                         </button>
                         <button
-                          onClick={() => handleDeleteSchedule(schedule.id)}
-                          className="bg-red-600 text-white font-inter rounded p-2 text-sm hover:bg-red-700"
+                          onClick={nextSchedule}
+                          disabled={
+                            scheduleCarouselIndex >=
+                            Math.max(0, schedules.length - 3)
+                          }
+                          className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                          aria-label="Next schedules"
                         >
-                          Delete
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
                         </button>
                       </div>
                     </div>
-                  ))}
+
+                    {getCarouselSchedules().length > 0 ? (
+                      <div className="space-y-3">
+                        {getCarouselSchedules().map((schedule) => (
+                          <div
+                            key={schedule.id}
+                            className="bg-gray-900/50 border border-red-500/50 rounded-lg p-3"
+                          >
+                            <h4 className="text-base font-bebas text-white line-clamp-1">
+                              {schedule.event_type}:{" "}
+                              {schedule.opponent || "N/A"}
+                            </h4>
+                            <p className="text-gray-300 font-inter text-sm mt-1">
+                              {new Date(schedule.date_time).toLocaleString()}
+                            </p>
+                            <p className="text-gray-300 font-inter text-sm">
+                              {schedule.location}
+                            </p>
+                            {schedule.description && (
+                              <p className="text-gray-300 font-inter text-sm line-clamp-1 mt-1">
+                                {schedule.description}
+                              </p>
+                            )}
+                            <div className="mt-2 flex space-x-2">
+                              <button
+                                onClick={() =>
+                                  setEditing({
+                                    id: schedule.id,
+                                    type: "schedule",
+                                    data: schedule,
+                                  })
+                                }
+                                className="bg-gray-700 text-white font-inter rounded px-2 py-1 text-xs hover:bg-gray-600"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleDeleteSchedule(schedule.id)
+                                }
+                                className="bg-red-600 text-white font-inter rounded px-2 py-1 text-xs hover:bg-red-700"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 font-inter text-sm">
+                        No schedules available
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
 
+            {/* Divider */}
+            <div className="border-t border-gray-700 my-8"></div>
+
             <section className="space-y-4 mb-8">
               <h2 className="text-2xl font-bebas uppercase">Team Updates</h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <form onSubmit={handleTeamUpdate} className="space-y-4">
                   <input type="hidden" name="csrf-token" value={csrfToken} />
                   <div>
@@ -700,7 +800,7 @@ export default function CoachesDashboard() {
                       type="file"
                       accept="image/*"
                       onChange={handleImageChange}
-                      className="w-full mt-1 p-3 bg-gray-800 text-white rounded-md border border-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-500 file:text-white hover:file:bg-red-600"
+                      className="w-full mt-1 p-3 bg-gray-800 text-white rounded-md border border-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bebas file:uppercase file:bg-red file:text-white hover:file:bg-red-600"
                     />
                     {imagePreview && (
                       <Image
@@ -714,7 +814,7 @@ export default function CoachesDashboard() {
                   </div>
                   <button
                     type="submit"
-                    className="w-full bg-red-600 text-white font-bebas uppercase py-3 rounded-md hover:bg-red-700 disabled:bg-gray-600 flex items-center justify-center text-base"
+                    className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center"
                     disabled={loading}
                   >
                     {loading ? (
@@ -746,49 +846,106 @@ export default function CoachesDashboard() {
                   </button>
                 </form>
                 <div className="space-y-4">
-                  {updates.map((update) => (
-                    <div
-                      key={update.id}
-                      className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4"
-                    >
-                      <h3 className="text-lg font-bebas">{update.title}</h3>
-                      <p className="text-gray-300 font-inter">
-                        {update.content}
-                      </p>
-                      {update.image_url && (
-                        <Image
-                          src={update.image_url}
-                          alt={update.title}
-                          width={400}
-                          height={200}
-                          className="w-full h-auto mt-2 rounded"
-                        />
-                      )}
-                      <div className="mt-2 flex space-x-2">
+                  <div className="bg-gray-800/50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-bebas text-white">
+                        Recent Updates
+                      </h3>
+                      <div className="flex space-x-2">
                         <button
-                          onClick={() =>
-                            setEditing({
-                              id: update.id,
-                              type: "update",
-                              data: update,
-                            })
-                          }
-                          className="bg-gray-700 text-white font-inter rounded p-2 text-sm"
+                          onClick={prevUpdate}
+                          disabled={updateCarouselIndex === 0}
+                          className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                          aria-label="Previous updates"
                         >
-                          Edit
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 19l-7-7 7-7"
+                            />
+                          </svg>
                         </button>
                         <button
-                          onClick={() => handleDeleteUpdate(update.id)}
-                          className="bg-red-600 text-white font-inter rounded p-2 text-sm hover:bg-red-700"
+                          onClick={nextUpdate}
+                          disabled={
+                            updateCarouselIndex >=
+                            Math.max(0, updates.length - 3)
+                          }
+                          className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
+                          aria-label="Next updates"
                         >
-                          Delete
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
                         </button>
                       </div>
                     </div>
-                  ))}
+
+                    {getCarouselUpdates().length > 0 ? (
+                      <div className="space-y-3">
+                        {getCarouselUpdates().map((update) => (
+                          <div
+                            key={update.id}
+                            className="bg-gray-900/50 border border-red-500/50 rounded-lg p-3"
+                          >
+                            <h4 className="text-base font-bebas text-white line-clamp-1">
+                              {update.title}
+                            </h4>
+                            <p className="text-gray-300 font-inter text-sm line-clamp-2 mt-1">
+                              {update.content}
+                            </p>
+                            <div className="mt-2 flex space-x-2">
+                              <button
+                                onClick={() =>
+                                  setEditing({
+                                    id: update.id,
+                                    type: "update",
+                                    data: update,
+                                  })
+                                }
+                                className="bg-gray-700 text-white font-inter rounded px-2 py-1 text-xs hover:bg-gray-600"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUpdate(update.id)}
+                                className="bg-red-600 text-white font-inter rounded px-2 py-1 text-xs hover:bg-red-700"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-400 font-inter text-sm">
+                        No updates available
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </section>
+
+            {/* Divider */}
+            <div className="border-t border-gray-700 my-8"></div>
 
             <section className="space-y-4">
               <h2 className="text-2xl font-bebas uppercase">News</h2>

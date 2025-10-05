@@ -1,6 +1,7 @@
 // src/components/TeamUpdates.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { motion, Variants, PanInfo } from "framer-motion";
+import Image from "next/image";
 import { Team, TeamUpdate } from "../types/supabase";
 import { sanitizeInput } from "../lib/security";
 
@@ -223,10 +224,20 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                   <div className="flex-1 flex flex-col mt-4">
                     <div className="flex-shrink-0 mb-4">
                       {update.image_url ? (
-                        <img
+                        <Image
                           src={update.image_url}
                           alt={update.title}
+                          width={400}
+                          height={192}
                           className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
+                        />
+                      ) : team.logo_url ? (
+                        <Image
+                          src={team.logo_url}
+                          alt={`${team.name} logo`}
+                          width={400}
+                          height={192}
+                          className="w-full h-32 md:h-40 lg:h-48 object-contain rounded-md bg-gray-800/50 p-4"
                         />
                       ) : (
                         <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
@@ -313,9 +324,11 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                 {sanitizeInput(selectedUpdate.content)}
               </p>
               {selectedUpdate.image_url && (
-                <img
+                <Image
                   src={selectedUpdate.image_url}
                   alt={selectedUpdate.title}
+                  width={400}
+                  height={320}
                   className="w-full h-auto max-h-64 sm:max-h-80 object-contain rounded-md mt-4"
                 />
               )}

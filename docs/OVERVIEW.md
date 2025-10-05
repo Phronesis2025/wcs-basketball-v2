@@ -97,7 +97,7 @@ Complete dashboard for coaches to manage their teams and content with enhanced d
 
 **Features:**
 
-- **Coaches Dashboard**: Team selection and management interface
+- **Coaches Dashboard**: Team selection and management interface with secure carousel system
 - **Schedule Creation**: Add and manage game and practice schedules with enhanced error handling
 - **Team Updates**: Post news and updates for teams
 - **Practice Drills**: Create and manage drill library with filtering

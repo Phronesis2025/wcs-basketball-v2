@@ -556,7 +556,7 @@ export async function getUserRole(userId: string) {
 
       return data;
     }
-    
+
     // Fallback: Use regular client with RLS (less secure but works without service key)
     devLog("Using fallback method for user role check");
     const { data, error } = await supabase
