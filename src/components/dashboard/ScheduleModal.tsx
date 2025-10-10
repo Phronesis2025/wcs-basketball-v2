@@ -188,7 +188,7 @@ export default function ScheduleModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bebas uppercase text-gray-900">
             Schedule New
@@ -230,7 +230,7 @@ export default function ScheduleModal({
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
           <div className="mb-6">
             <h3 className="text-xl font-bebas uppercase text-gray-900">
               {activeTab}
@@ -244,13 +244,15 @@ export default function ScheduleModal({
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Date & Time
                 </label>
-                <input
-                  type="datetime-local"
-                  value={gameDateTime}
-                  onChange={(e) => setGameDateTime(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  required
-                />
+                <div className="w-full overflow-hidden">
+                  <input
+                    type="datetime-local"
+                    value={gameDateTime}
+                    onChange={(e) => setGameDateTime(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0"
+                    required
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
@@ -310,13 +312,15 @@ export default function ScheduleModal({
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Date & Time
                 </label>
-                <input
-                  type="datetime-local"
-                  value={practiceDateTime}
-                  onChange={(e) => setPracticeDateTime(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  required
-                />
+                <div className="w-full overflow-hidden">
+                  <input
+                    type="datetime-local"
+                    value={practiceDateTime}
+                    onChange={(e) => setPracticeDateTime(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0"
+                    required
+                  />
+                </div>
               </div>
 
               {/* Recurring Options */}
