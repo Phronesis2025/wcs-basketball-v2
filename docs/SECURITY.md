@@ -1,9 +1,13 @@
 # WCSv2.0 Security
 
-## 🔒 Current Security Implementation (v2.6.0)
+## 🔒 Current Security Implementation (v2.6.1)
 
 ### Recent Security Updates
 
+- **UI Security Fixes**: Fixed critical user interface security issues
+  - Resolved page scrolling vulnerabilities that could expose sensitive data
+  - Fixed button type safety to prevent unintended form submissions
+  - Enhanced modal security with proper button rendering and event handling
 - **Build Security**: Fixed TypeScript type errors and React Hooks violations
 - **Code Quality**: Resolved unused variable warnings and improved type safety
 - **Schema Validation**: Fixed database schema issues with non-existent columns

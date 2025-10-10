@@ -1,6 +1,32 @@
 # WCSv2.0 Changelog
 
-## v2.6.0 - December 2024 (Current)
+## v2.6.1 - December 2024 (Current)
+
+### 🐛 Critical UI Fixes
+
+- **Message Board Scroll Issue**: Fixed page scrolling to top when clicking buttons in message board
+  - Added `type="button"` to all 17 buttons in MessageBoard component
+  - Prevents default form submission behavior that caused page scroll
+  - Maintains user's scroll position during message interactions
+
+- **Delete Button Rendering**: Fixed delete button not appearing in confirmation modal
+  - Enhanced button styling with inline styles to override CSS conflicts
+  - Improved visual appearance with proper red background and white text
+  - Added hover effects and loading states
+
+- **Build Compilation**: Fixed TypeScript build errors
+  - Resolved `devLog` return type conflicts in JSX rendering
+  - Wrapped debug logging in IIFE to return null for React compatibility
+  - Maintained secure development-only logging practices
+
+### 🔧 Technical Improvements
+
+- **Button Type Safety**: All interactive buttons now have explicit `type="button"`
+- **JSX Compatibility**: Fixed React rendering issues with debug logging
+- **User Experience**: Eliminated frustrating scroll-to-top behavior
+- **Code Quality**: Maintained clean build with zero errors
+
+## v2.6.0 - December 2024
 
 ### 💬 Message Board Implementation
 

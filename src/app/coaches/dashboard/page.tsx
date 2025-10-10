@@ -29,6 +29,7 @@ import {
   fetchTeamsByCoachId,
   getUserRole,
 } from "../../../lib/actions";
+import { getMessages } from "../../../lib/messageActions";
 import { Team, Schedule, TeamUpdate } from "../../../types/supabase";
 
 // Import new dashboard components
@@ -80,6 +81,9 @@ export default function CoachesDashboard() {
   // Lists for edit/delete
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [updates, setUpdates] = useState<TeamUpdate[]>([]);
+  const [messages, setMessages] = useState<
+    { id: string; created_at: string }[]
+  >([]); // For message board stats
   // const [newsList, setNewsList] = useState<News[]>([]);
 
   // // Editing state
@@ -167,53 +171,62 @@ export default function CoachesDashboard() {
   };
 
   const getLastUpdateTime = () => {
-    if (!lastLoginTime) {
-      // If no last login time, show time since most recent update
-      if (updates.length === 0) return "No updates";
-      const lastUpdate = updates.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      )[0];
-      const hoursAgo = Math.floor(
-        (new Date().getTime() - new Date(lastUpdate.created_at).getTime()) /
-          (1000 * 60 * 60)
-      );
-      if (hoursAgo < 24) {
-        return `${hoursAgo} hours ago`;
-      } else {
-        const daysAgo = Math.floor(hoursAgo / 24);
-        return `${daysAgo} day${daysAgo > 1 ? "s" : ""} ago`;
-      }
-    }
+    if (updates.length === 0) return "No updates";
 
-    // Show time since last new update (since last login)
-    const newUpdates = updates.filter(
-      (update) => new Date(update.created_at) > lastLoginTime
-    );
-
-    if (newUpdates.length === 0) return "No new updates";
-
-    const lastNewUpdate = newUpdates.sort(
+    const lastUpdate = updates.sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0];
 
-    const hoursAgo = Math.floor(
-      (new Date().getTime() - new Date(lastNewUpdate.created_at).getTime()) /
-        (1000 * 60 * 60)
-    );
+    return getRelativeTime(new Date(lastUpdate.created_at));
+  };
 
-    if (hoursAgo < 24) {
-      return `${hoursAgo} hours ago`;
+  const getLastMessageTime = () => {
+    if (messages.length === 0) return "No messages";
+
+    const lastMessage = messages.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+
+    return getRelativeTime(new Date(lastMessage.created_at));
+  };
+
+  const getRelativeTime = (date: Date) => {
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (diffInMinutes < 1) {
+      return "Just now";
+    } else if (diffInMinutes < 60) {
+      return `${diffInMinutes} minute${diffInMinutes > 1 ? "s" : ""} ago`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+    } else if (diffInDays < 7) {
+      return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
     } else {
-      const daysAgo = Math.floor(hoursAgo / 24);
-      return `${daysAgo} day${daysAgo > 1 ? "s" : ""} ago`;
+      const diffInWeeks = Math.floor(diffInDays / 7);
+      return `${diffInWeeks} week${diffInWeeks > 1 ? "s" : ""} ago`;
     }
   };
 
   const getDrillsCount = () => {
     // Mock data for now - in real app this would come from practice_drills table
     return 24;
+  };
+
+  const loadMessages = async () => {
+    try {
+      const messagesData = await getMessages();
+      setMessages(messagesData);
+    } catch (error) {
+      devError("Error loading messages:", error);
+      // If messages table doesn't exist yet, set empty array
+      setMessages([]);
+    }
   };
 
   // Modal handlers
@@ -385,6 +398,9 @@ export default function CoachesDashboard() {
         }
         devLog("Teams loaded:", `${teamsData.length} teams`);
         setTeams(teamsData);
+
+        // Load messages for the message board stats
+        await loadMessages();
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown error";
@@ -980,8 +996,8 @@ export default function CoachesDashboard() {
               />
               <StatCard
                 title="New Messages"
-                value="4"
-                subtitle="1.5 hours ago"
+                value={messages.length}
+                subtitle={getLastMessageTime()}
                 icon={
                   <svg
                     className="w-6 h-6"

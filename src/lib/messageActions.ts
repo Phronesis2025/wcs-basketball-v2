@@ -320,6 +320,13 @@ export async function deleteMessage(
   try {
     devLog("Deleting message:", { id, authorId, isAdmin });
 
+    // Get current user for debugging
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    devLog("Current user for delete:", { user: user?.id, authError });
+
     // Check if user can delete this message
     const { data: existingMessage, error: fetchError } = await supabase
       .from("coach_messages")
@@ -333,16 +340,16 @@ export async function deleteMessage(
       throw new Error("Message not found");
     }
 
+    devLog("Existing message data:", { existingMessage, authorId, isAdmin });
+
     if (!isAdmin && existingMessage.author_id !== authorId) {
       throw new Error("You can only delete your own messages");
     }
 
-    const { error } = await supabase
-      .from("coach_messages")
-      .update({
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+    // Prefer secure RPC that bypasses table RLS safely (SECURITY DEFINER)
+    const { error } = await supabase.rpc("soft_delete_coach_message", {
+      p_message_id: id,
+    });
 
     if (error) {
       devError("Error deleting message:", error);
