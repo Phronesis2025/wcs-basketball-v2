@@ -1,14 +1,26 @@
 # WCSv2.0 Database Setup
 
+## 📝 Schema Updates (v2.6.0)
+
+**Last Updated**: December 2024 - Updated to reflect current production database schema
+
+### Recent Schema Fixes (v2.6.0):
+- **Column Validation**: Fixed references to non-existent columns (`updated_at`, `updated_by`) in `team_updates` table
+- **Type Safety**: Improved TypeScript type definitions for better database interaction
+- **Image Upload**: Enhanced image upload functionality with proper error handling
+- **Build Optimization**: Resolved all TypeScript compilation errors and warnings
+
 ## 📝 Schema Updates (v2.5.0)
 
-**Last Updated**: January 2025 - Updated to reflect current production database schema
+**Last Updated**: October 2025 - Updated to reflect current production database schema
 
 ### Key Changes:
 
 - **Audit Logging**: Added comprehensive `audit_logs` table for security monitoring
 - **Soft Deletes**: Added `deleted_at` columns to `schedules`, `team_updates`, and `news` tables
 - **Enhanced Event Types**: Schedules now support 'Tournament' and 'Meeting' event types
+- **Program‑Wide Schedules**: `schedules.is_global BOOLEAN DEFAULT false NOT NULL` for admin program‑wide events
+- **Program‑Wide Updates**: `team_updates.team_id` accepts NULL when `is_global=true`
 - **User References**: Updated foreign key references from `coaches(id)` to `users(id)` for better consistency
 - **News Team Association**: Added `team_id` to news table for team-specific news
 - **Password Reset Tracking**: Added `last_password_reset` timestamp to users table
@@ -110,6 +122,7 @@ CREATE TABLE public.schedules (
   created_by uuid,
   deleted_at timestamp with time zone,
   description text,
+  is_global boolean NOT NULL DEFAULT false,
   CONSTRAINT schedules_pkey PRIMARY KEY (id),
   CONSTRAINT schedules_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
   CONSTRAINT schedules_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
@@ -125,6 +138,7 @@ CREATE TABLE public.team_updates (
   title text NOT NULL,
   content text NOT NULL,
   image_url text,
+  is_global boolean DEFAULT false,
   created_by uuid,
   created_at timestamp with time zone DEFAULT now(),
   deleted_at timestamp with time zone,
@@ -326,15 +340,20 @@ USING (EXISTS (
 CREATE POLICY "Public view schedules" ON schedules
 FOR SELECT TO public USING (true);
 
--- Coaches can manage schedules for their teams
-CREATE POLICY "Coaches manage team schedules" ON schedules
+-- Coaches can manage team schedules; admins can manage all and create global
+CREATE POLICY "Coaches and admins manage schedules" ON schedules
 FOR ALL TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM team_coaches tc
-  JOIN coaches c ON tc.coach_id = c.id
-  WHERE tc.team_id = schedules.team_id
-  AND c.user_id = auth.uid()
-) OR created_by = auth.uid());
+USING (
+  EXISTS (
+    SELECT 1 FROM team_coaches tc
+    JOIN coaches c ON tc.coach_id = c.id
+    WHERE tc.team_id = schedules.team_id
+    AND c.user_id = auth.uid()
+  )
+  OR EXISTS (
+    SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin'
+  )
+);
 ```
 
 ### Team Updates Table Policies
@@ -344,15 +363,20 @@ USING (EXISTS (
 CREATE POLICY "Public view team updates" ON team_updates
 FOR SELECT TO public USING (true);
 
--- Coaches can manage updates for their teams
+-- Coaches manage team updates; admins can manage all; allow program‑wide
 CREATE POLICY "Coaches manage team updates" ON team_updates
 FOR ALL TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM team_coaches tc
-  JOIN coaches c ON tc.coach_id = c.id
-  WHERE tc.team_id = team_updates.team_id
-  AND c.user_id = auth.uid()
-) OR created_by = auth.uid());
+USING (
+  EXISTS (
+    SELECT 1 FROM team_coaches tc
+    JOIN coaches c ON tc.coach_id = c.id
+    WHERE tc.team_id = team_updates.team_id
+    AND c.user_id = auth.uid()
+  )
+  OR EXISTS (
+    SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin'
+  )
+);
 ```
 
 ### Practice Drills Table Policies

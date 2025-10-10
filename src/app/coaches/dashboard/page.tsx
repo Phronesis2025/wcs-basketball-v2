@@ -1,17 +1,17 @@
 // src/app/coaches/dashboard/page.tsx
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import toast, { Toaster } from "react-hot-toast";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "../../../lib/supabaseClient";
 import {
   devLog,
   devError,
   generateCSRFToken,
   sanitizeInput,
-} from "@/lib/security";
+} from "../../../lib/security";
 import {
   addSchedule,
   updateSchedule,
@@ -26,9 +26,19 @@ import {
   fetchTeamUpdates,
   fetchNews,
   fetchTeams,
+  fetchTeamsByCoachId,
   getUserRole,
-} from "@/lib/actions";
-import { Team, Schedule, TeamUpdate, News } from "@/types/supabase";
+} from "../../../lib/actions";
+import { Team, Schedule, TeamUpdate, News } from "../../../types/supabase";
+
+// Import new dashboard components
+import StatCard from "../../../components/dashboard/StatCard";
+import ScheduleModal from "../../../components/dashboard/ScheduleModal";
+import GameCard from "../../../components/dashboard/GameCard";
+import PracticeCard from "../../../components/dashboard/PracticeCard";
+import AnnouncementCard from "../../../components/dashboard/AnnouncementCard";
+import DrillCard from "../../../components/dashboard/DrillCard";
+import MessageBoard from "../../../components/dashboard/MessageBoard";
 
 export default function CoachesDashboard() {
   const [teams, setTeams] = useState<Team[]>([]);
@@ -40,6 +50,7 @@ export default function CoachesDashboard() {
   const [csrfToken, setCsrfToken] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null); // New: Mobile preview
+  const scrollPositionRef = useRef<number>(0); // Track scroll position
   const router = useRouter();
 
   // Schedule form fields
@@ -48,6 +59,12 @@ export default function CoachesDashboard() {
   const [scheduleLocation, setScheduleLocation] = useState("");
   const [scheduleOpponent, setScheduleOpponent] = useState("");
   const [scheduleDescription, setScheduleDescription] = useState("");
+
+  // Recurring practice fields
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringType, setRecurringType] = useState<"count" | "date">("count");
+  const [recurringCount, setRecurringCount] = useState(4);
+  const [recurringEndDate, setRecurringEndDate] = useState("");
 
   // Team update form fields
   const [updateTitle, setUpdateTitle] = useState("");
@@ -62,7 +79,7 @@ export default function CoachesDashboard() {
   // Lists for edit/delete
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [updates, setUpdates] = useState<TeamUpdate[]>([]);
-  const [newsList, setNewsList] = useState<News[]>([]);
+  // const [newsList, setNewsList] = useState<News[]>([]);
 
   // Editing state
   const [editing, setEditing] = useState<{
@@ -75,33 +92,220 @@ export default function CoachesDashboard() {
   const [updateCarouselIndex, setUpdateCarouselIndex] = useState(0);
   const [scheduleCarouselIndex, setScheduleCarouselIndex] = useState(0);
 
-  // Carousel navigation functions
-  const nextUpdate = () => {
-    const maxIndex = Math.max(0, updates.length - 3);
-    setUpdateCarouselIndex((prev) => Math.min(prev + 1, maxIndex));
+  // Modal state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<
+    "Game" | "Practice" | "Update" | "Drill"
+  >("Game");
+  const [editingItem, setEditingItem] = useState<Schedule | TeamUpdate | null>(
+    null
+  );
+
+  // Carousel navigation functions (unused in new design)
+  // const nextUpdate = () => {
+  //   const maxIndex = Math.max(0, updates.length - 3);
+  //   setUpdateCarouselIndex((prev) => Math.min(prev + 1, maxIndex));
+  // };
+
+  // const prevUpdate = () => {
+  //   setUpdateCarouselIndex((prev) => Math.max(prev - 1, 0));
+  // };
+
+  // const nextSchedule = () => {
+  //   const maxIndex = Math.max(0, schedules.length - 3);
+  //   setScheduleCarouselIndex((prev) => Math.min(prev + 1, maxIndex));
+  // };
+
+  // const prevSchedule = () => {
+  //   setScheduleCarouselIndex((prev) => Math.max(prev - 1, 0));
+  // };
+
+  // Get the last 3 updates for carousel (unused in new design)
+  // const getCarouselUpdates = () => {
+  //   return updates.slice(updateCarouselIndex, updateCarouselIndex + 3);
+  // };
+
+  // Get the last 3 schedules for carousel (unused in new design)
+  // const getCarouselSchedules = () => {
+  //   return schedules.slice(scheduleCarouselIndex, scheduleCarouselIndex + 3);
+  // };
+
+  // Calculate dashboard stats
+  const getNextGame = () => {
+    const upcomingGames = schedules
+      .filter(
+        (s) => s.event_type === "Game" && new Date(s.date_time) > new Date()
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+      );
+
+    if (upcomingGames.length === 0) return null;
+
+    const nextGame = upcomingGames[0];
+    const daysUntil = Math.ceil(
+      (new Date(nextGame.date_time).getTime() - new Date().getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    return {
+      days: daysUntil,
+      opponent: nextGame.opponent || "TBD",
+    };
   };
 
-  const prevUpdate = () => {
-    setUpdateCarouselIndex((prev) => Math.max(prev - 1, 0));
+  const getUpdatesCount = () => {
+    return updates.length;
   };
 
-  const nextSchedule = () => {
-    const maxIndex = Math.max(0, schedules.length - 3);
-    setScheduleCarouselIndex((prev) => Math.min(prev + 1, maxIndex));
+  const getLastUpdateTime = () => {
+    if (updates.length === 0) return "No updates";
+
+    const lastUpdate = updates.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0];
+
+    const hoursAgo = Math.floor(
+      (new Date().getTime() - new Date(lastUpdate.created_at).getTime()) /
+        (1000 * 60 * 60)
+    );
+
+    if (hoursAgo < 24) {
+      return `${hoursAgo} hours ago`;
+    } else {
+      const daysAgo = Math.floor(hoursAgo / 24);
+      return `${daysAgo} day${daysAgo > 1 ? "s" : ""} ago`;
+    }
   };
 
-  const prevSchedule = () => {
-    setScheduleCarouselIndex((prev) => Math.max(prev - 1, 0));
+  const getDrillsCount = () => {
+    // Mock data for now - in real app this would come from practice_drills table
+    return 24;
   };
 
-  // Get the last 3 updates for carousel
-  const getCarouselUpdates = () => {
-    return updates.slice(updateCarouselIndex, updateCarouselIndex + 3);
+  // Modal handlers
+  const openModal = (
+    type: "Game" | "Practice" | "Update" | "Drill",
+    item?: Schedule | TeamUpdate
+  ) => {
+    setModalType(type);
+    setEditingItem(item || null);
+    setIsModalOpen(true);
   };
 
-  // Get the last 3 schedules for carousel
-  const getCarouselSchedules = () => {
-    return schedules.slice(scheduleCarouselIndex, scheduleCarouselIndex + 3);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingItem(null);
+  };
+
+  const handleModalSubmit = async (data: Record<string, unknown>) => {
+    try {
+      setLoading(true);
+
+      if (modalType === "Game" || modalType === "Practice") {
+        if (editingItem && "event_type" in editingItem) {
+          // Update existing schedule
+          const updatedData = await updateSchedule(editingItem.id, {
+            event_type: data.event_type as
+              | "Game"
+              | "Practice"
+              | "Tournament"
+              | "Meeting",
+            date_time: data.date_time as string,
+            location: data.location as string,
+            opponent: (data.opponent as string) || undefined,
+            description: (data.description as string) || undefined,
+          });
+          setSchedules((prev) =>
+            prev.map((item) =>
+              item.id === updatedData.id ? updatedData : item
+            )
+          );
+          toast.success("Schedule updated!");
+        } else {
+          // Create new schedule
+          const newSchedule = await addSchedule({
+            team_id:
+              selectedTeam === "__GLOBAL__"
+                ? "00000000-0000-0000-0000-000000000000"
+                : selectedTeam,
+            event_type: data.event_type as
+              | "Game"
+              | "Practice"
+              | "Tournament"
+              | "Meeting",
+            date_time: new Date(data.date_time as string).toISOString(),
+            location: data.location as string,
+            opponent: (data.opponent as string) || undefined,
+            description: (data.description as string) || undefined,
+            is_global: selectedTeam === "__GLOBAL__",
+          });
+          setSchedules((prev) => [...prev, newSchedule]);
+          toast.success("Schedule created!");
+        }
+      } else if (modalType === "Update") {
+        let imageUrl: string | undefined;
+
+        // Handle image upload if present
+        if (data.image) {
+          const imageFile = data.image as File;
+          const fileName = `${Date.now()}-${imageFile.name}`;
+          devLog("Client upload to team-updates:", { fileName });
+          const { error: uploadError } = await supabase.storage
+            .from("team-updates")
+            .upload(`team_updates/${fileName}`, imageFile, { upsert: true });
+          if (uploadError) {
+            devError("Client image upload error:", uploadError);
+            throw new Error(uploadError.message);
+          }
+          const { data: urlData } = supabase.storage
+            .from("team-updates")
+            .getPublicUrl(`team_updates/${fileName}`);
+          imageUrl = urlData.publicUrl;
+          devLog("Client upload success:", { imageUrl });
+        }
+
+        if (editingItem && "title" in editingItem) {
+          // Update existing update
+          const updatedData = await updateUpdate(editingItem.id, {
+            title: sanitizeInput(data.title as string),
+            content: sanitizeInput(data.content as string),
+            image_url: imageUrl,
+          });
+          setUpdates((prev) =>
+            prev.map((item) =>
+              item.id === updatedData.id ? updatedData : item
+            )
+          );
+          toast.success("Update updated!");
+        } else {
+          // Create new update
+          const newUpdate = await addUpdate({
+            team_id: selectedTeam === "__GLOBAL__" ? null : selectedTeam,
+            title: sanitizeInput(data.title as string),
+            content: sanitizeInput(data.content as string),
+            image_url: imageUrl,
+            is_global: selectedTeam === "__GLOBAL__",
+            created_by: userId!,
+          });
+          setUpdates((prev) => [...prev, newUpdate]);
+          toast.success("Update created!");
+        }
+      } else if (modalType === "Drill") {
+        // Mock drill creation - in real app this would create a practice drill
+        toast.success("Drill created! (Mock)");
+      }
+
+      closeModal();
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      devError("Modal submit error:", err);
+      toast.error(`Failed to save: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -129,7 +333,18 @@ export default function CoachesDashboard() {
         const admin = userData.role === "admin";
         setIsAdmin(admin);
 
-        const teamsData = await fetchTeams();
+        // Fetch teams based on user role
+        let teamsData: Team[];
+        if (admin) {
+          // Admins see all teams
+          devLog("Fetching all teams for admin user");
+          teamsData = await fetchTeams();
+        } else {
+          // Coaches see only their assigned teams
+          devLog("Fetching assigned teams for coach user:", user.user.id);
+          teamsData = await fetchTeamsByCoachId(user.user.id);
+        }
+        devLog("Teams loaded:", `${teamsData.length} teams`);
         setTeams(teamsData);
       } catch (err) {
         const errorMessage =
@@ -160,7 +375,7 @@ export default function CoachesDashboard() {
         ]);
         setSchedules(schedulesData);
         setUpdates(updatesData);
-        setNewsList(newsData);
+        // setNewsList(newsData); // Commented out - newsList not used in new design
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown error";
@@ -179,7 +394,10 @@ export default function CoachesDashboard() {
           event: "*",
           schema: "public",
           table: "schedules",
-          filter: selectedTeam === "__GLOBAL__" ? `is_global=eq.true` : `team_id=eq.${selectedTeam}`,
+          filter:
+            selectedTeam === "__GLOBAL__"
+              ? `is_global=eq.true`
+              : `team_id=eq.${selectedTeam}`,
         },
         () => loadTeamData()
       )
@@ -189,7 +407,10 @@ export default function CoachesDashboard() {
           event: "*",
           schema: "public",
           table: "team_updates",
-          filter: selectedTeam === "__GLOBAL__" ? `is_global=eq.true` : `team_id=eq.${selectedTeam}`,
+          filter:
+            selectedTeam === "__GLOBAL__"
+              ? `is_global=eq.true`
+              : `team_id=eq.${selectedTeam}`,
         },
         () => loadTeamData()
       )
@@ -210,178 +431,267 @@ export default function CoachesDashboard() {
     };
   }, [selectedTeam]);
 
-  const handleSchedule = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTeam) {
-      toast.error("Please select a team");
-      return;
-    }
-    // For program-wide schedules, we'll use a placeholder team_id and set is_global=true
+  // const handleSchedule = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!selectedTeam) {
+  //     toast.error("Please select a team");
+  //     return;
+  //   }
+  //   // For program-wide schedules, we'll use a placeholder team_id and set is_global=true
 
-    // Client-side validation
-    if (!scheduleEventType) {
-      toast.error("Event type is required");
-      return;
-    }
-    if (!scheduleDateTime) {
-      toast.error("Date and time are required");
-      return;
-    }
-    if (!scheduleLocation) {
-      toast.error("Location is required");
-      return;
-    }
+  //   // Client-side validation
+  //   if (!scheduleEventType) {
+  //     toast.error("Event type is required");
+  //     return;
+  //   }
+  //   if (!scheduleDateTime) {
+  //     toast.error("Date and time are required");
+  //     return;
+  //   }
+  //   if (!scheduleLocation) {
+  //     toast.error("Location is required");
+  //     return;
+  //   }
 
-    try {
-      setLoading(true);
-      const storedCsrf = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("csrf-token="))
-        ?.split("=")[1];
-      if (!storedCsrf || storedCsrf !== csrfToken) {
-        throw new Error("Invalid CSRF token");
-      }
+  //   // Validate recurring practice options
+  //   if (scheduleEventType === "Practice" && isRecurring) {
+  //     if (
+  //       recurringType === "count" &&
+  //       (recurringCount < 2 || recurringCount > 52)
+  //     ) {
+  //       toast.error("Number of practices must be between 2 and 52");
+  //       return;
+  //     }
+  //     if (recurringType === "date" && !recurringEndDate) {
+  //       toast.error("End date is required for recurring practices");
+  //       return;
+  //     }
+  //     if (
+  //       recurringType === "date" &&
+  //       recurringEndDate &&
+  //       new Date(recurringEndDate) <= new Date(scheduleDateTime)
+  //     ) {
+  //       toast.error("End date must be after the start date");
+  //       return;
+  //     }
+  //   }
 
-      if (editing && editing.type === "schedule") {
-        const updatedData = await updateSchedule(editing.id, {
-          event_type: scheduleEventType as
-            | "Game"
-            | "Practice"
-            | "Tournament"
-            | "Meeting",
-          date_time: scheduleDateTime,
-          location: scheduleLocation,
-          opponent: scheduleOpponent || undefined,
-          description: scheduleDescription || undefined,
-        });
-        setSchedules((prev) =>
-          prev.map((item) => (item.id === updatedData.id ? updatedData : item))
-        );
-        toast.success("Schedule updated!");
-        setEditing(null);
-      } else {
-        const newSchedule = await addSchedule({
-          team_id: selectedTeam === "__GLOBAL__" ? "00000000-0000-0000-0000-000000000000" : selectedTeam,
-          event_type: scheduleEventType as
-            | "Game"
-            | "Practice"
-            | "Tournament"
-            | "Meeting",
-          date_time: scheduleDateTime,
-          location: scheduleLocation,
-          opponent: scheduleOpponent || undefined,
-          description: scheduleDescription || undefined,
-          is_global: selectedTeam === "__GLOBAL__",
-        });
-        setSchedules((prev) => [...prev, newSchedule]);
-        toast.success("Schedule created!");
-      }
+  //   try {
+  //     setLoading(true);
+  //     const storedCsrf = document.cookie
+  //       .split("; ")
+  //       .find((row) => row.startsWith("csrf-token="))
+  //       ?.split("=")[1];
+  //     if (!storedCsrf || storedCsrf !== csrfToken) {
+  //       throw new Error("Invalid CSRF token");
+  //     }
 
-      setScheduleEventType("");
-      setScheduleDateTime("");
-      setScheduleLocation("");
-      setScheduleOpponent("");
-      setScheduleDescription("");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      devError("Schedule error:", err);
-      toast.error(`Failed to save schedule: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     if (editing && editing.type === "schedule") {
+  //       const updatedData = await updateSchedule(editing.id, {
+  //         event_type: scheduleEventType as
+  //           | "Game"
+  //           | "Practice"
+  //           | "Tournament"
+  //           | "Meeting",
+  //         date_time: scheduleDateTime,
+  //         location: scheduleLocation,
+  //         opponent: scheduleOpponent || undefined,
+  //         description: scheduleDescription || undefined,
+  //       });
+  //       setSchedules((prev) =>
+  //         prev.map((item) => (item.id === updatedData.id ? updatedData : item))
+  //       );
+  //       toast.success("Schedule updated!");
+  //       setEditing(null);
+  //     } else {
+  //       // Handle recurring practices
+  //       if (scheduleEventType === "Practice" && isRecurring) {
+  //         const startDate = new Date(scheduleDateTime);
+  //         const schedules: Schedule[] = [];
 
-  const handleTeamUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTeam) {
-      toast.error("Please select a team");
-      return;
-    }
-    if (!userId) {
-      toast.error("User not authenticated");
-      return;
-    }
-    if (!updateTitle) {
-      toast.error("Title is required");
-      return;
-    }
-    if (!updateContent) {
-      toast.error("Content is required");
-      return;
-    }
+  //         // Calculate how many practices to create
+  //         let practiceCount = 0;
+  //         if (recurringType === "count") {
+  //           practiceCount = recurringCount;
+  //         } else if (recurringType === "date" && recurringEndDate) {
+  //           const endDate = new Date(recurringEndDate);
+  //           const weeksDiff = Math.ceil(
+  //             (endDate.getTime() - startDate.getTime()) /
+  //               (7 * 24 * 60 * 60 * 1000)
+  //           );
+  //           practiceCount = Math.max(1, weeksDiff);
+  //         } else {
+  //           practiceCount = 4; // Default fallback
+  //         }
 
-    try {
-      setLoading(true);
-      let imagePath: string | undefined;
+  //         // Create multiple practice events (weekly)
+  //         for (let i = 0; i < practiceCount; i++) {
+  //           const practiceDate = new Date(
+  //             startDate.getTime() + i * 7 * 24 * 60 * 60 * 1000
+  //           ); // Add 7 days for each week
 
-      // Client-side upload if image (fixes server File issue + RLS)
-      if (updateImage) {
-        const fileName = `${Date.now()}-${updateImage.name}`;
-        devLog("Client upload to team-updates:", { fileName });
-        const { error: uploadError } = await supabase.storage
-          .from("team-updates")
-          .upload(`team_updates/${fileName}`, updateImage, { upsert: true });
-        if (uploadError) {
-          devError("Client image upload error:", uploadError);
-          throw new Error(uploadError.message);
-        }
-        const { data: urlData } = supabase.storage
-          .from("team-updates")
-          .getPublicUrl(`team_updates/${fileName}`);
-        imagePath = urlData.publicUrl;
-        devLog("Client upload success:", { imagePath });
-      }
+  //           const newSchedule = await addSchedule({
+  //             team_id:
+  //               selectedTeam === "__GLOBAL__"
+  //                 ? "00000000-0000-0000-0000-000000000000"
+  //                 : selectedTeam,
+  //             event_type: "Practice",
+  //             date_time: practiceDate.toISOString(), // Full ISO string for proper parsing
+  //             location: scheduleLocation,
+  //             opponent: scheduleOpponent || undefined,
+  //             description: scheduleDescription || undefined,
+  //             is_global: selectedTeam === "__GLOBAL__",
+  //           });
+  //           schedules.push(newSchedule);
+  //         }
 
-      // Server insert (no File; uses admin to set created_by safely)
-      if (editing && editing.type === "update") {
-        const updatedData = await updateUpdate(editing.id, {
-          title: sanitizeInput(updateTitle),
-          content: sanitizeInput(updateContent),
-          image_url: imagePath, // New image overrides old
-          updated_by: userId,
-        });
-        setUpdates((prev) =>
-          prev.map((item) => (item.id === updatedData.id ? updatedData : item))
-        );
-        toast.success("Team update updated!");
-      } else {
-        const newUpdate = await addUpdate({
-          team_id: selectedTeam === "__GLOBAL__" ? "GLOBAL" : selectedTeam,
-          title: sanitizeInput(updateTitle),
-          content: sanitizeInput(updateContent),
-          image_url: imagePath,
-          is_global: selectedTeam === "__GLOBAL__",
-          created_by: userId,
-        });
-        setUpdates((prev) => [...prev, newUpdate]);
-        toast.success("Team update added!");
-      }
+  //         setSchedules((prev) => [...prev, ...schedules]);
+  //         toast.success(`${practiceCount} recurring practices created!`);
+  //       } else {
+  //         // Single event (non-recurring or not a practice)
+  //         const newSchedule = await addSchedule({
+  //           team_id:
+  //             selectedTeam === "__GLOBAL__"
+  //               ? "00000000-0000-0000-0000-000000000000"
+  //               : selectedTeam,
+  //           event_type: scheduleEventType as
+  //             | "Game"
+  //             | "Practice"
+  //             | "Tournament"
+  //             | "Meeting",
+  //           date_time: new Date(scheduleDateTime).toISOString(),
+  //           location: scheduleLocation,
+  //           opponent: scheduleOpponent || undefined,
+  //           description: scheduleDescription || undefined,
+  //           is_global: selectedTeam === "__GLOBAL__",
+  //         });
+  //         setSchedules((prev) => [...prev, newSchedule]);
+  //         toast.success("Schedule created!");
+  //       }
+  //     }
 
-      // Reset form + preview
-      setUpdateTitle("");
-      setUpdateContent("");
-      setUpdateImage(null);
-      setImagePreview(null);
-      setEditing(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      devError("Team update error:", err);
-      toast.error(`Failed: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setScheduleEventType("");
+  //     setScheduleDateTime("");
+  //     setScheduleLocation("");
+  //     setScheduleOpponent("");
+  //     setScheduleDescription("");
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setUpdateImage(file);
-    if (file) {
-      setImagePreview(URL.createObjectURL(file)); // Client preview
-    } else {
-      setImagePreview(null);
-      URL.revokeObjectURL(imagePreview || ""); // Cleanup
-    }
-  };
+  //     // Reset recurring practice fields
+  //     setIsRecurring(false);
+  //     setRecurringType("count");
+  //     setRecurringCount(4);
+  //     setRecurringEndDate("");
+  //   } catch (err) {
+  //     const errorMessage = err instanceof Error ? err.message : "Unknown error";
+  //     devError("Schedule error:", err);
+  //     toast.error(`Failed to save schedule: ${errorMessage}`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const handleTeamUpdate = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!selectedTeam) {
+  //     toast.error("Please select a team");
+  //     return;
+  //   }
+  //   if (!userId) {
+  //     toast.error("User not authenticated");
+  //     return;
+  //   }
+  //   if (!updateTitle) {
+  //     toast.error("Title is required");
+  //     return;
+  //   }
+  //   if (!updateContent) {
+  //     toast.error("Content is required");
+  //     return;
+  //   }
+
+  //   try {
+  //     setLoading(true);
+  //     let imagePath: string | undefined;
+
+  //     // Client-side upload if image (fixes server File issue + RLS)
+  //     if (updateImage) {
+  //       const fileName = `${Date.now()}-${updateImage.name}`;
+  //       devLog("Client upload to team-updates:", { fileName });
+  //       const { error: uploadError } = await supabase.storage
+  //         .from("team-updates")
+  //         .upload(`team_updates/${fileName}`, updateImage, { upsert: true });
+  //       if (uploadError) {
+  //         devError("Client image upload error:", uploadError);
+  //         throw new Error(uploadError.message);
+  //       }
+  //       const { data: urlData } = supabase.storage
+  //         .from("team-updates")
+  //         .getPublicUrl(`team_updates/${fileName}`);
+  //       imagePath = urlData.publicUrl;
+  //       devLog("Client upload success:", { imagePath });
+  //     }
+
+  //     // Server insert (no File; uses admin to set created_by safely)
+  //     if (editing && editing.type === "update") {
+  //       const updatedData = await updateUpdate(editing.id, {
+  //         title: sanitizeInput(updateTitle),
+  //         content: sanitizeInput(updateContent),
+  //         image_url: imagePath, // New image overrides old
+  //       });
+  //       setUpdates((prev) =>
+  //         prev.map((item) => (item.id === updatedData.id ? updatedData : item))
+  //       );
+  //       toast.success("Team update updated!");
+  //     } else {
+  //       const newUpdate = await addUpdate({
+  //         team_id: selectedTeam === "__GLOBAL__" ? null : selectedTeam,
+  //         title: sanitizeInput(updateTitle),
+  //         content: sanitizeInput(updateContent),
+  //         image_url: imagePath,
+  //         is_global: selectedTeam === "__GLOBAL__",
+  //         created_by: userId,
+  //       });
+  //       setUpdates((prev) => [...prev, newUpdate]);
+  //       toast.success("Team update added!");
+  //     }
+
+  //     // Reset form + preview
+  //     setUpdateTitle("");
+  //     setUpdateContent("");
+  //     setUpdateImage(null);
+  //     setImagePreview(null);
+  //     setEditing(null);
+  //   } catch (err) {
+  //     const errorMessage = err instanceof Error ? err.message : "Unknown error";
+  //     devError("Team update error:", err);
+  //     toast.error(`Failed: ${errorMessage}`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   // Prevent any form submission or page scroll
+  //   e.preventDefault();
+  //   e.stopPropagation();
+
+  //   // Save current scroll position
+  //   scrollPositionRef.current = window.scrollY;
+
+  //   const file = e.target.files?.[0] || null;
+  //   setUpdateImage(file);
+  //   if (file) {
+  //     setImagePreview(URL.createObjectURL(file)); // Client preview
+  //   } else {
+  //     setImagePreview(null);
+  //     URL.revokeObjectURL(imagePreview || ""); // Cleanup
+  //   }
+
+  //   // Restore scroll position after state update
+  //   setTimeout(() => {
+  //     window.scrollTo(0, scrollPositionRef.current);
+  //   }, 0);
+  // };
 
   const handleDeleteSchedule = async (id: string) => {
     try {
@@ -413,117 +723,143 @@ export default function CoachesDashboard() {
     }
   };
 
-  const handleNews = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTeam) {
-      toast.error("Please select a team");
-      return;
-    }
-    if (selectedTeam === "__GLOBAL__") {
-      toast.error(
-        "Program-wide selection is only for Updates. Choose a team for news."
-      );
-      return;
-    }
-    if (!userId) {
-      toast.error("User not authenticated");
-      return;
-    }
-    if (!newsTitle) {
-      toast.error("Title is required");
-      return;
-    }
-    if (!newsContent) {
-      toast.error("Content is required");
-      return;
-    }
+  // const handleNews = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!selectedTeam) {
+  //     toast.error("Please select a team");
+  //     return;
+  //   }
+  //   if (selectedTeam === "__GLOBAL__") {
+  //     toast.error(
+  //       "Program-wide selection is only for Updates. Choose a team for news."
+  //     );
+  //     return;
+  //   }
+  //   if (!userId) {
+  //     toast.error("User not authenticated");
+  //     return;
+  //   }
+  //   if (!newsTitle) {
+  //     toast.error("Title is required");
+  //     return;
+  //   }
+  //   if (!newsContent) {
+  //     toast.error("Content is required");
+  //     return;
+  //   }
 
-    try {
-      setLoading(true);
-      let imagePath: string | undefined;
-      if (newsImage) {
-        const fileName = `${Date.now()}-${newsImage.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from("news")
-          .upload(fileName, newsImage);
-        if (uploadError) {
-          devError("Image upload error:", uploadError);
-          throw new Error(uploadError.message);
-        }
-        const { data: urlData } = supabase.storage
-          .from("news")
-          .getPublicUrl(fileName);
-        imagePath = urlData.publicUrl;
-      }
+  //   try {
+  //     setLoading(true);
+  //     let imagePath: string | undefined;
+  //     if (newsImage) {
+  //       const fileName = `${Date.now()}-${newsImage.name}`;
+  //       const { error: uploadError } = await supabase.storage
+  //         .from("news")
+  //         .upload(fileName, newsImage);
+  //       if (uploadError) {
+  //         devError("Image upload error:", uploadError);
+  //         throw new Error(uploadError.message);
+  //       }
+  //       const { data: urlData } = supabase.storage
+  //         .from("news")
+  //         .getPublicUrl(fileName);
+  //       imagePath = urlData.publicUrl;
+  //     }
 
-      if (editing && editing.type === "news") {
-        const updatedData = await updateNews(editing.id, {
-          title: newsTitle,
-          content: newsContent,
-          image_url: imagePath,
-        });
-        setNewsList((prev) =>
-          prev.map((item) => (item.id === updatedData.id ? updatedData : item))
-        );
-        toast.success("News updated!");
-      } else {
-        const newNews = await addNews({
-          team_id: selectedTeam,
-          title: newsTitle,
-          content: newsContent,
-          image_url: imagePath,
-        });
-        setNewsList((prev) => [...prev, newNews]);
-        toast.success("News added!");
-      }
+  //     if (editing && editing.type === "news") {
+  //       const updatedData = await updateNews(editing.id, {
+  //         title: newsTitle,
+  //         content: newsContent,
+  //         image_url: imagePath,
+  //       });
+  //       setNewsList((prev) =>
+  //         prev.map((item) => (item.id === updatedData.id ? updatedData : item))
+  //       );
+  //       toast.success("News updated!");
+  //     } else {
+  //       const newNews = await addNews({
+  //         team_id: selectedTeam,
+  //         title: newsTitle,
+  //         content: newsContent,
+  //         image_url: imagePath,
+  //       });
+  //       setNewsList((prev) => [...prev, newNews]);
+  //       toast.success("News added!");
+  //     }
 
-      setNewsTitle("");
-      setNewsContent("");
-      setNewsImage(null);
-      setEditing(null);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      devError("News error:", err);
-      toast.error(`Failed to save news: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setNewsTitle("");
+  //     setNewsContent("");
+  //     setNewsImage(null);
+  //     setEditing(null);
+  //   } catch (err) {
+  //     const errorMessage = err instanceof Error ? err.message : "Unknown error";
+  //     devError("News error:", err);
+  //     toast.error(`Failed to save news: ${errorMessage}`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
-  const handleDeleteNews = async (id: string) => {
-    try {
-      setLoading(true);
-      await deleteNews(id);
-      setNewsList((prev) => prev.filter((item) => item.id !== id));
-      toast.success("News deleted!");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      devError("Delete news error:", err);
-      toast.error(`Failed to delete news: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleDeleteNews = async (id: string) => {
+  //   try {
+  //     setLoading(true);
+  //     await deleteNews(id);
+  //     setNewsList((prev) => prev.filter((item) => item.id !== id));
+  //     toast.success("News deleted!");
+  //   } catch (err) {
+  //     const errorMessage = err instanceof Error ? err.message : "Unknown error";
+  //     devError("Delete news error:", err);
+  //     toast.error(`Failed to delete news: ${errorMessage}`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 sm:p-6 pt-20 sm:pt-24">
+    <div className="min-h-screen bg-[#0A2342] text-white">
       <Toaster position="top-right" />
-      <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col items-center gap-2 mb-8">
-          <h1 className="text-[clamp(2rem,4vw,2.5rem)] font-bebas uppercase text-center">
-            Coaches Dashboard
-          </h1>
-          {userName && (
-            <p className="text-sm text-gray-300 font-inter">
-              Signed in as <span className="text-red">{userName}</span>
-            </p>
-          )}
+
+      {/* Header */}
+      <div className="bg-white/95 backdrop-blur-md shadow-lg">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 py-1">
+          <div className="flex items-center justify-between h-12">
+            <Link
+              href="/"
+              className="flex items-center gap-1 sm:gap-2 hover:opacity-80 transition-opacity duration-300"
+            >
+              <div className="p-1 rounded-md transition-all duration-300 ease-out w-14 h-7 sm:w-16 sm:h-8 relative bg-transparent">
+                <Image
+                  src="/logo4.png"
+                  alt="WCS Basketball Logo"
+                  fill
+                  sizes="(max-width: 640px) 56px, 64px"
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <span className="md:hidden font-bebas text-base sm:text-lg transition-colors duration-300 ease-out text-navy">
+                World Class
+              </span>
+              <span className="hidden md:inline font-bebas text-lg transition-colors duration-300 ease-out text-navy">
+                World Class
+              </span>
+            </Link>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-900 font-inter">Coach {userName}</span>
+              <button className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm">
+                Sign Out
+              </button>
+            </div>
+          </div>
         </div>
-        {error && <p className="text-red-500 mb-4">Error: {error}</p>}
+      </div>
+
+      <div className="max-w-7xl mx-auto p-4 sm:p-6">
+        {/* Team Selection */}
         <div className="mb-6">
           <label
             htmlFor="team-select"
-            className="block text-sm font-inter mb-2"
+            className="block text-sm font-inter mb-2 text-white"
           >
             Select Team
           </label>
@@ -531,7 +867,7 @@ export default function CoachesDashboard() {
             id="team-select"
             value={selectedTeam}
             onChange={(e) => setSelectedTeam(e.target.value)}
-            className="w-full p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+            className="w-full p-3 bg-white text-gray-900 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">Select a team</option>
             {isAdmin && (
@@ -544,582 +880,266 @@ export default function CoachesDashboard() {
             ))}
           </select>
         </div>
+
+        {error && <p className="text-red-400 mb-4">Error: {error}</p>}
+
         {selectedTeam ? (
           <>
-            <section className="space-y-4 mb-8">
-              <h2 className="text-2xl font-bebas uppercase">
-                {selectedTeam === "__GLOBAL__" ? "Program-Wide Schedules" : "Schedules"}
-              </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <form onSubmit={handleSchedule} className="space-y-4">
-                    <input type="hidden" name="csrf-token" value={csrfToken} />
-                    <div>
-                      <label
-                        htmlFor="event-type"
-                        className="block text-sm font-inter"
-                      >
-                        Event Type
-                      </label>
-                      <select
-                        id="event-type"
-                        value={scheduleEventType}
-                        onChange={(e) => setScheduleEventType(e.target.value)}
-                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                        required
-                      >
-                        <option value="">Select event type</option>
-                        <option value="Game">Game</option>
-                        <option value="Practice">Practice</option>
-                        <option value="Tournament">Tournament</option>
-                        <option value="Meeting">Meeting</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="date-time"
-                        className="block text-sm font-inter"
-                      >
-                        Date & Time
-                      </label>
-                      <input
-                        id="date-time"
-                        type="datetime-local"
-                        value={scheduleDateTime}
-                        onChange={(e) => setScheduleDateTime(e.target.value)}
-                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="location"
-                        className="block text-sm font-inter"
-                      >
-                        Location
-                      </label>
-                      <input
-                        id="location"
-                        type="text"
-                        value={scheduleLocation}
-                        onChange={(e) => setScheduleLocation(e.target.value)}
-                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="opponent"
-                        className="block text-sm font-inter"
-                      >
-                        Opponent (optional)
-                      </label>
-                      <input
-                        id="opponent"
-                        type="text"
-                        value={scheduleOpponent}
-                        onChange={(e) => setScheduleOpponent(e.target.value)}
-                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="description"
-                        className="block text-sm font-inter"
-                      >
-                        Description (optional)
-                      </label>
-                      <textarea
-                        id="description"
-                        value={scheduleDescription}
-                        onChange={(e) => setScheduleDescription(e.target.value)}
-                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <svg
-                          className="animate-spin h-5 w-5 text-white mr-2"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="#D91E18"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="#FFFFFF"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                      ) : editing && editing.type === "schedule" ? (
-                        "Update Schedule"
-                      ) : (
-                        "Add Schedule"
-                      )}
-                    </button>
-                  </form>
-                  <div className="space-y-4">
-                    <div className="bg-gray-800/50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bebas text-white">
-                          Recent Schedules
-                        </h3>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={prevSchedule}
-                            disabled={scheduleCarouselIndex === 0}
-                            className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-                            aria-label="Previous schedules"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M15 19l-7-7 7-7"
-                              />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={nextSchedule}
-                            disabled={
-                              scheduleCarouselIndex >=
-                              Math.max(0, schedules.length - 3)
-                            }
-                            className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-                            aria-label="Next schedules"
-                          >
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-
-                      {getCarouselSchedules().length > 0 ? (
-                        <div className="space-y-3">
-                          {getCarouselSchedules().map((schedule) => (
-                            <div
-                              key={schedule.id}
-                              className="bg-gray-900/50 border border-red-500/50 rounded-lg p-3"
-                            >
-                              <h4 className="text-base font-bebas text-white line-clamp-1">
-                                {schedule.is_global ? "Program-Wide " : ""}{schedule.event_type}:{" "}
-                                {schedule.opponent || "N/A"}
-                              </h4>
-                              <p className="text-gray-300 font-inter text-sm mt-1">
-                                {new Date(schedule.date_time).toLocaleString()}
-                              </p>
-                              <p className="text-gray-300 font-inter text-sm">
-                                {schedule.location}
-                              </p>
-                              {schedule.description && (
-                                <p className="text-gray-300 font-inter text-sm line-clamp-1 mt-1">
-                                  {schedule.description}
-                                </p>
-                              )}
-                              <div className="mt-2 flex space-x-2">
-                                <button
-                                  onClick={() =>
-                                    setEditing({
-                                      id: schedule.id,
-                                      type: "schedule",
-                                      data: schedule,
-                                    })
-                                  }
-                                  className="bg-gray-700 text-white font-inter rounded px-2 py-1 text-xs hover:bg-gray-600"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteSchedule(schedule.id)
-                                  }
-                                  className="bg-red-600 text-white font-inter rounded px-2 py-1 text-xs hover:bg-red-700"
-                                >
-                                  Delete
-                                </button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-400 font-inter text-sm">
-                          No schedules available
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-            {/* Divider */}
-            <div className="border-t border-gray-700 my-8"></div>
-
-            <section className="space-y-4 mb-8">
-              <h2 className="text-2xl font-bebas uppercase">Team Updates</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <form onSubmit={handleTeamUpdate} className="space-y-4">
-                  <input type="hidden" name="csrf-token" value={csrfToken} />
-                  <div>
-                    <label
-                      htmlFor="update-title"
-                      className="block text-sm font-inter"
-                    >
-                      Title
-                    </label>
-                    <input
-                      id="update-title"
-                      type="text"
-                      value={updateTitle}
-                      onChange={(e) => setUpdateTitle(e.target.value)}
-                      className="w-full mt-1 p-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-                      required
+            {/* Statistics Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              <StatCard
+                title="Next Game"
+                value={getNextGame()?.days || "N/A"}
+                subtitle={
+                  getNextGame()
+                    ? `vs ${getNextGame()?.opponent}`
+                    : "No upcoming games"
+                }
+                icon={
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                     />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="update-content"
-                      className="block text-sm font-inter"
-                    >
-                      Content
-                    </label>
-                    <textarea
-                      id="update-content"
-                      value={updateContent}
-                      onChange={(e) => setUpdateContent(e.target.value)}
-                      className="w-full mt-1 p-3 bg-gray-800 text-white rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500 min-h-[100px]"
-                      required
+                  </svg>
+                }
+              />
+              <StatCard
+                title="New Updates"
+                value={getUpdatesCount()}
+                subtitle={getLastUpdateTime()}
+                icon={
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 00-15 0v5h5l-5 5-5-5h5v-5a7.5 7.5 0 0115 0v5z"
                     />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="update-image"
-                      className="block text-sm font-inter"
-                    >
-                      Image (optional)
-                    </label>
-                    <input
-                      id="update-image"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="w-full mt-1 p-3 bg-gray-800 text-white rounded-md border border-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-bebas file:uppercase file:bg-red file:text-white hover:file:bg-red-600"
+                  </svg>
+                }
+              />
+              <StatCard
+                title="New Comments"
+                value="4"
+                subtitle="1.5 hours ago"
+                icon={
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                     />
-                    {imagePreview && (
-                      <Image
-                        src={imagePreview}
-                        alt="Preview"
-                        width={400}
-                        height={128}
-                        className="mt-2 w-full h-32 object-cover rounded-md max-w-full"
-                      />
-                    )}
+                  </svg>
+                }
+              />
+              <StatCard
+                title="Practice Drills"
+                value={getDrillsCount()}
+                subtitle="In Library"
+                icon={
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                }
+              />
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              {/* Upcoming Games */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bebas uppercase text-gray-900">
+                      Upcoming Games
+                    </h3>
+                    <p className="text-sm text-gray-500 font-inter mt-1">
+                      Next scheduled games
+                    </p>
                   </div>
                   <button
-                    type="submit"
-                    className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center"
-                    disabled={loading}
+                    onClick={() => openModal("Game")}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700"
                   >
-                    {loading ? (
-                      <svg
-                        className="animate-spin h-5 w-5 text-white mr-2"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="#D91E18"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="#FFFFFF"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                    ) : editing && editing.type === "update" ? (
-                      "Update Team Update"
-                    ) : (
-                      "Add Team Update"
-                    )}
+                    + Add Game
                   </button>
-                </form>
-                <div className="space-y-4">
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-bebas text-white">
-                        Recent Updates
-                      </h3>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={prevUpdate}
-                          disabled={updateCarouselIndex === 0}
-                          className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-                          aria-label="Previous updates"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15 19l-7-7 7-7"
-                            />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={nextUpdate}
-                          disabled={
-                            updateCarouselIndex >=
-                            Math.max(0, updates.length - 3)
-                          }
-                          className="bg-gray-700 text-white p-2 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-600"
-                          aria-label="Next updates"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    {getCarouselUpdates().length > 0 ? (
-                      <div className="space-y-3">
-                        {getCarouselUpdates().map((update) => (
-                          <div
-                            key={update.id}
-                            className="bg-gray-900/50 border border-red-500/50 rounded-lg p-3"
-                          >
-                            <h4 className="text-base font-bebas text-white line-clamp-1">
-                              {update.title}
-                            </h4>
-                            <p className="text-gray-300 font-inter text-sm line-clamp-2 mt-1">
-                              {update.content}
-                            </p>
-                            <div className="mt-2 flex space-x-2">
-                              <button
-                                onClick={() =>
-                                  setEditing({
-                                    id: update.id,
-                                    type: "update",
-                                    data: update,
-                                  })
-                                }
-                                className="bg-gray-700 text-white font-inter rounded px-2 py-1 text-xs hover:bg-gray-600"
-                              >
-                                Edit
-                              </button>
-                              <button
-                                onClick={() => handleDeleteUpdate(update.id)}
-                                className="bg-red-600 text-white font-inter rounded px-2 py-1 text-xs hover:bg-red-700"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-400 font-inter text-sm">
-                        No updates available
-                      </p>
-                    )}
-                  </div>
+                </div>
+                <div className="space-y-3">
+                  {schedules
+                    .filter((s) => s.event_type === "Game")
+                    .slice(0, 3)
+                    .map((schedule) => (
+                      <GameCard
+                        key={schedule.id}
+                        schedule={schedule}
+                        onEdit={(s) => openModal("Game", s)}
+                        onDelete={handleDeleteSchedule}
+                      />
+                    ))}
+                  {schedules.filter((s) => s.event_type === "Game").length ===
+                    0 && (
+                    <p className="text-gray-500 text-center py-4">
+                      No upcoming games
+                    </p>
+                  )}
                 </div>
               </div>
-            </section>
 
-            {/* Divider */}
-            {selectedTeam !== "__GLOBAL__" && (
-              <div className="border-t border-gray-700 my-8"></div>
-            )}
-
-            {selectedTeam !== "__GLOBAL__" && (
-              <section className="space-y-4">
-                <h2 className="text-2xl font-bebas uppercase">News</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <form onSubmit={handleNews} className="space-y-4">
-                    <input type="hidden" name="csrf-token" value={csrfToken} />
-                    <div>
-                      <label
-                        htmlFor="news-title"
-                        className="block text-sm font-inter"
-                      >
-                        Title
-                      </label>
-                      <input
-                        id="news-title"
-                        type="text"
-                        value={newsTitle}
-                        onChange={(e) => setNewsTitle(e.target.value)}
-                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="news-content"
-                        className="block text-sm font-inter"
-                      >
-                        Content
-                      </label>
-                      <textarea
-                        id="news-content"
-                        value={newsContent}
-                        onChange={(e) => setNewsContent(e.target.value)}
-                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="news-image"
-                        className="block text-sm font-inter"
-                      >
-                        Image (optional)
-                      </label>
-                      <input
-                        id="news-image"
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                          setNewsImage(e.target.files?.[0] || null)
-                        }
-                        className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                      />
-                    </div>
-                    <button
-                      type="submit"
-                      className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 flex items-center justify-center"
-                      disabled={loading}
-                    >
-                      {loading ? (
-                        <svg
-                          className="animate-spin h-5 w-5 text-white mr-2"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="#D91E18"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="#FFFFFF"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                      ) : editing && editing.type === "news" ? (
-                        "Update News"
-                      ) : (
-                        "Add News"
-                      )}
-                    </button>
-                  </form>
-                  <div className="space-y-4">
-                    {newsList.map((news) => (
-                      <div
-                        key={news.id}
-                        className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4"
-                      >
-                        <h3 className="text-lg font-bebas">{news.title}</h3>
-                        <p className="text-gray-300 font-inter">
-                          {news.content}
-                        </p>
-                        {news.image_url && (
-                          <Image
-                            src={news.image_url}
-                            alt={news.title}
-                            width={400}
-                            height={200}
-                            className="w-full h-auto mt-2 rounded"
-                          />
-                        )}
-                        <div className="mt-2 flex space-x-2">
-                          <button
-                            onClick={() =>
-                              setEditing({
-                                id: news.id,
-                                type: "news",
-                                data: news,
-                              })
-                            }
-                            className="bg-gray-700 text-white font-inter rounded p-2 text-sm"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteNews(news.id)}
-                            className="bg-red-600 text-white font-inter rounded p-2 text-sm hover:bg-red-700"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+              {/* Practice Schedule */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bebas uppercase text-gray-900">
+                      Practice Schedule
+                    </h3>
+                    <p className="text-sm text-gray-500 font-inter mt-1">
+                      This week&apos;s practice
+                    </p>
                   </div>
+                  <button
+                    onClick={() => openModal("Practice")}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700"
+                  >
+                    + Add Practice
+                  </button>
                 </div>
-              </section>
-            )}
+                <div className="space-y-3">
+                  {schedules
+                    .filter((s) => s.event_type === "Practice")
+                    .slice(0, 3)
+                    .map((schedule) => (
+                      <PracticeCard
+                        key={schedule.id}
+                        schedule={schedule}
+                        onEdit={(s) => openModal("Practice", s)}
+                        onDelete={handleDeleteSchedule}
+                      />
+                    ))}
+                  {schedules.filter((s) => s.event_type === "Practice")
+                    .length === 0 && (
+                    <p className="text-gray-500 text-center py-4">
+                      No practices scheduled
+                    </p>
+                  )}
+                </div>
+              </div>
 
-            <section className="space-y-4">
-              <h2 className="text-2xl font-bebas uppercase">Practice Drills</h2>
-              {/* Existing drill form and list */}
-            </section>
+              {/* Recent Announcements */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bebas uppercase text-gray-900">
+                      Recent Announcements
+                    </h3>
+                    <p className="text-sm text-gray-500 font-inter mt-1">
+                      Latest Team Updates
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => openModal("Update")}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700"
+                  >
+                    + Add Update
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {updates.slice(0, 3).map((update) => (
+                    <AnnouncementCard
+                      key={update.id}
+                      update={update}
+                      onEdit={(u) => openModal("Update", u)}
+                      onDelete={handleDeleteUpdate}
+                    />
+                  ))}
+                  {updates.length === 0 && (
+                    <p className="text-gray-500 text-center py-4">
+                      No announcements
+                    </p>
+                  )}
+                </div>
+              </div>
 
+              {/* Your Practice Drills */}
+              <div className="bg-white rounded-lg p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bebas uppercase text-gray-900">
+                      Your Practice Drills
+                    </h3>
+                    <p className="text-sm text-gray-500 font-inter mt-1">
+                      Drill Library
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => openModal("Drill")}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700"
+                  >
+                    + Add Drill
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  {/* Mock drill data */}
+                  <DrillCard
+                    title="3-man weave"
+                    category="Offense"
+                    duration="15 min"
+                    skillLevel="Beginner"
+                  />
+                  <DrillCard
+                    title="Shell Drill"
+                    category="Defense"
+                    duration="20 min"
+                    skillLevel="Intermediate"
+                  />
+                  <DrillCard
+                    title="Pick and Roll"
+                    category="Offense"
+                    duration="10 min"
+                    skillLevel="Advanced"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Message Board - Desktop only */}
+            <div className="hidden lg:block mb-8">
+              <MessageBoard />
+            </div>
+
+            {/* Back to Teams Link */}
             <div className="text-center mt-12">
               <Link
                 href="/teams"
-                className="text-red hover:underline text-lg font-bebas inline-block"
+                className="text-blue-400 hover:text-blue-300 text-lg font-bebas inline-block"
                 aria-label="Back to teams"
               >
                 ← Back to Teams
@@ -1127,10 +1147,22 @@ export default function CoachesDashboard() {
             </div>
           </>
         ) : (
-          <p className="text-gray-400 text-center">
-            Select a team to manage content.
-          </p>
+          <div className="text-center py-12">
+            <p className="text-gray-300 text-lg">
+              Select a team to manage content.
+            </p>
+          </div>
         )}
+
+        {/* Schedule Modal */}
+        <ScheduleModal
+          isOpen={isModalOpen}
+          onClose={closeModal}
+          onSubmit={handleModalSubmit}
+          type={modalType}
+          editingData={editingItem}
+          loading={loading}
+        />
       </div>
     </div>
   );

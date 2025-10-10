@@ -26,7 +26,38 @@
 
 ## 🧩 Implemented Components
 
-### 1. Navbar Component
+### 1. Coaches Dashboard – Complete Redesign (v2.6.0)
+
+**Modern Card-Based Layout**
+- **Statistics Cards**: 4-card grid at top showing Next Game, New Updates, New Comments, and Practice Drills
+- **Content Sections**: Upcoming Games, Practice Schedule, Recent Announcements, Your Practice Drills
+- **Custom Header**: Logo, coach name, and sign-out button (no navigation links)
+- **Unified Modal**: Single modal with tabs for Game, Practice, Update, and Drill creation
+- **Responsive Design**: Mobile-optimized layout matching provided mockups
+
+**New Components**
+- **StatCard**: Reusable statistics display component
+- **GameCard**: Individual game event display
+- **PracticeCard**: Individual practice event display  
+- **AnnouncementCard**: Team update display
+- **DrillCard**: Practice drill display
+- **MessageBoard**: UI-only message board component
+- **ScheduleModal**: Unified modal with tabbed interface
+
+### 2. Coaches Dashboard – Legacy Scheduling (Deprecated)
+
+- **Location**: `src/app/coaches/dashboard/page.tsx`
+- **What's new**:
+  - Combined Date/Time + Recurrence card for Practice events
+  - Weekly repeat pattern with End options: On date / After N times
+  - Day-of-week chips; live summary sentence
+  - Program‑wide selector for Admins (`__GLOBAL__`), hidden for coaches
+  - Image preview uses `blob:` URLs; CSP updated to allow previews
+- **Behavior**:
+  - Recurring generator creates weekly instances on submit
+  - For program‑wide updates/schedules, `team_id` is set to `NULL` and `is_global=true`
+
+### 2. Navbar Component
 
 - **Location**: `src/components/Navbar.tsx`
 - **Features**:
@@ -39,7 +70,7 @@
 - **Styling**: Navy background, white text, Bebas font
 - **Props**: None (self-contained)
 
-### 2. Hero Section
+### 3. Hero Section
 
 - **Location**: `src/components/Hero.tsx`
 - **Features**:
@@ -55,7 +86,7 @@
 - **Images**: Basketball action shots from `/public/images/`
 - **Mobile**: Optimized text sizing and positioning for mobile devices
 
-### 3. Values Section
+### 4. Values Section
 
 - **Location**: `src/components/ValuesSection.tsx`
 - **Features**:
@@ -66,7 +97,7 @@
 - **Styling**: White background, card-based layout
 - **Values**: 7 core values with images and descriptions
 
-### 4. News Carousel
+### 5. News Carousel
 
 - **Location**: `src/components/NewsCarousel.tsx`
 - **Features**:
@@ -77,7 +108,7 @@
 - **Styling**: Navy background, white cards
 - **Content**: 3 news items with images and descriptions
 
-### 5. Team Previews
+### 6. Team Previews
 
 - **Location**: `src/app/page.tsx` (inline)
 - **Features**:
@@ -88,7 +119,7 @@
 - **Styling**: Gray background, white cards
 - **Data**: 3 teams with logos from `/public/logos/`
 
-### 6. Coaches Corner
+### 7. Coaches Corner
 
 - **Location**: `src/app/page.tsx` (inline)
 - **Features**:
@@ -99,7 +130,7 @@
 - **Styling**: Gray background, white cards
 - **Content**: 3 coaches with initials and descriptions
 
-### 7. Dialog Component (UI Library)
+### 8. Dialog Component (UI Library)
 
 - **Location**: `src/components/ui/dialog.tsx`
 - **Features**:
@@ -116,7 +147,7 @@
   - `DialogHeaderProps`: `{ children: ReactNode }`
   - `DialogTitleProps`: `{ children: ReactNode }`
 
-### 7. Shop Section
+### 9. Shop Section
 
 - **Location**: `src/app/page.tsx` (inline)
 - **Features**:
@@ -127,7 +158,7 @@
 - **Styling**: White background, bordered cards
 - **Products**: Jersey, Basketball, Team Hat
 
-### 8. Fan Zone Component
+### 10. Fan Zone Component
 
 - **Location**: `src/components/FanZone.tsx`
 - **Features**:
@@ -138,7 +169,7 @@
 - **Styling**: Black background, white cards, mobile-optimized margins
 - **Content**: 4 fan zone cards with videos and descriptions
 
-### 9. Shop Component
+### 11. Shop Component
 
 - **Location**: `src/components/Shop.tsx`
 - **Features**:
@@ -149,7 +180,7 @@
 - **Styling**: Navy background, white cards, mobile-optimized margins
 - **Products**: Jersey, Basketball, Team Hat with pricing
 
-### 10. Logo Marquee Component
+### 12. Logo Marquee Component
 
 - **Location**: `src/components/LogoMarquee.tsx`
 - **Features**:
@@ -160,7 +191,7 @@
 - **Styling**: Navy background with opacity, smaller logos, enhanced spacing
 - **Content**: Team logos from `/public/logos/`
 
-### 11. Footer Component
+### 13. Footer Component
 
 - **Location**: `src/components/Footer.tsx`
 - **Features**:
@@ -175,7 +206,7 @@
 - **Styling**: Navy background, white text, centered mobile layout
 - **Content**: Navigation links, social media, contact information
 
-### 12. ScrollToTop Component
+### 14. ScrollToTop Component
 
 - **Location**: `src/components/ScrollToTop.tsx`
 - **Features**:
@@ -184,7 +215,7 @@
   - Visibility change and focus event handling
   - No visual element (utility component)
 
-### 13. Dialog Component (NEW)
+### 15. Dialog Component (NEW)
 
 - **Location**: `src/components/ui/dialog.tsx`
 - **Features**:
@@ -197,7 +228,7 @@
 - **Styling**: Navy background, red accents, rounded corners
 - **Props**: `children`, `className`
 
-### 14. Input Component (NEW)
+### 16. Input Component (NEW)
 
 - **Location**: `src/components/ui/input.tsx`
 - **Features**:
@@ -209,7 +240,7 @@
 - **Styling**: Navy background, gray borders, red focus states
 - **Props**: Standard HTML input props + `className`
 
-### 15. Select Component (NEW)
+### 17. Select Component (NEW)
 
 - **Location**: `src/components/ui/select.tsx`
 - **Features**:

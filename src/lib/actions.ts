@@ -1,6 +1,6 @@
 // src/lib/actions.ts
 "use server";
-import { supabase, supabaseAdmin } from "@/lib/supabaseClient";
+import { supabase, supabaseAdmin } from "../lib/supabaseClient";
 import {
   Team,
   Coach,
@@ -8,8 +8,8 @@ import {
   PracticeDrill,
   TeamUpdate,
   News,
-} from "@/types/supabase";
-import { devLog, devError } from "@/lib/security";
+} from "../types/supabase";
+import { devLog, devError } from "../lib/security";
 
 // Type definitions for Supabase query results
 type TeamCoachRelation = {
@@ -175,6 +175,54 @@ export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
   }
 }
 
+// Fetch teams by coach ID (for coaches to see only their assigned teams)
+export async function fetchTeamsByCoachId(
+  coachUserId: string
+): Promise<Team[]> {
+  try {
+    const { data, error } = await supabase
+      .from("team_coaches")
+      .select(
+        `
+        teams(
+          id,
+          name,
+          age_group,
+          gender,
+          grade_level,
+          logo_url,
+          season,
+          team_image
+        ),
+        coaches!inner(user_id)
+      `
+      )
+      .eq("coaches.user_id", coachUserId);
+
+    if (error) {
+      devError("Supabase teams by coach fetch error:", error);
+      throw new Error(error.message);
+    }
+
+    if (!data) {
+      devLog("No teams data returned for coach user ID:", coachUserId);
+      return [];
+    }
+
+    // Transform the data to match the Team type
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return data.map((item: any) => ({
+      ...item.teams,
+      coach_names: [], // Will be populated separately if needed
+    }));
+  } catch (err: unknown) {
+    devError("Fetch teams by coach error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch teams for coach";
+    throw new Error(errorMessage);
+  }
+}
+
 // Fetch schedules by team ID
 export async function fetchSchedulesByTeamId(
   teamId: string
@@ -286,7 +334,7 @@ export async function fetchPracticeDrills(): Promise<PracticeDrill[]> {
 
 // Add schedule
 export async function addSchedule(data: {
-  team_id: string;
+  team_id: string | null; // Allow null for globals
   event_type: "Game" | "Practice" | "Tournament" | "Meeting";
   date_time: string;
   location: string;
@@ -295,17 +343,26 @@ export async function addSchedule(data: {
   is_global?: boolean;
 }): Promise<Schedule> {
   try {
+    // If it's global, ensure team_id is null
+    const insertData = { ...data };
+    if (data.is_global) {
+      insertData.team_id = null; // Override to null for program-wide
+    }
+
+    // Insert into Supabase
     const { data: result, error } = await supabase
       .from("schedules")
-      .insert(data)
+      .insert(insertData)
       .select()
       .single();
 
+    // Handle errors
     if (error) {
       devError("Supabase schedule insert error:", error);
       throw new Error(error.message);
     }
 
+    // Return the result
     return result;
   } catch (err: unknown) {
     devError("Add schedule error:", err);
@@ -371,7 +428,7 @@ export async function deleteSchedule(id: string): Promise<void> {
 
 // Add team update
 export async function addUpdate(data: {
-  team_id: string;
+  team_id: string | null; // Allow null for global updates
   title: string;
   content: string;
   image_url?: string;
@@ -385,10 +442,11 @@ export async function addUpdate(data: {
       throw new Error("Admin client not available");
     }
 
-    const insertData = {
-      ...data,
-      created_by: data.created_by,
-    };
+    // If it's global, ensure team_id is null
+    const insertData = { ...data };
+    if (data.is_global) {
+      insertData.team_id = null; // Override to null for program-wide
+    }
 
     const { data: result, error } = await supabaseAdmin
       .from("team_updates")
@@ -416,7 +474,6 @@ export async function updateUpdate(
     title?: string;
     content?: string;
     image_url?: string;
-    updated_by: string;
   }
 ): Promise<TeamUpdate> {
   try {
@@ -428,7 +485,6 @@ export async function updateUpdate(
 
     const updateData = {
       ...data,
-      updated_at: new Date().toISOString(),
     };
 
     const { data: result, error } = await supabaseAdmin

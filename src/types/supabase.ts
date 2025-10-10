@@ -23,13 +23,13 @@ export type Coach = {
 
 export type Schedule = {
   id: string;
-  team_id: string;
+  team_id: string | null; // Change from string to string | null to allow null
   event_type: "Game" | "Practice" | "Tournament" | "Meeting";
   date_time: string;
   location: string;
   opponent: string | null;
   description: string | null;
-  is_global?: boolean; // Added for program-wide schedules
+  is_global: boolean | null; // Already should be here from your migration
   created_by: string;
   created_at: string;
   deleted_at: string | null;
@@ -55,7 +55,7 @@ export type PracticeDrill = {
 
 export type TeamUpdate = {
   id: string;
-  team_id: string;
+  team_id: string | null; // Allow null for global updates
   title: string;
   content: string;
   image_url: string | null;

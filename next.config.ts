@@ -14,7 +14,7 @@ const cspDev = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allows dev tools and Vercel Analytics
   "style-src 'self' 'unsafe-inline'", // Allows Tailwind CSS
   "font-src 'self' data:",
-  "img-src 'self' data: https://htgkddahhgugesktujds.supabase.co",
+  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com",
 ].join("; ");
 
@@ -24,7 +24,7 @@ const cspProd = [
   "script-src 'self' 'unsafe-inline' https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics with inline scripts
   "style-src 'self' 'unsafe-inline'", // Allows Tailwind CSS
   "font-src 'self' data:",
-  "img-src 'self' data: https://htgkddahhgugesktujds.supabase.co",
+  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics connections
 ].join("; ");
 

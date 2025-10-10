@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Coach Dashboard — Mockup</title>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --page-bg: #05283a;         /* deep teal/navy background */
+      --panel-navy: #033447;      /* interior navy frame color */
+      --muted: #8a93a0;
+      --card-bg: #ffffff;
+      --header-bg: #f4f6f7;
+      --accent: #3a1166;          /* deep purple CTA */
+      --accent-hover: #2c0a50;
+      --danger: #e94b4b;
+      --teal: #0b5d78;
+      --pill-stroke: #e6edf1;
+      --max-width: 1180px;
+      --radius-lg: 14px;
+      --radius-md: 10px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      background: var(--page-bg);
+      color: #0b1220;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:24px 16px;
+      display:flex;
+      justify-content:center;
+    }
+
+    /* centered container */
+    .container{
+      width:100%;
+      max-width:var(--max-width);
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
+
+    /* HEADER */
+    header.topbar{
+      height:68px;
+      background:var(--header-bg);
+      border-radius:10px;
+      display:flex;
+      align-items:center;
+      padding:0 20px;
+      justify-content:space-between;
+      box-shadow:0 1px 0 rgba(0,0,0,0.03);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    .logo{
+      width:36px;height:36px;border-radius:8px;
+      background:linear-gradient(135deg,#eaedf0,#dfe9ef);
+      border:2px solid #dbe6ea;
+      display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);
+      font-family:"Poppins";
+      box-shadow:inset 0 -2px rgba(0,0,0,0.03);
+    }
+    .brand-name{ font-family:"Poppins"; font-weight:600; letter-spacing:1px; color:#0b2b38 }
+
+    .user-actions{
+      display:flex;
+      align-items:center;
+      gap:14px;
+    }
+    .user-name{ font-weight:600; color:#111827 }
+    .btn-signout{
+      background:var(--accent);
+      color:#fff;
+      padding:8px 14px;
+      border-radius:999px;
+      font-weight:600;
+      border:none;
+      cursor:pointer;
+      font-family:"Poppins";
+    }
+    .btn-signout:hover{ background:var(--accent-hover) }
+
+    /* KPI strip */
+    .kpi-row{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:18px;
+      align-items:stretch;
+    }
+    .kpi-card{
+      background:var(--card-bg);
+      padding:16px;
+      border-radius:12px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      box-shadow:0 6px 14px rgba(3,20,30,0.12);
+      min-height:86px;
+    }
+    .kpi-title{ font-size:13px; color:var(--muted) }
+    .kpi-value{ font-size:28px; font-weight:700; margin-top:6px; font-family:"Poppins" }
+    .kpi-sub{ font-size:13px; color:var(--muted); margin-top:8px }
+
+    /* main content: two-column grid */
+    .main-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:22px;
+    }
+
+    /* big navy frame cards */
+    .frame{
+      background:var(--panel-navy);
+      border-radius:16px;
+      padding:18px;
+      min-height:170px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .frame .frame-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      color:#ffffff;
+    }
+    .frame h3{ margin:0; font-family:"Poppins"; font-weight:600; color:#ffffff; font-size:18px }
+    .frame .btn{
+      background:var(--accent);
+      color:#fff;
+      border-radius:999px;
+      padding:8px 12px;
+      font-weight:600;
+      border:none;
+      cursor:pointer;
+      font-family:"Poppins";
+      font-size:13px;
+    }
+    .frame .btn:hover{ background:var(--accent-hover) }
+
+    /* inner white card list */
+    .inner{
+      background:var(--card-bg);
+      border-radius:12px;
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .list-item{
+      background:#fff;
+      border-radius:10px;
+      padding:12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      box-shadow:0 3px 10px rgba(3,20,30,0.06);
+      border:1px solid rgba(8,15,20,0.03);
+    }
+    .item-left{ display:flex;flex-direction:column; gap:6px }
+    .item-title{ font-weight:600; font-family:"Poppins"; color:#0b1220 }
+    .item-sub{ font-size:13px; color:var(--muted) }
+    .item-pill{
+      padding:6px 10px; border-radius:999px; font-weight:700; font-size:12px; color:#fff;
+    }
+    .pill-danger{ background:var(--danger) }
+    .pill-teal{ background:var(--teal) }
+    .pill-outline{
+      border:1px solid #e6edf1;
+      color:#6b7280;
+      background:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:600;
+    }
+
+    /* Practice drills item uses small tag + time + right-level-pill */
+    .drill-meta{ display:flex; gap:10px; align-items:center; font-size:13px }
+    .level-pill{
+      color:#374151;
+      border:1px solid #e6edf1;
+      background:#fff;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:600;
+      font-size:12px;
+    }
+
+    /* Announcements list uses similar list-item but smaller */
+    .announcement .list-item{ padding:14px; }
+
+    /* Coaches message board - full width frame */
+    .messages-frame{
+      background:var(--panel-navy);
+      border-radius:16px;
+      padding:20px;
+      margin-top:6px;
+      color:#fff;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+    .messages-inner{
+      background:var(--card-bg);
+      border-radius:12px;
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:16px;
+    }
+    .messages-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      color:#111827;
+    }
+    .msg-thread{
+      background:#fff;
+      border-radius:10px;
+      padding:14px;
+      border:1px solid rgba(8,15,20,0.04);
+    }
+    .msg-author{ font-weight:700; font-family:"Poppins"; color:#0b1220 }
+    .msg-time{ color:var(--muted); font-size:13px; margin-left:8px }
+
+    .msg-body{ margin-top:8px; color:#374151; font-size:14px }
+    .msg-controls{ margin-top:12px; display:flex; gap:14px; align-items:center; color:#6b7280; font-weight:600 }
+
+    .reply-area{
+      margin-top:12px;
+      display:flex;
+      gap:12px;
+      align-items:flex-end;
+      justify-content:space-between;
+    }
+    .reply-area textarea{
+      width:100%;
+      min-height:90px;
+      border-radius:10px;
+      border:1px solid #e6edf1;
+      padding:12px;
+      font-family:inherit;
+      resize:vertical;
+    }
+    .reply-actions{ display:flex; gap:10px; }
+    .btn-ghost{
+      padding:8px 12px; border-radius:999px; background:#f4f6f7; border:none; cursor:pointer;
+      font-weight:600;
+    }
+    .btn-primary{
+      background:var(--accent); color:#fff; padding:8px 14px; border-radius:999px; border:none; font-weight:700;
+    }
+
+    /* smaller post item (collapsed) */
+    .post-item{
+      background:#fff; border-radius:10px; padding:12px; border:1px solid rgba(8,15,20,0.04); display:flex; justify-content:space-between; align-items:center;
+    }
+    .post-left{display:flex;flex-direction:column;gap:6px}
+    .post-title{ font-weight:600; color:#0b1220 }
+    .post-sub{ color:var(--muted); font-size:13px }
+
+    /* Responsive tweaks */
+    @media (max-width:1000px){
+      .kpi-row{ grid-template-columns:repeat(2,1fr) }
+      .main-grid{ grid-template-columns: 1fr; }
+    }
+    @media (max-width:620px){
+      header.topbar{ padding:0 12px; height:72px; }
+      .kpi-row{ grid-template-columns:1fr; gap:12px }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="topbar" role="banner">
+      <div class="brand">
+        <div class="logo">WC</div>
+        <div>
+          <div class="brand-name">WORLD CLASS</div>
+        </div>
+      </div>
+
+      <div class="user-actions" role="navigation">
+        <div class="user-name">Coach Williams</div>
+        <button class="btn-signout">Sign Out</button>
+      </div>
+    </header>
+
+    <!-- KPI row -->
+    <section class="kpi-row" aria-label="top statistics">
+      <div class="kpi-card">
+        <div>
+          <div class="kpi-title">Next Game</div>
+          <div class="kpi-value">3 days</div>
+          <div class="kpi-sub">vs Warriors</div>
+        </div>
+        <div style="align-self:flex-end;opacity:0.9">📅</div>
+      </div>
+
+      <div class="kpi-card">
+        <div>
+          <div class="kpi-title">New Updates</div>
+          <div class="kpi-value">2</div>
+          <div class="kpi-sub">1 day ago</div>
+        </div>
+        <div style="align-self:flex-end;opacity:0.9">🔔</div>
+      </div>
+
+      <div class="kpi-card">
+        <div>
+          <div class="kpi-title">New Comments</div>
+          <div class="kpi-value">4</div>
+          <div class="kpi-sub">1.5 hours ago</div>
+        </div>
+        <div style="align-self:flex-end;opacity:0.9">💬</div>
+      </div>
+
+      <div class="kpi-card">
+        <div>
+          <div class="kpi-title">Practice Drills</div>
+          <div class="kpi-value">24</div>
+          <div class="kpi-sub">In Library</div>
+        </div>
+        <div style="align-self:flex-end;opacity:0.9">🌐</div>
+      </div>
+    </section>
+
+    <!-- Main grid (two columns) -->
+    <main class="main-grid" role="main" aria-label="coach dashboard main">
+      <!-- LEFT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <!-- Upcoming Games -->
+        <section class="frame" aria-labelledby="upcoming-games">
+          <div class="frame-header">
+            <h3 id="upcoming-games">Upcoming Games</h3>
+            <button class="btn">+ Add Game</button>
+          </div>
+
+          <div class="inner">
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">vs Opponent</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+              <div class="item-pill pill-danger">Salina–The Fieldhouse</div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">vs Opponent</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+              <div class="item-pill pill-teal">Hutchinson</div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">vs Opponent</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+              <div class="item-pill pill-danger">Salina–The Fieldhouse</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recent Announcements -->
+        <section class="frame" aria-labelledby="recent-announcements">
+          <div class="frame-header">
+            <h3 id="recent-announcements">Recent Announcements</h3>
+            <button class="btn">+ Add Update</button>
+          </div>
+
+          <div class="inner announcement">
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">Updated Practice Schedule</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+              <div class="item-pill pill-danger" style="font-weight:600">IMPORTANT</div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">Uniform hand-out</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">Team Photo</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <!-- Practice Schedule -->
+        <section class="frame" aria-labelledby="practice-schedule">
+          <div class="frame-header">
+            <h3 id="practice-schedule">Practice Schedule</h3>
+            <button class="btn">+ Add Practice</button>
+          </div>
+
+          <div class="inner">
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">Defensive Drills</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+              <div style="font-weight:600; font-size:13px; color:var(--muted)">4:00 - 6:00 PM</div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">Shooting Practice</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+              <div style="font-weight:600; font-size:13px; color:var(--muted)">4:00 - 6:00 PM</div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">Scrimmage</div>
+                <div class="item-sub">Friday, Oct 5th • 7:00 PM</div>
+              </div>
+              <div style="font-weight:600; font-size:13px; color:var(--muted)">4:00 - 6:00 PM</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Practice Drills Library -->
+        <section class="frame" aria-labelledby="practice-drills">
+          <div class="frame-header">
+            <h3 id="practice-drills">Your Practice Drills</h3>
+            <button class="btn">+ Add Drill</button>
+          </div>
+
+          <div class="inner">
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">3-man weave</div>
+                <div class="drill-meta"><span class="pill-danger item-pill" style="padding:4px 8px;font-size:12px">Offense</span> <span style="font-size:13px;color:var(--muted)">15 min</span></div>
+              </div>
+              <div class="level-pill">Beginner</div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">Shell Drill</div>
+                <div class="drill-meta"><span class="pill-teal item-pill" style="padding:4px 8px;font-size:12px">Defense</span> <span style="font-size:13px;color:var(--muted)">20 min</span></div>
+              </div>
+              <div class="level-pill">Intermediate</div>
+            </div>
+
+            <div class="list-item">
+              <div class="item-left">
+                <div class="item-title">Pick and Roll</div>
+                <div class="drill-meta"><span class="pill-danger item-pill" style="padding:4px 8px;font-size:12px">Offense</span> <span style="font-size:13px;color:var(--muted)">10 min</span></div>
+              </div>
+              <div class="level-pill">Advanced</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Coaches Message Board - wide -->
+    <section class="messages-frame" aria-labelledby="coaches-board">
+      <div class="messages-header">
+        <h3 style="margin:0;font-family:Poppins;font-weight:700;color:#fff">Coaches Message Board</h3>
+        <button class="btn">+ New Message</button>
+      </div>
+
+      <div class="messages-inner">
+        <!-- Expanded thread -->
+        <article class="msg-thread">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="msg-author">Coach Boyer</div>
+            <div class="msg-time">• 2 hr ago</div>
+          </div>
+
+          <div class="msg-body">
+            What defensive strategies have worked best against zone offenses?
+          </div>
+
+          <div class="msg-controls">
+            <div>🗨️ Reply</div>
+            <div style="color:#374151;font-weight:600">Hide 3 comments</div>
+          </div>
+
+          <!-- comments -->
+          <div style="margin-top:12px;padding-left:8px;display:flex;flex-direction:column;gap:10px">
+            <div style="background:#f8fafb;padding:10px;border-radius:8px">
+              <div style="font-weight:700">Coach Williams <span style="font-weight:400;color:var(--muted)">• 1.5 hr ago</span></div>
+              <div style="color:#374151;margin-top:6px">We've had success with a 2-3 matchup zone. Forces them to shoot from the perimeter and we can adjust quickly.</div>
+            </div>
+
+            <div style="background:#f8fafb;padding:10px;border-radius:8px">
+              <div style="font-weight:700">Coach Parker <span style="font-weight:400;color:var(--muted)">• 1 hr ago</span></div>
+              <div style="color:#374151;margin-top:6px">Man-to-man principles still apply. Focus on ball pressure and help defense. Don't let them get comfortable.</div>
+            </div>
+
+            <div style="background:#f8fafb;padding:10px;border-radius:8px">
+              <div style="font-weight:700">Coach Anderson <span style="font-weight:400;color:var(--muted)">• 45 min ago</span></div>
+              <div style="color:#374151;margin-top:6px">Great question! I'd also recommend working on your offensive rebounding. Zone defenses can leave gaps.</div>
+            </div>
+          </div>
+
+          <div class="reply-area">
+            <textarea placeholder="Write a reply..."></textarea>
+            <div class="reply-actions">
+              <button class="btn-ghost">Cancel</button>
+              <button class="btn-primary">Post Reply</button>
+            </div>
+          </div>
+        </article>
+
+        <!-- collapsed posts -->
+        <div class="post-item">
+          <div class="post-left">
+            <div class="post-title">Coach Williams</div>
+            <div class="post-sub">• 1 day ago — Great article on player motivation techniques - highly recommend checking it out!</div>
+          </div>
+          <div style="color:var(--muted); font-weight:700">💬 View 2 comments</div>
+        </div>
+
+        <div class="post-item">
+          <div class="post-left">
+            <div class="post-title">Coach Williams</div>
+            <div class="post-sub">• 2 days ago — Need advice on managing playing time with a deep bench. How do you keep everyone engaged?</div>
+          </div>
+          <div style="color:var(--muted); font-weight:700">💬 View 8 comments</div>
+        </div>
+
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Minimal JS for demo interactivity -->
+  <script>
+    // placeholder JS: collapse/expand, reply action stubs (add real APIs as needed)
+    document.querySelectorAll('.btn').forEach(btn=>{
+      btn.addEventListener('click',()=> alert('Action: '+btn.textContent.trim()));
+    });
+
+    document.querySelectorAll('.btn-signout').forEach(b=> b.addEventListener('click',()=> alert('Sign out clicked')));
+  </script>
+</body>
+</html>

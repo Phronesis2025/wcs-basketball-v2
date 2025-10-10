@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
 export default function Navbar() {
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -44,6 +46,11 @@ export default function Navbar() {
     );
     return () => authListener.subscription.unsubscribe();
   }, []);
+
+  // Hide navbar on coaches dashboard page
+  if (pathname === "/coaches/dashboard") {
+    return null;
+  }
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();

@@ -1,7 +1,6 @@
 // src/app/schedules/page.tsx
 "use client";
 import React from "react";
-// Removed unused imports: fetchSchedulesByTeamId, fetchTeamById
 import { Team, Schedule } from "@/types/supabase";
 import * as Sentry from "@sentry/nextjs";
 import { useState, useEffect, useMemo } from "react";
@@ -9,6 +8,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
+import { fetchTeams } from "@/lib/actions";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function SchedulesPage() {
@@ -26,20 +26,9 @@ export default function SchedulesPage() {
           .from("schedules")
           .select("*")
           .is("deleted_at", null); // Filter soft-deleted
-        const { data: teamsData } = await supabase
-          .from("teams")
-          .select(
-            "id, name, age_group, gender, grade_level, logo_url, season, coach_names, video_url, team_image"
-          );
+        const teamsData = await fetchTeams();
         setEvents(schedules || []);
-        setTeams(
-          (teamsData || []).map((team) => ({
-            ...team,
-            coach_names: team.coach_names || [],
-            video_url: team.video_url || null,
-            team_image: team.team_image || null,
-          }))
-        );
+        setTeams(teamsData);
       } catch (err) {
         Sentry.captureException(err);
         setError("Failed to load schedules or teams");
@@ -82,20 +71,26 @@ export default function SchedulesPage() {
     });
   }, [filteredEvents]);
 
-  const formattedEvents = filteredEvents.map((event) => ({
-    id: event.id,
-    title: event.event_type,
-    start: event.date_time,
-    backgroundColor:
-      event.event_type === "Game"
-        ? "#15803D"
-        : event.event_type === "Practice"
-        ? "#D91E18"
-        : event.event_type === "Tournament"
-        ? "#6B21A8"
-        : "#F59E0B",
-    extendedProps: { location: event.location, opponent: event.opponent },
-  }));
+  const formattedEvents = filteredEvents.map((event) => {
+    const startDate = new Date(event.date_time); // treat as local timestamp
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour duration
+    return {
+      id: event.id,
+      title: event.event_type,
+      start: startDate, // pass Date object (local)
+      end: endDate,
+      allDay: false,
+      backgroundColor:
+        event.event_type === "Game"
+          ? "#15803D"
+          : event.event_type === "Practice"
+          ? "#D91E18"
+          : event.event_type === "Tournament"
+          ? "#6B21A8"
+          : "#F59E0B",
+      extendedProps: { location: event.location, opponent: event.opponent },
+    };
+  });
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
