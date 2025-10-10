@@ -1,6 +1,6 @@
 // src/app/coaches/dashboard/page.tsx
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -19,17 +19,17 @@ import {
   addUpdate,
   updateUpdate,
   deleteUpdate,
-  addNews,
-  updateNews,
-  deleteNews,
+  // addNews,
+  // updateNews,
+  // deleteNews,
   fetchSchedulesByTeamId,
   fetchTeamUpdates,
-  fetchNews,
+  // fetchNews,
   fetchTeams,
   fetchTeamsByCoachId,
   getUserRole,
 } from "../../../lib/actions";
-import { Team, Schedule, TeamUpdate, News } from "../../../types/supabase";
+import { Team, Schedule, TeamUpdate } from "../../../types/supabase";
 
 // Import new dashboard components
 import StatCard from "../../../components/dashboard/StatCard";
@@ -47,50 +47,51 @@ export default function CoachesDashboard() {
   const [userName, setUserName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [csrfToken, setCsrfToken] = useState("");
+  // const [csrfToken, setCsrfToken] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null); // New: Mobile preview
-  const scrollPositionRef = useRef<number>(0); // Track scroll position
+  // const [imagePreview, setImagePreview] = useState<string | null>(null); // New: Mobile preview
+  const [lastLoginTime, setLastLoginTime] = useState<Date | null>(null);
+  // const scrollPositionRef = useRef<number>(0); // Track scroll position
   const router = useRouter();
 
-  // Schedule form fields
-  const [scheduleEventType, setScheduleEventType] = useState("");
-  const [scheduleDateTime, setScheduleDateTime] = useState("");
-  const [scheduleLocation, setScheduleLocation] = useState("");
-  const [scheduleOpponent, setScheduleOpponent] = useState("");
-  const [scheduleDescription, setScheduleDescription] = useState("");
+  // // Schedule form fields
+  // const [scheduleEventType, setScheduleEventType] = useState("");
+  // const [scheduleDateTime, setScheduleDateTime] = useState("");
+  // const [scheduleLocation, setScheduleLocation] = useState("");
+  // const [scheduleOpponent, setScheduleOpponent] = useState("");
+  // const [scheduleDescription, setScheduleDescription] = useState("");
 
-  // Recurring practice fields
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringType, setRecurringType] = useState<"count" | "date">("count");
-  const [recurringCount, setRecurringCount] = useState(4);
-  const [recurringEndDate, setRecurringEndDate] = useState("");
+  // // Recurring practice fields
+  // const [isRecurring, setIsRecurring] = useState(false);
+  // const [recurringType, setRecurringType] = useState<"count" | "date">("count");
+  // const [recurringCount, setRecurringCount] = useState(4);
+  // const [recurringEndDate, setRecurringEndDate] = useState("");
 
-  // Team update form fields
-  const [updateTitle, setUpdateTitle] = useState("");
-  const [updateContent, setUpdateContent] = useState("");
-  const [updateImage, setUpdateImage] = useState<File | null>(null);
+  // // Team update form fields
+  // const [updateTitle, setUpdateTitle] = useState("");
+  // const [updateContent, setUpdateContent] = useState("");
+  // const [updateImage, setUpdateImage] = useState<File | null>(null);
 
-  // News form fields
-  const [newsTitle, setNewsTitle] = useState("");
-  const [newsContent, setNewsContent] = useState("");
-  const [newsImage, setNewsImage] = useState<File | null>(null);
+  // // News form fields
+  // const [newsTitle, setNewsTitle] = useState("");
+  // const [newsContent, setNewsContent] = useState("");
+  // const [newsImage, setNewsImage] = useState<File | null>(null);
 
   // Lists for edit/delete
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [updates, setUpdates] = useState<TeamUpdate[]>([]);
   // const [newsList, setNewsList] = useState<News[]>([]);
 
-  // Editing state
-  const [editing, setEditing] = useState<{
-    id: string;
-    type: "schedule" | "update" | "news";
-    data: Schedule | TeamUpdate | News;
-  } | null>(null);
+  // // Editing state
+  // const [editing, setEditing] = useState<{
+  //   id: string;
+  //   type: "schedule" | "update" | "news";
+  //   data: Schedule | TeamUpdate | News;
+  // } | null>(null);
 
-  // Carousel state for updates and schedules
-  const [updateCarouselIndex, setUpdateCarouselIndex] = useState(0);
-  const [scheduleCarouselIndex, setScheduleCarouselIndex] = useState(0);
+  // // Carousel state for updates and schedules
+  // const [updateCarouselIndex, setUpdateCarouselIndex] = useState(0);
+  // const [scheduleCarouselIndex, setScheduleCarouselIndex] = useState(0);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -156,19 +157,49 @@ export default function CoachesDashboard() {
   };
 
   const getUpdatesCount = () => {
-    return updates.length;
+    if (!lastLoginTime) {
+      return updates.length; // If no last login time, return all updates
+    }
+
+    return updates.filter(
+      (update) => new Date(update.created_at) > lastLoginTime
+    ).length;
   };
 
   const getLastUpdateTime = () => {
-    if (updates.length === 0) return "No updates";
+    if (!lastLoginTime) {
+      // If no last login time, show time since most recent update
+      if (updates.length === 0) return "No updates";
+      const lastUpdate = updates.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )[0];
+      const hoursAgo = Math.floor(
+        (new Date().getTime() - new Date(lastUpdate.created_at).getTime()) /
+          (1000 * 60 * 60)
+      );
+      if (hoursAgo < 24) {
+        return `${hoursAgo} hours ago`;
+      } else {
+        const daysAgo = Math.floor(hoursAgo / 24);
+        return `${daysAgo} day${daysAgo > 1 ? "s" : ""} ago`;
+      }
+    }
 
-    const lastUpdate = updates.sort(
+    // Show time since last new update (since last login)
+    const newUpdates = updates.filter(
+      (update) => new Date(update.created_at) > lastLoginTime
+    );
+
+    if (newUpdates.length === 0) return "No new updates";
+
+    const lastNewUpdate = newUpdates.sort(
       (a, b) =>
         new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     )[0];
 
     const hoursAgo = Math.floor(
-      (new Date().getTime() - new Date(lastUpdate.created_at).getTime()) /
+      (new Date().getTime() - new Date(lastNewUpdate.created_at).getTime()) /
         (1000 * 60 * 60)
     );
 
@@ -310,7 +341,7 @@ export default function CoachesDashboard() {
 
   useEffect(() => {
     const token = generateCSRFToken();
-    setCsrfToken(token);
+    // setCsrfToken(token);
     document.cookie = `csrf-token=${token}; Path=/; SameSite=Strict`;
 
     const fetchData = async () => {
@@ -322,9 +353,17 @@ export default function CoachesDashboard() {
         }
 
         setUserId(user.user.id); // Set user ID for created_by
-        setUserName(
-          user.user.user_metadata?.first_name || user.user.email || ""
-        );
+        // Set last login time to current time
+        setLastLoginTime(new Date());
+        // Extract last name from email or use first_name
+        const email = user.user.email || "";
+        const firstName = user.user.user_metadata?.first_name || "";
+        const lastName = email.includes("@")
+          ? email.split("@")[0].split(".").pop() || ""
+          : "";
+        const capitalizedLastName =
+          lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
+        setUserName(firstName || capitalizedLastName || email);
 
         const userData = await getUserRole(user.user.id);
         if (!userData) {
@@ -366,12 +405,9 @@ export default function CoachesDashboard() {
       try {
         const teamIdForFetch =
           selectedTeam === "__GLOBAL__" ? "__GLOBAL__" : selectedTeam;
-        const [schedulesData, updatesData, newsData] = await Promise.all([
+        const [schedulesData, updatesData] = await Promise.all([
           fetchSchedulesByTeamId(teamIdForFetch),
           fetchTeamUpdates(teamIdForFetch),
-          teamIdForFetch === "__GLOBAL__"
-            ? Promise.resolve([])
-            : fetchNews(teamIdForFetch),
         ]);
         setSchedules(schedulesData);
         setUpdates(updatesData);
@@ -845,8 +881,16 @@ export default function CoachesDashboard() {
               </span>
             </Link>
             <div className="flex items-center space-x-4">
-              <span className="text-gray-900 font-inter">Coach {userName}</span>
-              <button className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm">
+              <span className="text-gray-900 font-inter text-sm sm:text-base">
+                Coach {userName?.split(" ").pop() || ""}
+              </span>
+              <button
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  router.push("/coaches/login");
+                }}
+                className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
+              >
                 Sign Out
               </button>
             </div>
@@ -887,30 +931,33 @@ export default function CoachesDashboard() {
           <>
             {/* Statistics Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatCard
-                title="Next Game"
-                value={getNextGame()?.days || "N/A"}
-                subtitle={
-                  getNextGame()
-                    ? `vs ${getNextGame()?.opponent}`
-                    : "No upcoming games"
-                }
-                icon={
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                    />
-                  </svg>
-                }
-              />
+              {(() => {
+                const nextGame = getNextGame();
+                return (
+                  <StatCard
+                    title="Next Game"
+                    value={nextGame ? `${nextGame.days} days` : "N/A"}
+                    subtitle={
+                      nextGame ? `vs ${nextGame.opponent}` : "No upcoming games"
+                    }
+                    icon={
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                        />
+                      </svg>
+                    }
+                  />
+                );
+              })()}
               <StatCard
                 title="New Updates"
                 value={getUpdatesCount()}
@@ -926,13 +973,13 @@ export default function CoachesDashboard() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M15 17h5l-5 5-5-5h5v-5a7.5 7.5 0 00-15 0v5h5l-5 5-5-5h5v-5a7.5 7.5 0 0115 0v5z"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
                     />
                   </svg>
                 }
               />
               <StatCard
-                title="New Comments"
+                title="New Messages"
                 value="4"
                 subtitle="1.5 hours ago"
                 icon={
@@ -962,11 +1009,32 @@ export default function CoachesDashboard() {
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
+                    <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                    {/* Center seams (straight) */}
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      d="M12 2L12 22"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2 12L22 12"
+                    />
+                    {/* Symmetric side seams (Bezier curves) */}
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4 C 9 8, 9 16, 4 20"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M20 4 C 15 8, 15 16, 20 20"
                     />
                   </svg>
                 }
@@ -1130,9 +1198,13 @@ export default function CoachesDashboard() {
               </div>
             </div>
 
-            {/* Message Board - Desktop only */}
-            <div className="hidden lg:block mb-8">
-              <MessageBoard />
+            {/* Message Board - Visible on all screen sizes */}
+            <div className="mb-8">
+              <MessageBoard
+                userId={userId || ""}
+                userName={userName}
+                isAdmin={isAdmin}
+              />
             </div>
 
             {/* Back to Teams Link */}

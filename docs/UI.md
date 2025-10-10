@@ -28,20 +28,31 @@
 
 ### 1. Coaches Dashboard – Complete Redesign (v2.6.0)
 
+#### Message Board System
+
+- **Real-time Communication**: Live message updates using Supabase Realtime
+- **Role-based Permissions**: Coaches edit own messages, admins manage all
+- **Message Features**: Create, edit, delete, pin messages and replies
+- **Input Sanitization**: Enhanced security with XSS protection
+- **Mobile Optimized**: Fully responsive interface for all devices
+- **Visual Indicators**: Pinned messages, edited status, real-time connection status
+
 **Modern Card-Based Layout**
-- **Statistics Cards**: 4-card grid at top showing Next Game, New Updates, New Comments, and Practice Drills
-- **Content Sections**: Upcoming Games, Practice Schedule, Recent Announcements, Your Practice Drills
+
+- **Statistics Cards**: 4-card grid at top showing Next Game, New Updates, New Messages, and Practice Drills
+- **Content Sections**: Upcoming Games, Practice Schedule, Recent Announcements, Your Practice Drills, Message Board
 - **Custom Header**: Logo, coach name, and sign-out button (no navigation links)
 - **Unified Modal**: Single modal with tabs for Game, Practice, Update, and Drill creation
 - **Responsive Design**: Mobile-optimized layout matching provided mockups
 
 **New Components**
-- **StatCard**: Reusable statistics display component
+
+- **StatCard**: Reusable statistics display component with enhanced icons and styling
 - **GameCard**: Individual game event display
-- **PracticeCard**: Individual practice event display  
+- **PracticeCard**: Individual practice event display with improved mobile layout
 - **AnnouncementCard**: Team update display
 - **DrillCard**: Practice drill display
-- **MessageBoard**: UI-only message board component
+- **MessageBoard**: Full-featured message board with real-time updates and CRUD operations
 - **ScheduleModal**: Unified modal with tabbed interface
 
 ### 2. Coaches Dashboard – Legacy Scheduling (Deprecated)

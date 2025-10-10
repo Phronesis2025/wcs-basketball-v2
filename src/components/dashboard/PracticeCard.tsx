@@ -15,32 +15,40 @@ export default function PracticeCard({
 }: PracticeCardProps) {
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime);
-    return date.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
+    return {
+      day: date.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      }),
+      time: date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }),
+    };
   };
 
   // Mock duration - in real app this would come from schedule data
-  const duration = "4:00 - 6:00 PM";
+  const duration = "2h";
+
+  const { day, time } = formatDateTime(schedule.date_time);
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <h4 className="font-inter font-semibold text-gray-900">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-inter font-semibold text-gray-900 text-sm sm:text-base truncate">
             {schedule.description || "Practice Session"}
           </h4>
-          <p className="text-sm text-gray-500 font-inter mt-1">
-            {formatDateTime(schedule.date_time)}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mt-1">
+            <p className="text-xs sm:text-sm text-gray-500 font-inter">{day}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-inter">
+              {time} • {duration}
+            </p>
+          </div>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600 font-inter">{duration}</span>
           {onEdit && onDelete && (
             <div className="flex space-x-1">
               <button
