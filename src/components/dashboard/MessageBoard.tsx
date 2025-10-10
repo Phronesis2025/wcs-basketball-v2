@@ -1,5 +1,6 @@
 // src/components/dashboard/MessageBoard.tsx
 import React, { useState, useEffect, useCallback } from "react";
+import toast from "react-hot-toast";
 import { supabase } from "../../lib/supabaseClient";
 import { CoachMessage, CoachMessageReply } from "../../types/supabase";
 import {
@@ -199,9 +200,16 @@ export default function MessageBoard({
       await createMessage(newMessageText, userId, userName);
       setNewMessageText("");
       setShowNewMessageModal(false);
+      toast.success("Message posted successfully", {
+        duration: 3000,
+        position: "top-right",
+      });
     } catch (error) {
       devError("Error creating message:", error);
-      alert("Failed to create message. Please try again.");
+      toast.error("Failed to create message. Please try again.", {
+        duration: 4000,
+        position: "top-right",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -214,9 +222,16 @@ export default function MessageBoard({
       setSubmitting(true);
       await createReply(messageId, replyText, userId, userName);
       setReplyText("");
+      toast.success("Reply posted successfully", {
+        duration: 3000,
+        position: "top-right",
+      });
     } catch (error) {
       devError("Error creating reply:", error);
-      alert("Failed to create reply. Please try again.");
+      toast.error("Failed to create reply. Please try again.", {
+        duration: 4000,
+        position: "top-right",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -230,9 +245,16 @@ export default function MessageBoard({
       await updateMessage(messageId, editText, userId, isAdmin);
       setEditingMessage(null);
       setEditText("");
+      toast.success("Message updated successfully", {
+        duration: 3000,
+        position: "top-right",
+      });
     } catch (error) {
       devError("Error updating message:", error);
-      alert("Failed to update message. Please try again.");
+      toast.error("Failed to update message. Please try again.", {
+        duration: 4000,
+        position: "top-right",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -246,9 +268,16 @@ export default function MessageBoard({
       await updateReply(replyId, editText, userId, isAdmin);
       setEditingReply(null);
       setEditText("");
+      toast.success("Reply updated successfully", {
+        duration: 3000,
+        position: "top-right",
+      });
     } catch (error) {
       devError("Error updating reply:", error);
-      alert("Failed to update reply. Please try again.");
+      toast.error("Failed to update reply. Please try again.", {
+        duration: 4000,
+        position: "top-right",
+      });
     } finally {
       setSubmitting(false);
     }
@@ -268,8 +297,16 @@ export default function MessageBoard({
 
       if (deleteTarget.type === "message") {
         await deleteMessage(deleteTarget.id, userId, isAdmin);
+        toast.success("Message deleted successfully", {
+          duration: 3000,
+          position: "top-right",
+        });
       } else {
         await deleteReply(deleteTarget.id, userId, isAdmin);
+        toast.success("Reply deleted successfully", {
+          duration: 3000,
+          position: "top-right",
+        });
       }
 
       devLog("Deleted successfully, refreshing messages...");
@@ -277,7 +314,10 @@ export default function MessageBoard({
       devLog("Messages refreshed after deletion");
     } catch (error) {
       devError("Error deleting:", error);
-      alert(`Failed to delete ${deleteTarget.type}. Please try again.`);
+      toast.error(`Failed to delete ${deleteTarget.type}. Please try again.`, {
+        duration: 4000,
+        position: "top-right",
+      });
     } finally {
       setSubmitting(false);
       setShowDeleteConfirm(false);
@@ -294,9 +334,20 @@ export default function MessageBoard({
     try {
       setSubmitting(true);
       await pinMessage(messageId, isAdmin);
+      // Find the message to determine if it was pinned or unpinned
+      const message = messages.find(m => m.id === messageId);
+      if (message) {
+        toast.success(message.is_pinned ? "Message unpinned" : "Message pinned", {
+          duration: 3000,
+          position: "top-right",
+        });
+      }
     } catch (error) {
       devError("Error pinning message:", error);
-      alert("Failed to pin/unpin message. Please try again.");
+      toast.error("Failed to pin/unpin message. Please try again.", {
+        duration: 4000,
+        position: "top-right",
+      });
     } finally {
       setSubmitting(false);
     }
