@@ -1,0 +1,617 @@
+// src/components/dashboard/ScheduleModal.tsx
+import React, { useState, useEffect } from "react";
+import { Schedule, TeamUpdate } from "../../types/supabase";
+
+interface ScheduleModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: Record<string, unknown>) => void;
+  type: "Game" | "Practice" | "Update" | "Drill";
+  editingData?: Schedule | TeamUpdate | null;
+  loading?: boolean;
+}
+
+export default function ScheduleModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  type,
+  editingData,
+  loading = false,
+}: ScheduleModalProps) {
+  const [activeTab, setActiveTab] = useState<
+    "Game" | "Practice" | "Update" | "Drill"
+  >("Game");
+
+  // Game form fields
+  const [gameDateTime, setGameDateTime] = useState("");
+  const [gameOpponent, setGameOpponent] = useState("");
+  const [gameLocation, setGameLocation] = useState("");
+  const [gameComments, setGameComments] = useState("");
+
+  // Practice form fields
+  const [practiceTitle, setPracticeTitle] = useState("");
+  const [practiceDateTime, setPracticeDateTime] = useState("");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringType, setRecurringType] = useState<"count" | "date">("count");
+  const [recurringCount, setRecurringCount] = useState(4);
+  const [recurringEndDate, setRecurringEndDate] = useState("");
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
+  const [practiceDuration, setPracticeDuration] = useState("");
+  const [practiceLocation, setPracticeLocation] = useState("");
+  const [practiceComments, setPracticeComments] = useState("");
+
+  // Update form fields
+  const [updateTitle, setUpdateTitle] = useState("");
+  const [updateContent, setUpdateContent] = useState("");
+  const [updateImage, setUpdateImage] = useState<File | null>(null);
+  const [isImportant, setIsImportant] = useState(false);
+
+  // Drill form fields
+  const [drillTitle, setDrillTitle] = useState("");
+  const [drillCategory, setDrillCategory] = useState<
+    "Offense" | "Defense" | "Conditioning" | "Fundamentals"
+  >("Offense");
+  const [drillDuration, setDrillDuration] = useState("");
+  const [drillSkillLevel, setDrillSkillLevel] = useState<
+    "Beginner" | "Intermediate" | "Advanced"
+  >("Beginner");
+  const [drillInstructions, setDrillInstructions] = useState("");
+
+  const days = [
+    { letter: "S", name: "Sunday" },
+    { letter: "M", name: "Monday" },
+    { letter: "T", name: "Tuesday" },
+    { letter: "W", name: "Wednesday" },
+    { letter: "T", name: "Thursday" },
+    { letter: "F", name: "Friday" },
+    { letter: "S", name: "Saturday" },
+  ];
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab(type);
+    }
+  }, [isOpen, type]);
+
+  useEffect(() => {
+    if (editingData) {
+      // Populate form fields based on editing data
+      if ("event_type" in editingData) {
+        // Schedule data
+        setGameDateTime(editingData.date_time);
+        setGameOpponent(editingData.opponent || "");
+        setGameLocation(editingData.location);
+        setGameComments(editingData.description || "");
+        setPracticeTitle(editingData.description || "");
+        setPracticeDateTime(editingData.date_time);
+        setPracticeLocation(editingData.location);
+        setPracticeComments(editingData.description || "");
+      } else if ("title" in editingData) {
+        // Update data
+        setUpdateTitle(editingData.title);
+        setUpdateContent(editingData.content);
+      }
+    } else {
+      // Reset form when opening for new item
+      resetForms();
+    }
+  }, [editingData, isOpen]);
+
+  const resetForms = () => {
+    setGameDateTime("");
+    setGameOpponent("");
+    setGameLocation("");
+    setGameComments("");
+    setPracticeTitle("");
+    setPracticeDateTime("");
+    setIsRecurring(false);
+    setRecurringType("count");
+    setRecurringCount(4);
+    setRecurringEndDate("");
+    setSelectedDays([]);
+    setPracticeDuration("");
+    setPracticeLocation("");
+    setPracticeComments("");
+    setUpdateTitle("");
+    setUpdateContent("");
+    setUpdateImage(null);
+    setIsImportant(false);
+    setDrillTitle("");
+    setDrillCategory("Offense");
+    setDrillDuration("");
+    setDrillSkillLevel("Beginner");
+    setDrillInstructions("");
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    let formData: Record<string, unknown> = {};
+
+    switch (activeTab) {
+      case "Game":
+        formData = {
+          event_type: "Game",
+          date_time: gameDateTime,
+          opponent: gameOpponent,
+          location: gameLocation,
+          description: gameComments,
+        };
+        break;
+      case "Practice":
+        formData = {
+          event_type: "Practice",
+          title: practiceTitle,
+          date_time: practiceDateTime,
+          location: practiceLocation,
+          description: practiceComments,
+          duration: practiceDuration,
+          isRecurring,
+          recurringType,
+          recurringCount,
+          recurringEndDate,
+          selectedDays,
+        };
+        break;
+      case "Update":
+        formData = {
+          title: updateTitle,
+          content: updateContent,
+          image: updateImage,
+          isImportant,
+        };
+        break;
+      case "Drill":
+        formData = {
+          title: drillTitle,
+          category: drillCategory,
+          duration: drillDuration,
+          skillLevel: drillSkillLevel,
+          instructions: drillInstructions,
+        };
+        break;
+    }
+
+    onSubmit(formData);
+  };
+
+  const toggleDay = (dayIndex: number) => {
+    setSelectedDays((prev) =>
+      prev.includes(dayIndex)
+        ? prev.filter((d) => d !== dayIndex)
+        : [...prev, dayIndex]
+    );
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-2xl font-bebas uppercase text-gray-900">
+            Schedule New
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="grid grid-cols-4 border-b border-gray-200">
+          {(["Game", "Practice", "Update", "Drill"] as const).map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-4 py-3 text-sm font-inter transition-colors ${
+                activeTab === tab
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+              }`}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="mb-6">
+            <h3 className="text-xl font-bebas uppercase text-gray-900">
+              {activeTab}
+            </h3>
+          </div>
+
+          {/* Game Form */}
+          {activeTab === "Game" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={gameDateTime}
+                  onChange={(e) => setGameDateTime(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Opponent
+                </label>
+                <input
+                  type="text"
+                  value={gameOpponent}
+                  onChange={(e) => setGameOpponent(e.target.value)}
+                  placeholder="eg. Central 7th grade"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={gameLocation}
+                  onChange={(e) => setGameLocation(e.target.value)}
+                  placeholder="eg. Salina South Gym"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Comments (optional)
+                </label>
+                <textarea
+                  value={gameComments}
+                  onChange={(e) => setGameComments(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Practice Form */}
+          {activeTab === "Practice" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={practiceTitle}
+                  onChange={(e) => setPracticeTitle(e.target.value)}
+                  placeholder="eg. Shooting Drills"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Date & Time
+                </label>
+                <input
+                  type="datetime-local"
+                  value={practiceDateTime}
+                  onChange={(e) => setPracticeDateTime(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                />
+              </div>
+
+              {/* Recurring Options */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center space-x-3 mb-4">
+                  <input
+                    type="checkbox"
+                    id="is-recurring"
+                    checked={isRecurring}
+                    onChange={(e) => setIsRecurring(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label
+                    htmlFor="is-recurring"
+                    className="text-sm font-inter font-medium text-gray-700"
+                  >
+                    Reoccurring
+                  </label>
+                </div>
+
+                {isRecurring && (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                        Every
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="number"
+                          min="1"
+                          max="4"
+                          value="1"
+                          className="w-16 p-2 border border-gray-300 rounded-md text-center text-gray-900"
+                          disabled
+                        />
+                        <select className="p-2 border border-gray-300 rounded-md text-gray-900">
+                          <option value="week">Week(s)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                        Repeat on:
+                      </label>
+                      <div className="flex space-x-2">
+                        {days.map((day, index) => (
+                          <button
+                            key={`${day.name}-${index}`}
+                            type="button"
+                            onClick={() => toggleDay(index)}
+                            className={`w-10 h-10 rounded-full text-xs font-medium transition-colors ${
+                              selectedDays.includes(index)
+                                ? "bg-blue-600 text-white"
+                                : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                            }`}
+                            title={day.name}
+                          >
+                            {day.letter}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                        Ends
+                      </label>
+                      <div className="space-y-2">
+                        <label className="flex items-center space-x-3">
+                          <input
+                            type="radio"
+                            name="end-option"
+                            value="count"
+                            checked={recurringType === "count"}
+                            onChange={() => setRecurringType("count")}
+                            className="w-4 h-4 text-blue-600 border-gray-300"
+                          />
+                          <span className="text-sm text-gray-700">After</span>
+                          <input
+                            type="number"
+                            min="2"
+                            max="52"
+                            value={recurringCount}
+                            onChange={(e) =>
+                              setRecurringCount(parseInt(e.target.value) || 4)
+                            }
+                            className="w-16 p-2 border border-gray-300 rounded-md text-center text-gray-900"
+                          />
+                          <span className="text-sm text-gray-700">times</span>
+                        </label>
+                        <label className="flex items-center space-x-3">
+                          <input
+                            type="radio"
+                            name="end-option"
+                            value="date"
+                            checked={recurringType === "date"}
+                            onChange={() => setRecurringType("date")}
+                            className="w-4 h-4 text-blue-600 border-gray-300"
+                          />
+                          <span className="text-sm text-gray-700">On</span>
+                          <input
+                            type="date"
+                            value={recurringEndDate}
+                            onChange={(e) =>
+                              setRecurringEndDate(e.target.value)
+                            }
+                            className="p-2 border border-gray-300 rounded-md text-gray-900"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Duration
+                </label>
+                <input
+                  type="text"
+                  value={practiceDuration}
+                  onChange={(e) => setPracticeDuration(e.target.value)}
+                  placeholder="eg. 90 min"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  value={practiceLocation}
+                  onChange={(e) => setPracticeLocation(e.target.value)}
+                  placeholder="eg. Salina South Gym"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Comments (optional)
+                </label>
+                <textarea
+                  value={practiceComments}
+                  onChange={(e) => setPracticeComments(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Update Form */}
+          {activeTab === "Update" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={updateTitle}
+                  onChange={(e) => setUpdateTitle(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Content
+                </label>
+                <textarea
+                  value={updateContent}
+                  onChange={(e) => setUpdateContent(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  rows={4}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Image (optional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setUpdateImage(e.target.files?.[0] || null)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+              </div>
+              <div className="flex items-center space-x-3">
+                <input
+                  type="checkbox"
+                  id="is-important"
+                  checked={isImportant}
+                  onChange={(e) => setIsImportant(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="is-important"
+                  className="text-sm font-inter font-medium text-gray-700"
+                >
+                  Mark as Important
+                </label>
+              </div>
+            </div>
+          )}
+
+          {/* Drill Form */}
+          {activeTab === "Drill" && (
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={drillTitle}
+                  onChange={(e) => setDrillTitle(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Category
+                </label>
+                <select
+                  value={drillCategory}
+                  onChange={(e) => setDrillCategory(e.target.value as "Offense" | "Defense" | "Conditioning" | "Fundamentals")}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                >
+                  <option value="Offense">Offense</option>
+                  <option value="Defense">Defense</option>
+                  <option value="Conditioning">Conditioning</option>
+                  <option value="Fundamentals">Fundamentals</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Duration
+                </label>
+                <input
+                  type="text"
+                  value={drillDuration}
+                  onChange={(e) => setDrillDuration(e.target.value)}
+                  placeholder="eg. 15 min"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Skill Level
+                </label>
+                <select
+                  value={drillSkillLevel}
+                  onChange={(e) => setDrillSkillLevel(e.target.value as "Beginner" | "Intermediate" | "Advanced")}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                >
+                  <option value="Beginner">Beginner</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Instructions
+                </label>
+                <textarea
+                  value={drillInstructions}
+                  onChange={(e) => setDrillInstructions(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  rows={4}
+                  required
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <div className="flex justify-end pt-6">
+            <button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 text-white px-6 py-2 rounded-md font-inter hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? "Saving..." : `Schedule ${activeTab}`}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

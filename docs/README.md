@@ -20,9 +20,11 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **News Carousel**: Swipeable news section with modal details
 - **Team Previews**: Dynamic team cards with logos and information
 - **Coaches Corner**: Staff profiles and information
-- **Coaches Dashboard**: Complete team management interface with secure carousel system, schedule creation, drill management, and team updates
+- **Coaches Dashboard**: Modern card-based dashboard with statistics cards, unified modal system, and comprehensive team management interface
 - **Practice Drills**: Comprehensive drill library with filtering by time, skill level, and difficulty
 - **Coaches Authentication**: Secure login system with role-based access control
+  - Coaches now only see teams they are assigned to
+  - Admins see all teams and can create program‑wide schedules/updates
 - **Shop Section**: Merchandise preview with updated product descriptions and mobile-optimized margins
 - **Fan Zone**: Interactive video cards with mobile-responsive layout and enhanced data validation
 - **Footer**: Complete redesign with mobile and desktop layouts, centered quick links, clean design
@@ -30,7 +32,7 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **User Authentication**: Secure registration and login system with rate limiting
 - **Enhanced Data Validation**: Defensive programming with proper error handling and recovery
 - **Responsive Design**: Mobile-first approach with enhanced mobile experience
-- **Security**: Comprehensive security utilities, rate limiting, input validation, CSP headers, security audit completion
+- **Security**: Comprehensive security utilities, rate limiting, input validation, CSP headers (now allow `blob:` for image previews), security audit completion
 - **Scroll Management**: Automatic scroll-to-top functionality
 - **Logo Marquee**: Animated team logos with enhanced spacing and opacity
 - **UI Components**: Enhanced component library with dialog, input, and select components
@@ -77,4 +79,4 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 
 ## Version
 
-- v2.4.2 (Current - FanZone bug fix, enhanced data validation, and comprehensive security validation)
+- v2.5.0 (Current – recurring practices, calendar single‑day fix, program‑wide scheduling/updates, coach team filtering, CSP image preview fix, schedules team fetch update)

@@ -1,6 +1,83 @@
 # WCSv2.0 Changelog
 
-## v2.4.3 - January 2025 (Current)
+## v2.6.0 - December 2024 (Current)
+
+### 🎨 Complete Dashboard Redesign
+- **Modern Card-Based Layout**: Transformed coaches dashboard from form-based to modern card-based interface
+- **Statistics Cards**: Added 4-card grid at top showing Next Game, New Updates, New Comments, and Practice Drills
+- **Unified Modal System**: Created single modal with tabs for Game, Practice, Update, and Drill creation
+- **Responsive Design**: Fully responsive layout matching provided mockup designs for desktop and mobile
+- **Custom Header**: Replaced navbar with custom header featuring logo, coach name, and sign-out button
+- **Image Upload Fix**: Fixed image upload functionality for team updates in unified modal
+- **Schema Error Fixes**: Resolved database schema issues with non-existent columns
+
+### 🧩 New Dashboard Components
+- **StatCard**: Reusable statistics card component
+- **GameCard**: Individual game event display component  
+- **PracticeCard**: Individual practice event display component
+- **AnnouncementCard**: Team update display component
+- **DrillCard**: Practice drill display component
+- **MessageBoard**: UI-only message board component
+- **ScheduleModal**: Unified modal with tabbed interface
+
+### 🐛 Bug Fixes
+- Fixed React duplicate keys error in recurring practice day selection
+- Fixed team update schema errors (removed non-existent updated_at and updated_by columns)
+- Fixed image upload functionality for team updates
+- Fixed React Hooks rules violations in Navbar component
+- Fixed TypeScript type errors and unused variable warnings
+
+### 🎯 UI/UX Improvements
+- **Color Scheme**: Applied mockup color scheme with navy blue background (#0A2342)
+- **Typography**: Consistent Bebas Neue headers and Inter body text
+- **Spacing**: Proper card spacing and shadows for depth
+- **Badges**: Location, category, and skill level badges with proper styling
+- **Mobile Optimization**: Responsive design that works on all screen sizes
+
+## v2.5.0 - October 2025
+
+### 🗓️ Recurring Practice Scheduler (Dashboard)
+
+- Added a user-friendly recurring scheduler for Practice events
+  - Weekly recurrence with end options: On date or After N occurrences
+  - Day-of-week chips and live natural-language summary
+  - Validation (count 2–52, end date after start)
+  - UI merged with the Date/Time input into a single cohesive card
+  - Smooth scroll prevention on file input and state changes
+
+### 🛠️ Calendar Rendering Fixes (Schedules Page)
+
+- Events now render as single-day/time events (no unintended multi-day bars)
+  - Passed Date objects to FullCalendar with explicit `start` and 1‑hour `end`
+  - Set `allDay: false` for time-bound events
+  - Normalized incoming timestamps from DB
+
+### 👥 Coach Visibility – Team Filtering
+
+- Coaches see only the teams they are assigned to in the dashboard selector
+  - Introduced `fetchTeamsByCoachId(userId)` that joins through `team_coaches → coaches`
+  - Dashboard uses this for non-admins; admins still see all teams
+
+### 🌐 Program‑Wide Items
+
+- Schedules: Admins can create program‑wide schedules using `is_global = true`
+  - DB: `schedules.is_global BOOLEAN DEFAULT false NOT NULL` (see `docs/schedules_global_migration.sql`)
+  - RLS: Added policies enabling admins to manage all schedules and create global ones (see `docs/schedules_rls_update.sql`)
+- Team Updates: Program‑wide updates supported by allowing `team_id = NULL` and optional `is_global` flag
+  - Server: `addUpdate()` coerces `team_id` to `NULL` when `is_global`
+
+### 🖼️ Image Preview + CSP
+
+- Fixed broken image previews by allowing blob URLs in CSP
+  - `next.config.ts`: `img-src 'self' data: blob: https://<project>.supabase.co`
+
+### 🔗 API/Data Fixes
+
+- Schedules page now fetches teams via `fetchTeams()` (removes direct select of non-existent `coach_names` column)
+
+---
+
+## v2.4.3 - January 2025
 
 ### 🎨 PROGRAM-WIDE SCHEDULES - Admin Global Event Management
 

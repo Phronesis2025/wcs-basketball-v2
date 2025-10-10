@@ -89,7 +89,7 @@ export default function About() {
               Our Values
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {values.map((value, index) => (
+              {values.map((value) => (
                 <motion.div
                   key={value.title}
                   className="bg-white rounded-lg shadow-md overflow-hidden"
