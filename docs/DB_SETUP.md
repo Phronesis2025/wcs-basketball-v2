@@ -4,7 +4,16 @@
 
 **Last Updated**: December 2024 - Updated to reflect current production database schema
 
+### Message Board System (v2.6.0):
+
+- **Coach Messages Table**: Added `coach_messages` table for real-time coach communication
+- **Message Replies Table**: Added `coach_message_replies` table for threaded conversations
+- **Real-time Support**: Enabled Supabase Realtime for live message updates
+- **Row Level Security**: Comprehensive RLS policies for role-based message access
+- **Input Sanitization**: Enhanced security with proper content validation
+
 ### Recent Schema Fixes (v2.6.0):
+
 - **Column Validation**: Fixed references to non-existent columns (`updated_at`, `updated_by`) in `team_updates` table
 - **Type Safety**: Improved TypeScript type definitions for better database interaction
 - **Image Upload**: Enhanced image upload functionality with proper error handling
@@ -39,11 +48,12 @@
 
 ### Database Statistics
 
-- **Tables**: 11 active tables (teams, coaches, schedules, team_updates, practice_drills, users, news, products, resources, team_coaches, audit_logs)
+- **Tables**: 13 active tables (teams, coaches, schedules, team_updates, practice_drills, users, news, products, resources, team_coaches, audit_logs, coach_messages, coach_message_replies)
 - **Rows**: ~100+ records across all tables
 - **Storage**: <200MB (well within limits)
 - **Connections**: Stable connection pool
 - **Performance**: Optimized with proper indexing and RLS policies
+- **Real-time**: ✅ Enabled for message board tables (coach_messages, coach_message_replies)
 
 ## 📊 Database Schema
 
@@ -219,7 +229,45 @@ CREATE TABLE public.resources (
 );
 ```
 
-### 11. Audit Logs Table
+### 11. Coach Messages Table
+
+```sql
+CREATE TABLE public.coach_messages (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  author_id uuid NOT NULL,
+  author_name text NOT NULL,
+  content text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  deleted_at timestamp with time zone,
+  is_pinned boolean DEFAULT false,
+  CONSTRAINT coach_messages_pkey PRIMARY KEY (id),
+  CONSTRAINT coach_messages_author_id_fkey FOREIGN KEY (author_id)
+    REFERENCES public.users(id) ON DELETE CASCADE
+);
+```
+
+### 12. Coach Message Replies Table
+
+```sql
+CREATE TABLE public.coach_message_replies (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  message_id uuid NOT NULL,
+  author_id uuid NOT NULL,
+  author_name text NOT NULL,
+  content text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  deleted_at timestamp with time zone,
+  CONSTRAINT coach_message_replies_pkey PRIMARY KEY (id),
+  CONSTRAINT coach_message_replies_message_id_fkey FOREIGN KEY (message_id)
+    REFERENCES public.coach_messages(id) ON DELETE CASCADE,
+  CONSTRAINT coach_message_replies_author_id_fkey FOREIGN KEY (author_id)
+    REFERENCES public.users(id) ON DELETE CASCADE
+);
+```
+
+### 13. Audit Logs Table
 
 ```sql
 CREATE TABLE public.audit_logs (
@@ -711,6 +759,61 @@ CREATE INDEX idx_users_role ON users(role);
 3. **Accidental Deletion**: Restore from backup
 4. **Security Breach**: Isolate and restore from clean backup
 5. **Audit Log Recovery**: Restore audit logs for forensic analysis
+
+## 💬 Message Board System
+
+### Overview
+
+The coaches message board provides a real-time communication platform for coaches and administrators to share insights, ask questions, and collaborate on coaching strategies.
+
+### Features
+
+- **Real-time Messaging**: Live updates using Supabase Realtime
+- **Message Threading**: Reply to messages with threaded conversations
+- **Role-based Permissions**: Coaches can edit/delete their own messages, admins can manage all
+- **Message Pinning**: Admins can pin important messages to the top
+- **Soft Deletes**: Messages are soft-deleted to maintain conversation history
+- **Character Limits**: 1000 characters for messages, 500 for replies
+- **Edit Tracking**: Visual indicators for edited messages and replies
+
+### Database Design
+
+#### Coach Messages Table
+
+- **Primary Key**: `id` (UUID)
+- **Author Tracking**: `author_id` and `author_name` for user attribution
+- **Content**: `content` field with validation
+- **Timestamps**: `created_at`, `updated_at`, `deleted_at` for full audit trail
+- **Pinning**: `is_pinned` boolean for admin-controlled message priority
+
+#### Coach Message Replies Table
+
+- **Foreign Key**: `message_id` links to parent message
+- **Author Tracking**: `author_id` and `author_name` for reply attribution
+- **Content**: `content` field with validation
+- **Timestamps**: `created_at`, `updated_at`, `deleted_at` for full audit trail
+
+### Security Features
+
+- **Row Level Security**: All tables protected with RLS policies
+- **Permission-based Access**: Users can only edit/delete their own content
+- **Admin Override**: Admins can manage all messages and replies
+- **Soft Deletes**: Maintains data integrity while allowing content removal
+- **Input Validation**: Character limits and content sanitization
+
+### Real-time Updates
+
+- **Supabase Channels**: Uses `coach-messages` channel for live updates
+- **Postgres Changes**: Listens to database changes for instant UI updates
+- **Optimistic UI**: Immediate feedback with server-side validation
+- **Connection Management**: Automatic reconnection and error handling
+
+### Performance Optimizations
+
+- **Indexed Queries**: Optimized indexes for message retrieval and sorting
+- **Pagination Ready**: Structure supports future pagination implementation
+- **Efficient Loading**: Loads messages and replies separately for better performance
+- **Caching Strategy**: Client-side state management for reduced API calls
 
 ## 📞 Support & Resources
 

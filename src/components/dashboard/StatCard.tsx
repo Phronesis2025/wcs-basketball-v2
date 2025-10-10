@@ -21,7 +21,7 @@ export default function StatCard({
       className={`bg-white rounded-lg p-6 shadow-sm border border-gray-100 ${className}`}
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-inter text-gray-600 uppercase tracking-wide">
+        <h3 className="text-xl font-bebas text-gray-600 uppercase tracking-wide">
           {title}
         </h3>
         <div className="text-gray-400">{icon}</div>

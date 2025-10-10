@@ -4,8 +4,8 @@
 
 **WCSv2.0** is a comprehensive youth basketball league website built for World Class Sports Basketball in Kansas. The project empowers kids (ages 8-18), builds character, and generates revenue through merchandise sales. Built with modern web technologies, it features a responsive design, comprehensive security measures, and interactive components for coaches, parents, and players.
 
-**Current Version**: v2.4.3  
-**Last Updated**: January 2025  
+**Current Version**: v2.6.0  
+**Last Updated**: December 2024  
 **Status**: Production Ready ✅  
 **Security Score**: 10/10 (Perfect) 🔒
 
@@ -97,17 +97,19 @@ Complete dashboard for coaches to manage their teams and content with enhanced d
 
 **Features:**
 
-- **Coaches Dashboard**: Team selection and management interface with secure carousel system
+- **Coaches Dashboard**: Modern card-based interface with statistics cards and unified modal system
+- **Message Board System**: Real-time communication with live updates and role-based permissions
 - **Schedule Creation**: Add and manage game and practice schedules with enhanced error handling
 - **Team Updates**: Post news and updates for teams
 - **Practice Drills**: Create and manage drill library with filtering
 - **Authentication**: Secure login system with role-based access
 - **Data Validation**: Enhanced error handling and defensive programming
+- **Mobile Optimization**: Fully responsive design for all devices
 
 **Reference Files:**
 
-- Code: `src/app/coaches/dashboard/page.tsx`, `src/app/coaches/drills/page.tsx`
-- Docs: [CHANGELOG.md](CHANGELOG.md) v2.4.2, [PROGRESS.md](PROGRESS.md) Phase 12
+- Code: `src/app/coaches/dashboard/page.tsx`, `src/app/coaches/drills/page.tsx`, `src/lib/messageActions.ts`
+- Docs: [CHANGELOG.md](CHANGELOG.md) v2.6.0, [PROGRESS.md](PROGRESS.md) December 2024
 
 ### **4. User Authentication**
 
