@@ -244,14 +244,24 @@ export default function ScheduleModal({
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Date & Time
                 </label>
-                <div className="w-full overflow-hidden">
+                <div className="relative w-full">
                   <input
                     type="datetime-local"
                     value={gameDateTime}
                     onChange={(e) => setGameDateTime(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0"
+                    placeholder="mm/dd/yyyy --:-- --"
+                    className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 max-w-full"
+                    style={{ 
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'textfield'
+                    }}
                     required
                   />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
                 </div>
               </div>
               <div>
@@ -312,14 +322,24 @@ export default function ScheduleModal({
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Date & Time
                 </label>
-                <div className="w-full overflow-hidden">
+                <div className="relative w-full">
                   <input
                     type="datetime-local"
                     value={practiceDateTime}
                     onChange={(e) => setPracticeDateTime(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0"
+                    placeholder="mm/dd/yyyy --:-- --"
+                    className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 max-w-full"
+                    style={{ 
+                      WebkitAppearance: 'none',
+                      MozAppearance: 'textfield'
+                    }}
                     required
                   />
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
                 </div>
               </div>
 
