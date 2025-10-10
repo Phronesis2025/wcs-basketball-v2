@@ -26,12 +26,17 @@
 
 ## 🧩 Implemented Components
 
-### 1. Coaches Dashboard – Complete Redesign (v2.6.0)
+### 1. Coaches Dashboard – Complete Redesign (v2.6.1)
 
 #### Message Board System
 
 - **Real-time Communication**: Live message updates using Supabase Realtime
 - **Role-based Permissions**: Coaches edit own messages, admins manage all
+- **UI Fixes (v2.6.1)**: Fixed page scrolling issues and button rendering problems
+  - Added `type="button"` to all 17 buttons to prevent form submission behavior
+  - Fixed delete button rendering in confirmation modal with enhanced styling
+  - Resolved TypeScript build errors with proper JSX compatibility
+  - Enhanced user experience by maintaining scroll position during interactions
 - **Message Features**: Create, edit, delete, pin messages and replies
 - **Input Sanitization**: Enhanced security with XSS protection
 - **Mobile Optimized**: Fully responsive interface for all devices

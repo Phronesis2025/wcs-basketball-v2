@@ -40,6 +40,11 @@ export default function MessageBoard({
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    type: "message" | "reply";
+  } | null>(null);
 
   // Load messages and replies
   const loadMessages = useCallback(async () => {
@@ -71,6 +76,24 @@ export default function MessageBoard({
   useEffect(() => {
     loadMessages();
   }, [loadMessages]);
+
+  // Debug logging for message data
+  useEffect(() => {
+    if (messages.length > 0) {
+      devLog("Messages loaded for delete check:", {
+        messageCount: messages.length,
+        firstMessage: messages[0],
+        userId,
+        isAdmin,
+        editingMessage,
+        allMessageAuthors: messages.map((m) => ({
+          id: m.id,
+          author_id: m.author_id,
+          author_name: m.author_name,
+        })),
+      });
+    }
+  }, [messages, userId, isAdmin, editingMessage]);
 
   // Set up real-time subscriptions
   useEffect(() => {
@@ -231,32 +254,40 @@ export default function MessageBoard({
     }
   };
 
-  const handleDeleteMessage = async (messageId: string) => {
-    if (!confirm("Are you sure you want to delete this message?")) return;
+  const handleDeleteMessage = (messageId: string) => {
+    setDeleteTarget({ id: messageId, type: "message" });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
 
     try {
       setSubmitting(true);
-      await deleteMessage(messageId, userId, isAdmin);
+      devLog("Attempting to delete:", { deleteTarget, userId, isAdmin });
+
+      if (deleteTarget.type === "message") {
+        await deleteMessage(deleteTarget.id, userId, isAdmin);
+      } else {
+        await deleteReply(deleteTarget.id, userId, isAdmin);
+      }
+
+      devLog("Deleted successfully, refreshing messages...");
+      await loadMessages();
+      devLog("Messages refreshed after deletion");
     } catch (error) {
-      devError("Error deleting message:", error);
-      alert("Failed to delete message. Please try again.");
+      devError("Error deleting:", error);
+      alert(`Failed to delete ${deleteTarget.type}. Please try again.`);
     } finally {
       setSubmitting(false);
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
     }
   };
 
-  const handleDeleteReply = async (replyId: string) => {
-    if (!confirm("Are you sure you want to delete this reply?")) return;
-
-    try {
-      setSubmitting(true);
-      await deleteReply(replyId, userId, isAdmin);
-    } catch (error) {
-      devError("Error deleting reply:", error);
-      alert("Failed to delete reply. Please try again.");
-    } finally {
-      setSubmitting(false);
-    }
+  const handleDeleteReply = (replyId: string) => {
+    setDeleteTarget({ id: replyId, type: "reply" });
+    setShowDeleteConfirm(true);
   };
 
   const handlePinMessage = async (messageId: string) => {
@@ -318,7 +349,19 @@ export default function MessageBoard({
   };
 
   const canDelete = (authorId: string) => {
-    return authorId === userId || isAdmin;
+    const canDeleteResult = authorId === userId || isAdmin;
+    devLog("canDelete check:", {
+      authorId,
+      userId,
+      isAdmin,
+      canDeleteResult,
+      authorIdType: typeof authorId,
+      userIdType: typeof userId,
+      isAdminType: typeof isAdmin,
+      strictEqual: authorId === userId,
+      adminCheck: isAdmin,
+    });
+    return canDeleteResult;
   };
 
   if (loading) {
@@ -361,6 +404,7 @@ export default function MessageBoard({
         </div>
         <div className="flex items-center space-x-2">
           <button
+            type="button"
             onClick={loadMessages}
             className="bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm font-inter hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={loading}
@@ -369,6 +413,7 @@ export default function MessageBoard({
             {loading ? "Loading..." : "↻"}
           </button>
           <button
+            type="button"
             onClick={async () => {
               devLog("Testing real-time connection...");
 
@@ -393,6 +438,7 @@ export default function MessageBoard({
             Test
           </button>
           <button
+            type="button"
             onClick={() => setShowNewMessageModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={submitting}
@@ -424,6 +470,7 @@ export default function MessageBoard({
             </div>
             <div className="flex items-center justify-end space-x-2 mt-4">
               <button
+                type="button"
                 onClick={() => {
                   setShowNewMessageModal(false);
                   setNewMessageText("");
@@ -434,6 +481,7 @@ export default function MessageBoard({
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleNewMessage}
                 disabled={!newMessageText.trim() || submitting}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -530,6 +578,7 @@ export default function MessageBoard({
                         />
                         <div className="flex items-center justify-end space-x-2">
                           <button
+                            type="button"
                             onClick={cancelEdit}
                             className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
                             disabled={submitting}
@@ -537,6 +586,7 @@ export default function MessageBoard({
                             Cancel
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleEditMessage(message.id)}
                             disabled={!editText.trim() || submitting}
                             className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -553,6 +603,7 @@ export default function MessageBoard({
 
                     <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                       <button
+                        type="button"
                         onClick={() => toggleExpanded(message.id)}
                         className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-inter self-start"
                         disabled={submitting}
@@ -580,32 +631,76 @@ export default function MessageBoard({
                     </div>
 
                     {/* Action buttons */}
-                    <div className="flex items-center space-x-2 mt-2">
+                    <div className="flex items-center space-x-1 mt-2">
                       {canEdit(message.author_id) && !isEditing && (
                         <button
+                          type="button"
                           onClick={() => startEdit(message, "message")}
-                          className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                          className="text-gray-400 hover:text-gray-600 p-1"
+                          aria-label="Edit message"
                           disabled={submitting}
                         >
-                          Edit
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
                         </button>
                       )}
                       {canDelete(message.author_id) && !isEditing && (
                         <button
+                          type="button"
                           onClick={() => handleDeleteMessage(message.id)}
-                          className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                          className="text-gray-400 hover:text-red-600 p-1"
+                          aria-label="Delete message"
                           disabled={submitting}
                         >
-                          Delete
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
                         </button>
                       )}
                       {isAdmin && !isEditing && (
                         <button
+                          type="button"
                           onClick={() => handlePinMessage(message.id)}
-                          className="text-xs text-yellow-600 hover:text-yellow-700 transition-colors"
+                          className="text-gray-400 hover:text-yellow-600 p-1"
+                          aria-label={
+                            message.is_pinned ? "Unpin message" : "Pin message"
+                          }
                           disabled={submitting}
                         >
-                          {message.is_pinned ? "Unpin" : "Pin"}
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                            />
+                          </svg>
                         </button>
                       )}
                     </div>
@@ -650,6 +745,7 @@ export default function MessageBoard({
                                   />
                                   <div className="flex items-center justify-end space-x-2">
                                     <button
+                                      type="button"
                                       onClick={cancelEdit}
                                       className="px-2 py-1 text-xs font-inter text-gray-600 hover:text-gray-800 transition-colors"
                                       disabled={submitting}
@@ -657,6 +753,7 @@ export default function MessageBoard({
                                       Cancel
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => handleEditReply(reply.id)}
                                       disabled={!editText.trim() || submitting}
                                       className="px-2 py-1 bg-blue-600 text-white text-xs font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -670,27 +767,55 @@ export default function MessageBoard({
                                   <p className="text-gray-700 font-inter text-sm">
                                     {reply.content}
                                   </p>
-                                  <div className="flex items-center space-x-2 mt-1">
+                                  <div className="flex items-center space-x-1 mt-1">
                                     {canEdit(reply.author_id) && (
                                       <button
+                                        type="button"
                                         onClick={() =>
                                           startEdit(reply, "reply")
                                         }
-                                        className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                                        className="text-gray-400 hover:text-gray-600 p-1"
+                                        aria-label="Edit reply"
                                         disabled={submitting}
                                       >
-                                        Edit
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                          />
+                                        </svg>
                                       </button>
                                     )}
                                     {canDelete(reply.author_id) && (
                                       <button
+                                        type="button"
                                         onClick={() =>
                                           handleDeleteReply(reply.id)
                                         }
-                                        className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                                        className="text-gray-400 hover:text-red-600 p-1"
+                                        aria-label="Delete reply"
                                         disabled={submitting}
                                       >
-                                        Delete
+                                        <svg
+                                          className="w-4 h-4"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          viewBox="0 0 24 24"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                          />
+                                        </svg>
                                       </button>
                                     )}
                                   </div>
@@ -717,6 +842,7 @@ export default function MessageBoard({
                         </span>
                         <div className="flex items-center space-x-2">
                           <button
+                            type="button"
                             onClick={() => setReplyText("")}
                             className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
                             disabled={submitting}
@@ -724,6 +850,7 @@ export default function MessageBoard({
                             Cancel
                           </button>
                           <button
+                            type="button"
                             onClick={() => handleReply(message.id)}
                             disabled={!replyText.trim() || submitting}
                             className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -740,6 +867,111 @@ export default function MessageBoard({
           })
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-red-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Delete {deleteTarget?.type === "message" ? "Message" : "Reply"}
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                This action cannot be undone. The {deleteTarget?.type} will be
+                permanently removed from the message board.
+              </p>
+              <div className="flex space-x-3 justify-center">
+                {(() => {
+                  devLog("Rendering modal buttons:", {
+                    showDeleteConfirm,
+                    deleteTarget,
+                    submitting,
+                  });
+                  return null;
+                })()}
+                <button
+                  type="button"
+                  onClick={() => {
+                    devLog("Cancel button clicked");
+                    setShowDeleteConfirm(false);
+                    setDeleteTarget(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  disabled={submitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!submitting) {
+                      devLog("Delete button clicked in modal");
+                      confirmDelete();
+                    }
+                  }}
+                  disabled={submitting}
+                  style={{
+                    minWidth: "100px",
+                    padding: "8px 24px",
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: "white",
+                    backgroundColor: "#dc2626",
+                    border: "2px solid #b91c1c",
+                    borderRadius: "6px",
+                    cursor: submitting ? "not-allowed" : "pointer",
+                    opacity: submitting ? 0.5 : 1,
+                    display: "inline-block",
+                    textAlign: "center",
+                    boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                    transition: "all 0.2s ease-in-out",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.backgroundColor = "#b91c1c";
+                      e.currentTarget.style.boxShadow =
+                        "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!submitting) {
+                      e.currentTarget.style.backgroundColor = "#dc2626";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
+                    }
+                  }}
+                >
+                  {(() => {
+                    devLog("Button content:", {
+                      submitting,
+                      content: submitting ? "Deleting..." : "Delete",
+                    });
+                    return null;
+                  })()}
+                  {submitting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

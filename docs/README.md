@@ -21,7 +21,7 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **Team Previews**: Dynamic team cards with logos and information
 - **Coaches Corner**: Staff profiles and information
 - **Coaches Dashboard**: Modern card-based dashboard with statistics cards, unified modal system, and comprehensive team management interface
-- **Message Board**: Real-time communication system for coaches with live updates, role-based permissions, and mobile optimization
+- **Message Board**: Real-time communication system for coaches with live updates, role-based permissions, mobile optimization, and enhanced UI fixes
 - **Practice Drills**: Comprehensive drill library with filtering by time, skill level, and difficulty
 - **Coaches Authentication**: Secure login system with role-based access control
   - Coaches now only see teams they are assigned to

@@ -4,7 +4,7 @@
 
 **WCSv2.0** is a comprehensive youth basketball league website built for World Class Sports Basketball in Kansas. The project empowers kids (ages 8-18), builds character, and generates revenue through merchandise sales. Built with modern web technologies, it features a responsive design, comprehensive security measures, and interactive components for coaches, parents, and players.
 
-**Current Version**: v2.6.0  
+**Current Version**: v2.6.1  
 **Last Updated**: December 2024  
 **Status**: Production Ready ✅  
 **Security Score**: 10/10 (Perfect) 🔒
