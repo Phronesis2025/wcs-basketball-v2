@@ -27,7 +27,9 @@ export default function ScheduleModal({
   >("Game");
 
   // Game form fields
+  const [gameType, setGameType] = useState<"game" | "tournament">("game");
   const [gameDateTime, setGameDateTime] = useState("");
+  const [gameEndDateTime, setGameEndDateTime] = useState("");
   const [gameOpponent, setGameOpponent] = useState("");
   const [gameLocation, setGameLocation] = useState("");
   const [gameComments, setGameComments] = useState("");
@@ -164,7 +166,9 @@ export default function ScheduleModal({
   }, [isOpen]);
 
   const resetForms = () => {
+    setGameType("game");
     setGameDateTime("");
+    setGameEndDateTime("");
     setGameOpponent("");
     setGameLocation("");
     setGameComments("");
@@ -270,8 +274,9 @@ export default function ScheduleModal({
       case "Game":
         formData = {
           formType: "Game",
-          event_type: "Game",
+          event_type: gameType === "tournament" ? "Tournament" : "Game",
           date_time: gameDateTime,
+          end_date_time: gameType === "tournament" ? gameEndDateTime : null,
           opponent: gameOpponent,
           location: gameLocation,
           description: gameComments,
@@ -425,7 +430,21 @@ export default function ScheduleModal({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  Date & Time
+                  Event Type
+                </label>
+                <select
+                  value={gameType}
+                  onChange={(e) => setGameType(e.target.value as "game" | "tournament")}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  required
+                >
+                  <option value="game">Single Game</option>
+                  <option value="tournament">Tournament</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  {gameType === "tournament" ? "Start Date & Time" : "Date & Time"}
                 </label>
                 <div className="w-full">
                   <input
@@ -439,6 +458,24 @@ export default function ScheduleModal({
                   />
                 </div>
               </div>
+              {gameType === "tournament" && (
+                <div>
+                  <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                    End Date & Time
+                  </label>
+                  <div className="w-full">
+                    <input
+                      type="datetime-local"
+                      value={gameEndDateTime}
+                      onChange={(e) => setGameEndDateTime(e.target.value)}
+                      placeholder="mm/dd/yyyy --:-- --"
+                      className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
+                      style={{ width: '100%', maxWidth: '100%' }}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Opponent
@@ -973,6 +1010,8 @@ export default function ScheduleModal({
                 ? "Saving..."
                 : activeTab === "Drill"
                 ? "Post Drill"
+                : activeTab === "Game"
+                ? `Schedule ${gameType === "tournament" ? "Tournament" : "Game"}`
                 : `Schedule ${activeTab}`}
             </button>
           </div>
