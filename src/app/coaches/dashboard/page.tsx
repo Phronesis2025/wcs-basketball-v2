@@ -67,6 +67,15 @@ export default function CoachesDashboard() {
   // const scrollPositionRef = useRef<number>(0); // Track scroll position
   const router = useRouter();
 
+  const navLinks = [
+    { name: "Home", href: "/" },
+    { name: "About", href: "/about" },
+    { name: "Teams", href: "/teams" },
+    { name: "Schedules", href: "/schedules" },
+    { name: "Coaches", href: "/coaches/login" },
+    { name: "Shop", href: "/shop" },
+  ];
+
   // // Schedule form fields
   // const [scheduleEventType, setScheduleEventType] = useState("");
   // const [scheduleDateTime, setScheduleDateTime] = useState("");
@@ -1157,8 +1166,8 @@ export default function CoachesDashboard() {
               </span>
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="md:hidden p-2 rounded-md transition-all duration-300 ease-out text-navy hover:bg-gray-100"
-                aria-label="Toggle mobile menu"
+                className="p-2 rounded-md transition-all duration-300 ease-out text-navy hover:bg-gray-100"
+                aria-label="Toggle menu"
               >
                 <svg
                   className="h-6 w-6"
@@ -1183,9 +1192,9 @@ export default function CoachesDashboard() {
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Menu Dropdown */}
       <div
-        className={`fixed top-12 left-0 right-0 z-50 md:hidden transition-all duration-300 ease-out ${
+        className={`fixed top-12 left-0 right-0 z-50 transition-all duration-300 ease-out ${
           isMobileMenuOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
@@ -1193,6 +1202,16 @@ export default function CoachesDashboard() {
       >
         <div className="bg-white shadow-lg">
           <div className="px-4 py-3 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {link.name}
+              </Link>
+            ))}
             <button
               onClick={async () => {
                 await supabase.auth.signOut();
