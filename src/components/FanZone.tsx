@@ -36,11 +36,11 @@ const cards = [
     href: "/news",
   },
   {
-    title: "Coaches Corner",
-    description: "Meet our expert coaches shaping young athletes.",
+    title: "Practice Drills",
+    description: "Explore our comprehensive library of basketball drills and training exercises.",
     video: "/video/coaches.mp4",
     poster: "/images/placeholder-news-2.png",
-    href: "/coaches/login",
+    href: "/drills",
   },
 ];
 

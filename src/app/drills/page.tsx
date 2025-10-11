@@ -1,4 +1,4 @@
-// src/app/coaches/drills/page.tsx
+// src/app/drills/page.tsx
 "use client";
 import { fetchPracticeDrills } from "@/lib/actions";
 import { PracticeDrill } from "@/types/supabase";
