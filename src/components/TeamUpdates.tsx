@@ -204,7 +204,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                     <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
                       {team.name} News
                     </h4>
-                    <h3 className="text-3xl font-bebas mt-2 text-white line-clamp-2">
+                    <h3 className="text-2xl font-bebas mt-2 text-white line-clamp-1 leading-tight overflow-hidden">
                       {sanitizeInput(update.title)}
                     </h3>
                     <p
@@ -221,7 +221,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                     </p>
                   </div>
 
-                  <div className="flex-1 flex flex-col mt-4">
+                  <div className="flex-1 flex flex-col justify-between mt-4">
                     <div className="flex-shrink-0 mb-4">
                       {update.image_url ? (
                         <Image
@@ -248,7 +248,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                       )}
                     </div>
 
-                    <div className="py-2">
+                    <div className="flex-shrink-0 py-2">
                       <button
                         onClick={(e) => {
                           e.preventDefault();

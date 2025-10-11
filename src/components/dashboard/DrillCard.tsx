@@ -1,6 +1,5 @@
 // src/components/dashboard/DrillCard.tsx
 import React from "react";
-import Image from "next/image";
 import { PracticeDrill } from "../../types/supabase";
 
 interface DrillCardProps {

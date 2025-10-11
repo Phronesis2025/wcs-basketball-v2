@@ -1,6 +1,42 @@
 # WCSv2.0 Changelog
 
-## v2.7.0 - January 2025 (Current)
+## v2.7.1 - January 2025 (Current)
+
+### 🎨 UI/UX Improvements
+
+- **Team Updates Card Layout Fix**: Fixed uniform card appearance in TeamUpdates component
+  - Limited titles to single line with `line-clamp-1` to prevent layout issues
+  - Reduced title font size from `text-3xl` to `text-2xl` for better fit
+  - Ensured "READ MORE" buttons stay within card boundaries
+  - Improved responsive design across all screen sizes
+
+- **Mobile UX Enhancement**: Improved touch targets for message board icons
+  - Increased icon sizes on mobile: `w-5 h-5` (20px) vs `w-4 h-4` (16px) on desktop
+  - Enhanced padding: `p-2` (8px) on mobile vs `p-1` (4px) on desktop
+  - Added hover backgrounds and smooth transitions for better visual feedback
+  - Applied improvements to both main messages and reply sections
+  - Meets accessibility guidelines with 44px minimum touch targets
+
+- **Page Scroll Behavior Fix**: Resolved unwanted scrolling on team pages
+  - Removed Y-axis animation from Framer Motion to prevent scroll issues
+  - Added scroll restoration prevention with `window.history.scrollRestoration = "manual"`
+  - Implemented animation state tracking to prevent re-triggering
+  - Preserved scroll position during page interactions
+
+### 🐛 Bug Fixes
+
+- **Build Warnings**: Fixed TypeScript warnings for unused variables
+  - Removed unused `Image` import from DrillCard component
+  - Commented out unused `skillOptions` and `equipmentOptions` in ScheduleModal
+  - Clean build with no TypeScript errors
+
+### 🔧 Technical Improvements
+
+- **Code Quality**: Enhanced component structure and maintainability
+- **Performance**: Optimized animations and reduced layout shifts
+- **Accessibility**: Improved touch targets and user interaction feedback
+
+## v2.7.0 - January 2025
 
 ### 🔐 Comprehensive Admin Permission System
 
