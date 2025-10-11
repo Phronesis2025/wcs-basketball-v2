@@ -63,6 +63,7 @@ export default function CoachesDashboard() {
   const [userId, setUserId] = useState<string | null>(null);
   // const [imagePreview, setImagePreview] = useState<string | null>(null); // New: Mobile preview
   const [lastLoginTime, setLastLoginTime] = useState<Date | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // const scrollPositionRef = useRef<number>(0); // Track scroll position
   const router = useRouter();
 
@@ -1155,15 +1156,53 @@ export default function CoachesDashboard() {
                 Coach {userName?.split(" ").pop() || ""}
               </span>
               <button
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                  router.push("/coaches/login");
-                }}
-                className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="md:hidden p-2 rounded-md transition-all duration-300 ease-out text-navy hover:bg-gray-100"
+                aria-label="Toggle mobile menu"
               >
-                Sign Out
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d={
+                      isMobileMenuOpen
+                        ? "M6 18L18 6M6 6l12 12"
+                        : "M4 6h16M4 12h16m-7 6h7"
+                    }
+                  />
+                </svg>
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu Dropdown */}
+      <div
+        className={`fixed top-12 left-0 right-0 z-50 md:hidden transition-all duration-300 ease-out ${
+          isMobileMenuOpen
+            ? "opacity-100 pointer-events-auto"
+            : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div className="bg-white shadow-lg">
+          <div className="px-4 py-3 space-y-1">
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push("/coaches/login");
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </div>
@@ -1198,8 +1237,8 @@ export default function CoachesDashboard() {
         {/* Team Logo */}
         {selectedTeam && (
           <div className="mb-6 flex justify-center">
-            <div className="w-32 h-32 relative bg-white rounded-full flex items-center justify-center p-4">
-              <div className="w-20 h-20 relative">
+            <div className="w-32 h-32 relative bg-white rounded-full flex items-center justify-center p-2">
+              <div className="w-26 h-26 relative">
                 <Image
                   src={
                     selectedTeam === "__GLOBAL__"
