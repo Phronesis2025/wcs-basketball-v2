@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WCS Basketball v2.0 - Complete Website Structure</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f8f9fa;
+      }
+      .container {
+        background: white;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #0a2342;
+        border-bottom: 3px solid #dc2626;
+        padding-bottom: 10px;
+        margin-bottom: 30px;
+      }
+      h2 {
+        color: #0a2342;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        border-left: 4px solid #dc2626;
+        padding-left: 15px;
+      }
+      h3 {
+        color: #374151;
+        margin-top: 25px;
+        margin-bottom: 10px;
+      }
+      h4 {
+        color: #6b7280;
+        margin-top: 20px;
+        margin-bottom: 8px;
+      }
+      .page-section {
+        background: #f8f9fa;
+        padding: 15px;
+        margin: 10px 0;
+        border-radius: 5px;
+        border-left: 3px solid #dc2626;
+      }
+      .feature-list {
+        list-style: none;
+        padding-left: 0;
+      }
+      .feature-list li {
+        padding: 5px 0;
+        padding-left: 20px;
+        position: relative;
+      }
+      .feature-list li:before {
+        content: "✓";
+        color: #dc2626;
+        font-weight: bold;
+        position: absolute;
+        left: 0;
+      }
+      .tech-section {
+        background: #e5f3ff;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+      .security-section {
+        background: #f0fdf4;
+        padding: 15px;
+        border-radius: 5px;
+        margin: 10px 0;
+      }
+      .code {
+        background: #f1f5f9;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: "Monaco", "Menlo", monospace;
+        font-size: 0.9em;
+      }
+      .emoji {
+        font-size: 1.2em;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>
+        <span class="emoji">🏀</span> WCS Basketball v2.0 - Complete Website
+        Structure
+      </h1>
+
+      <h2><span class="emoji">🏠</span> Main Pages</h2>
+
+      <div class="page-section">
+        <h3>Home Page <span class="code">(/)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Hero Section</strong>: Rotating image carousel with Framer
+            Motion animations
+          </li>
+          <li><strong>Logo Marquee</strong>: Partner/sponsor logos display</li>
+          <li>
+            <strong>Fan Zone</strong>: Team previews with interactive video
+            cards and coach information
+          </li>
+          <li>
+            <strong>Shop Section</strong>: Merchandise preview with pricing and
+            call-to-action
+          </li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>About Page <span class="code">(/about)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Core Values Section</strong>: Interactive 3-card carousel
+            showcasing WCS principles
+          </li>
+          <li>
+            <strong>Values</strong>: Fundamentals First, Basketball IQ, Work
+            Ethic, Teamwork, Leadership, Mental Toughness, Discipline,
+            Integrity, Respect, Responsibility, Adaptability
+          </li>
+          <li>
+            <strong>Values Carousel</strong>: Smooth directional slide
+            animations with Framer Motion
+          </li>
+          <li>
+            <strong>Professional Design</strong>: Clean card layout with value
+            descriptions and images
+          </li>
+        </ul>
+      </div>
+
+      <h2><span class="emoji">🏀</span> Team Management</h2>
+
+      <div class="page-section">
+        <h3>Teams Page <span class="code">(/teams)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Team Grid</strong>: Dynamic team cards with responsive
+            design
+          </li>
+          <li>
+            <strong>Gender-Specific Backgrounds</strong>: Boys/girls team visual
+            differentiation
+          </li>
+          <li>
+            <strong>Team Information</strong>: Age groups, grade levels,
+            seasons, and logos
+          </li>
+          <li>
+            <strong>Interactive Cards</strong>: Hover effects and smooth
+            transitions
+          </li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Individual Team Page <span class="code">(/teams/[id])</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Team Details</strong>: Logo, name, age group, gender, grade
+            level, season
+          </li>
+          <li>
+            <strong>Coaches Section</strong>: Coach profiles with photos, bios,
+            and quotes
+          </li>
+          <li>
+            <strong>Team Updates</strong>: News and announcements with image
+            support
+          </li>
+          <li>
+            <strong>Schedules</strong>: Game and practice schedules with
+            calendar integration
+          </li>
+          <li>
+            <strong>Responsive Layout</strong>: Mobile-optimized with proper
+            content flow
+          </li>
+        </ul>
+      </div>
+
+      <h2><span class="emoji">📅</span> Scheduling System</h2>
+
+      <div class="page-section">
+        <h3>Schedules Page <span class="code">(/schedules)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>FullCalendar Integration</strong>: Interactive calendar with
+            multiple view modes
+          </li>
+          <li>
+            <strong>Event Types</strong>: Games, practices, tournaments,
+            meetings
+          </li>
+          <li><strong>Filtering System</strong>: By team and event type</li>
+          <li>
+            <strong>Real-time Updates</strong>: Live schedule updates via
+            Supabase subscriptions
+          </li>
+          <li>
+            <strong>Event Details</strong>: Click to view detailed event
+            information
+          </li>
+        </ul>
+      </div>
+
+      <h2><span class="emoji">👨‍🏫</span> Coaches Portal</h2>
+
+      <div class="page-section">
+        <h3>Coaches Login <span class="code">(/coaches/login)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Secure Authentication</strong>: Supabase Auth integration
+          </li>
+          <li><strong>CSRF Protection</strong>: Token-based form security</li>
+          <li>
+            <strong>Rate Limiting</strong>: 5 attempts per 5 minutes protection
+          </li>
+          <li>
+            <strong>Session Persistence</strong>: Maintains login across
+            navigation
+          </li>
+          <li>
+            <strong>Error Handling</strong>: Comprehensive validation and
+            feedback
+          </li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>
+          Coaches Dashboard <span class="code">(/coaches/dashboard)</span>
+        </h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Statistics Cards</strong>: Next Game, New Updates, New
+            Messages, Practice Drills
+          </li>
+          <li>
+            <strong>Team Selection</strong>: Dropdown with team logos and "All
+            Teams" option
+          </li>
+          <li>
+            <strong>Unified Modal System</strong>: Single modal with tabs for
+            Game, Practice, Update, Drill creation
+          </li>
+          <li>
+            <strong>Message Board</strong>: Real-time coach communication system
+          </li>
+          <li>
+            <strong>Content Management</strong>: CRUD operations for schedules,
+            updates, and drills
+          </li>
+          <li>
+            <strong>Role-Based Access</strong>: Admin vs Coach permission system
+          </li>
+          <li><strong>Real-time Updates</strong>: Live data synchronization</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Practice Drills <span class="code">(/coaches/drills)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Drill Library</strong>: Comprehensive practice drill
+            database
+          </li>
+          <li>
+            <strong>Filtering System</strong>: By time duration and skill level
+          </li>
+          <li>
+            <strong>Drill Details</strong>: Instructions, equipment, benefits,
+            and images
+          </li>
+          <li>
+            <strong>Real-time Updates</strong>: Live drill additions and
+            modifications
+          </li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Coaches Page <span class="code">(/coaches)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Coach Profiles</strong>: Photos, bios, quotes, and team
+            assignments
+          </li>
+          <li>
+            <strong>Schedule Management</strong>: Add new events and practices
+          </li>
+          <li>
+            <strong>Team Information</strong>: Coach-team relationship display
+          </li>
+          <li>
+            <strong>Real-time Updates</strong>: Live coach and schedule updates
+          </li>
+        </ul>
+      </div>
+
+      <h2><span class="emoji">🛒</span> E-commerce & Content</h2>
+
+      <div class="page-section">
+        <h3>Shop Page <span class="code">(/shop)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Placeholder Page</strong>: Ready for merchandise integration
+          </li>
+          <li>
+            <strong>Future Stripe Integration</strong>: Payment processing
+            planned
+          </li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>News Page <span class="code">(/news)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Placeholder Page</strong>: Ready for news content management
+          </li>
+          <li>
+            <strong>Future CMS Integration</strong>: Content management system
+            planned
+          </li>
+        </ul>
+      </div>
+
+      <h2><span class="emoji">🔐</span> Authentication & Legal</h2>
+
+      <div class="page-section">
+        <h3>User Registration <span class="code">(/register)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Account Creation</strong>: Email and password registration
+          </li>
+          <li>
+            <strong>Input Validation</strong>: Email format, password strength,
+            length limits
+          </li>
+          <li>
+            <strong>Rate Limiting</strong>: Protection against brute force
+            attacks
+          </li>
+          <li><strong>CSRF Protection</strong>: Secure form submission</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Privacy Policy <span class="code">(/privacy)</span></h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Data Collection</strong>: Information gathering practices
+          </li>
+          <li><strong>Usage Rights</strong>: How data is used and protected</li>
+          <li>
+            <strong>Contact Information</strong>: Support and inquiry details
+          </li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Terms of Service <span class="code">(/terms)</span></h3>
+        <ul class="feature-list">
+          <li><strong>Usage License</strong>: Terms and conditions</li>
+          <li>
+            <strong>Limitations</strong>: Liability and warranty information
+          </li>
+          <li><strong>Contact Information</strong>: Legal inquiry support</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Refund Policy <span class="code">(/refund-policy)</span></h3>
+        <ul class="feature-list">
+          <li><strong>Refund Terms</strong>: All sales final policy</li>
+          <li><strong>Exceptions</strong>: Program cancellation refunds</li>
+          <li><strong>Contact Information</strong>: Policy inquiry support</li>
+        </ul>
+      </div>
+
+      <h2><span class="emoji">🧪</span> Development & Testing</h2>
+
+      <div class="page-section">
+        <h3>Test Auth Page <span class="code">(/test-auth)</span></h3>
+        <ul class="feature-list">
+          <li><strong>Development Only</strong>: Blocked in production</li>
+          <li><strong>User Testing</strong>: Authentication verification</li>
+          <li><strong>Team Data</strong>: Database connection testing</li>
+          <li><strong>CSRF Testing</strong>: Security token validation</li>
+        </ul>
+      </div>
+
+      <h2><span class="emoji">🎨</span> UI Components</h2>
+
+      <div class="page-section">
+        <h3>Core Components</h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Navbar</strong>: Responsive navigation with mobile hamburger
+            menu
+          </li>
+          <li>
+            <strong>Footer</strong>: Social links, quick navigation, and
+            branding
+          </li>
+          <li>
+            <strong>Hero</strong>: Rotating image carousel with animations
+          </li>
+          <li><strong>ValuesSection</strong>: Interactive 3-card carousel</li>
+          <li>
+            <strong>FanZone</strong>: Team previews with video integration
+          </li>
+          <li><strong>Shop</strong>: Merchandise preview section</li>
+          <li><strong>LogoMarquee</strong>: Partner/sponsor logo display</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Dashboard Components</h3>
+        <ul class="feature-list">
+          <li><strong>StatCard</strong>: Statistics display cards</li>
+          <li>
+            <strong>ScheduleModal</strong>: Unified modal for content creation
+          </li>
+          <li><strong>GameCard</strong>: Individual game event display</li>
+          <li><strong>PracticeCard</strong>: Practice event display</li>
+          <li><strong>AnnouncementCard</strong>: Team update display</li>
+          <li><strong>DrillCard</strong>: Practice drill display</li>
+          <li><strong>MessageBoard</strong>: Real-time coach communication</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>UI Library</h3>
+        <ul class="feature-list">
+          <li><strong>Button</strong>: Standardized button component</li>
+          <li><strong>Dialog</strong>: Modal system with animations</li>
+          <li><strong>Input</strong>: Form input components</li>
+          <li><strong>Select</strong>: Dropdown selection interface</li>
+        </ul>
+      </div>
+
+      <h2><span class="emoji">🔧</span> Technical Features</h2>
+
+      <div class="security-section">
+        <h3>Security</h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Content Security Policy</strong>: Comprehensive CSP
+            implementation
+          </li>
+          <li>
+            <strong>Input Sanitization</strong>: XSS prevention for all user
+            content
+          </li>
+          <li>
+            <strong>Profanity Filtering</strong>: Advanced content moderation
+            system
+          </li>
+          <li><strong>Rate Limiting</strong>: Protection against abuse</li>
+          <li><strong>CSRF Protection</strong>: Token-based form security</li>
+          <li>
+            <strong>Row Level Security</strong>: Database-level access control
+          </li>
+        </ul>
+      </div>
+
+      <div class="tech-section">
+        <h3>Performance</h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Next.js Image Optimization</strong>: Optimized image loading
+          </li>
+          <li><strong>Real-time Updates</strong>: Supabase subscriptions</li>
+          <li><strong>Responsive Design</strong>: Mobile-first approach</li>
+          <li><strong>Code Splitting</strong>: Optimized bundle sizes</li>
+          <li><strong>Caching</strong>: Efficient data caching strategies</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>User Experience</h3>
+        <ul class="feature-list">
+          <li>
+            <strong>Scroll Lock</strong>: Prevents background scrolling when
+            menus open
+          </li>
+          <li>
+            <strong>Session Persistence</strong>: Maintains login across
+            navigation
+          </li>
+          <li><strong>Toast Notifications</strong>: User feedback system</li>
+          <li><strong>Loading States</strong>: Proper loading indicators</li>
+          <li>
+            <strong>Error Handling</strong>: Comprehensive error management
+          </li>
+        </ul>
+      </div>
+
+      <div
+        style="
+          margin-top: 40px;
+          padding: 20px;
+          background: #f0f9ff;
+          border-radius: 8px;
+          border-left: 4px solid #0ea5e9;
+        "
+      >
+        <h3 style="color: #0c4a6e; margin-top: 0">Summary</h3>
+        <p style="margin-bottom: 0; color: #0c4a6e">
+          This comprehensive structure provides a complete basketball program
+          management system with public-facing content, coach portals, team
+          management, scheduling, and administrative features. The system is
+          built with Next.js 15.5.2, TypeScript, Tailwind CSS, and Supabase,
+          featuring enterprise-level security and real-time functionality.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

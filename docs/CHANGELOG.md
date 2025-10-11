@@ -24,12 +24,14 @@
 ### 🎨 UI/UX Improvements
 
 - **Team Updates Card Layout Fix**: Fixed uniform card appearance in TeamUpdates component
+
   - Limited titles to single line with `line-clamp-1` to prevent layout issues
   - Reduced title font size from `text-3xl` to `text-2xl` for better fit
   - Ensured "READ MORE" buttons stay within card boundaries
   - Improved responsive design across all screen sizes
 
 - **Mobile UX Enhancement**: Improved touch targets for message board icons
+
   - Increased icon sizes on mobile: `w-5 h-5` (20px) vs `w-4 h-4` (16px) on desktop
   - Enhanced padding: `p-2` (8px) on mobile vs `p-1` (4px) on desktop
   - Added hover backgrounds and smooth transitions for better visual feedback
@@ -37,6 +39,7 @@
   - Meets accessibility guidelines with 44px minimum touch targets
 
 - **Page Scroll Behavior Fix**: Resolved unwanted scrolling on team pages
+
   - Removed Y-axis animation from Framer Motion to prevent scroll issues
   - Added scroll restoration prevention with `window.history.scrollRestoration = "manual"`
   - Implemented animation state tracking to prevent re-triggering
@@ -65,13 +68,15 @@
 ### 🔐 Comprehensive Admin Permission System
 
 - **Complete Role-Based Access Control**: Implemented comprehensive admin permissions across all dashboard sections
+
   - **Admins**: Can add, edit, and delete any content in all sections
   - **Coaches**: Can only manage content they created
   - **Consistent Security Model**: Applied uniform permission checks across schedules, updates, drills, and messages
 
 - **Backend Security Enhancements**:
+
   - Updated `deleteSchedule()` with admin permission checks
-  - Updated `deleteUpdate()` with admin permission checks  
+  - Updated `deleteUpdate()` with admin permission checks
   - Enhanced `updatePracticeDrill()` and `deletePracticeDrill()` with admin support
   - Server-side validation prevents unauthorized access attempts
 
@@ -83,6 +88,7 @@
 ### 🎨 UI/UX Improvements
 
 - **Drill Card Styling**: Fixed category pill colors to match site theme
+
   - **Conditioning**: Orange background with dark orange text (was white/invisible)
   - **Drill**: Light blue background with dark blue text
   - **Warm-up**: Light green background with dark green text
@@ -97,6 +103,7 @@
 ### 🛡️ Security Enhancements
 
 - **Profanity Filter Improvements**: Fixed false positive issues
+
   - Implemented word boundary matching to prevent "pass" from triggering "ass" detection
   - Enhanced filtering for basketball and educational content
   - Maintained protection against actual inappropriate language
@@ -109,6 +116,7 @@
 ### 🔧 Technical Improvements
 
 - **Form Routing**: Fixed modal form submission routing
+
   - Added `formType` field to ensure data saves to correct sections
   - Resolved issue where drill data was saving to team updates section
   - Improved user experience with accurate form handling
@@ -123,11 +131,13 @@
 ### 🐛 Critical UI Fixes
 
 - **Message Board Scroll Issue**: Fixed page scrolling to top when clicking buttons in message board
+
   - Added `type="button"` to all 17 buttons in MessageBoard component
   - Prevents default form submission behavior that caused page scroll
   - Maintains user's scroll position during message interactions
 
 - **Delete Button Rendering**: Fixed delete button not appearing in confirmation modal
+
   - Enhanced button styling with inline styles to override CSS conflicts
   - Improved visual appearance with proper red background and white text
   - Added hover effects and loading states

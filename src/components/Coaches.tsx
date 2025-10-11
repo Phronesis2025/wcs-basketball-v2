@@ -81,7 +81,7 @@ export default function Coaches() {
                 </p>
                 <p className="text-gray-600 font-inter text-sm leading-relaxed">
                   <Link
-                    href="/coaches"
+                    href="/coaches/login"
                     className="text-gray-600 hover:text-red transition duration-300"
                   >
                     {coach.description}

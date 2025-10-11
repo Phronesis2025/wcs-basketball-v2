@@ -40,7 +40,7 @@ const cards = [
     description: "Meet our expert coaches shaping young athletes.",
     video: "/video/coaches.mp4",
     poster: "/images/placeholder-news-2.png",
-    href: "/coaches",
+    href: "/coaches/login",
   },
 ];
 
