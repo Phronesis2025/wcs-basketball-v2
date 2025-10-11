@@ -131,6 +131,7 @@ export default function CoachesLogin() {
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
+        <h1 className="text-3xl font-bebas text-center">WCS Coaches</h1>
         {error && <p className="text-red font-inter text-center">{error}</p>}
         <form onSubmit={handleLogin} className="space-y-4">
           <input type="hidden" name="csrf-token" value={csrfToken} />
