@@ -655,21 +655,22 @@ export default function CoachesDashboard() {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'SIGNED_OUT' || !session) {
+        if (event === "SIGNED_OUT" || !session) {
           router.push("/coaches/login");
-        } else if (event === 'SIGNED_IN' && session?.user) {
+        } else if (event === "SIGNED_IN" && session?.user) {
           // User signed in, refresh the data
           try {
             setUserId(session.user.id);
             setLastLoginTime(new Date());
-            
+
             const email = session.user.email || "";
             const firstName = session.user.user_metadata?.first_name || "";
             const lastName = email.includes("@")
               ? email.split("@")[0].split(".").pop() || ""
               : "";
             const capitalizedLastName =
-              lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
+              lastName.charAt(0).toUpperCase() +
+              lastName.slice(1).toLowerCase();
             setUserName(firstName || capitalizedLastName || email);
 
             const userData = await getUserRole(session.user.id);
@@ -1304,7 +1305,7 @@ export default function CoachesDashboard() {
         {selectedTeam && (
           <div className="mb-6 flex justify-center">
             <div className="w-32 h-32 relative bg-white rounded-full flex items-center justify-center p-2">
-              <div className="w-26 h-26 relative">
+              <div className="w-24 h-24 relative">
                 <Image
                   src={
                     selectedTeam === "__GLOBAL__"
