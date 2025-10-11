@@ -13,6 +13,7 @@ export type PracticeDrillInput = {
   benefits: string;
   difficulty: string;
   category: string;
+  week_number?: number; // Optional since we provide default
   image_url?: string;
 };
 
@@ -118,6 +119,7 @@ export async function createPracticeDrill(
         benefits: drillData.benefits.trim(),
         difficulty: drillData.difficulty.trim(),
         category: drillData.category.trim(),
+        week_number: 1, // Default week number since we removed the field
         image_url: drillData.image_url || null,
         created_by: userId,
       })
