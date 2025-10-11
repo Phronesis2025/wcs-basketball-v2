@@ -55,40 +55,48 @@ export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
 
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <h4 className="font-inter font-semibold text-gray-900">
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-inter font-semibold text-gray-900 mb-2">
             {drill.title}
           </h4>
-          <div className="flex items-center space-x-2 mt-2">
+
+          {/* Pills row - with better spacing */}
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             <span
-              className={`text-xs font-medium px-2 py-1 rounded-full ${getCategoryColor(
+              className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getCategoryColor(
                 drill.category
               )}`}
             >
               {drill.category}
             </span>
             <span
-              className={`text-xs font-medium px-2 py-1 rounded-full ${getDifficultyColor(
+              className={`text-xs font-medium px-2 py-1 rounded-full whitespace-nowrap ${getDifficultyColor(
                 drill.difficulty
               )}`}
             >
               {drill.difficulty}
             </span>
-            <span className="text-sm text-gray-600 font-inter">
+          </div>
+
+          {/* Duration on its own line to prevent wrapping */}
+          <div className="flex items-center">
+            <span className="text-sm text-gray-600 font-inter whitespace-nowrap">
               {formatDuration(drill.time)}
             </span>
           </div>
         </div>
+
+        {/* Action buttons */}
         {onEdit && onDelete && (
-          <div className="flex space-x-1">
+          <div className="flex space-x-1 ml-3 flex-shrink-0">
             <button
               onClick={onEdit}
-              className="text-gray-400 hover:text-gray-600 p-1"
+              className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
               aria-label="Edit drill"
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5 sm:w-4 sm:h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -103,11 +111,11 @@ export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
             </button>
             <button
               onClick={onDelete}
-              className="text-gray-400 hover:text-red-600 p-1"
+              className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
               aria-label="Delete drill"
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5 sm:w-4 sm:h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
