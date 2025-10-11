@@ -23,7 +23,9 @@ export default function DrillsPage() {
   const [timeFilter, setTimeFilter] = useState<string>("all");
   const [skillFilter, setSkillFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
-  const [selectedDrill, setSelectedDrill] = useState<PracticeDrill | null>(null);
+  const [selectedDrill, setSelectedDrill] = useState<PracticeDrill | null>(
+    null
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -235,7 +237,7 @@ export default function DrillsPage() {
                       {selectedDrill.difficulty}
                     </span>
                   </div>
-                  <h2 className="text-3xl font-bebas font-bold uppercase">
+                  <h2 className="text-3xl font-bebas font-bold uppercase text-black">
                     {sanitizeInput(selectedDrill.title)}
                   </h2>
                 </div>
@@ -244,8 +246,18 @@ export default function DrillsPage() {
                   className="text-white hover:text-gray-300 transition-colors"
                   aria-label="Close modal"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -256,35 +268,67 @@ export default function DrillsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
                       <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-inter text-gray-600 uppercase">Skills</p>
-                    <p className="text-lg font-inter text-gray-900">{selectedDrill.skills.join(", ")}</p>
+                    <p className="text-sm font-inter text-gray-600 uppercase">
+                      Skills
+                    </p>
+                    <p className="text-lg font-inter text-gray-900">
+                      {selectedDrill.skills.join(", ")}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-inter text-gray-600 uppercase">Equipment</p>
-                    <p className="text-lg font-inter text-gray-900">{selectedDrill.equipment.join(", ")}</p>
+                    <p className="text-sm font-inter text-gray-600 uppercase">
+                      Equipment
+                    </p>
+                    <p className="text-lg font-inter text-gray-900">
+                      {selectedDrill.equipment.join(", ")}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    <svg
+                      className="w-4 h-4 text-white"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-inter text-gray-600 uppercase">Duration</p>
-                    <p className="text-lg font-inter text-gray-900">{selectedDrill.time}</p>
+                    <p className="text-sm font-inter text-gray-600 uppercase">
+                      Duration
+                    </p>
+                    <p className="text-lg font-inter text-gray-900">
+                      {selectedDrill.time}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -309,7 +353,9 @@ export default function DrillsPage() {
             <div className="p-6">
               <div className="flex items-center mb-4">
                 <div className="w-1 h-6 bg-red-600 mr-3"></div>
-                <h3 className="text-2xl font-bebas font-bold text-gray-900">Instructions</h3>
+                <h3 className="text-2xl font-bebas font-bold text-gray-900">
+                  Instructions
+                </h3>
               </div>
               <div className="prose prose-lg max-w-none">
                 <p className="text-gray-700 font-inter leading-relaxed whitespace-pre-line">
@@ -322,11 +368,21 @@ export default function DrillsPage() {
             <div className="p-6 bg-gray-50">
               <div className="flex items-center mb-4">
                 <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center mr-3">
-                  <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bebas font-bold text-gray-900">Benefits</h3>
+                <h3 className="text-2xl font-bebas font-bold text-gray-900">
+                  Benefits
+                </h3>
               </div>
               <div className="prose prose-lg max-w-none">
                 <p className="text-gray-700 font-inter leading-relaxed">
@@ -338,7 +394,9 @@ export default function DrillsPage() {
             {/* Additional Information */}
             {selectedDrill.additional_info && (
               <div className="p-6">
-                <h3 className="text-2xl font-bebas font-bold text-gray-900 mb-4">Additional Information</h3>
+                <h3 className="text-2xl font-bebas font-bold text-gray-900 mb-4">
+                  Additional Information
+                </h3>
                 <div className="prose prose-lg max-w-none">
                   <p className="text-gray-700 font-inter leading-relaxed whitespace-pre-line">
                     {sanitizeInput(selectedDrill.additional_info)}
