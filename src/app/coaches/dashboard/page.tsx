@@ -29,8 +29,14 @@ import {
   fetchTeamsByCoachId,
   getUserRole,
 } from "../../../lib/actions";
+import {
+  createPracticeDrill,
+  updatePracticeDrill,
+  deletePracticeDrill,
+  getPracticeDrills,
+} from "../../../lib/drillActions";
 import { getMessages } from "../../../lib/messageActions";
-import { Team, Schedule, TeamUpdate } from "../../../types/supabase";
+import { Team, Schedule, TeamUpdate, PracticeDrill } from "../../../types/supabase";
 
 // Import new dashboard components
 import StatCard from "../../../components/dashboard/StatCard";
@@ -81,6 +87,7 @@ export default function CoachesDashboard() {
   // Lists for edit/delete
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [updates, setUpdates] = useState<TeamUpdate[]>([]);
+  const [drills, setDrills] = useState<PracticeDrill[]>([]); // Practice drills
   const [messages, setMessages] = useState<
     { id: string; created_at: string }[]
   >([]); // For message board stats
@@ -102,7 +109,7 @@ export default function CoachesDashboard() {
   const [modalType, setModalType] = useState<
     "Game" | "Practice" | "Update" | "Drill"
   >("Game");
-  const [editingItem, setEditingItem] = useState<Schedule | TeamUpdate | null>(
+  const [editingItem, setEditingItem] = useState<Schedule | TeamUpdate | PracticeDrill | null>(
     null
   );
 
@@ -214,8 +221,7 @@ export default function CoachesDashboard() {
   };
 
   const getDrillsCount = () => {
-    // Mock data for now - in real app this would come from practice_drills table
-    return 24;
+    return drills.length;
   };
 
   const loadMessages = async () => {
@@ -338,8 +344,67 @@ export default function CoachesDashboard() {
           toast.success("Update created!");
         }
       } else if (modalType === "Drill") {
-        // Mock drill creation - in real app this would create a practice drill
-        toast.success("Drill created! (Mock)");
+        let imageUrl: string | undefined;
+
+        // Handle image upload if present
+        if (data.image) {
+          const imageFile = data.image as File;
+          const fileName = `${Date.now()}-${imageFile.name}`;
+          devLog("Client upload to practice-drills:", { fileName });
+          const { error: uploadError } = await supabase.storage
+            .from("practice-drills")
+            .upload(`drills/${fileName}`, imageFile, { upsert: true });
+          if (uploadError) {
+            devError("Client image upload error:", uploadError);
+            throw new Error(uploadError.message);
+          }
+          const { data: urlData } = supabase.storage
+            .from("practice-drills")
+            .getPublicUrl(`drills/${fileName}`);
+          imageUrl = urlData.publicUrl;
+          devLog("Client upload success:", { imageUrl });
+        }
+
+        if (editingItem && "title" in editingItem) {
+          // Update existing drill
+          const updatedData = await updatePracticeDrill(editingItem.id, {
+            title: sanitizeInput(data.title as string),
+            skills: data.skills as string[],
+            equipment: data.equipment as string[],
+            time: sanitizeInput(data.time as string),
+            instructions: sanitizeInput(data.instructions as string),
+            additional_info: data.additional_info ? sanitizeInput(data.additional_info as string) : undefined,
+            benefits: sanitizeInput(data.benefits as string),
+            difficulty: data.difficulty as string,
+            category: data.category as string,
+            week_number: data.week_number as number,
+            image_url: imageUrl,
+          }, userId!);
+          setDrills((prev) =>
+            prev.map((item) =>
+              item.id === updatedData.id ? updatedData : item
+            )
+          );
+          toast.success("Drill updated!");
+        } else {
+          // Create new drill
+          const newDrill = await createPracticeDrill({
+            team_id: selectedTeam === "__GLOBAL__" ? "00000000-0000-0000-0000-000000000000" : selectedTeam,
+            title: sanitizeInput(data.title as string),
+            skills: data.skills as string[],
+            equipment: data.equipment as string[],
+            time: sanitizeInput(data.time as string),
+            instructions: sanitizeInput(data.instructions as string),
+            additional_info: data.additional_info ? sanitizeInput(data.additional_info as string) : undefined,
+            benefits: sanitizeInput(data.benefits as string),
+            difficulty: data.difficulty as string,
+            category: data.category as string,
+            week_number: data.week_number as number,
+            image_url: imageUrl,
+          }, userId!);
+          setDrills((prev) => [...prev, newDrill]);
+          toast.success("Drill created!");
+        }
       }
 
       closeModal();
@@ -421,12 +486,14 @@ export default function CoachesDashboard() {
       try {
         const teamIdForFetch =
           selectedTeam === "__GLOBAL__" ? "__GLOBAL__" : selectedTeam;
-        const [schedulesData, updatesData] = await Promise.all([
+        const [schedulesData, updatesData, drillsData] = await Promise.all([
           fetchSchedulesByTeamId(teamIdForFetch),
           fetchTeamUpdates(teamIdForFetch),
+          selectedTeam !== "__GLOBAL__" ? getPracticeDrills(selectedTeam) : Promise.resolve([]),
         ]);
         setSchedules(schedulesData);
         setUpdates(updatesData);
+        setDrills(drillsData);
         // setNewsList(newsData); // Commented out - newsList not used in new design
       } catch (err) {
         const errorMessage =
@@ -1191,25 +1258,35 @@ export default function CoachesDashboard() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  {/* Mock drill data */}
-                  <DrillCard
-                    title="3-man weave"
-                    category="Offense"
-                    duration="15 min"
-                    skillLevel="Beginner"
-                  />
-                  <DrillCard
-                    title="Shell Drill"
-                    category="Defense"
-                    duration="20 min"
-                    skillLevel="Intermediate"
-                  />
-                  <DrillCard
-                    title="Pick and Roll"
-                    category="Offense"
-                    duration="10 min"
-                    skillLevel="Advanced"
-                  />
+                  {drills.length > 0 ? (
+                    drills.map((drill) => (
+                      <DrillCard
+                        key={drill.id}
+                        drill={drill}
+                        onEdit={() => {
+                          setEditingItem(drill);
+                          openModal("Drill");
+                        }}
+                        onDelete={async () => {
+                          if (confirm("Are you sure you want to delete this drill?")) {
+                            try {
+                              await deletePracticeDrill(drill.id, userId!);
+                              setDrills(prev => prev.filter(d => d.id !== drill.id));
+                              toast.success("Drill deleted!");
+                            } catch (error) {
+                              devError("Error deleting drill:", error);
+                              toast.error("Failed to delete drill");
+                            }
+                          }
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">No practice drills yet</p>
+                      <p className="text-xs mt-1">Click &quot;Add Drill&quot; to create your first drill</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
