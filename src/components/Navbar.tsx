@@ -78,7 +78,6 @@ export default function Navbar() {
     { name: "Teams", href: "/teams" },
     { name: "Schedules", href: "/schedules" },
     { name: "Coaches", href: "/coaches/login" },
-    { name: "Shop", href: "/shop" },
   ];
 
   return (
