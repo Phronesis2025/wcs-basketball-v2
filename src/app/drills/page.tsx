@@ -268,12 +268,8 @@ export default function DrillsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-4 h-4 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 2L12.5 7.5L18 7.5L14 11L15.5 16.5L10 13L4.5 16.5L6 11L2 7.5L7.5 7.5L10 2Z" />
                     </svg>
                   </div>
                   <div>
@@ -292,7 +288,7 @@ export default function DrillsPage() {
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
-                      <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8zM3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM2 10a8 8 0 1116 0v6a2 2 0 01-2 2H4a2 2 0 01-2-2v-6zm8 1c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2z" />
+                      <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" />
                     </svg>
                   </div>
                   <div>
