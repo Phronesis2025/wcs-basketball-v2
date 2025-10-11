@@ -27,6 +27,11 @@ January 2025, Current Status - v2.7.1 UI/UX Improvements and Mobile Optimization
   - Added animation state tracking to prevent re-triggering
   - Preserved user scroll position during page interactions
 
+- ✅ **iOS Modal Field Alignment**: Date & Time inputs now match other fields
+  - Normalized iPhone sizing for `datetime-local` controls
+  - Applied `appearance-none`, `block`, and `overflow-hidden` to neutralize native widths
+  - Ensured consistent `w-full`/`max-w-full` behavior in Game and Practice modals
+
 - ✅ **Code Quality Improvements**: Clean build and better maintainability
   - Fixed TypeScript warnings for unused variables
   - Removed unused imports and commented out unused code
