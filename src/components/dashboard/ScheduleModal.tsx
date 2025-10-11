@@ -49,6 +49,7 @@ export default function ScheduleModal({
   // Update form fields
   const [updateTitle, setUpdateTitle] = useState("");
   const [updateContent, setUpdateContent] = useState("");
+  const [updateDateTime, setUpdateDateTime] = useState("");
   const [updateImage, setUpdateImage] = useState<File | null>(null);
   const [isImportant, setIsImportant] = useState(false);
 
@@ -184,6 +185,7 @@ export default function ScheduleModal({
     setPracticeComments("");
     setUpdateTitle("");
     setUpdateContent("");
+    setUpdateDateTime("");
     setUpdateImage(null);
     setIsImportant(false);
     setDrillTitle("");
@@ -303,8 +305,11 @@ export default function ScheduleModal({
           formType: "Update",
           title: updateTitle,
           content: updateContent,
+          date_time: updateDateTime || null,
           image: updateImage,
           isImportant,
+          // If date_time is provided, also save to schedules table
+          saveToSchedules: !!updateDateTime,
         };
         break;
       case "Drill":
@@ -434,7 +439,9 @@ export default function ScheduleModal({
                 </label>
                 <select
                   value={gameType}
-                  onChange={(e) => setGameType(e.target.value as "game" | "tournament")}
+                  onChange={(e) =>
+                    setGameType(e.target.value as "game" | "tournament")
+                  }
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 >
@@ -444,7 +451,9 @@ export default function ScheduleModal({
               </div>
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  {gameType === "tournament" ? "Start Date & Time" : "Date & Time"}
+                  {gameType === "tournament"
+                    ? "Start Date & Time"
+                    : "Date & Time"}
                 </label>
                 <div className="w-full">
                   <input
@@ -453,7 +462,7 @@ export default function ScheduleModal({
                     onChange={(e) => setGameDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
                     className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
-                    style={{ width: '100%', maxWidth: '100%' }}
+                    style={{ width: "100%", maxWidth: "100%" }}
                     required
                   />
                 </div>
@@ -470,7 +479,7 @@ export default function ScheduleModal({
                       onChange={(e) => setGameEndDateTime(e.target.value)}
                       placeholder="mm/dd/yyyy --:-- --"
                       className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
-                      style={{ width: '100%', maxWidth: '100%' }}
+                      style={{ width: "100%", maxWidth: "100%" }}
                       required
                     />
                   </div>
@@ -486,7 +495,7 @@ export default function ScheduleModal({
                   onChange={(e) => setGameOpponent(e.target.value)}
                   placeholder="eg. Central 7th grade"
                   className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  style={{ width: '100%', maxWidth: '100%' }}
+                  style={{ width: "100%", maxWidth: "100%" }}
                 />
               </div>
               <div>
@@ -499,7 +508,7 @@ export default function ScheduleModal({
                   onChange={(e) => setGameLocation(e.target.value)}
                   placeholder="eg. Salina South Gym"
                   className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  style={{ width: '100%', maxWidth: '100%' }}
+                  style={{ width: "100%", maxWidth: "100%" }}
                   required
                 />
               </div>
@@ -543,7 +552,7 @@ export default function ScheduleModal({
                     onChange={(e) => setPracticeDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
                     className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
-                    style={{ width: '100%', maxWidth: '100%' }}
+                    style={{ width: "100%", maxWidth: "100%" }}
                     required
                   />
                 </div>
@@ -716,6 +725,25 @@ export default function ScheduleModal({
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Date & Time (optional)
+                </label>
+                <div className="w-full">
+                  <input
+                    type="datetime-local"
+                    value={updateDateTime}
+                    onChange={(e) => setUpdateDateTime(e.target.value)}
+                    placeholder="mm/dd/yyyy --:-- --"
+                    className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
+                    style={{ width: "100%", maxWidth: "100%" }}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Add a date/time to include this update on the schedule
+                  calendar
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
@@ -1011,7 +1039,9 @@ export default function ScheduleModal({
                 : activeTab === "Drill"
                 ? "Post Drill"
                 : activeTab === "Game"
-                ? `Schedule ${gameType === "tournament" ? "Tournament" : "Game"}`
+                ? `Schedule ${
+                    gameType === "tournament" ? "Tournament" : "Game"
+                  }`
                 : `Schedule ${activeTab}`}
             </button>
           </div>

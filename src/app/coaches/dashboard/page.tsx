@@ -432,11 +432,34 @@ export default function CoachesDashboard() {
               data.content as string,
               "update content"
             ),
+            date_time: data.date_time as string | null,
             image_url: imageUrl,
             is_global: selectedTeam === "__GLOBAL__",
             created_by: userId!,
           });
           setUpdates((prev) => [...prev, newUpdate]);
+          
+          // If date_time is provided, also save to schedules table
+          if (data.date_time && data.saveToSchedules) {
+            const newSchedule = await addSchedule({
+              team_id: selectedTeam === "__GLOBAL__" ? null : selectedTeam,
+              event_type: "Update",
+              date_time: new Date(data.date_time as string).toISOString(),
+              title: sanitizeInputWithProfanity(
+                data.title as string,
+                "update title"
+              ),
+              location: "N/A", // Updates don't have location
+              opponent: undefined, // Updates don't have opponent
+              description: sanitizeInputWithProfanity(
+                data.content as string,
+                "update content"
+              ),
+              is_global: selectedTeam === "__GLOBAL__",
+            });
+            setSchedules((prev) => [...prev, newSchedule]);
+          }
+          
           toast.success("Update created!");
         }
       } else if (actualType === "Drill") {
