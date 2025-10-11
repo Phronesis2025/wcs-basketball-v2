@@ -438,7 +438,7 @@ export default function CoachesDashboard() {
             created_by: userId!,
           });
           setUpdates((prev) => [...prev, newUpdate]);
-          
+
           // If date_time is provided, also save to schedules table
           if (data.date_time && data.saveToSchedules) {
             const newSchedule = await addSchedule({
@@ -459,7 +459,7 @@ export default function CoachesDashboard() {
             });
             setSchedules((prev) => [...prev, newSchedule]);
           }
-          
+
           toast.success("Update created!");
         }
       } else if (actualType === "Drill") {
@@ -1198,24 +1198,26 @@ export default function CoachesDashboard() {
         {/* Team Logo */}
         {selectedTeam && (
           <div className="mb-6 flex justify-center">
-            <div className="w-20 h-20 relative bg-white rounded-full flex items-center justify-center">
-              <Image
-                src={
-                  selectedTeam === "__GLOBAL__"
-                    ? "/logos/logo2.png"
-                    : teams.find((team) => team.id === selectedTeam)?.logo_url ||
-                      "/logos/logo2.png"
-                }
-                alt={
-                  selectedTeam === "__GLOBAL__"
-                    ? "All Teams"
-                    : teams.find((team) => team.id === selectedTeam)?.name ||
-                      "Team Logo"
-                }
-                fill
-                className="object-contain"
-                sizes="80px"
-              />
+            <div className="w-32 h-32 relative bg-white rounded-full flex items-center justify-center p-4">
+              <div className="w-20 h-20 relative">
+                <Image
+                  src={
+                    selectedTeam === "__GLOBAL__"
+                      ? "/logos/logo2.png"
+                      : teams.find((team) => team.id === selectedTeam)
+                          ?.logo_url || "/logos/logo2.png"
+                  }
+                  alt={
+                    selectedTeam === "__GLOBAL__"
+                      ? "All Teams"
+                      : teams.find((team) => team.id === selectedTeam)?.name ||
+                        "Team Logo"
+                  }
+                  fill
+                  className="object-contain"
+                  sizes="80px"
+                />
+              </div>
             </div>
           </div>
         )}
