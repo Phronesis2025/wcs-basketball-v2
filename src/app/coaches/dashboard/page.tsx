@@ -123,6 +123,8 @@ export default function CoachesDashboard() {
     type: "drill" | "game" | "practice" | "update";
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [showProfanityModal, setShowProfanityModal] = useState(false);
+  const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
 
   // Carousel navigation functions (unused in new design)
   // const nextUpdate = () => {
@@ -231,6 +233,23 @@ export default function CoachesDashboard() {
     }
   };
 
+  // Permission helper functions
+  const canEditSchedule = (schedule: Schedule) => {
+    return isAdmin || schedule.created_by === userId;
+  };
+
+  const canDeleteSchedule = (schedule: Schedule) => {
+    return isAdmin || schedule.created_by === userId;
+  };
+
+  const canEditUpdate = (update: TeamUpdate) => {
+    return isAdmin || update.created_by === userId;
+  };
+
+  const canDeleteUpdate = (update: TeamUpdate) => {
+    return isAdmin || update.created_by === userId;
+  };
+
   const getDrillsCount = () => {
     return drills.length;
   };
@@ -269,7 +288,7 @@ export default function CoachesDashboard() {
       devLog("Attempting to delete:", { deleteTarget, userId });
 
       if (deleteTarget.type === "drill") {
-        await deletePracticeDrill(deleteTarget.id, userId!);
+        await deletePracticeDrill(deleteTarget.id, userId!, isAdmin);
         setDrills((prev) => prev.filter((d) => d.id !== deleteTarget.id));
         toast.success("Drill deleted successfully", {
           duration: 3000,
@@ -279,7 +298,7 @@ export default function CoachesDashboard() {
         deleteTarget.type === "game" ||
         deleteTarget.type === "practice"
       ) {
-        await deleteSchedule(deleteTarget.id);
+        await deleteSchedule(deleteTarget.id, userId!, isAdmin);
         setSchedules((prev) => prev.filter((s) => s.id !== deleteTarget.id));
         toast.success(
           `${
@@ -291,7 +310,7 @@ export default function CoachesDashboard() {
           }
         );
       } else if (deleteTarget.type === "update") {
-        await deleteUpdate(deleteTarget.id);
+        await deleteUpdate(deleteTarget.id, userId!, isAdmin);
         setUpdates((prev) => prev.filter((u) => u.id !== deleteTarget.id));
         toast.success("Update deleted successfully", {
           duration: 3000,
@@ -316,7 +335,10 @@ export default function CoachesDashboard() {
     try {
       setLoading(true);
 
-      if (modalType === "Game" || modalType === "Practice") {
+      // Determine the actual type based on the form data
+      const actualType = data.formType || data.event_type || modalType;
+
+      if (actualType === "Game" || actualType === "Practice") {
         if (editingItem && "event_type" in editingItem) {
           // Update existing schedule
           const updatedData = await updateSchedule(editingItem.id, {
@@ -357,7 +379,7 @@ export default function CoachesDashboard() {
           setSchedules((prev) => [...prev, newSchedule]);
           toast.success("Schedule created!");
         }
-      } else if (modalType === "Update") {
+      } else if (actualType === "Update") {
         let imageUrl: string | undefined;
 
         // Handle image upload if present
@@ -417,7 +439,7 @@ export default function CoachesDashboard() {
           setUpdates((prev) => [...prev, newUpdate]);
           toast.success("Update created!");
         }
-      } else if (modalType === "Drill") {
+      } else if (actualType === "Drill") {
         let imageUrl: string | undefined;
 
         // Handle image upload if present
@@ -472,7 +494,8 @@ export default function CoachesDashboard() {
               category: data.category as string,
               image_url: imageUrl,
             },
-            userId!
+            userId!,
+            isAdmin
           );
           setDrills((prev) =>
             prev.map((item) =>
@@ -687,6 +710,26 @@ export default function CoachesDashboard() {
       };
     }
   }, [showDeleteConfirm]);
+
+  // Prevent body scrolling when profanity modal is open
+  useEffect(() => {
+    if (showProfanityModal) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      // Prevent scrolling
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+
+      return () => {
+        // Restore scrolling
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showProfanityModal]);
 
   // const handleSchedule = async (e: React.FormEvent) => {
   //   e.preventDefault();
@@ -1277,6 +1320,8 @@ export default function CoachesDashboard() {
                         onDelete={() =>
                           handleDeleteSchedule(schedule.id, "Game")
                         }
+                        canEdit={canEditSchedule(schedule)}
+                        canDelete={canDeleteSchedule(schedule)}
                       />
                     ))}
                   {schedules.filter((s) => s.event_type === "Game").length ===
@@ -1318,6 +1363,8 @@ export default function CoachesDashboard() {
                         onDelete={() =>
                           handleDeleteSchedule(schedule.id, "Practice")
                         }
+                        canEdit={canEditSchedule(schedule)}
+                        canDelete={canDeleteSchedule(schedule)}
                       />
                     ))}
                   {schedules.filter((s) => s.event_type === "Practice")
@@ -1354,6 +1401,8 @@ export default function CoachesDashboard() {
                       update={update}
                       onEdit={(u) => openModal("Update", u)}
                       onDelete={handleDeleteUpdate}
+                      canEdit={canEditUpdate(update)}
+                      canDelete={canDeleteUpdate(update)}
                     />
                   ))}
                   {updates.length === 0 && (
@@ -1444,6 +1493,10 @@ export default function CoachesDashboard() {
           isOpen={isModalOpen}
           onClose={closeModal}
           onSubmit={handleModalSubmit}
+          onProfanityError={(errors) => {
+            setProfanityErrors(errors);
+            setShowProfanityModal(true);
+          }}
           type={modalType}
           editingData={editingItem}
           loading={loading}
@@ -1539,6 +1592,58 @@ export default function CoachesDashboard() {
                     }}
                   >
                     {submitting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Profanity Validation Modal */}
+        {showProfanityModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0 w-10 h-10 mx-auto bg-yellow-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-yellow-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Inappropriate Language Detected
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Please review and correct the following issues:
+                </p>
+                <div className="text-left mb-6">
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                    {profanityErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex space-x-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowProfanityModal(false);
+                      setProfanityErrors([]);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    I&apos;ll Fix This
                   </button>
                 </div>
               </div>

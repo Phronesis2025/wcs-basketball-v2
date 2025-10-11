@@ -7,6 +7,7 @@ interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: Record<string, unknown>) => void;
+  onProfanityError: (errors: string[]) => void;
   type: "Game" | "Practice" | "Update" | "Drill";
   editingData?: Schedule | TeamUpdate | PracticeDrill | null;
   loading?: boolean;
@@ -16,6 +17,7 @@ export default function ScheduleModal({
   isOpen,
   onClose,
   onSubmit,
+  onProfanityError,
   type,
   editingData,
   loading = false,
@@ -258,9 +260,7 @@ export default function ScheduleModal({
 
     // If there are validation errors, show them and prevent submission
     if (validationErrors.length > 0) {
-      alert(
-        "Please fix the following issues:\n\n" + validationErrors.join("\n")
-      );
+      onProfanityError(validationErrors);
       return;
     }
 
@@ -269,6 +269,7 @@ export default function ScheduleModal({
     switch (activeTab) {
       case "Game":
         formData = {
+          formType: "Game",
           event_type: "Game",
           date_time: gameDateTime,
           opponent: gameOpponent,
@@ -278,6 +279,7 @@ export default function ScheduleModal({
         break;
       case "Practice":
         formData = {
+          formType: "Practice",
           event_type: "Practice",
           title: practiceTitle,
           date_time: practiceDateTime,
@@ -293,6 +295,7 @@ export default function ScheduleModal({
         break;
       case "Update":
         formData = {
+          formType: "Update",
           title: updateTitle,
           content: updateContent,
           image: updateImage,
@@ -315,6 +318,7 @@ export default function ScheduleModal({
         }
 
         formData = {
+          formType: "Drill",
           title: drillTitle,
           skills: finalSkills,
           equipment: finalEquipment,

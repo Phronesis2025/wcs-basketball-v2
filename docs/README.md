@@ -9,7 +9,7 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **Frontend**: Next.js 15.5.2, Tailwind CSS 3.3.3, TypeScript, Framer Motion
 - **UI Components**: Swiper.js, React Icons, react-intersection-observer
 - **Backend**: Supabase (auth, DB, storage), Rate limiting with Upstash Redis
-- **Security**: Sentry monitoring, comprehensive CSP headers, CSRF protection, RLS policies, input sanitization, security utilities
+- **Security**: Sentry monitoring, comprehensive CSP headers, CSRF protection, RLS policies, input sanitization, security utilities, profanity filtering, admin permission system
 - **Deployment**: Vercel with automatic deployments
 - **Fonts**: Local Inter, Bebas Neue
 

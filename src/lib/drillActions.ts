@@ -21,7 +21,7 @@ export type PracticeDrillInput = {
 export async function getPracticeDrills(teamId: string) {
   try {
     devLog("Fetching practice drills for team:", teamId);
-    
+
     const { data, error } = await supabase
       .from("practice_drills")
       .select("*")
@@ -37,7 +37,8 @@ export async function getPracticeDrills(teamId: string) {
     return data || [];
   } catch (err: unknown) {
     devError("Error in getPracticeDrills:", err);
-    const errorMessage = err instanceof Error ? err.message : "Failed to fetch practice drills";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch practice drills";
     throw new Error(errorMessage);
   }
 }
@@ -46,16 +47,18 @@ export async function getPracticeDrills(teamId: string) {
 export async function getAllPracticeDrills() {
   try {
     devLog("Fetching all practice drills");
-    
+
     const { data, error } = await supabase
       .from("practice_drills")
-      .select(`
+      .select(
+        `
         *,
         teams!practice_drills_team_id_fkey (
           id,
           name
         )
-      `)
+      `
+      )
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -67,7 +70,8 @@ export async function getAllPracticeDrills() {
     return data || [];
   } catch (err: unknown) {
     devError("Error in getAllPracticeDrills:", err);
-    const errorMessage = err instanceof Error ? err.message : "Failed to fetch practice drills";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch practice drills";
     throw new Error(errorMessage);
   }
 }
@@ -135,7 +139,8 @@ export async function createPracticeDrill(
     return data;
   } catch (err: unknown) {
     devError("Error in createPracticeDrill:", err);
-    const errorMessage = err instanceof Error ? err.message : "Failed to create practice drill";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to create practice drill";
     throw new Error(errorMessage);
   }
 }
@@ -144,7 +149,8 @@ export async function createPracticeDrill(
 export async function updatePracticeDrill(
   drillId: string,
   drillData: Partial<PracticeDrillInput>,
-  userId: string
+  userId: string,
+  isAdmin: boolean = false
 ) {
   try {
     devLog("Updating practice drill:", drillId);
@@ -161,22 +167,30 @@ export async function updatePracticeDrill(
       throw new Error("Drill not found");
     }
 
-    if (existingDrill.created_by !== userId) {
+    if (!isAdmin && existingDrill.created_by !== userId) {
       throw new Error("You can only update drills you created");
     }
 
     // Prepare update data
     const updateData: Record<string, unknown> = {};
-    if (drillData.title !== undefined) updateData.title = drillData.title.trim();
+    if (drillData.title !== undefined)
+      updateData.title = drillData.title.trim();
     if (drillData.skills !== undefined) updateData.skills = drillData.skills;
-    if (drillData.equipment !== undefined) updateData.equipment = drillData.equipment;
+    if (drillData.equipment !== undefined)
+      updateData.equipment = drillData.equipment;
     if (drillData.time !== undefined) updateData.time = drillData.time.trim();
-    if (drillData.instructions !== undefined) updateData.instructions = drillData.instructions.trim();
-    if (drillData.additional_info !== undefined) updateData.additional_info = drillData.additional_info?.trim() || null;
-    if (drillData.benefits !== undefined) updateData.benefits = drillData.benefits.trim();
-    if (drillData.difficulty !== undefined) updateData.difficulty = drillData.difficulty.trim();
-    if (drillData.category !== undefined) updateData.category = drillData.category.trim();
-    if (drillData.image_url !== undefined) updateData.image_url = drillData.image_url;
+    if (drillData.instructions !== undefined)
+      updateData.instructions = drillData.instructions.trim();
+    if (drillData.additional_info !== undefined)
+      updateData.additional_info = drillData.additional_info?.trim() || null;
+    if (drillData.benefits !== undefined)
+      updateData.benefits = drillData.benefits.trim();
+    if (drillData.difficulty !== undefined)
+      updateData.difficulty = drillData.difficulty.trim();
+    if (drillData.category !== undefined)
+      updateData.category = drillData.category.trim();
+    if (drillData.image_url !== undefined)
+      updateData.image_url = drillData.image_url;
 
     const { data, error } = await supabase
       .from("practice_drills")
@@ -194,13 +208,18 @@ export async function updatePracticeDrill(
     return data;
   } catch (err: unknown) {
     devError("Error in updatePracticeDrill:", err);
-    const errorMessage = err instanceof Error ? err.message : "Failed to update practice drill";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to update practice drill";
     throw new Error(errorMessage);
   }
 }
 
 // Delete a practice drill (soft delete)
-export async function deletePracticeDrill(drillId: string, userId: string) {
+export async function deletePracticeDrill(
+  drillId: string,
+  userId: string,
+  isAdmin: boolean = false
+) {
   try {
     devLog("Deleting practice drill:", drillId);
 
@@ -216,7 +235,7 @@ export async function deletePracticeDrill(drillId: string, userId: string) {
       throw new Error("Drill not found");
     }
 
-    if (existingDrill.created_by !== userId) {
+    if (!isAdmin && existingDrill.created_by !== userId) {
       throw new Error("You can only delete drills you created");
     }
 
@@ -233,7 +252,8 @@ export async function deletePracticeDrill(drillId: string, userId: string) {
     devLog("Successfully deleted practice drill:", drillId);
   } catch (err: unknown) {
     devError("Error in deletePracticeDrill:", err);
-    const errorMessage = err instanceof Error ? err.message : "Failed to delete practice drill";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to delete practice drill";
     throw new Error(errorMessage);
   }
 }
@@ -242,16 +262,18 @@ export async function deletePracticeDrill(drillId: string, userId: string) {
 export async function getPracticeDrillById(drillId: string) {
   try {
     devLog("Fetching practice drill by ID:", drillId);
-    
+
     const { data, error } = await supabase
       .from("practice_drills")
-      .select(`
+      .select(
+        `
         *,
         teams!practice_drills_team_id_fkey (
           id,
           name
         )
-      `)
+      `
+      )
       .eq("id", drillId)
       .single();
 
@@ -264,7 +286,8 @@ export async function getPracticeDrillById(drillId: string) {
     return data;
   } catch (err: unknown) {
     devError("Error in getPracticeDrillById:", err);
-    const errorMessage = err instanceof Error ? err.message : "Failed to fetch practice drill";
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch practice drill";
     throw new Error(errorMessage);
   }
 }

@@ -46,6 +46,8 @@ export default function MessageBoard({
     id: string;
     type: "message" | "reply";
   } | null>(null);
+  const [showProfanityModal, setShowProfanityModal] = useState(false);
+  const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
 
   // Load messages and replies
   const loadMessages = useCallback(async () => {
@@ -80,7 +82,7 @@ export default function MessageBoard({
 
   // Prevent body scroll when modals are open
   useEffect(() => {
-    if (showNewMessageModal || showDeleteConfirm) {
+    if (showNewMessageModal || showDeleteConfirm || showProfanityModal) {
       // Save current scroll position
       const scrollY = window.scrollY;
       // Prevent scrolling
@@ -96,7 +98,7 @@ export default function MessageBoard({
         window.scrollTo(0, scrollY);
       };
     }
-  }, [showNewMessageModal, showDeleteConfirm]);
+  }, [showNewMessageModal, showDeleteConfirm, showProfanityModal]);
 
   // Debug logging for message data
   useEffect(() => {
@@ -218,10 +220,8 @@ export default function MessageBoard({
     // Validate message for profanity
     const validation = validateInput(newMessageText, "message");
     if (!validation.isValid) {
-      toast.error(validation.errors.join(", "), {
-        duration: 4000,
-        position: "top-right",
-      });
+      setProfanityErrors(validation.errors);
+      setShowProfanityModal(true);
       return;
     }
 
@@ -251,10 +251,8 @@ export default function MessageBoard({
     // Validate reply for profanity
     const validation = validateInput(replyText, "reply");
     if (!validation.isValid) {
-      toast.error(validation.errors.join(", "), {
-        duration: 4000,
-        position: "top-right",
-      });
+      setProfanityErrors(validation.errors);
+      setShowProfanityModal(true);
       return;
     }
 
@@ -283,10 +281,8 @@ export default function MessageBoard({
     // Validate edited message for profanity
     const validation = validateInput(editText, "message");
     if (!validation.isValid) {
-      toast.error(validation.errors.join(", "), {
-        duration: 4000,
-        position: "top-right",
-      });
+      setProfanityErrors(validation.errors);
+      setShowProfanityModal(true);
       return;
     }
 
@@ -321,10 +317,8 @@ export default function MessageBoard({
     // Validate edited reply for profanity
     const validation = validateInput(editText, "reply");
     if (!validation.isValid) {
-      toast.error(validation.errors.join(", "), {
-        duration: 4000,
-        position: "top-right",
-      });
+      setProfanityErrors(validation.errors);
+      setShowProfanityModal(true);
       return;
     }
 
@@ -1085,6 +1079,58 @@ export default function MessageBoard({
                     return null;
                   })()}
                   {submitting ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profanity Validation Modal */}
+      {showProfanityModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0 w-10 h-10 mx-auto bg-yellow-100 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-6 h-6 text-yellow-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Inappropriate Language Detected
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Please review and correct the following issues:
+              </p>
+              <div className="text-left mb-6">
+                <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                  {profanityErrors.map((error, index) => (
+                    <li key={index}>{error}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex space-x-3 justify-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProfanityModal(false);
+                    setProfanityErrors([]);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                >
+                  I&apos;ll Fix This
                 </button>
               </div>
             </div>

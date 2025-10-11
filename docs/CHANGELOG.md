@@ -1,6 +1,64 @@
 # WCSv2.0 Changelog
 
-## v2.6.1 - December 2024 (Current)
+## v2.7.0 - January 2025 (Current)
+
+### 🔐 Comprehensive Admin Permission System
+
+- **Complete Role-Based Access Control**: Implemented comprehensive admin permissions across all dashboard sections
+  - **Admins**: Can add, edit, and delete any content in all sections
+  - **Coaches**: Can only manage content they created
+  - **Consistent Security Model**: Applied uniform permission checks across schedules, updates, drills, and messages
+
+- **Backend Security Enhancements**:
+  - Updated `deleteSchedule()` with admin permission checks
+  - Updated `deleteUpdate()` with admin permission checks  
+  - Enhanced `updatePracticeDrill()` and `deletePracticeDrill()` with admin support
+  - Server-side validation prevents unauthorized access attempts
+
+- **Frontend Permission Controls**:
+  - Added `canEdit` and `canDelete` props to all card components
+  - Implemented permission helper functions for consistent UI behavior
+  - Real-time permission checks based on user role and content ownership
+
+### 🎨 UI/UX Improvements
+
+- **Drill Card Styling**: Fixed category pill colors to match site theme
+  - **Conditioning**: Orange background with dark orange text (was white/invisible)
+  - **Drill**: Light blue background with dark blue text
+  - **Warm-up**: Light green background with dark green text
+  - **Skill Development**: Light purple background with dark purple text
+  - **Team Building**: Light yellow background with dark yellow text
+
+- **Duration Formatting**: Enhanced drill duration display
+  - Automatically adds "minutes" when users enter just numbers (e.g., "10" → "10 minutes")
+  - Preserves existing time units (e.g., "15 minutes", "30 sec", "1 hour")
+  - Improved user experience with clearer time information
+
+### 🛡️ Security Enhancements
+
+- **Profanity Filter Improvements**: Fixed false positive issues
+  - Implemented word boundary matching to prevent "pass" from triggering "ass" detection
+  - Enhanced filtering for basketball and educational content
+  - Maintained protection against actual inappropriate language
+
+- **Modal Security**: Updated profanity validation modals
+  - Consistent styling with delete confirmation modals
+  - Professional appearance matching application design
+  - Better user feedback for content moderation
+
+### 🔧 Technical Improvements
+
+- **Form Routing**: Fixed modal form submission routing
+  - Added `formType` field to ensure data saves to correct sections
+  - Resolved issue where drill data was saving to team updates section
+  - Improved user experience with accurate form handling
+
+- **Code Quality**: Enhanced error handling and debugging
+  - Improved console logging for development
+  - Better error messages for permission violations
+  - Cleaner code structure with helper functions
+
+## v2.6.1 - December 2024
 
 ### 🐛 Critical UI Fixes
 

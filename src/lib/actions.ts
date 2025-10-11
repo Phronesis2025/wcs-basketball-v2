@@ -407,8 +407,28 @@ export async function updateSchedule(
 }
 
 // Delete schedule
-export async function deleteSchedule(id: string): Promise<void> {
+export async function deleteSchedule(
+  id: string,
+  userId: string,
+  isAdmin: boolean = false
+): Promise<void> {
   try {
+    // Check if user has permission to delete this schedule
+    const { data: existingSchedule, error: fetchError } = await supabase
+      .from("schedules")
+      .select("created_by")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      devError("Error fetching schedule for deletion:", fetchError);
+      throw new Error("Schedule not found");
+    }
+
+    if (!isAdmin && existingSchedule.created_by !== userId) {
+      throw new Error("You can only delete schedules you created");
+    }
+
     const { error } = await supabase
       .from("schedules")
       .update({ deleted_at: new Date().toISOString() })
@@ -509,8 +529,28 @@ export async function updateUpdate(
 }
 
 // Delete team update
-export async function deleteUpdate(id: string): Promise<void> {
+export async function deleteUpdate(
+  id: string,
+  userId: string,
+  isAdmin: boolean = false
+): Promise<void> {
   try {
+    // Check if user has permission to delete this update
+    const { data: existingUpdate, error: fetchError } = await supabase
+      .from("team_updates")
+      .select("created_by")
+      .eq("id", id)
+      .single();
+
+    if (fetchError) {
+      devError("Error fetching update for deletion:", fetchError);
+      throw new Error("Update not found");
+    }
+
+    if (!isAdmin && existingUpdate.created_by !== userId) {
+      throw new Error("You can only delete updates you created");
+    }
+
     const { error } = await supabase
       .from("team_updates")
       .update({ deleted_at: new Date().toISOString() })
