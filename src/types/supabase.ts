@@ -24,8 +24,9 @@ export type Coach = {
 export type Schedule = {
   id: string;
   team_id: string | null; // Change from string to string | null to allow null
-  event_type: "Game" | "Practice" | "Tournament" | "Meeting";
+  event_type: "Game" | "Practice" | "Tournament" | "Meeting" | "Update";
   date_time: string;
+  title: string | null;
   location: string;
   opponent: string | null;
   description: string | null;
@@ -58,6 +59,7 @@ export type TeamUpdate = {
   team_id: string | null; // Allow null for global updates
   title: string;
   content: string;
+  date_time: string | null;
   image_url: string | null;
   // Program-wide flag (requires DB column team_updates.is_global boolean DEFAULT false)
   is_global?: boolean;

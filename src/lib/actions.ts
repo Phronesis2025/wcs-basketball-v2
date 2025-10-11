@@ -335,8 +335,9 @@ export async function fetchPracticeDrills(): Promise<PracticeDrill[]> {
 // Add schedule
 export async function addSchedule(data: {
   team_id: string | null; // Allow null for globals
-  event_type: "Game" | "Practice" | "Tournament" | "Meeting";
+  event_type: "Game" | "Practice" | "Tournament" | "Meeting" | "Update";
   date_time: string;
+  title?: string | null;
   location: string;
   opponent?: string;
   description?: string;
@@ -451,6 +452,7 @@ export async function addUpdate(data: {
   team_id: string | null; // Allow null for global updates
   title: string;
   content: string;
+  date_time?: string | null;
   image_url?: string;
   is_global?: boolean;
   created_by: string;

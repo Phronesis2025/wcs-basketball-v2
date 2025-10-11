@@ -27,20 +27,20 @@ export default function SchedulesPage() {
           .from("schedules")
           .select("*")
           .is("deleted_at", null); // Filter soft-deleted
-        
+
         // Fetch updates with date_time
         const { data: updates } = await supabase
           .from("team_updates")
           .select("*")
           .not("date_time", "is", null)
           .is("deleted_at", null);
-        
+
         const teamsData = await fetchTeams();
-        
+
         // Combine schedules and updates, converting updates to schedule format
         const allEvents = [
           ...(schedules || []),
-          ...(updates || []).map(update => ({
+          ...(updates || []).map((update) => ({
             id: update.id,
             event_type: "Update",
             date_time: update.date_time,
@@ -51,10 +51,10 @@ export default function SchedulesPage() {
             team_id: update.team_id,
             created_at: update.created_at,
             updated_at: update.updated_at,
-            deleted_at: update.deleted_at
-          }))
+            deleted_at: update.deleted_at,
+          })),
         ];
-        
+
         setEvents(allEvents);
         setTeams(teamsData);
       } catch (err) {
@@ -90,7 +90,7 @@ export default function SchedulesPage() {
               team_id: update.team_id,
               created_at: update.created_at,
               updated_at: update.updated_at,
-              deleted_at: update.deleted_at
+              deleted_at: update.deleted_at,
             };
             setEvents((prev) => [...prev, scheduleEvent as Schedule]);
           }
@@ -141,11 +141,11 @@ export default function SchedulesPage() {
           : event.event_type === "Update"
           ? "#3B82F6"
           : "#F59E0B",
-      extendedProps: { 
-        location: event.location, 
+      extendedProps: {
+        location: event.location,
         opponent: event.opponent,
         description: event.description,
-        eventType: event.event_type
+        eventType: event.event_type,
       },
     };
   });
