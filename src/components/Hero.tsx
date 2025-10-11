@@ -47,7 +47,7 @@ export default function Hero() {
       </div>
 
       <motion.div
-        className="relative z-20 text-white flex flex-col items-start justify-between w-full min-h-screen px-4 py-8 sm:px-6 md:px-8 sm:py-16"
+        className="relative z-20 text-white flex flex-col items-start justify-between w-full min-h-screen px-4 pt-20 pb-8 sm:px-6 md:px-8 sm:pt-24 sm:pb-16"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}

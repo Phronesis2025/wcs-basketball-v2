@@ -93,7 +93,7 @@ export default function SchedulesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
+    <div className="min-h-screen bg-black text-white p-4 pt-20 sm:pt-24">
       <div className="max-w-4xl mx-auto space-y-8">
         <h1 className="text-3xl font-bebas uppercase">Schedules</h1>
         {error && <p className="text-red font-inter text-center">{error}</p>}
