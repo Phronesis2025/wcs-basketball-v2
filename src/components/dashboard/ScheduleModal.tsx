@@ -1,13 +1,13 @@
 // src/components/dashboard/ScheduleModal.tsx
 import React, { useState, useEffect } from "react";
-import { Schedule, TeamUpdate } from "../../types/supabase";
+import { Schedule, TeamUpdate, PracticeDrill } from "../../types/supabase";
 
 interface ScheduleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: Record<string, unknown>) => void;
   type: "Game" | "Practice" | "Update" | "Drill";
-  editingData?: Schedule | TeamUpdate | null;
+  editingData?: Schedule | TeamUpdate | PracticeDrill | null;
   loading?: boolean;
 }
 
@@ -49,14 +49,22 @@ export default function ScheduleModal({
 
   // Drill form fields
   const [drillTitle, setDrillTitle] = useState("");
-  const [drillCategory, setDrillCategory] = useState<
-    "Offense" | "Defense" | "Conditioning" | "Fundamentals"
-  >("Offense");
-  const [drillDuration, setDrillDuration] = useState("");
-  const [drillSkillLevel, setDrillSkillLevel] = useState<
-    "Beginner" | "Intermediate" | "Advanced"
-  >("Beginner");
+  const [drillSkills, setDrillSkills] = useState<string[]>([]);
+  const [drillEquipment, setDrillEquipment] = useState<string[]>([]);
+  const [drillTime, setDrillTime] = useState("");
   const [drillInstructions, setDrillInstructions] = useState("");
+  const [drillAdditionalInfo, setDrillAdditionalInfo] = useState("");
+  const [drillBenefits, setDrillBenefits] = useState("");
+  const [drillDifficulty, setDrillDifficulty] = useState<
+    "Basic" | "Intermediate" | "Advanced" | "Expert"
+  >("Basic");
+  const [drillCategory, setDrillCategory] = useState<
+    "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building"
+  >("Drill");
+  const [drillWeekNumber, setDrillWeekNumber] = useState(1);
+  const [drillImage, setDrillImage] = useState<File | null>(null);
+  const [newSkill, setNewSkill] = useState("");
+  const [newEquipment, setNewEquipment] = useState("");
 
   const days = [
     { letter: "S", name: "Sunday" },
@@ -87,10 +95,22 @@ export default function ScheduleModal({
         setPracticeDateTime(editingData.date_time);
         setPracticeLocation(editingData.location);
         setPracticeComments(editingData.description || "");
-      } else if ("title" in editingData) {
+      } else if ("content" in editingData) {
         // Update data
         setUpdateTitle(editingData.title);
         setUpdateContent(editingData.content);
+      } else if ("skills" in editingData) {
+        // Practice drill data
+        setDrillTitle(editingData.title);
+        setDrillSkills(editingData.skills);
+        setDrillEquipment(editingData.equipment);
+        setDrillTime(editingData.time);
+        setDrillInstructions(editingData.instructions);
+        setDrillAdditionalInfo(editingData.additional_info || "");
+        setDrillBenefits(editingData.benefits);
+        setDrillDifficulty(editingData.difficulty as "Basic" | "Intermediate" | "Advanced" | "Expert");
+        setDrillCategory(editingData.category as "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building");
+        setDrillWeekNumber(editingData.week_number);
       }
     } else {
       // Reset form when opening for new item
@@ -138,10 +158,18 @@ export default function ScheduleModal({
     setUpdateImage(null);
     setIsImportant(false);
     setDrillTitle("");
-    setDrillCategory("Offense");
-    setDrillDuration("");
-    setDrillSkillLevel("Beginner");
+    setDrillSkills([]);
+    setDrillEquipment([]);
+    setDrillTime("");
     setDrillInstructions("");
+    setDrillAdditionalInfo("");
+    setDrillBenefits("");
+    setDrillDifficulty("Basic");
+    setDrillCategory("Drill");
+    setDrillWeekNumber(1);
+    setDrillImage(null);
+    setNewSkill("");
+    setNewEquipment("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -185,10 +213,16 @@ export default function ScheduleModal({
       case "Drill":
         formData = {
           title: drillTitle,
-          category: drillCategory,
-          duration: drillDuration,
-          skillLevel: drillSkillLevel,
+          skills: drillSkills,
+          equipment: drillEquipment,
+          time: drillTime,
           instructions: drillInstructions,
+          additional_info: drillAdditionalInfo,
+          benefits: drillBenefits,
+          difficulty: drillDifficulty,
+          category: drillCategory,
+          week_number: drillWeekNumber,
+          image: drillImage,
         };
         break;
     }
@@ -202,6 +236,29 @@ export default function ScheduleModal({
         ? prev.filter((d) => d !== dayIndex)
         : [...prev, dayIndex]
     );
+  };
+
+  // Drill helper functions
+  const addSkill = () => {
+    if (newSkill.trim() && !drillSkills.includes(newSkill.trim())) {
+      setDrillSkills([...drillSkills, newSkill.trim()]);
+      setNewSkill("");
+    }
+  };
+
+  const removeSkill = (skill: string) => {
+    setDrillSkills(drillSkills.filter(s => s !== skill));
+  };
+
+  const addEquipment = () => {
+    if (newEquipment.trim() && !drillEquipment.includes(newEquipment.trim())) {
+      setDrillEquipment([...drillEquipment, newEquipment.trim()]);
+      setNewEquipment("");
+    }
+  };
+
+  const removeEquipment = (equipment: string) => {
+    setDrillEquipment(drillEquipment.filter(e => e !== equipment));
   };
 
   if (!isOpen) return null;
@@ -574,72 +631,235 @@ export default function ScheduleModal({
 
           {/* Drill Form */}
           {activeTab === "Drill" && (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Title */}
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  Title
+                  Drill Title *
                 </label>
                 <input
                   type="text"
                   value={drillTitle}
                   onChange={(e) => setDrillTitle(e.target.value)}
+                  placeholder="e.g., Lightning Pass Relay"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  value={drillCategory}
-                  onChange={(e) => setDrillCategory(e.target.value as "Offense" | "Defense" | "Conditioning" | "Fundamentals")}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                >
-                  <option value="Offense">Offense</option>
-                  <option value="Defense">Defense</option>
-                  <option value="Conditioning">Conditioning</option>
-                  <option value="Fundamentals">Fundamentals</option>
-                </select>
+
+              {/* Skills and Equipment Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Skills */}
+                <div>
+                  <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                    Skills Developed *
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newSkill}
+                        onChange={(e) => setNewSkill(e.target.value)}
+                        placeholder="e.g., Passing"
+                        className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                      />
+                      <button
+                        type="button"
+                        onClick={addSkill}
+                        className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {drillSkills.map((skill, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
+                        >
+                          {skill}
+                          <button
+                            type="button"
+                            onClick={() => removeSkill(skill)}
+                            className="text-blue-600 hover:text-blue-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Equipment */}
+                <div>
+                  <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                    Equipment Needed *
+                  </label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newEquipment}
+                        onChange={(e) => setNewEquipment(e.target.value)}
+                        placeholder="e.g., cones"
+                        className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addEquipment())}
+                      />
+                      <button
+                        type="button"
+                        onClick={addEquipment}
+                        className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {drillEquipment.map((equipment, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm"
+                        >
+                          {equipment}
+                          <button
+                            type="button"
+                            onClick={() => removeEquipment(equipment)}
+                            className="text-green-600 hover:text-green-800"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
+
+              {/* Time, Difficulty, Category Row */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                    Duration *
+                  </label>
+                  <input
+                    type="text"
+                    value={drillTime}
+                    onChange={(e) => setDrillTime(e.target.value)}
+                    placeholder="e.g., 10 minutes"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                    Difficulty *
+                  </label>
+                  <select
+                    value={drillDifficulty}
+                    onChange={(e) => setDrillDifficulty(e.target.value as "Basic" | "Intermediate" | "Advanced" | "Expert")}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  >
+                    <option value="Basic">Basic</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                    <option value="Expert">Expert</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                    Category *
+                  </label>
+                  <select
+                    value={drillCategory}
+                    onChange={(e) => setDrillCategory(e.target.value as "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building")}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  >
+                    <option value="Drill">Drill</option>
+                    <option value="Warm-up">Warm-up</option>
+                    <option value="Conditioning">Conditioning</option>
+                    <option value="Skill Development">Skill Development</option>
+                    <option value="Team Building">Team Building</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Week Number */}
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  Duration
+                  Week Number *
                 </label>
                 <input
-                  type="text"
-                  value={drillDuration}
-                  onChange={(e) => setDrillDuration(e.target.value)}
-                  placeholder="eg. 15 min"
+                  type="number"
+                  value={drillWeekNumber}
+                  onChange={(e) => setDrillWeekNumber(parseInt(e.target.value) || 1)}
+                  min="1"
+                  max="52"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 />
               </div>
+
+              {/* Instructions */}
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  Skill Level
-                </label>
-                <select
-                  value={drillSkillLevel}
-                  onChange={(e) => setDrillSkillLevel(e.target.value as "Beginner" | "Intermediate" | "Advanced")}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                >
-                  <option value="Beginner">Beginner</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  Instructions
+                  Instructions *
                 </label>
                 <textarea
                   value={drillInstructions}
                   onChange={(e) => setDrillInstructions(e.target.value)}
+                  placeholder="Detailed step-by-step instructions for the drill..."
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  rows={4}
+                  rows={6}
                   required
                 />
+              </div>
+
+              {/* Additional Info */}
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Additional Information
+                </label>
+                <textarea
+                  value={drillAdditionalInfo}
+                  onChange={(e) => setDrillAdditionalInfo(e.target.value)}
+                  placeholder="Tips, variations, age-specific modifications, etc..."
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  rows={4}
+                />
+              </div>
+
+              {/* Benefits */}
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Benefits *
+                </label>
+                <textarea
+                  value={drillBenefits}
+                  onChange={(e) => setDrillBenefits(e.target.value)}
+                  placeholder="What skills and abilities does this drill develop?"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  rows={3}
+                  required
+                />
+              </div>
+
+              {/* Image Upload */}
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  Drill Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setDrillImage(e.target.files?.[0] || null)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+                {drillImage && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Selected: {drillImage.name}
+                  </p>
+                )}
               </div>
             </div>
           )}
