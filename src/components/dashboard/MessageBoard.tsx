@@ -78,6 +78,26 @@ export default function MessageBoard({
     loadMessages();
   }, [loadMessages]);
 
+  // Prevent body scroll when modals are open
+  useEffect(() => {
+    if (showNewMessageModal || showDeleteConfirm) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      // Prevent scrolling
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = '100%';
+      
+      return () => {
+        // Restore scrolling
+        document.body.style.position = '';
+        document.body.style.top = '';
+        document.body.style.width = '';
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showNewMessageModal, showDeleteConfirm]);
+
   // Debug logging for message data
   useEffect(() => {
     if (messages.length > 0) {
