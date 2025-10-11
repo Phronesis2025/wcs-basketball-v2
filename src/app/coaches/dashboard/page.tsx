@@ -1195,6 +1195,31 @@ export default function CoachesDashboard() {
           </select>
         </div>
 
+        {/* Team Logo */}
+        {selectedTeam && (
+          <div className="mb-6 flex justify-center">
+            <div className="w-20 h-20 relative">
+              <Image
+                src={
+                  selectedTeam === "__GLOBAL__"
+                    ? "/logos.png"
+                    : teams.find((team) => team.id === selectedTeam)?.logo_url ||
+                      "/logos.png"
+                }
+                alt={
+                  selectedTeam === "__GLOBAL__"
+                    ? "All Teams"
+                    : teams.find((team) => team.id === selectedTeam)?.name ||
+                      "Team Logo"
+                }
+                fill
+                className="object-contain"
+                sizes="80px"
+              />
+            </div>
+          </div>
+        )}
+
         {error && <p className="text-red-400 mb-4">Error: {error}</p>}
 
         {selectedTeam ? (
