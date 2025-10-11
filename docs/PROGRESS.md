@@ -2,9 +2,18 @@
 
 ## Last Updated
 
-January 2025, Current Status - v2.7.1 UI/UX Improvements and Mobile Optimization Complete (10/10)
+October 2025, Current Status - v2.7.2 Security & Stability Updates (10/10)
 
 ## Recent Updates
+
+### October 2025 (v2.7.2) - Security & Stability
+
+- ✅ Auth persistence: Added Supabase `onAuthStateChange` listener in coaches dashboard
+- ✅ Scroll lock: Locked body scroll when nav menus are open (regular+dashboard)
+- ✅ Team logo: Fixed Tailwind sizes and ensured default fallback `/logos/logo2.png`
+- ✅ Next Game: Corrected singular vs plural day text
+- ✅ API: Guarded Upstash Redis to avoid build warnings when env vars are missing
+- ✅ Build: Verified production build success; remaining Prisma OTEL warnings are 3rd‑party
 
 ### January 2025 (v2.7.1) - UI/UX Improvements and Mobile Optimization
 

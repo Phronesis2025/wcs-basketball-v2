@@ -1,6 +1,25 @@
 # WCSv2.0 Changelog
 
-## v2.7.1 - January 2025 (Current)
+## v2.7.2 - October 2025 (Current)
+
+### 🔒 Security & Stability
+
+- Authentication persistence: Added Supabase auth state listener to keep users logged in when navigating
+- Scroll lock: Prevent background scrolling when nav menu is open (regular and dashboard)
+- API hardening: Guarded Upstash Redis usage to avoid missing-env warnings, initialized rate limiter only when configured
+
+### 🐛 Fixes
+
+- Team logo display: Fixed invalid Tailwind classes (`w-26 h-26` → `w-24 h-24`)
+- Next Game card: Correct pluralization for day/days when value is 1
+
+### 📦 Build
+
+- Production build passes; remaining Prisma OpenTelemetry warnings are 3rd‑party and non-blocking
+
+---
+
+## v2.7.1 - January 2025
 
 ### 🎨 UI/UX Improvements
 
