@@ -1198,7 +1198,7 @@ export default function CoachesDashboard() {
         {/* Team Logo */}
         {selectedTeam && (
           <div className="mb-6 flex justify-center">
-            <div className="w-20 h-20 relative">
+            <div className="w-20 h-20 relative bg-white rounded-full flex items-center justify-center">
               <Image
                 src={
                   selectedTeam === "__GLOBAL__"
