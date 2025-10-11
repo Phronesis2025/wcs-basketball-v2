@@ -29,11 +29,11 @@ const cards = [
     href: "/teams",
   },
   {
-    title: "Latest News",
-    description: "Stay updated with WCS Warriors' championship wins and more.",
+    title: "Schedules",
+    description: "View upcoming games, practices, and team events on our interactive calendar.",
     video: "/video/news.mp4",
     poster: "/images/placeholder-news-1.png",
-    href: "/news",
+    href: "/schedules",
   },
   {
     title: "Practice Drills",
