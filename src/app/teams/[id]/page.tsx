@@ -21,8 +21,8 @@ import TeamUpdates from "../../../components/TeamUpdates";
 type TeamPageProps = { params: Promise<{ id: string }> };
 
 const containerVariants: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.5, ease: "easeOut" } },
 };
 
 export default function TeamPage({ params }: TeamPageProps) {
@@ -32,6 +32,29 @@ export default function TeamPage({ params }: TeamPageProps) {
   const [updates, setUpdates] = useState<TeamUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [animationComplete, setAnimationComplete] = useState(false);
+
+  // Prevent scroll restoration and unwanted scrolling
+  useEffect(() => {
+    // Prevent browser from restoring scroll position
+    if (typeof window !== "undefined") {
+      window.history.scrollRestoration = "manual";
+
+      // Store current scroll position
+      const scrollY = window.scrollY;
+
+      // Restore scroll position after a brief delay to ensure layout is stable
+      const timer = setTimeout(() => {
+        window.scrollTo(0, scrollY);
+      }, 100);
+
+      return () => {
+        clearTimeout(timer);
+        // Restore default scroll restoration
+        window.history.scrollRestoration = "auto";
+      };
+    }
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -179,9 +202,12 @@ export default function TeamPage({ params }: TeamPageProps) {
       animate={
         typeof window !== "undefined" &&
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? { opacity: 1, y: 0 }
+          ? { opacity: 1 }
+          : animationComplete
+          ? { opacity: 1 }
           : "visible"
       }
+      onAnimationComplete={() => setAnimationComplete(true)}
     >
       <div className="max-w-7xl mx-auto">
         {/* Team Identity (Logo and Name) - Side by Side, Centered */}

@@ -68,16 +68,16 @@ export default function ScheduleModal({
   const [newSkill, setNewSkill] = useState("");
   const [newEquipment, setNewEquipment] = useState("");
 
-  // Predefined options
-  const skillOptions = [
-    "Passing",
-    "Defensive stance & footwork",
-    "Shooting",
-    "Rebounding",
-    "Dribbling",
-  ];
+  // Predefined options (commented out for future use)
+  // const skillOptions = [
+  //   "Passing",
+  //   "Defensive stance & footwork",
+  //   "Shooting",
+  //   "Rebounding",
+  //   "Dribbling",
+  // ];
 
-  const equipmentOptions = ["None", "Cones", "Markers", "Chairs"];
+  // const equipmentOptions = ["None", "Cones", "Markers", "Chairs"];
 
   const days = [
     { letter: "S", name: "Sunday" },

@@ -36,16 +36,16 @@ export default function AnnouncementCard({
 
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div className="flex-1">
-          <h4 className="font-inter font-semibold text-gray-900">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h4 className="font-inter font-semibold text-gray-900 line-clamp-2 leading-tight">
             {update.title}
           </h4>
           <p className="text-sm text-gray-500 font-inter mt-1">
             {formatDateTime(update.created_at)}
           </p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-start space-x-2 flex-shrink-0">
           {isImportant && (
             <span className="bg-red-500 text-white text-xs font-medium px-2 py-1 rounded-full">
               IMPORTANT

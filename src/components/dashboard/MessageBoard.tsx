@@ -749,12 +749,12 @@ export default function MessageBoard({
                         <button
                           type="button"
                           onClick={() => startEdit(message, "message")}
-                          className="text-gray-400 hover:text-gray-600 p-1"
+                          className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
                           aria-label="Edit message"
                           disabled={submitting}
                         >
                           <svg
-                            className="w-4 h-4"
+                            className="w-5 h-5 sm:w-4 sm:h-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -772,12 +772,12 @@ export default function MessageBoard({
                         <button
                           type="button"
                           onClick={() => handleDeleteMessage(message.id)}
-                          className="text-gray-400 hover:text-red-600 p-1"
+                          className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
                           aria-label="Delete message"
                           disabled={submitting}
                         >
                           <svg
-                            className="w-4 h-4"
+                            className="w-5 h-5 sm:w-4 sm:h-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -795,14 +795,14 @@ export default function MessageBoard({
                         <button
                           type="button"
                           onClick={() => handlePinMessage(message.id)}
-                          className="text-gray-400 hover:text-yellow-600 p-1"
+                          className="text-gray-400 hover:text-yellow-600 p-2 sm:p-1 rounded-md hover:bg-yellow-50 transition-colors"
                           aria-label={
                             message.is_pinned ? "Unpin message" : "Pin message"
                           }
                           disabled={submitting}
                         >
                           <svg
-                            className="w-4 h-4"
+                            className="w-5 h-5 sm:w-4 sm:h-4"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -887,12 +887,12 @@ export default function MessageBoard({
                                         onClick={() =>
                                           startEdit(reply, "reply")
                                         }
-                                        className="text-gray-400 hover:text-gray-600 p-1"
+                                        className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
                                         aria-label="Edit reply"
                                         disabled={submitting}
                                       >
                                         <svg
-                                          className="w-4 h-4"
+                                          className="w-5 h-5 sm:w-4 sm:h-4"
                                           fill="none"
                                           stroke="currentColor"
                                           viewBox="0 0 24 24"
@@ -912,12 +912,12 @@ export default function MessageBoard({
                                         onClick={() =>
                                           handleDeleteReply(reply.id)
                                         }
-                                        className="text-gray-400 hover:text-red-600 p-1"
+                                        className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
                                         aria-label="Delete reply"
                                         disabled={submitting}
                                       >
                                         <svg
-                                          className="w-4 h-4"
+                                          className="w-5 h-5 sm:w-4 sm:h-4"
                                           fill="none"
                                           stroke="currentColor"
                                           viewBox="0 0 24 24"
