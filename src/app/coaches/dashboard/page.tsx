@@ -702,14 +702,14 @@ export default function CoachesDashboard() {
   // Lock scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     // Cleanup function to reset overflow when component unmounts
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isMobileMenuOpen]);
 
@@ -1353,7 +1353,7 @@ export default function CoachesDashboard() {
                 return (
                   <StatCard
                     title="Next Game"
-                    value={nextGame ? `${nextGame.days} days` : "N/A"}
+                    value={nextGame ? `${nextGame.days} day${nextGame.days === 1 ? "" : "s"}` : "N/A"}
                     subtitle={
                       nextGame ? `vs ${nextGame.opponent}` : "No upcoming games"
                     }
