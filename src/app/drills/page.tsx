@@ -54,7 +54,7 @@ export default function DrillsPage() {
     <div className="min-h-screen bg-navy text-white py-8 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <h1
-          className="text-4xl font-bebas mb-8 text-center"
+          className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase"
           aria-label="Practice Drills"
         >
           Practice Drills

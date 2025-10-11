@@ -2,7 +2,7 @@ export default function Privacy() {
   return (
     <div className="min-h-screen bg-gray-900 text-white py-16">
       <div className="container mx-auto px-4 max-w-4xl">
-        <h1 className="text-4xl font-bebas uppercase text-red-600 mb-8">
+        <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
           Privacy Policy
         </h1>
         
