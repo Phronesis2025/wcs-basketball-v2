@@ -1,7 +1,7 @@
 // src/app/schedules/page.tsx
 "use client";
 import React from "react";
-import { Team, Schedule } from "@/types/supabase";
+import { Team, Schedule, TeamUpdate } from "@/types/supabase";
 import * as Sentry from "@sentry/nextjs";
 import { useState, useEffect, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
@@ -77,7 +77,7 @@ export default function SchedulesPage() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "team_updates" },
         (payload) => {
-          const update = payload.new as any;
+          const update = payload.new as TeamUpdate;
           if (update.date_time) {
             const scheduleEvent = {
               id: update.id,
