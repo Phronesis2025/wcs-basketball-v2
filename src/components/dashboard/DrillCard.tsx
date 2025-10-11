@@ -9,11 +9,7 @@ interface DrillCardProps {
   onDelete?: () => void;
 }
 
-export default function DrillCard({
-  drill,
-  onEdit,
-  onDelete,
-}: DrillCardProps) {
+export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "Drill":
@@ -47,14 +43,13 @@ export default function DrillCard({
   };
 
   return (
-    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-      {/* Header */}
-      <div className="flex items-start justify-between mb-4">
+    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+      <div className="flex items-center justify-between">
         <div className="flex-1">
-          <h4 className="font-inter font-semibold text-gray-900 text-lg mb-2">
+          <h4 className="font-inter font-semibold text-gray-900">
             {drill.title}
           </h4>
-          <div className="flex items-center space-x-2 mb-3">
+          <div className="flex items-center space-x-2 mt-2">
             <span
               className={`text-white text-xs font-medium px-2 py-1 rounded-full ${getCategoryColor(
                 drill.category
@@ -117,75 +112,6 @@ export default function DrillCard({
           </div>
         )}
       </div>
-
-      {/* Skills and Equipment */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-        <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-2">Skills Developed</h5>
-          <div className="flex flex-wrap gap-1">
-            {drill.skills.map((skill, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div>
-          <h5 className="text-sm font-medium text-gray-700 mb-2">Equipment Needed</h5>
-          <div className="flex flex-wrap gap-1">
-            {drill.equipment.map((equipment, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs"
-              >
-                {equipment}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Instructions Preview */}
-      <div className="mb-4">
-        <h5 className="text-sm font-medium text-gray-700 mb-2">Instructions</h5>
-        <p className="text-sm text-gray-600 line-clamp-3">
-          {drill.instructions}
-        </p>
-      </div>
-
-      {/* Benefits Preview */}
-      <div className="mb-4">
-        <h5 className="text-sm font-medium text-gray-700 mb-2">Benefits</h5>
-        <p className="text-sm text-gray-600 line-clamp-2">
-          {drill.benefits}
-        </p>
-      </div>
-
-      {/* Additional Info (if exists) */}
-      {drill.additional_info && (
-        <div className="mb-4">
-          <h5 className="text-sm font-medium text-gray-700 mb-2">Additional Info</h5>
-          <p className="text-sm text-gray-600 line-clamp-2">
-            {drill.additional_info}
-          </p>
-        </div>
-      )}
-
-      {/* Image (if exists) */}
-      {drill.image_url && (
-        <div className="mt-4">
-          <Image
-            src={drill.image_url}
-            alt={drill.title}
-            width={400}
-            height={128}
-            className="w-full h-32 object-cover rounded-md"
-          />
-        </div>
-      )}
     </div>
   );
 }

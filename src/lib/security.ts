@@ -5,6 +5,8 @@
  * throughout the application to maintain consistent security practices.
  */
 
+import { validateInputForProfanity } from "./profanityFilter";
+
 /**
  * Check if the application is running in production environment
  * @returns {boolean} True if in production, false otherwise
@@ -209,4 +211,78 @@ export function createCSRFCookie(
   cookie += httpOnly ? "; HttpOnly" : "";
 
   return cookie;
+}
+
+/**
+ * Enhanced input sanitization with profanity filtering
+ * @param input - The input string to sanitize
+ * @param fieldName - Optional field name for validation context
+ * @returns Sanitized string with profanity removed
+ */
+export function sanitizeInputWithProfanity(
+  input: string,
+  fieldName?: string
+): string {
+  if (typeof input !== "string") {
+    return "";
+  }
+
+  // First apply basic sanitization
+  const sanitized = sanitizeInput(input);
+
+  // Then check for profanity
+  const profanityCheck = validateInputForProfanity(
+    fieldName || "input",
+    sanitized
+  );
+
+  if (!profanityCheck.isValid && profanityCheck.sanitizedValue) {
+    return profanityCheck.sanitizedValue;
+  }
+
+  return sanitized;
+}
+
+/**
+ * Validate input for both XSS and profanity
+ * @param input - The input to validate
+ * @param fieldName - Optional field name for context
+ * @returns Validation result
+ */
+export function validateInput(
+  input: string,
+  fieldName?: string
+): {
+  isValid: boolean;
+  sanitizedValue: string;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  let sanitizedValue = input;
+
+  // Check for malicious content
+  if (containsMaliciousContent(input)) {
+    errors.push("Input contains potentially malicious content");
+    sanitizedValue = sanitizeInput(input);
+  }
+
+  // Check for profanity
+  const profanityCheck = validateInputForProfanity(
+    fieldName || "input",
+    sanitizedValue
+  );
+  if (!profanityCheck.isValid) {
+    errors.push(
+      profanityCheck.errorMessage || "Inappropriate language detected"
+    );
+    if (profanityCheck.sanitizedValue) {
+      sanitizedValue = profanityCheck.sanitizedValue;
+    }
+  }
+
+  return {
+    isValid: errors.length === 0,
+    sanitizedValue,
+    errors,
+  };
 }
