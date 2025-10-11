@@ -22,12 +22,40 @@ export default function SchedulesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch schedules
         const { data: schedules } = await supabase
           .from("schedules")
           .select("*")
           .is("deleted_at", null); // Filter soft-deleted
+        
+        // Fetch updates with date_time
+        const { data: updates } = await supabase
+          .from("team_updates")
+          .select("*")
+          .not("date_time", "is", null)
+          .is("deleted_at", null);
+        
         const teamsData = await fetchTeams();
-        setEvents(schedules || []);
+        
+        // Combine schedules and updates, converting updates to schedule format
+        const allEvents = [
+          ...(schedules || []),
+          ...(updates || []).map(update => ({
+            id: update.id,
+            event_type: "Update",
+            date_time: update.date_time,
+            location: null,
+            opponent: null,
+            description: update.content,
+            title: update.title,
+            team_id: update.team_id,
+            created_at: update.created_at,
+            updated_at: update.updated_at,
+            deleted_at: update.deleted_at
+          }))
+        ];
+        
+        setEvents(allEvents);
         setTeams(teamsData);
       } catch (err) {
         Sentry.captureException(err);
@@ -43,6 +71,29 @@ export default function SchedulesPage() {
         { event: "INSERT", schema: "public", table: "schedules" },
         (payload) => {
           setEvents((prev) => [...prev, payload.new as Schedule]);
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "team_updates" },
+        (payload) => {
+          const update = payload.new as any;
+          if (update.date_time) {
+            const scheduleEvent = {
+              id: update.id,
+              event_type: "Update",
+              date_time: update.date_time,
+              location: null,
+              opponent: null,
+              description: update.content,
+              title: update.title,
+              team_id: update.team_id,
+              created_at: update.created_at,
+              updated_at: update.updated_at,
+              deleted_at: update.deleted_at
+            };
+            setEvents((prev) => [...prev, scheduleEvent as Schedule]);
+          }
         }
       )
       .subscribe();
@@ -76,7 +127,7 @@ export default function SchedulesPage() {
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour duration
     return {
       id: event.id,
-      title: event.event_type,
+      title: event.event_type === "Update" ? event.title : event.event_type,
       start: startDate, // pass Date object (local)
       end: endDate,
       allDay: false,
@@ -87,8 +138,15 @@ export default function SchedulesPage() {
           ? "#D91E18"
           : event.event_type === "Tournament"
           ? "#6B21A8"
+          : event.event_type === "Update"
+          ? "#3B82F6"
           : "#F59E0B",
-      extendedProps: { location: event.location, opponent: event.opponent },
+      extendedProps: { 
+        location: event.location, 
+        opponent: event.opponent,
+        description: event.description,
+        eventType: event.event_type
+      },
     };
   });
 
@@ -131,6 +189,7 @@ export default function SchedulesPage() {
                 <option value="Game">Games</option>
                 <option value="Practice">Practices</option>
                 <option value="Tournament">Tournaments</option>
+                <option value="Update">Updates</option>
                 <option value="Meeting">Meetings</option>
               </select>
             </div>
