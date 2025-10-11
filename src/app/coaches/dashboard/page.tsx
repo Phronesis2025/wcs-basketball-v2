@@ -10,7 +10,7 @@ import {
   devLog,
   devError,
   generateCSRFToken,
-  sanitizeInput,
+  sanitizeInputWithProfanity,
 } from "../../../lib/security";
 import {
   addSchedule,
@@ -36,7 +36,12 @@ import {
   getPracticeDrills,
 } from "../../../lib/drillActions";
 import { getMessages } from "../../../lib/messageActions";
-import { Team, Schedule, TeamUpdate, PracticeDrill } from "../../../types/supabase";
+import {
+  Team,
+  Schedule,
+  TeamUpdate,
+  PracticeDrill,
+} from "../../../types/supabase";
 
 // Import new dashboard components
 import StatCard from "../../../components/dashboard/StatCard";
@@ -109,9 +114,15 @@ export default function CoachesDashboard() {
   const [modalType, setModalType] = useState<
     "Game" | "Practice" | "Update" | "Drill"
   >("Game");
-  const [editingItem, setEditingItem] = useState<Schedule | TeamUpdate | PracticeDrill | null>(
-    null
-  );
+  const [editingItem, setEditingItem] = useState<
+    Schedule | TeamUpdate | PracticeDrill | null
+  >(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    type: "drill" | "game" | "practice" | "update";
+  } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Carousel navigation functions (unused in new design)
   // const nextUpdate = () => {
@@ -250,6 +261,57 @@ export default function CoachesDashboard() {
     setEditingItem(null);
   };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    try {
+      setSubmitting(true);
+      devLog("Attempting to delete:", { deleteTarget, userId });
+
+      if (deleteTarget.type === "drill") {
+        await deletePracticeDrill(deleteTarget.id, userId!);
+        setDrills((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+        toast.success("Drill deleted successfully", {
+          duration: 3000,
+          position: "top-right",
+        });
+      } else if (
+        deleteTarget.type === "game" ||
+        deleteTarget.type === "practice"
+      ) {
+        await deleteSchedule(deleteTarget.id);
+        setSchedules((prev) => prev.filter((s) => s.id !== deleteTarget.id));
+        toast.success(
+          `${
+            deleteTarget.type === "game" ? "Game" : "Practice"
+          } deleted successfully`,
+          {
+            duration: 3000,
+            position: "top-right",
+          }
+        );
+      } else if (deleteTarget.type === "update") {
+        await deleteUpdate(deleteTarget.id);
+        setUpdates((prev) => prev.filter((u) => u.id !== deleteTarget.id));
+        toast.success("Update deleted successfully", {
+          duration: 3000,
+          position: "top-right",
+        });
+      }
+
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+    } catch (error) {
+      devError("Error deleting item:", error);
+      toast.error("Failed to delete item. Please try again.", {
+        duration: 4000,
+        position: "top-right",
+      });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleModalSubmit = async (data: Record<string, unknown>) => {
     try {
       setLoading(true);
@@ -320,8 +382,14 @@ export default function CoachesDashboard() {
         if (editingItem && "title" in editingItem) {
           // Update existing update
           const updatedData = await updateUpdate(editingItem.id, {
-            title: sanitizeInput(data.title as string),
-            content: sanitizeInput(data.content as string),
+            title: sanitizeInputWithProfanity(
+              data.title as string,
+              "update title"
+            ),
+            content: sanitizeInputWithProfanity(
+              data.content as string,
+              "update content"
+            ),
             image_url: imageUrl,
           });
           setUpdates((prev) =>
@@ -334,8 +402,14 @@ export default function CoachesDashboard() {
           // Create new update
           const newUpdate = await addUpdate({
             team_id: selectedTeam === "__GLOBAL__" ? null : selectedTeam,
-            title: sanitizeInput(data.title as string),
-            content: sanitizeInput(data.content as string),
+            title: sanitizeInputWithProfanity(
+              data.title as string,
+              "update title"
+            ),
+            content: sanitizeInputWithProfanity(
+              data.content as string,
+              "update content"
+            ),
             image_url: imageUrl,
             is_global: selectedTeam === "__GLOBAL__",
             created_by: userId!,
@@ -367,18 +441,39 @@ export default function CoachesDashboard() {
 
         if (editingItem && "title" in editingItem) {
           // Update existing drill
-          const updatedData = await updatePracticeDrill(editingItem.id, {
-            title: sanitizeInput(data.title as string),
-            skills: data.skills as string[],
-            equipment: data.equipment as string[],
-            time: sanitizeInput(data.time as string),
-            instructions: sanitizeInput(data.instructions as string),
-            additional_info: data.additional_info ? sanitizeInput(data.additional_info as string) : undefined,
-            benefits: sanitizeInput(data.benefits as string),
-            difficulty: data.difficulty as string,
-            category: data.category as string,
-            image_url: imageUrl,
-          }, userId!);
+          const updatedData = await updatePracticeDrill(
+            editingItem.id,
+            {
+              title: sanitizeInputWithProfanity(
+                data.title as string,
+                "drill title"
+              ),
+              skills: data.skills as string[],
+              equipment: data.equipment as string[],
+              time: sanitizeInputWithProfanity(
+                data.time as string,
+                "drill time"
+              ),
+              instructions: sanitizeInputWithProfanity(
+                data.instructions as string,
+                "drill instructions"
+              ),
+              additional_info: data.additional_info
+                ? sanitizeInputWithProfanity(
+                    data.additional_info as string,
+                    "drill additional info"
+                  )
+                : undefined,
+              benefits: sanitizeInputWithProfanity(
+                data.benefits as string,
+                "drill benefits"
+              ),
+              difficulty: data.difficulty as string,
+              category: data.category as string,
+              image_url: imageUrl,
+            },
+            userId!
+          );
           setDrills((prev) =>
             prev.map((item) =>
               item.id === updatedData.id ? updatedData : item
@@ -387,19 +482,42 @@ export default function CoachesDashboard() {
           toast.success("Drill updated!");
         } else {
           // Create new drill
-          const newDrill = await createPracticeDrill({
-            team_id: selectedTeam === "__GLOBAL__" ? "00000000-0000-0000-0000-000000000000" : selectedTeam,
-            title: sanitizeInput(data.title as string),
-            skills: data.skills as string[],
-            equipment: data.equipment as string[],
-            time: sanitizeInput(data.time as string),
-            instructions: sanitizeInput(data.instructions as string),
-            additional_info: data.additional_info ? sanitizeInput(data.additional_info as string) : undefined,
-            benefits: sanitizeInput(data.benefits as string),
-            difficulty: data.difficulty as string,
-            category: data.category as string,
-            image_url: imageUrl,
-          }, userId!);
+          const newDrill = await createPracticeDrill(
+            {
+              team_id:
+                selectedTeam === "__GLOBAL__"
+                  ? "00000000-0000-0000-0000-000000000000"
+                  : selectedTeam,
+              title: sanitizeInputWithProfanity(
+                data.title as string,
+                "drill title"
+              ),
+              skills: data.skills as string[],
+              equipment: data.equipment as string[],
+              time: sanitizeInputWithProfanity(
+                data.time as string,
+                "drill time"
+              ),
+              instructions: sanitizeInputWithProfanity(
+                data.instructions as string,
+                "drill instructions"
+              ),
+              additional_info: data.additional_info
+                ? sanitizeInputWithProfanity(
+                    data.additional_info as string,
+                    "drill additional info"
+                  )
+                : undefined,
+              benefits: sanitizeInputWithProfanity(
+                data.benefits as string,
+                "drill benefits"
+              ),
+              difficulty: data.difficulty as string,
+              category: data.category as string,
+              image_url: imageUrl,
+            },
+            userId!
+          );
           setDrills((prev) => [...prev, newDrill]);
           toast.success("Drill created!");
         }
@@ -487,7 +605,9 @@ export default function CoachesDashboard() {
         const [schedulesData, updatesData, drillsData] = await Promise.all([
           fetchSchedulesByTeamId(teamIdForFetch),
           fetchTeamUpdates(teamIdForFetch),
-          selectedTeam !== "__GLOBAL__" ? getPracticeDrills(selectedTeam) : Promise.resolve([]),
+          selectedTeam !== "__GLOBAL__"
+            ? getPracticeDrills(selectedTeam)
+            : Promise.resolve([]),
         ]);
         setSchedules(schedulesData);
         setUpdates(updatesData);
@@ -547,6 +667,26 @@ export default function CoachesDashboard() {
       supabase.removeChannel(channel);
     };
   }, [selectedTeam]);
+
+  // Prevent body scroll when delete modal is open
+  useEffect(() => {
+    if (showDeleteConfirm) {
+      // Save current scroll position
+      const scrollY = window.scrollY;
+      // Prevent scrolling
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+
+      return () => {
+        // Restore scrolling
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
+        window.scrollTo(0, scrollY);
+      };
+    }
+  }, [showDeleteConfirm]);
 
   // const handleSchedule = async (e: React.FormEvent) => {
   //   e.preventDefault();
@@ -810,34 +950,17 @@ export default function CoachesDashboard() {
   //   }, 0);
   // };
 
-  const handleDeleteSchedule = async (id: string) => {
-    try {
-      setLoading(true);
-      await deleteSchedule(id);
-      setSchedules((prev) => prev.filter((item) => item.id !== id));
-      toast.success("Schedule deleted!");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      devError("Delete schedule error:", err);
-      toast.error(`Failed to delete schedule: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
+  const handleDeleteSchedule = (id: string, eventType: "Game" | "Practice") => {
+    setDeleteTarget({
+      id,
+      type: eventType.toLowerCase() as "game" | "practice",
+    });
+    setShowDeleteConfirm(true);
   };
 
-  const handleDeleteUpdate = async (id: string) => {
-    try {
-      setLoading(true);
-      await deleteUpdate(id);
-      setUpdates((prev) => prev.filter((item) => item.id !== id));
-      toast.success("Team update deleted!");
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      devError("Delete team update error:", err);
-      toast.error(`Failed to delete team update: ${errorMessage}`);
-    } finally {
-      setLoading(false);
-    }
+  const handleDeleteUpdate = (id: string) => {
+    setDeleteTarget({ id, type: "update" });
+    setShowDeleteConfirm(true);
   };
 
   // const handleNews = async (e: React.FormEvent) => {
@@ -1151,7 +1274,9 @@ export default function CoachesDashboard() {
                         key={schedule.id}
                         schedule={schedule}
                         onEdit={(s) => openModal("Game", s)}
-                        onDelete={handleDeleteSchedule}
+                        onDelete={() =>
+                          handleDeleteSchedule(schedule.id, "Game")
+                        }
                       />
                     ))}
                   {schedules.filter((s) => s.event_type === "Game").length ===
@@ -1190,7 +1315,9 @@ export default function CoachesDashboard() {
                         key={schedule.id}
                         schedule={schedule}
                         onEdit={(s) => openModal("Practice", s)}
-                        onDelete={handleDeleteSchedule}
+                        onDelete={() =>
+                          handleDeleteSchedule(schedule.id, "Practice")
+                        }
                       />
                     ))}
                   {schedules.filter((s) => s.event_type === "Practice")
@@ -1263,26 +1390,21 @@ export default function CoachesDashboard() {
                         drill={drill}
                         onEdit={() => {
                           setEditingItem(drill);
-                          openModal("Drill");
+                          setModalType("Drill");
+                          setIsModalOpen(true);
                         }}
-                        onDelete={async () => {
-                          if (confirm("Are you sure you want to delete this drill?")) {
-                            try {
-                              await deletePracticeDrill(drill.id, userId!);
-                              setDrills(prev => prev.filter(d => d.id !== drill.id));
-                              toast.success("Drill deleted!");
-                            } catch (error) {
-                              devError("Error deleting drill:", error);
-                              toast.error("Failed to delete drill");
-                            }
-                          }
+                        onDelete={() => {
+                          setDeleteTarget({ id: drill.id, type: "drill" });
+                          setShowDeleteConfirm(true);
                         }}
                       />
                     ))
                   ) : (
                     <div className="text-center py-8 text-gray-500">
                       <p className="text-sm">No practice drills yet</p>
-                      <p className="text-xs mt-1">Click &quot;Add Drill&quot; to create your first drill</p>
+                      <p className="text-xs mt-1">
+                        Click &quot;Add Drill&quot; to create your first drill
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1326,6 +1448,103 @@ export default function CoachesDashboard() {
           editingData={editingItem}
           loading={loading}
         />
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Delete{" "}
+                  {deleteTarget?.type === "drill"
+                    ? "Drill"
+                    : deleteTarget?.type === "game"
+                    ? "Game"
+                    : deleteTarget?.type === "practice"
+                    ? "Practice"
+                    : deleteTarget?.type === "update"
+                    ? "Update"
+                    : "Item"}
+                </h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  This action cannot be undone. The {deleteTarget?.type} will be
+                  permanently removed.
+                </p>
+                <div className="flex space-x-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteTarget(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!submitting) {
+                        confirmDelete();
+                      }
+                    }}
+                    disabled={submitting}
+                    style={{
+                      minWidth: "100px",
+                      padding: "8px 24px",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "white",
+                      backgroundColor: "#dc2626",
+                      border: "2px solid #b91c1c",
+                      borderRadius: "6px",
+                      cursor: submitting ? "not-allowed" : "pointer",
+                      opacity: submitting ? 0.5 : 1,
+                      display: "inline-block",
+                      textAlign: "center",
+                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                      transition: "all 0.2s ease-in-out",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!submitting) {
+                        e.currentTarget.style.backgroundColor = "#b91c1c";
+                        e.currentTarget.style.boxShadow =
+                          "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!submitting) {
+                        e.currentTarget.style.backgroundColor = "#dc2626";
+                        e.currentTarget.style.boxShadow =
+                          "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
+                      }
+                    }}
+                  >
+                    {submitting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

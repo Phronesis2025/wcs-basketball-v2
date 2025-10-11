@@ -1,6 +1,7 @@
 // src/components/dashboard/ScheduleModal.tsx
 import React, { useState, useEffect } from "react";
 import { Schedule, TeamUpdate, PracticeDrill } from "../../types/supabase";
+import { validateInput } from "../../lib/security";
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -65,6 +66,17 @@ export default function ScheduleModal({
   const [newSkill, setNewSkill] = useState("");
   const [newEquipment, setNewEquipment] = useState("");
 
+  // Predefined options
+  const skillOptions = [
+    "Passing",
+    "Defensive stance & footwork",
+    "Shooting",
+    "Rebounding",
+    "Dribbling",
+  ];
+
+  const equipmentOptions = ["None", "Cones", "Markers", "Chairs"];
+
   const days = [
     { letter: "S", name: "Sunday" },
     { letter: "M", name: "Monday" },
@@ -82,7 +94,7 @@ export default function ScheduleModal({
   }, [isOpen, type]);
 
   useEffect(() => {
-    if (editingData) {
+    if (editingData && isOpen) {
       // Populate form fields based on editing data
       if ("event_type" in editingData) {
         // Schedule data
@@ -101,20 +113,33 @@ export default function ScheduleModal({
       } else if ("skills" in editingData) {
         // Practice drill data
         setDrillTitle(editingData.title);
-        setDrillSkills(editingData.skills);
-        setDrillEquipment(editingData.equipment);
+        setDrillSkills(editingData.skills || []);
+        setDrillEquipment(editingData.equipment || []);
         setDrillTime(editingData.time);
         setDrillInstructions(editingData.instructions);
         setDrillAdditionalInfo(editingData.additional_info || "");
         setDrillBenefits(editingData.benefits);
-        setDrillDifficulty(editingData.difficulty as "Basic" | "Intermediate" | "Advanced" | "Expert");
-        setDrillCategory(editingData.category as "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building");
+        setDrillDifficulty(
+          editingData.difficulty as
+            | "Basic"
+            | "Intermediate"
+            | "Advanced"
+            | "Expert"
+        );
+        setDrillCategory(
+          editingData.category as
+            | "Drill"
+            | "Warm-up"
+            | "Conditioning"
+            | "Skill Development"
+            | "Team Building"
+        );
       }
     } else {
       // Reset form when opening for new item
       resetForms();
     }
-  }, [editingData, isOpen]);
+  }, [editingData, isOpen, type]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -122,15 +147,15 @@ export default function ScheduleModal({
       // Save current scroll position
       const scrollY = window.scrollY;
       // Prevent scrolling
-      document.body.style.position = 'fixed';
+      document.body.style.position = "fixed";
       document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      
+      document.body.style.width = "100%";
+
       return () => {
         // Restore scrolling
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
         window.scrollTo(0, scrollY);
       };
     }
@@ -158,6 +183,8 @@ export default function ScheduleModal({
     setDrillTitle("");
     setDrillSkills([]);
     setDrillEquipment([]);
+    setNewSkill("");
+    setNewEquipment("");
     setDrillTime("");
     setDrillInstructions("");
     setDrillAdditionalInfo("");
@@ -165,12 +192,77 @@ export default function ScheduleModal({
     setDrillDifficulty("Basic");
     setDrillCategory("Drill");
     setDrillImage(null);
-    setNewSkill("");
-    setNewEquipment("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate all text inputs for profanity
+    const validationErrors: string[] = [];
+
+    // Validate based on active tab
+    if (activeTab === "Game") {
+      const opponentValidation = validateInput(gameOpponent, "opponent");
+      const locationValidation = validateInput(gameLocation, "location");
+      const commentsValidation = validateInput(gameComments, "comments");
+
+      if (!opponentValidation.isValid)
+        validationErrors.push(...opponentValidation.errors);
+      if (!locationValidation.isValid)
+        validationErrors.push(...locationValidation.errors);
+      if (!commentsValidation.isValid)
+        validationErrors.push(...commentsValidation.errors);
+    } else if (activeTab === "Practice") {
+      const titleValidation = validateInput(practiceTitle, "practice title");
+      const durationValidation = validateInput(practiceDuration, "duration");
+      const locationValidation = validateInput(practiceLocation, "location");
+      const commentsValidation = validateInput(practiceComments, "comments");
+
+      if (!titleValidation.isValid)
+        validationErrors.push(...titleValidation.errors);
+      if (!durationValidation.isValid)
+        validationErrors.push(...durationValidation.errors);
+      if (!locationValidation.isValid)
+        validationErrors.push(...locationValidation.errors);
+      if (!commentsValidation.isValid)
+        validationErrors.push(...commentsValidation.errors);
+    } else if (activeTab === "Update") {
+      const titleValidation = validateInput(updateTitle, "update title");
+      const contentValidation = validateInput(updateContent, "update content");
+
+      if (!titleValidation.isValid)
+        validationErrors.push(...titleValidation.errors);
+      if (!contentValidation.isValid)
+        validationErrors.push(...contentValidation.errors);
+    } else if (activeTab === "Drill") {
+      const titleValidation = validateInput(drillTitle, "drill title");
+      const instructionsValidation = validateInput(
+        drillInstructions,
+        "instructions"
+      );
+      const additionalInfoValidation = validateInput(
+        drillAdditionalInfo,
+        "additional info"
+      );
+      const benefitsValidation = validateInput(drillBenefits, "benefits");
+
+      if (!titleValidation.isValid)
+        validationErrors.push(...titleValidation.errors);
+      if (!instructionsValidation.isValid)
+        validationErrors.push(...instructionsValidation.errors);
+      if (!additionalInfoValidation.isValid)
+        validationErrors.push(...additionalInfoValidation.errors);
+      if (!benefitsValidation.isValid)
+        validationErrors.push(...benefitsValidation.errors);
+    }
+
+    // If there are validation errors, show them and prevent submission
+    if (validationErrors.length > 0) {
+      alert(
+        "Please fix the following issues:\n\n" + validationErrors.join("\n")
+      );
+      return;
+    }
 
     let formData: Record<string, unknown> = {};
 
@@ -208,10 +300,24 @@ export default function ScheduleModal({
         };
         break;
       case "Drill":
+        // Auto-add any typed values that weren't added to arrays
+        const finalSkills = [...drillSkills];
+        const finalEquipment = [...drillEquipment];
+
+        if (newSkill.trim() && !drillSkills.includes(newSkill.trim())) {
+          finalSkills.push(newSkill.trim());
+        }
+        if (
+          newEquipment.trim() &&
+          !drillEquipment.includes(newEquipment.trim())
+        ) {
+          finalEquipment.push(newEquipment.trim());
+        }
+
         formData = {
           title: drillTitle,
-          skills: drillSkills,
-          equipment: drillEquipment,
+          skills: finalSkills,
+          equipment: finalEquipment,
           time: drillTime,
           instructions: drillInstructions,
           additional_info: drillAdditionalInfo,
@@ -243,7 +349,7 @@ export default function ScheduleModal({
   };
 
   const removeSkill = (skill: string) => {
-    setDrillSkills(drillSkills.filter(s => s !== skill));
+    setDrillSkills(drillSkills.filter((s) => s !== skill));
   };
 
   const addEquipment = () => {
@@ -254,7 +360,7 @@ export default function ScheduleModal({
   };
 
   const removeEquipment = (equipment: string) => {
-    setDrillEquipment(drillEquipment.filter(e => e !== equipment));
+    setDrillEquipment(drillEquipment.filter((e) => e !== equipment));
   };
 
   if (!isOpen) return null;
@@ -317,24 +423,15 @@ export default function ScheduleModal({
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Date & Time
                 </label>
-                <div className="relative w-full">
+                <div className="w-full">
                   <input
                     type="datetime-local"
                     value={gameDateTime}
                     onChange={(e) => setGameDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
-                    className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 max-w-full"
-                    style={{ 
-                      WebkitAppearance: 'none',
-                      MozAppearance: 'textfield'
-                    }}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 max-w-full"
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
                 </div>
               </div>
               <div>
@@ -395,24 +492,15 @@ export default function ScheduleModal({
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Date & Time
                 </label>
-                <div className="relative w-full">
+                <div className="w-full">
                   <input
                     type="datetime-local"
                     value={practiceDateTime}
                     onChange={(e) => setPracticeDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
-                    className="w-full p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 max-w-full"
-                    style={{ 
-                      WebkitAppearance: 'none',
-                      MozAppearance: 'textfield'
-                    }}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 max-w-full"
                     required
                   />
-                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
                 </div>
               </div>
 
@@ -658,7 +746,9 @@ export default function ScheduleModal({
                         onChange={(e) => setNewSkill(e.target.value)}
                         placeholder="e.g., Passing"
                         className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" && (e.preventDefault(), addSkill())
+                        }
                       />
                       <button
                         type="button"
@@ -701,7 +791,10 @@ export default function ScheduleModal({
                         onChange={(e) => setNewEquipment(e.target.value)}
                         placeholder="e.g., cones"
                         className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addEquipment())}
+                        onKeyPress={(e) =>
+                          e.key === "Enter" &&
+                          (e.preventDefault(), addEquipment())
+                        }
                       />
                       <button
                         type="button"
@@ -753,7 +846,15 @@ export default function ScheduleModal({
                   </label>
                   <select
                     value={drillDifficulty}
-                    onChange={(e) => setDrillDifficulty(e.target.value as "Basic" | "Intermediate" | "Advanced" | "Expert")}
+                    onChange={(e) =>
+                      setDrillDifficulty(
+                        e.target.value as
+                          | "Basic"
+                          | "Intermediate"
+                          | "Advanced"
+                          | "Expert"
+                      )
+                    }
                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   >
                     <option value="Basic">Basic</option>
@@ -768,7 +869,16 @@ export default function ScheduleModal({
                   </label>
                   <select
                     value={drillCategory}
-                    onChange={(e) => setDrillCategory(e.target.value as "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building")}
+                    onChange={(e) =>
+                      setDrillCategory(
+                        e.target.value as
+                          | "Drill"
+                          | "Warm-up"
+                          | "Conditioning"
+                          | "Skill Development"
+                          | "Team Building"
+                      )
+                    }
                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   >
                     <option value="Drill">Drill</option>
@@ -779,7 +889,6 @@ export default function ScheduleModal({
                   </select>
                 </div>
               </div>
-
 
               {/* Instructions */}
               <div>
@@ -852,7 +961,11 @@ export default function ScheduleModal({
               disabled={loading}
               className="bg-blue-600 text-white px-6 py-2 rounded-md font-inter hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Saving..." : activeTab === "Drill" ? "Post Drill" : `Schedule ${activeTab}`}
+              {loading
+                ? "Saving..."
+                : activeTab === "Drill"
+                ? "Post Drill"
+                : `Schedule ${activeTab}`}
             </button>
           </div>
         </form>

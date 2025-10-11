@@ -14,7 +14,7 @@ import {
   deleteReply,
   pinMessage,
 } from "../../lib/messageActions";
-import { devLog, devError } from "../../lib/security";
+import { devLog, devError, validateInput } from "../../lib/security";
 
 interface MessageBoardProps {
   userId: string;
@@ -84,15 +84,15 @@ export default function MessageBoard({
       // Save current scroll position
       const scrollY = window.scrollY;
       // Prevent scrolling
-      document.body.style.position = 'fixed';
+      document.body.style.position = "fixed";
       document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = '100%';
-      
+      document.body.style.width = "100%";
+
       return () => {
         // Restore scrolling
-        document.body.style.position = '';
-        document.body.style.top = '';
-        document.body.style.width = '';
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.width = "";
         window.scrollTo(0, scrollY);
       };
     }
@@ -215,9 +215,19 @@ export default function MessageBoard({
   const handleNewMessage = async () => {
     if (!newMessageText.trim() || submitting) return;
 
+    // Validate message for profanity
+    const validation = validateInput(newMessageText, "message");
+    if (!validation.isValid) {
+      toast.error(validation.errors.join(", "), {
+        duration: 4000,
+        position: "top-right",
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
-      await createMessage(newMessageText, userId, userName);
+      await createMessage(validation.sanitizedValue, userId, userName);
       setNewMessageText("");
       setShowNewMessageModal(false);
       toast.success("Message posted successfully", {
@@ -238,9 +248,19 @@ export default function MessageBoard({
   const handleReply = async (messageId: string) => {
     if (!replyText.trim() || submitting) return;
 
+    // Validate reply for profanity
+    const validation = validateInput(replyText, "reply");
+    if (!validation.isValid) {
+      toast.error(validation.errors.join(", "), {
+        duration: 4000,
+        position: "top-right",
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
-      await createReply(messageId, replyText, userId, userName);
+      await createReply(messageId, validation.sanitizedValue, userId, userName);
       setReplyText("");
       toast.success("Reply posted successfully", {
         duration: 3000,
@@ -260,9 +280,24 @@ export default function MessageBoard({
   const handleEditMessage = async (messageId: string) => {
     if (!editText.trim() || submitting) return;
 
+    // Validate edited message for profanity
+    const validation = validateInput(editText, "message");
+    if (!validation.isValid) {
+      toast.error(validation.errors.join(", "), {
+        duration: 4000,
+        position: "top-right",
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
-      await updateMessage(messageId, editText, userId, isAdmin);
+      await updateMessage(
+        messageId,
+        validation.sanitizedValue,
+        userId,
+        isAdmin
+      );
       setEditingMessage(null);
       setEditText("");
       toast.success("Message updated successfully", {
@@ -283,9 +318,19 @@ export default function MessageBoard({
   const handleEditReply = async (replyId: string) => {
     if (!editText.trim() || submitting) return;
 
+    // Validate edited reply for profanity
+    const validation = validateInput(editText, "reply");
+    if (!validation.isValid) {
+      toast.error(validation.errors.join(", "), {
+        duration: 4000,
+        position: "top-right",
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
-      await updateReply(replyId, editText, userId, isAdmin);
+      await updateReply(replyId, validation.sanitizedValue, userId, isAdmin);
       setEditingReply(null);
       setEditText("");
       toast.success("Reply updated successfully", {
@@ -355,12 +400,15 @@ export default function MessageBoard({
       setSubmitting(true);
       await pinMessage(messageId, isAdmin);
       // Find the message to determine if it was pinned or unpinned
-      const message = messages.find(m => m.id === messageId);
+      const message = messages.find((m) => m.id === messageId);
       if (message) {
-        toast.success(message.is_pinned ? "Message unpinned" : "Message pinned", {
-          duration: 3000,
-          position: "top-right",
-        });
+        toast.success(
+          message.is_pinned ? "Message unpinned" : "Message pinned",
+          {
+            duration: 3000,
+            position: "top-right",
+          }
+        );
       }
     } catch (error) {
       devError("Error pinning message:", error);
