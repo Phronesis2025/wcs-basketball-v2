@@ -370,9 +370,9 @@ export default function ScheduleModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-2 sm:mx-0">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-50">
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-1 sm:mx-0">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bebas uppercase text-gray-900">
             Schedule New
           </h2>
@@ -413,7 +413,7 @@ export default function ScheduleModal({
           ))}
         </div>
 
-        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
+        <form onSubmit={handleSubmit} className="p-3 sm:p-6">
           <div className="mb-6">
             <h3 className="text-xl font-bebas uppercase text-gray-900">
               {activeTab}
@@ -433,7 +433,7 @@ export default function ScheduleModal({
                     value={gameDateTime}
                     onChange={(e) => setGameDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 max-w-full"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 box-border"
                     required
                   />
                 </div>
@@ -502,7 +502,7 @@ export default function ScheduleModal({
                     value={practiceDateTime}
                     onChange={(e) => setPracticeDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 max-w-full"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 text-sm sm:text-base min-w-0 box-border"
                     required
                   />
                 </div>
