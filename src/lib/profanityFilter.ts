@@ -197,9 +197,14 @@ export function checkProfanity(text: string): {
       continue;
     }
 
-    // Check for partial matches (for compound words)
+    // Check for partial matches (for compound words) using word boundaries
     for (const profaneWord of PROFANITY_WORDS) {
-      if (word.includes(profaneWord) || profaneWord.includes(word)) {
+      // Use word boundary regex to avoid false positives like "pass" matching "ass"
+      const wordBoundaryRegex = new RegExp(
+        `\\b${profaneWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+        "i"
+      );
+      if (wordBoundaryRegex.test(word)) {
         detectedWords.push(word);
         break;
       }

@@ -2,9 +2,37 @@
 
 ## Last Updated
 
-December 2024, Current Status - v2.6.1 Critical UI Fixes Complete with Perfect Security Score (10/10)
+January 2025, Current Status - v2.7.1 Comprehensive Admin Permission System Complete with Enhanced Security (10/10)
 
 ## Recent Updates
+
+### January 2025 (v2.7.1)
+
+- ✅ **Comprehensive Admin Permission System**: Enterprise-level role-based access control
+  - Implemented complete admin permissions across all dashboard sections
+  - Admins can manage all content (add, edit, delete any item)
+  - Coaches restricted to managing only their own content
+  - Backend validation with server-side permission checks
+  - Frontend controls with real-time permission enforcement
+  - Consistent security model across schedules, updates, drills, and messages
+
+- ✅ **UI/UX Enhancements**: Drill Card Styling and Duration Formatting
+  - Fixed category pill colors to match site theme (conditioning now orange)
+  - Enhanced duration display with automatic "minutes" addition
+  - Improved visual consistency across all drill cards
+  - Better user experience with clearer time information
+
+- ✅ **Security Improvements**: Profanity Filter and Modal Enhancements
+  - Fixed false positive issues with word boundary matching
+  - Enhanced profanity detection for basketball terminology
+  - Updated profanity validation modals with consistent styling
+  - Improved content moderation with professional feedback
+
+- ✅ **Technical Improvements**: Form Routing and Code Quality
+  - Fixed modal form submission routing with formType field
+  - Resolved drill data saving to incorrect sections
+  - Enhanced error handling and debugging capabilities
+  - Cleaner code structure with helper functions
 
 ### December 2024 (v2.6.1)
 

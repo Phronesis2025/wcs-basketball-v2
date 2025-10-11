@@ -11,19 +11,22 @@ interface DrillCardProps {
 
 export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
   const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Drill":
-        return "bg-blue-500";
-      case "Warm-up":
-        return "bg-green-500";
-      case "Conditioning":
-        return "bg-red-500";
-      case "Skill Development":
-        return "bg-purple-500";
-      case "Team Building":
-        return "bg-yellow-500";
-      default:
-        return "bg-gray-500";
+    // Normalize the category by trimming whitespace and converting to lowercase for comparison
+    const normalizedCategory = category?.trim().toLowerCase();
+
+    // Use case-insensitive matching
+    if (normalizedCategory === "drill") {
+      return "bg-blue-100 text-blue-700";
+    } else if (normalizedCategory === "warm-up") {
+      return "bg-green-100 text-green-700";
+    } else if (normalizedCategory === "conditioning") {
+      return "bg-orange-100 text-orange-700";
+    } else if (normalizedCategory === "skill development") {
+      return "bg-purple-100 text-purple-700";
+    } else if (normalizedCategory === "team building") {
+      return "bg-yellow-100 text-yellow-700";
+    } else {
+      return "bg-gray-100 text-gray-700";
     }
   };
 
@@ -42,6 +45,15 @@ export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
     }
   };
 
+  const formatDuration = (time: string) => {
+    // If it's just a number, add "minutes"
+    if (/^\d+$/.test(time.trim())) {
+      return `${time} minutes`;
+    }
+    // If it already contains time units, return as is
+    return time;
+  };
+
   return (
     <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
@@ -51,7 +63,7 @@ export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
           </h4>
           <div className="flex items-center space-x-2 mt-2">
             <span
-              className={`text-white text-xs font-medium px-2 py-1 rounded-full ${getCategoryColor(
+              className={`text-xs font-medium px-2 py-1 rounded-full ${getCategoryColor(
                 drill.category
               )}`}
             >
@@ -65,7 +77,7 @@ export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
               {drill.difficulty}
             </span>
             <span className="text-sm text-gray-600 font-inter">
-              {drill.time}
+              {formatDuration(drill.time)}
             </span>
           </div>
         </div>
