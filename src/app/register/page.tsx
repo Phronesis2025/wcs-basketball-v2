@@ -124,7 +124,7 @@ export default function Register() {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-md mx-auto bg-white rounded-lg shadow-md p-8">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bebas text-navy mb-2">REGISTER</h1>
+          <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase text-navy">REGISTER</h1>
           <p className="text-gray-600 font-inter">Join WCS Basketball today!</p>
         </div>
 

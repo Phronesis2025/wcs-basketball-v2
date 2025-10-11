@@ -235,7 +235,7 @@ export default function TeamPage({ params }: TeamPageProps) {
             />
           </div>
           <div className="text-center sm:text-left">
-            <h1 className="text-4xl sm:text-5xl font-bebas uppercase">
+            <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
               {team.name}
             </h1>
             <p className="text-lg font-inter text-gray-300">
