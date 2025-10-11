@@ -127,7 +127,10 @@ export default function SchedulesPage() {
     const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour duration
     return {
       id: event.id,
-      title: event.event_type === "Update" ? event.title : event.event_type,
+      title:
+        event.event_type === "Update"
+          ? (event.title || "Update")
+          : event.event_type,
       start: startDate, // pass Date object (local)
       end: endDate,
       allDay: false,
