@@ -24,7 +24,7 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
     Sentry.captureMessage("Teams page error: " + error);
     return (
       <div className="bg-navy min-h-screen text-white">
-        <section className="py-12" aria-label="Our Teams">
+        <section className="pt-20 pb-12 sm:pt-24" aria-label="Our Teams">
           <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-white text-base font-inter text-center">
               {error}
@@ -38,7 +38,7 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
   if (!uniqueTeams.length) {
     return (
       <div className="bg-navy min-h-screen text-white">
-        <section className="py-12" aria-label="Our Teams">
+        <section className="pt-20 pb-12 sm:pt-24" aria-label="Our Teams">
           <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-white text-base font-inter text-center">
               No teams available.
