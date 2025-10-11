@@ -13,7 +13,6 @@ export type PracticeDrillInput = {
   benefits: string;
   difficulty: string;
   category: string;
-  week_number: number;
   image_url?: string;
 };
 
@@ -26,8 +25,7 @@ export async function getPracticeDrills(teamId: string) {
       .from("practice_drills")
       .select("*")
       .eq("team_id", teamId)
-      .is("deleted_at", null)
-      .order("week_number", { ascending: true });
+      .order("created_at", { ascending: false });
 
     if (error) {
       devError("Error fetching practice drills:", error);
@@ -57,7 +55,6 @@ export async function getAllPracticeDrills() {
           name
         )
       `)
-      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -107,9 +104,6 @@ export async function createPracticeDrill(
     if (!drillData.category.trim()) {
       throw new Error("Category is required");
     }
-    if (!drillData.week_number || drillData.week_number < 1) {
-      throw new Error("Week number must be a positive integer");
-    }
 
     const { data, error } = await supabase
       .from("practice_drills")
@@ -124,7 +118,6 @@ export async function createPracticeDrill(
         benefits: drillData.benefits.trim(),
         difficulty: drillData.difficulty.trim(),
         category: drillData.category.trim(),
-        week_number: drillData.week_number,
         image_url: drillData.image_url || null,
         created_by: userId,
       })
@@ -181,7 +174,6 @@ export async function updatePracticeDrill(
     if (drillData.benefits !== undefined) updateData.benefits = drillData.benefits.trim();
     if (drillData.difficulty !== undefined) updateData.difficulty = drillData.difficulty.trim();
     if (drillData.category !== undefined) updateData.category = drillData.category.trim();
-    if (drillData.week_number !== undefined) updateData.week_number = drillData.week_number;
     if (drillData.image_url !== undefined) updateData.image_url = drillData.image_url;
 
     const { data, error } = await supabase
@@ -228,7 +220,7 @@ export async function deletePracticeDrill(drillId: string, userId: string) {
 
     const { error } = await supabase
       .from("practice_drills")
-      .update({ deleted_at: new Date().toISOString() })
+      .delete()
       .eq("id", drillId);
 
     if (error) {
@@ -259,7 +251,6 @@ export async function getPracticeDrillById(drillId: string) {
         )
       `)
       .eq("id", drillId)
-      .is("deleted_at", null)
       .single();
 
     if (error) {

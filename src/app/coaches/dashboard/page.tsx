@@ -352,15 +352,15 @@ export default function CoachesDashboard() {
           const fileName = `${Date.now()}-${imageFile.name}`;
           devLog("Client upload to practice-drills:", { fileName });
           const { error: uploadError } = await supabase.storage
-            .from("practice-drills")
-            .upload(`drills/${fileName}`, imageFile, { upsert: true });
+            .from("team-updates")
+            .upload(`practice_drills/${fileName}`, imageFile, { upsert: true });
           if (uploadError) {
             devError("Client image upload error:", uploadError);
             throw new Error(uploadError.message);
           }
           const { data: urlData } = supabase.storage
-            .from("practice-drills")
-            .getPublicUrl(`drills/${fileName}`);
+            .from("team-updates")
+            .getPublicUrl(`practice_drills/${fileName}`);
           imageUrl = urlData.publicUrl;
           devLog("Client upload success:", { imageUrl });
         }
@@ -377,7 +377,6 @@ export default function CoachesDashboard() {
             benefits: sanitizeInput(data.benefits as string),
             difficulty: data.difficulty as string,
             category: data.category as string,
-            week_number: data.week_number as number,
             image_url: imageUrl,
           }, userId!);
           setDrills((prev) =>
@@ -399,7 +398,6 @@ export default function CoachesDashboard() {
             benefits: sanitizeInput(data.benefits as string),
             difficulty: data.difficulty as string,
             category: data.category as string,
-            week_number: data.week_number as number,
             image_url: imageUrl,
           }, userId!);
           setDrills((prev) => [...prev, newDrill]);

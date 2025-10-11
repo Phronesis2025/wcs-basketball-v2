@@ -70,9 +70,6 @@ export default function DrillCard({
               {drill.difficulty}
             </span>
             <span className="text-sm text-gray-600 font-inter">
-              Week {drill.week_number}
-            </span>
-            <span className="text-sm text-gray-600 font-inter">
               {drill.time}
             </span>
           </div>

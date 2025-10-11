@@ -61,7 +61,6 @@ export default function ScheduleModal({
   const [drillCategory, setDrillCategory] = useState<
     "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building"
   >("Drill");
-  const [drillWeekNumber, setDrillWeekNumber] = useState(1);
   const [drillImage, setDrillImage] = useState<File | null>(null);
   const [newSkill, setNewSkill] = useState("");
   const [newEquipment, setNewEquipment] = useState("");
@@ -110,7 +109,6 @@ export default function ScheduleModal({
         setDrillBenefits(editingData.benefits);
         setDrillDifficulty(editingData.difficulty as "Basic" | "Intermediate" | "Advanced" | "Expert");
         setDrillCategory(editingData.category as "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building");
-        setDrillWeekNumber(editingData.week_number);
       }
     } else {
       // Reset form when opening for new item
@@ -166,7 +164,6 @@ export default function ScheduleModal({
     setDrillBenefits("");
     setDrillDifficulty("Basic");
     setDrillCategory("Drill");
-    setDrillWeekNumber(1);
     setDrillImage(null);
     setNewSkill("");
     setNewEquipment("");
@@ -221,7 +218,6 @@ export default function ScheduleModal({
           benefits: drillBenefits,
           difficulty: drillDifficulty,
           category: drillCategory,
-          week_number: drillWeekNumber,
           image: drillImage,
         };
         break;
@@ -784,21 +780,6 @@ export default function ScheduleModal({
                 </div>
               </div>
 
-              {/* Week Number */}
-              <div>
-                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  Week Number *
-                </label>
-                <input
-                  type="number"
-                  value={drillWeekNumber}
-                  onChange={(e) => setDrillWeekNumber(parseInt(e.target.value) || 1)}
-                  min="1"
-                  max="52"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                  required
-                />
-              </div>
 
               {/* Instructions */}
               <div>
@@ -871,7 +852,7 @@ export default function ScheduleModal({
               disabled={loading}
               className="bg-blue-600 text-white px-6 py-2 rounded-md font-inter hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? "Saving..." : `Schedule ${activeTab}`}
+              {loading ? "Saving..." : activeTab === "Drill" ? "Post Drill" : `Schedule ${activeTab}`}
             </button>
           </div>
         </form>
