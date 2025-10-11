@@ -433,7 +433,8 @@ export default function ScheduleModal({
                     value={gameDateTime}
                     onChange={(e) => setGameDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    style={{ width: '100%', maxWidth: '100%' }}
                     required
                   />
                 </div>
@@ -447,7 +448,8 @@ export default function ScheduleModal({
                   value={gameOpponent}
                   onChange={(e) => setGameOpponent(e.target.value)}
                   placeholder="eg. Central 7th grade"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  style={{ width: '100%', maxWidth: '100%' }}
                 />
               </div>
               <div>
@@ -459,7 +461,8 @@ export default function ScheduleModal({
                   value={gameLocation}
                   onChange={(e) => setGameLocation(e.target.value)}
                   placeholder="eg. Salina South Gym"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  style={{ width: '100%', maxWidth: '100%' }}
                   required
                 />
               </div>
@@ -502,7 +505,8 @@ export default function ScheduleModal({
                     value={practiceDateTime}
                     onChange={(e) => setPracticeDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    style={{ width: '100%', maxWidth: '100%' }}
                     required
                   />
                 </div>
