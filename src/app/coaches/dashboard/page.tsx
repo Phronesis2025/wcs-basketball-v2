@@ -1202,9 +1202,9 @@ export default function CoachesDashboard() {
               <Image
                 src={
                   selectedTeam === "__GLOBAL__"
-                    ? "/logos.png"
+                    ? "/logos/logo2.png"
                     : teams.find((team) => team.id === selectedTeam)?.logo_url ||
-                      "/logos.png"
+                      "/logos/logo2.png"
                 }
                 alt={
                   selectedTeam === "__GLOBAL__"
