@@ -18,12 +18,14 @@ October 2025, Current Status - v2.7.2 Security & Stability Updates (10/10)
 ### January 2025 (v2.7.1) - UI/UX Improvements and Mobile Optimization
 
 - ✅ **Team Updates Card Layout Fix**: Resolved uniform card appearance issues
+
   - Fixed title text wrapping that caused layout inconsistencies
   - Implemented single-line title display with proper truncation
   - Ensured "READ MORE" buttons stay within card boundaries
   - Improved responsive design across all screen sizes
 
 - ✅ **Mobile UX Enhancement**: Significantly improved touch targets for message board
+
   - Increased icon sizes on mobile devices (20px vs 16px on desktop)
   - Enhanced padding for better touch interaction (8px vs 4px)
   - Added visual feedback with hover backgrounds and smooth transitions
@@ -31,12 +33,14 @@ October 2025, Current Status - v2.7.2 Security & Stability Updates (10/10)
   - Meets accessibility guidelines with proper touch target sizes
 
 - ✅ **Page Scroll Behavior Fix**: Resolved unwanted scrolling on team pages
+
   - Fixed Framer Motion animation causing scroll issues after refresh
   - Implemented scroll restoration prevention
   - Added animation state tracking to prevent re-triggering
   - Preserved user scroll position during page interactions
 
 - ✅ **iOS Modal Field Alignment**: Date & Time inputs now match other fields
+
   - Normalized iPhone sizing for `datetime-local` controls
   - Applied `appearance-none`, `block`, and `overflow-hidden` to neutralize native widths
   - Ensured consistent `w-full`/`max-w-full` behavior in Game and Practice modals
@@ -50,6 +54,7 @@ October 2025, Current Status - v2.7.2 Security & Stability Updates (10/10)
 ### January 2025 (v2.7.0) - Comprehensive Admin Permission System
 
 - ✅ **Comprehensive Admin Permission System**: Enterprise-level role-based access control
+
   - Implemented complete admin permissions across all dashboard sections
   - Admins can manage all content (add, edit, delete any item)
   - Coaches restricted to managing only their own content
@@ -58,12 +63,14 @@ October 2025, Current Status - v2.7.2 Security & Stability Updates (10/10)
   - Consistent security model across schedules, updates, drills, and messages
 
 - ✅ **UI/UX Enhancements**: Drill Card Styling and Duration Formatting
+
   - Fixed category pill colors to match site theme (conditioning now orange)
   - Enhanced duration display with automatic "minutes" addition
   - Improved visual consistency across all drill cards
   - Better user experience with clearer time information
 
 - ✅ **Security Improvements**: Profanity Filter and Modal Enhancements
+
   - Fixed false positive issues with word boundary matching
   - Enhanced profanity detection for basketball terminology
   - Updated profanity validation modals with consistent styling

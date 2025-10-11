@@ -1353,7 +1353,13 @@ export default function CoachesDashboard() {
                 return (
                   <StatCard
                     title="Next Game"
-                    value={nextGame ? `${nextGame.days} day${nextGame.days === 1 ? "" : "s"}` : "N/A"}
+                    value={
+                      nextGame
+                        ? `${nextGame.days} day${
+                            nextGame.days === 1 ? "" : "s"
+                          }`
+                        : "N/A"
+                    }
                     subtitle={
                       nextGame ? `vs ${nextGame.opponent}` : "No upcoming games"
                     }

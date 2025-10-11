@@ -43,7 +43,7 @@ export default function HomeSections() {
               transition={{ duration: 0.6, delay: 0.4 }}
             >
               <Link
-                href="/coaches"
+                href="/coaches/login"
                 className="inline-block bg-blue-600 text-white font-medium font-inter rounded-md hover:bg-blue-700 hover:scale-105 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 text-base px-6 py-3 uppercase no-underline"
               >
                 Meet Our Coaches
