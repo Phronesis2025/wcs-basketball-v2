@@ -23,6 +23,11 @@
   - Implemented animation state tracking to prevent re-triggering
   - Preserved scroll position during page interactions
 
+- **iOS Modal Field Alignment**: Date & Time inputs now align with other fields
+  - Standardized width behavior for `datetime-local` inputs on iPhone
+  - Applied `appearance-none`, `block`, and `overflow-hidden` to neutralize native control sizing
+  - Ensured identical `w-full`/`max-w-full` sizing in both Game and Practice modals
+
 ### 🐛 Bug Fixes
 
 - **Build Warnings**: Fixed TypeScript warnings for unused variables
