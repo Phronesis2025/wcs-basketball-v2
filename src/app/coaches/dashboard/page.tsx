@@ -699,6 +699,20 @@ export default function CoachesDashboard() {
     };
   }, [router]);
 
+  // Lock scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup function to reset overflow when component unmounts
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMobileMenuOpen]);
+
   useEffect(() => {
     if (!selectedTeam) return;
 
