@@ -3,19 +3,6 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { supabase } from "@/lib/supabaseClient";
 
-// Configure Redis client (use your Upstash URL and token from .env.local)
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || "",
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
-});
-
-// Rate limit: 5 requests per minute per IP
-const ratelimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(5, "1 m"),
-  analytics: true,
-});
-
 export async function GET(request: Request) {
   // Security: Additional validation for production
   if (process.env.NODE_ENV === "production") {
@@ -28,8 +15,28 @@ export async function GET(request: Request) {
   // Extract IP address from request headers
   const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
 
-  // Check rate limit for this IP
-  const { success, limit, reset, remaining } = await ratelimit.limit(ip);
+  // Initialize rate limiter only when Upstash env vars are present
+  let success = true;
+  let limit: number | undefined = undefined;
+  let reset: number | undefined = undefined;
+  let remaining: number | undefined = undefined;
+
+  const upstashUrl = process.env.UPSTASH_REDIS_REST_URL;
+  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (upstashUrl && upstashToken) {
+    const redis = new Redis({ url: upstashUrl, token: upstashToken });
+    const ratelimit = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(5, "1 m"),
+      analytics: true,
+    });
+    const result = await ratelimit.limit(ip);
+    success = result.success;
+    limit = result.limit;
+    reset = result.reset;
+    remaining = result.remaining;
+  }
 
   // If rate limit exceeded, return 429 status
   if (!success) {

@@ -1,6 +1,6 @@
 # WCSv2.0 Security
 
-## 🔒 Current Security Implementation (v2.7.1)
+## 🔒 Current Security Implementation (v2.7.2)
 
 ### Recent Security Updates
 
@@ -8,6 +8,8 @@
   - Resolved page scrolling vulnerabilities that could expose sensitive data
   - Fixed button type safety to prevent unintended form submissions
   - Enhanced modal security with proper button rendering and event handling
+- **Auth Persistence**: Added Supabase `onAuthStateChange` listener to maintain sessions across navigation
+- **API Hardening**: Guarded Upstash Redis initialization; initialize rate limiter only when env vars present
 - **Build Security**: Fixed TypeScript type errors and React Hooks violations
 - **Code Quality**: Resolved unused variable warnings and improved type safety
 - **Schema Validation**: Fixed database schema issues with non-existent columns
