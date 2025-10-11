@@ -433,7 +433,7 @@ export default function ScheduleModal({
                     value={gameDateTime}
                     onChange={(e) => setGameDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
-                    className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
                     style={{ width: '100%', maxWidth: '100%' }}
                     required
                   />
@@ -505,7 +505,7 @@ export default function ScheduleModal({
                     value={practiceDateTime}
                     onChange={(e) => setPracticeDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
-                    className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
                     style={{ width: '100%', maxWidth: '100%' }}
                     required
                   />
