@@ -651,6 +651,53 @@ export default function CoachesDashboard() {
     fetchData();
   }, [router]);
 
+  // Listen for authentication state changes
+  useEffect(() => {
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_OUT' || !session) {
+          router.push("/coaches/login");
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          // User signed in, refresh the data
+          try {
+            setUserId(session.user.id);
+            setLastLoginTime(new Date());
+            
+            const email = session.user.email || "";
+            const firstName = session.user.user_metadata?.first_name || "";
+            const lastName = email.includes("@")
+              ? email.split("@")[0].split(".").pop() || ""
+              : "";
+            const capitalizedLastName =
+              lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
+            setUserName(firstName || capitalizedLastName || email);
+
+            const userData = await getUserRole(session.user.id);
+            if (userData) {
+              const admin = userData.role === "admin";
+              setIsAdmin(admin);
+
+              // Fetch teams based on user role
+              let teamsData: Team[];
+              if (admin) {
+                teamsData = await fetchTeams();
+              } else {
+                teamsData = await fetchTeamsByCoachId(session.user.id);
+              }
+              setTeams(teamsData);
+            }
+          } catch (err) {
+            devError("Auth state change error:", err);
+          }
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [router]);
+
   useEffect(() => {
     if (!selectedTeam) return;
 

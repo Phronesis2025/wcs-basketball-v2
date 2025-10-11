@@ -29,6 +29,16 @@ export default function CoachesLogin() {
   const router = useRouter();
 
   useEffect(() => {
+    // Check if user is already authenticated
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        router.push("/coaches/dashboard");
+        return;
+      }
+    };
+    checkAuth();
+
     // Generate CSRF token for form security (best practice to prevent CSRF attacks)
     const token = generateCSRFToken();
     setCsrfToken(token);
@@ -50,7 +60,7 @@ export default function CoachesLogin() {
       }
       setAttempts(count);
     }
-  }, []);
+  }, [router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
