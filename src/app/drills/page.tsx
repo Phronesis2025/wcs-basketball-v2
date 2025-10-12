@@ -105,11 +105,33 @@ export default function DrillsPage() {
     };
   }, [selectedDrill]);
 
-  const uniqueTimes = [...new Set(drills.map((drill) => drill.time))];
+  // Predefined time categories
+  const timeCategories = [
+    { value: "all", label: "All Times" },
+    { value: "under-5", label: "< 5 minutes" },
+    { value: "5-10", label: "5-10 minutes" },
+    { value: "10-15", label: "10-15 minutes" },
+    { value: "15-30", label: "15-30 minutes" }
+  ];
+
   const uniqueSkills = [...new Set(drills.flatMap((drill) => drill.skills))];
 
+  // Function to categorize drill time into time buckets
+  const getTimeCategory = (timeString: string) => {
+    // Extract numeric value from time string (e.g., "15 minutes" -> 15)
+    const numericTime = parseInt(timeString.replace(/\D/g, ''));
+    
+    if (numericTime < 5) return "under-5";
+    if (numericTime >= 5 && numericTime <= 10) return "5-10";
+    if (numericTime > 10 && numericTime <= 15) return "10-15";
+    if (numericTime > 15 && numericTime <= 30) return "15-30";
+    
+    // For times outside our categories, return null (will be filtered out)
+    return null;
+  };
+
   const filteredDrills = drills.filter((drill) => {
-    const timeMatch = timeFilter === "all" || drill.time === timeFilter;
+    const timeMatch = timeFilter === "all" || getTimeCategory(drill.time) === timeFilter;
     const skillMatch =
       skillFilter === "all" || drill.skills.includes(skillFilter);
     return timeMatch && skillMatch;
@@ -144,10 +166,9 @@ export default function DrillsPage() {
                 onChange={(e) => setTimeFilter(e.target.value)}
                 className="w-full bg-gray-900 text-white border border-red-500/50 rounded p-2"
               >
-                <option value="all">All Times</option>
-                {uniqueTimes.map((time) => (
-                  <option key={time} value={time}>
-                    {time}
+                {timeCategories.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.label}
                   </option>
                 ))}
               </select>
