@@ -1,21 +1,36 @@
 # WCSv2.0 Changelog
 
-## v2.7.2 - October 2025 (Current)
+## v2.7.3 - January 2025 (Current)
+
+### 🎨 UI/UX Improvements
+
+- **Drills Modal Enhancement**: Comprehensive redesign of practice drill modal interface
+  - Increased icon sizes (16px → 32px) for better visibility
+  - Improved spacing and margins following standard design practices
+  - Enhanced typography hierarchy with larger titles and properly sized content
+  - Added consistent red vertical bars to all section headers (Benefits, Instructions, Additional Information)
+  - Implemented left-alignment for all text content for better readability
+  - Added body scroll prevention when modal is open for better focus
+  - Reordered content flow: Skills/Equipment/Duration → Benefits → Image → Instructions → Additional Information
 
 ### 🔒 Security & Stability
 
 - Authentication persistence: Added Supabase auth state listener to keep users logged in when navigating
 - Scroll lock: Prevent background scrolling when nav menu is open (regular and dashboard)
 - API hardening: Guarded Upstash Redis usage to avoid missing-env warnings, initialized rate limiter only when configured
+- Modal security: Enhanced drill modal with proper scroll prevention and focus management
 
 ### 🐛 Fixes
 
 - Team logo display: Fixed invalid Tailwind classes (`w-26 h-26` → `w-24 h-24`)
 - Next Game card: Correct pluralization for day/days when value is 1
+- Drills modal: Fixed missing red vertical bars in section headers
+- Typography: Improved font sizing and alignment consistency across drill modal
 
 ### 📦 Build
 
 - Production build passes; remaining Prisma OpenTelemetry warnings are 3rd‑party and non-blocking
+- Zero security vulnerabilities confirmed via npm audit
 
 ---
 
