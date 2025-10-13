@@ -856,7 +856,7 @@ export default function CoachesDashboard() {
 
     const loadTeamData = async () => {
       try {
-        console.log("loadTeamData called for team:", selectedTeam);
+        devLog("loadTeamData called for team:", selectedTeam);
         const teamIdForFetch =
           selectedTeam === "__GLOBAL__" ? "__GLOBAL__" : selectedTeam;
         const [schedulesData, updatesData, drillsData] = await Promise.all([
@@ -866,7 +866,7 @@ export default function CoachesDashboard() {
             ? getPracticeDrills(selectedTeam)
             : Promise.resolve([]),
         ]);
-        console.log("Fetched updates data:", updatesData);
+        devLog("Fetched updates data:", updatesData);
         setSchedules(schedulesData);
         setUpdates(updatesData);
         setDrills(drillsData);
@@ -951,7 +951,7 @@ export default function CoachesDashboard() {
               : `team_id=eq.${selectedTeam}`,
         },
         (payload) => {
-          console.log(
+          devLog(
             "Dashboard received team update UPDATE (filtered):",
             payload.new
           );
@@ -966,7 +966,7 @@ export default function CoachesDashboard() {
           table: "team_updates",
         },
         (payload) => {
-          console.log(
+          devLog(
             "Dashboard received team update UPDATE (unfiltered):",
             payload.new
           );
@@ -978,10 +978,10 @@ export default function CoachesDashboard() {
               : update.team_id === selectedTeam;
 
           if (isRelevant) {
-            console.log("Update is relevant, reloading data");
+            devLog("Update is relevant, reloading data");
             loadTeamData();
           } else {
-            console.log("Update is not relevant, skipping reload");
+            devLog("Update is not relevant, skipping reload");
           }
         }
       )
