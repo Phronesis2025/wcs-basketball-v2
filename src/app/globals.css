@@ -7,9 +7,163 @@ html {
   scroll-behavior: smooth;
 }
 
-/* Smooth scrolling for all elements */
-* {
-  scroll-behavior: smooth;
+/* Marquee animation for logo carousel */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.marquee {
+  animation: marquee 45s linear infinite;
+  will-change: transform; /* Optimize for animations */
+}
+
+.marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Hero content animation - CSS-only for better performance */
+@keyframes heroFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-content {
+  animation: heroFadeIn 0.8s ease-out;
+}
+
+/* Values section card animation - CSS-only for better performance */
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.values-card {
+  animation: cardFadeIn 0.4s ease-out;
+}
+
+/* Fan Zone card animation - CSS-only for better performance */
+@keyframes fanZoneCardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fan-zone-card {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.fan-zone-card-visible {
+  animation: fanZoneCardFadeIn 0.5s ease-out forwards;
+}
+
+/* Shop section animation - CSS-only for better performance */
+@keyframes shopSectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.shop-section {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.shop-section-visible {
+  animation: shopSectionFadeIn 0.5s ease-out forwards;
+}
+
+/* Home sections animation - CSS-only for better performance */
+@keyframes homeSectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes homeSectionTextFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes homeSectionButtonFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.home-section-title {
+  opacity: 0;
+  transform: translateY(50px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.home-section-title-visible {
+  animation: homeSectionFadeIn 0.6s ease-out forwards;
+}
+
+.home-section-text {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.home-section-text-visible {
+  animation: homeSectionTextFadeIn 0.6s ease-out forwards;
+}
+
+.home-section-button {
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.home-section-button-visible {
+  animation: homeSectionButtonFadeIn 0.6s ease-out forwards;
 }
 
 @font-face {

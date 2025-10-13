@@ -18,6 +18,7 @@ export default function TeamCard({ team }: TeamCardProps) {
         width={100}
         height={100}
         className="rounded-full object-cover mb-4 flex-shrink-0"
+        sizes="100px"
         onError={(e) => {
           devError(`Image load error for ${team.name} logo: ${team.logo_url}`);
           e.currentTarget.src = "/logos/logo2.png";

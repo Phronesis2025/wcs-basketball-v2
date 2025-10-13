@@ -223,6 +223,7 @@ export default function TeamPage({ params }: TeamPageProps) {
               height={120}
               className="rounded-full object-cover"
               priority
+              sizes="120px"
               onError={(e) => {
                 devError(
                   `Image load error for ${team.name} logo: ${team.logo_url}`
@@ -290,6 +291,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                         width={70}
                         height={70}
                         className="rounded-full flex-shrink-0"
+                        sizes="70px"
                         onError={(e) => {
                           devError(
                             `Image load error for coach ${coach.first_name} ${coach.last_name}: ${coach.image_url}`

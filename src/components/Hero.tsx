@@ -1,7 +1,5 @@
 "use client";
 
-import Image from "next/image";
-import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -32,26 +30,24 @@ export default function Hero() {
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80 sm:from-black/80 sm:via-black/65 sm:to-black/90" />
 
-      {/* Basketball Flames Video - Desktop Only */}
+      {/* Basketball Flames - Desktop Only (use <img> for animated asset, low priority) */}
       <div className="hidden sm:block absolute right-4 sm:right-60 lg:right-80 xl:right-96 top-1/2 transform -translate-y-1/2 translate-x-1/2 z-10">
-        <Image
-          src="/video/basketball-flames.gif"
+        <img
+          src="/video/basketball-flames-optimized.webp"
           alt="Basketball flames animation"
-          width={384}
-          height={384}
-          className="w-96 h-96 object-contain"
-          style={{ width: "auto", height: "auto" }}
-          priority
-          unoptimized
+          width={500}
+          height={500}
+          className="w-[500px] h-[500px] object-contain"
+          loading="lazy"
+          decoding="async"
+          fetchPriority="low"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).style.display = "none";
+          }}
         />
       </div>
 
-      <motion.div
-        className="relative z-20 text-white flex flex-col items-start justify-between w-full min-h-screen px-4 pt-20 pb-8 sm:px-6 md:px-8 sm:pt-24 sm:pb-16"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-      >
+      <div className="relative z-20 text-white flex flex-col items-start justify-between w-full min-h-screen px-4 pt-20 pb-8 sm:px-6 md:px-8 sm:pt-24 sm:pb-16 hero-content">
         {/* Headline */}
         <div className="flex-grow flex flex-col justify-center">
           <h1 className="text-[clamp(2.2rem,6vw,4.5rem)] font-bebas font-bold uppercase leading-tight drop-shadow-lg">
@@ -65,17 +61,20 @@ export default function Hero() {
           </h1>
         </div>
 
-        {/* Basketball Flames Video - Mobile Only */}
+        {/* Basketball Flames - Mobile Only (use <img>, load lazily to avoid LCP hit) */}
         <div className="sm:hidden flex justify-center mb-6 pl-4">
-          <Image
-            src="/video/basketball-flames.gif"
+          <img
+            src="/video/basketball-flames-optimized.webp"
             alt="Basketball flames animation"
-            width={368}
-            height={368}
-            className="w-92 h-92 object-contain"
-            style={{ width: "auto", height: "auto" }}
-            priority
-            unoptimized
+            width={400}
+            height={400}
+            className="w-[400px] h-[400px] object-contain"
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            onError={(e) => {
+              (e.currentTarget as HTMLImageElement).style.display = "none";
+            }}
           />
         </div>
 
@@ -94,7 +93,7 @@ export default function Hero() {
             Basketball excellence that extends beyond the game
           </p>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }

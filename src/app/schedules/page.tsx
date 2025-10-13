@@ -4,12 +4,14 @@ import React from "react";
 import { Team, Schedule, TeamUpdate } from "@/types/supabase";
 import * as Sentry from "@sentry/nextjs";
 import { useState, useEffect, useMemo } from "react";
+import { fetchTeams } from "@/lib/actions";
+import { supabase } from "@/lib/supabaseClient";
+
+// Import FullCalendar normally - the code splitting will happen at the page level
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import listPlugin from "@fullcalendar/list";
-import { fetchTeams } from "@/lib/actions";
-import { supabase } from "@/lib/supabaseClient";
 
 export default function SchedulesPage() {
   const [events, setEvents] = useState<Schedule[]>([]);
@@ -129,7 +131,7 @@ export default function SchedulesPage() {
       id: event.id,
       title:
         event.event_type === "Update"
-          ? (event.title || "Update")
+          ? event.title || "Update"
           : event.event_type,
       start: startDate, // pass Date object (local)
       end: endDate,
@@ -156,7 +158,9 @@ export default function SchedulesPage() {
   return (
     <div className="min-h-screen bg-black text-white p-4 pt-20 sm:pt-24">
       <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">Schedules</h1>
+        <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
+          Schedules
+        </h1>
         {error && <p className="text-red font-inter text-center">{error}</p>}
         <section aria-label="Filters">
           <div className="grid grid-cols-2 gap-4 mb-8">
@@ -240,7 +244,9 @@ export default function SchedulesPage() {
                 right: "dayGridMonth,timeGridWeek,listWeek",
               }}
               events={formattedEvents}
-              eventContent={(info) => (
+              eventContent={(info: {
+                event: { title: string; extendedProps: { location: string } };
+              }) => (
                 <div className="p-1">
                   <p className="text-white font-inter text-sm">
                     {info.event.title}
@@ -250,7 +256,7 @@ export default function SchedulesPage() {
                   </p>
                 </div>
               )}
-              eventClick={(info) =>
+              eventClick={(info: { event: { id: string } }) =>
                 setSelectedEvent(
                   events.find((e) => e.id === info.event.id) || null
                 )

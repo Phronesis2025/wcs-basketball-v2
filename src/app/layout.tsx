@@ -5,6 +5,7 @@ import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTop";
+// import QueryProvider from "../components/QueryProvider"; // Temporarily disabled
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -110,6 +111,8 @@ export default function RootLayout({
 
         {/* Web App Manifest */}
         <link rel="manifest" href="/site.webmanifest" />
+
+        {/* Note: No preload for animated flames to avoid LCP impact */}
       </head>
       <body>
         <ScrollToTop />

@@ -230,6 +230,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                           width={400}
                           height={192}
                           className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       ) : team.logo_url ? (
                         <Image
@@ -238,6 +239,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                           width={400}
                           height={192}
                           className="w-full h-32 md:h-40 lg:h-48 object-contain rounded-md bg-gray-800/50 p-4"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       ) : (
                         <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
@@ -330,6 +332,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                   width={400}
                   height={320}
                   className="w-full h-auto max-h-64 sm:max-h-80 object-contain rounded-md mt-4"
+                  sizes="100vw"
                 />
               )}
             </div>
