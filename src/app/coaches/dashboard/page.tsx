@@ -14,6 +14,7 @@ import {
 } from "../../../lib/security";
 import {
   addSchedule,
+  addRecurringPractice,
   updateSchedule,
   deleteSchedule,
   addUpdate,
@@ -369,25 +370,45 @@ export default function CoachesDashboard() {
           );
           toast.success("Schedule updated!");
         } else {
-          // Create new schedule
-          const newSchedule = await addSchedule({
-            team_id:
-              selectedTeam === "__GLOBAL__"
-                ? "00000000-0000-0000-0000-000000000000"
-                : selectedTeam,
-            event_type: data.event_type as
-              | "Game"
-              | "Practice"
-              | "Tournament"
-              | "Meeting",
-            date_time: new Date(data.date_time as string).toISOString(),
-            location: data.location as string,
-            opponent: (data.opponent as string) || undefined,
-            description: (data.description as string) || undefined,
-            is_global: selectedTeam === "__GLOBAL__",
-          });
-          setSchedules((prev) => [...prev, newSchedule]);
-          toast.success("Schedule created!");
+          // Check if this is a recurring practice
+          if (actualType === "Practice" && data.isRecurring) {
+            // Create recurring practice schedules
+            const newSchedules = await addRecurringPractice({
+              team_id: selectedTeam === "__GLOBAL__" ? null : selectedTeam,
+              event_type: "Practice",
+              date_time: new Date(data.date_time as string).toISOString(),
+              title: (data.title as string) || undefined,
+              location: data.location as string,
+              description: (data.description as string) || undefined,
+              is_global: selectedTeam === "__GLOBAL__",
+              recurringType: data.recurringType as "count" | "date",
+              recurringCount: data.recurringCount as number,
+              recurringEndDate: (data.recurringEndDate as string) || undefined,
+              selectedDays: data.selectedDays as number[],
+            });
+            setSchedules((prev) => [...prev, ...newSchedules]);
+            toast.success(`Created ${newSchedules.length} recurring practice schedules!`);
+          } else {
+            // Create single schedule
+            const newSchedule = await addSchedule({
+              team_id:
+                selectedTeam === "__GLOBAL__"
+                  ? "00000000-0000-0000-0000-000000000000"
+                  : selectedTeam,
+              event_type: data.event_type as
+                | "Game"
+                | "Practice"
+                | "Tournament"
+                | "Meeting",
+              date_time: new Date(data.date_time as string).toISOString(),
+              location: data.location as string,
+              opponent: (data.opponent as string) || undefined,
+              description: (data.description as string) || undefined,
+              is_global: selectedTeam === "__GLOBAL__",
+            });
+            setSchedules((prev) => [...prev, newSchedule]);
+            toast.success("Schedule created!");
+          }
         }
       } else if (actualType === "Update") {
         let imageUrl: string | undefined;
