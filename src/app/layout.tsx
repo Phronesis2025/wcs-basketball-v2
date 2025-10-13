@@ -5,7 +5,7 @@ import "./globals.css";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTop";
-// import QueryProvider from "../components/QueryProvider"; // Temporarily disabled
+import QueryProvider from "../components/QueryProvider"; // Re-enabled
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -112,18 +112,31 @@ export default function RootLayout({
         {/* Web App Manifest */}
         <link rel="manifest" href="/site.webmanifest" />
 
+        {/* Performance: preconnect/dns-prefetch for Supabase storage */}
+        <link
+          rel="preconnect"
+          href="https://htgkddahhgugesktujds.supabase.co"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://htgkddahhgugesktujds.supabase.co"
+        />
+
         {/* Note: No preload for animated flames to avoid LCP impact */}
       </head>
       <body>
-        <ScrollToTop />
-        <Navbar />
-        {children}
-        <Footer />
-        {/* Vercel Analytics for user behavior tracking */}
-        <Analytics />
+        <QueryProvider>
+          <ScrollToTop />
+          <Navbar />
+          {children}
+          <Footer />
+          {/* Vercel Analytics for user behavior tracking */}
+          <Analytics />
 
-        {/* Vercel Speed Insights for Core Web Vitals monitoring */}
-        <SpeedInsights />
+          {/* Vercel Speed Insights for Core Web Vitals monitoring */}
+          <SpeedInsights />
+        </QueryProvider>
       </body>
     </html>
   );

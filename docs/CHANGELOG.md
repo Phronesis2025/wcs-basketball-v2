@@ -21,6 +21,15 @@
   - Moved unused components to dedicated folder for cleaner codebase
   - Maintained all functionality while reducing JavaScript execution time
 
+- **Additional Optimizations (latest)**
+  - Added `font-display: swap` for Inter and Bebas Neue to speed text rendering
+  - Added `preconnect`/`dns-prefetch` for Supabase storage to accelerate third‑party image fetch
+  - Gated FullCalendar render until events are loaded to avoid heavy initial mount
+  - Deferred Team Updates carousel work until section is in‑view (intersection observer)
+  - Converted TeamUpdates images to fixed aspect‑ratio wrappers with `Image fill` to remove warnings
+  - Re‑enabled QueryProvider and integrated React Query on Teams and Schedules (safe caching)
+  - Added `public/robots.txt` (removed 404, improved crawl hygiene)
+
 ### 🎨 UI/UX Improvements
 
 - **Drills Modal Enhancement**: Comprehensive redesign of practice drill modal interface
@@ -37,7 +46,7 @@
 - Authentication persistence: Added Supabase auth state listener to keep users logged in when navigating
 - Scroll lock: Prevent background scrolling when nav menu is open (regular and dashboard)
 - API hardening: Guarded Upstash Redis usage to avoid missing-env warnings, initialized rate limiter only when configured
-- Modal security: Enhanced drill modal with proper scroll prevention and focus management
+- Realtime: Dashboard subscriptions limited to INSERTs with error handling + 30s polling fallback
 
 ### 🐛 Fixes
 

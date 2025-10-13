@@ -2,40 +2,37 @@
 
 ## Last Updated
 
-January 2025, Current Status - v2.7.3 Performance Optimization (10/10)
+January 2025, Current Status - v2.7.3 Performance Optimization (complete)
 
 ## Recent Updates
 
 ### January 2025 (v2.7.3) - Performance Optimization
 
-- ✅ **Mobile TBT Optimization**: Dramatically improved mobile Total Blocking Time
-  - Replaced Framer Motion with CSS animations in FanZone, Shop, and HomeSections components
-  - Reduced JavaScript bundle size by eliminating heavy animation library from main page
-  - Implemented hardware-accelerated CSS animations for better performance
-  - Expected mobile TBT improvement from 1370ms to <300ms
+- ✅ **Mobile TBT Optimization**
+  - Replaced Framer Motion with CSS animations in FanZone, Shop, HomeSections
+  - Deferred TeamUpdates carousel initialization until in-view
+  - Gated FullCalendar render until events are loaded
 
-- ✅ **Image Optimization**: Enhanced image loading performance
-  - Replaced MP4 videos with static images in FanZone component
-  - Updated basketball flames to use optimized WebP format with proper sizing (500px desktop, 400px mobile)
-  - Added responsive image sizing and lazy loading for better LCP scores
-  - Fixed fetchPriority casing warning in Hero component
+- ✅ **Image Optimization**
+  - Basketball flames switched to optimized WebP with controlled sizing
+  - FanZone: videos replaced with static images
+  - TeamUpdates: fixed aspect‑ratio wrappers + `Image fill`; warnings resolved
 
-- ✅ **Bundle Size Reduction**: Optimized JavaScript payload
-  - Removed unused Framer Motion imports from main page components
-  - Moved unused components to dedicated folder for cleaner codebase
-  - Maintained all functionality while reducing JavaScript execution time
+- ✅ **Data Layer**
+  - Re-enabled QueryProvider app-wide with safe caching
+  - Teams page wired to `useTeams` with SSR fallback
+  - Schedules page fetching optimized; teams list via React Query
 
-- ✅ **Drills Modal Redesign**: Comprehensive UI/UX improvements for practice drill modal
-  - Increased icon sizes from 16px to 32px for better visibility
-  - Enhanced spacing and margins following standard design practices
-  - Improved typography hierarchy with larger titles (text-lg) and properly sized content (text-base)
-  - Added consistent red vertical bars to all section headers (Benefits, Instructions, Additional Information)
-  - Implemented left-alignment for all text content for better readability
-  - Added body scroll prevention when modal is open for better user focus
-  - Reordered content flow: Skills/Equipment/Duration → Benefits → Image → Instructions → Additional Information
+- ✅ **Network & Fonts**
+  - Added `font-display: swap` for Inter and Bebas Neue
+  - Added `preconnect`/`dns-prefetch` to Supabase storage domain
 
-- ✅ **Security Verification**: Confirmed zero vulnerabilities via npm audit
-- ✅ **Build Success**: Production build passes with only non-critical Prisma warnings
+- ✅ **SEO/Crawl Hygiene**
+  - Added `public/robots.txt` to remove 404 and allow crawling
+
+- ✅ **Build & Security**
+  - `npm audit`: 0 vulnerabilities
+  - Builds pass; only expected third‑party warnings remain
 
 ### October 2025 (v2.7.2) - Security & Stability
 

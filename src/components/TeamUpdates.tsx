@@ -4,6 +4,7 @@ import { motion, Variants, PanInfo } from "framer-motion";
 import Image from "next/image";
 import { Team, TeamUpdate } from "../types/supabase";
 import { sanitizeInput } from "../lib/security";
+import { useInView } from "react-intersection-observer";
 
 interface TeamUpdatesProps {
   team: Team;
@@ -25,6 +26,10 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const { ref: sectionRef, inView } = useInView({
+    triggerOnce: true,
+    rootMargin: "200px",
+  });
 
   // Calculate how many cards to show based on screen size
   const getCardsToShow = () => {
@@ -41,6 +46,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
 
   // Update cards to show on resize and track container width
   useEffect(() => {
+    if (!inView) return; // Defer work until visible
     if (typeof window !== "undefined") {
       const handleResize = () => {
         setCardsToShow(getCardsToShow());
@@ -55,10 +61,11 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);
     }
-  }, []);
+  }, [inView]);
 
   // Keyboard navigation
   useEffect(() => {
+    if (!inView) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (updates.length <= cardsToShow) return;
 
@@ -71,10 +78,11 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [currentIndex, maxIndex, updates.length, cardsToShow]);
+  }, [currentIndex, maxIndex, updates.length, cardsToShow, inView]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
+    if (!inView) return;
     if (selectedUpdate) {
       // Prevent scrolling
       document.body.style.overflow = "hidden";
@@ -87,7 +95,7 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [selectedUpdate]);
+  }, [selectedUpdate, inView]);
 
   const handleDragEnd = (event: unknown, info: PanInfo) => {
     setIsDragging(false);
@@ -114,11 +122,19 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
   };
 
   return (
-    <section aria-label="Team Updates" className="mt-8 space-y-4">
+    <section
+      ref={sectionRef}
+      aria-label="Team Updates"
+      className="mt-8 space-y-4"
+    >
       <h2 className="text-2xl font-bebas uppercase text-center">
         Team Updates
       </h2>
-      {updates.length > 0 ? (
+      {!inView ? (
+        <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
+          <p className="text-gray-300 font-inter">Loading updates…</p>
+        </div>
+      ) : updates.length > 0 ? (
         <div className="relative overflow-hidden group">
           {/* Left Arrow */}
           {updates.length > cardsToShow && currentIndex > 0 && (
@@ -224,25 +240,27 @@ export default function TeamUpdates({ team, updates }: TeamUpdatesProps) {
                   <div className="flex-1 flex flex-col justify-between mt-4">
                     <div className="flex-shrink-0 mb-4">
                       {update.image_url ? (
-                        <Image
-                          src={update.image_url}
-                          alt={update.title}
-                          width={400}
-                          height={192}
-                          className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
+                        <div className="relative w-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] rounded-md overflow-hidden">
+                          <Image
+                            src={update.image_url}
+                            alt={update.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          />
+                        </div>
                       ) : team.logo_url ? (
-                        <Image
-                          src={team.logo_url}
-                          alt={`${team.name} logo`}
-                          width={400}
-                          height={192}
-                          className="w-full h-32 md:h-40 lg:h-48 object-contain rounded-md bg-gray-800/50 p-4"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
+                        <div className="relative w-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] rounded-md overflow-hidden bg-gray-800/50">
+                          <Image
+                            src={team.logo_url}
+                            alt={`${team.name} logo`}
+                            fill
+                            className="object-contain p-4"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          />
+                        </div>
                       ) : (
-                        <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
+                        <div className="w-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] bg-gray-800/50 rounded-md flex items-center justify-center">
                           <span className="text-gray-500 text-sm">
                             No Image
                           </span>

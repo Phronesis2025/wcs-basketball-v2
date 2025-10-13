@@ -6,6 +6,7 @@ import { useMediaQuery } from "react-responsive";
 import TeamCard from "@/components/TeamCard";
 import * as Sentry from "@sentry/nextjs";
 import { Team } from "@/types/supabase";
+import { useTeams } from "@/hooks/useTeams";
 
 interface ClientTeamsProps {
   initialTeams: Team[];
@@ -16,7 +17,12 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
   const { ref, inView } = useInView({ triggerOnce: true });
   const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
 
-  const uniqueTeams = initialTeams.filter(
+  // Fetch teams via React Query with caching; fall back to initialTeams
+  const { data: queryTeams, isLoading, error: queryError } = useTeams();
+  const teamsSource: Team[] =
+    queryTeams && queryTeams.length ? queryTeams : initialTeams;
+
+  const uniqueTeams = teamsSource.filter(
     (team, index, self) => index === self.findIndex((t) => t.name === team.name)
   );
 
@@ -36,6 +42,22 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
   }
 
   if (!uniqueTeams.length) {
+    if (isLoading) {
+      return (
+        <div className="bg-navy min-h-screen text-white">
+          <section className="pt-20 pb-12 sm:pt-24" aria-label="Our Teams">
+            <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
+              <p className="text-white text-base font-inter text-center">
+                Loading teams...
+              </p>
+            </div>
+          </section>
+        </div>
+      );
+    }
+    if (queryError) {
+      Sentry.captureMessage("Teams query error: " + String(queryError));
+    }
     return (
       <div className="bg-navy min-h-screen text-white">
         <section className="pt-20 pb-12 sm:pt-24" aria-label="Our Teams">

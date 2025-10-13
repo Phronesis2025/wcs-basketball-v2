@@ -4,8 +4,8 @@ import React from "react";
 import { Team, Schedule, TeamUpdate } from "@/types/supabase";
 import * as Sentry from "@sentry/nextjs";
 import { useState, useEffect, useMemo } from "react";
-import { fetchTeams } from "@/lib/actions";
 import { supabase } from "@/lib/supabaseClient";
+import { useTeams } from "@/hooks/useTeams";
 
 // Import FullCalendar normally - the code splitting will happen at the page level
 import FullCalendar from "@fullcalendar/react";
@@ -15,7 +15,7 @@ import listPlugin from "@fullcalendar/list";
 
 export default function SchedulesPage() {
   const [events, setEvents] = useState<Schedule[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const { data: teamsData = [], error: teamsError } = useTeams();
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [teamFilter, setTeamFilter] = useState<string>("all");
   const [error, setError] = useState<string | null>(null);
@@ -37,8 +37,6 @@ export default function SchedulesPage() {
           .not("date_time", "is", null)
           .is("deleted_at", null);
 
-        const teamsData = await fetchTeams();
-
         // Combine schedules and updates, converting updates to schedule format
         const allEvents = [
           ...(schedules || []),
@@ -57,8 +55,7 @@ export default function SchedulesPage() {
           })),
         ];
 
-        setEvents(allEvents);
-        setTeams(teamsData);
+        setEvents(allEvents as Schedule[]);
       } catch (err) {
         Sentry.captureException(err);
         setError("Failed to load schedules or teams");
@@ -66,8 +63,9 @@ export default function SchedulesPage() {
     };
     fetchData();
 
+    // Realtime: inserts only; minimal subscription
     const channel = supabase
-      .channel("schedules")
+      .channel("schedules_inserts")
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "schedules" },
@@ -93,8 +91,8 @@ export default function SchedulesPage() {
               created_by: update.created_by,
               created_at: update.created_at,
               deleted_at: update.deleted_at,
-            };
-            setEvents((prev) => [...prev, scheduleEvent as Schedule]);
+            } as Schedule;
+            setEvents((prev) => [...prev, scheduleEvent]);
           }
         }
       )
@@ -117,10 +115,12 @@ export default function SchedulesPage() {
       timeZone: "America/Chicago",
     });
     return filteredEvents.filter((event) => {
-      const eventDate = new Date(event.date_time).toLocaleDateString("en-US", {
-        timeZone: "America/Chicago",
-      });
-      return eventDate === today;
+      // Compare date-only strings in the same locale/timezone
+      const eventDateOnly = new Date(event.date_time).toLocaleDateString(
+        "en-US",
+        { timeZone: "America/Chicago" }
+      );
+      return eventDateOnly === today;
     });
   }, [filteredEvents]);
 
@@ -161,7 +161,11 @@ export default function SchedulesPage() {
         <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
           Schedules
         </h1>
-        {error && <p className="text-red font-inter text-center">{error}</p>}
+        {(error || teamsError) && (
+          <p className="text-red font-inter text-center">
+            {error || String(teamsError)}
+          </p>
+        )}
         <section aria-label="Filters">
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div>
@@ -175,7 +179,7 @@ export default function SchedulesPage() {
                 className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
               >
                 <option value="all">All Teams</option>
-                {teams.map((team) => (
+                {teamsData.map((team: Team) => (
                   <option key={team.id} value={team.id}>
                     {team.name}
                   </option>
@@ -235,51 +239,55 @@ export default function SchedulesPage() {
         <section aria-label="Schedules Calendar">
           <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4">
             <h2 className="text-2xl font-bebas mb-4">Team Schedules</h2>
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
-              initialView="dayGridMonth"
-              headerToolbar={{
-                left: "prev,next today",
-                center: "title",
-                right: "dayGridMonth,timeGridWeek,listWeek",
-              }}
-              events={formattedEvents}
-              eventContent={(info: {
-                event: { title: string; extendedProps: { location: string } };
-              }) => (
-                <div className="p-1">
-                  <p className="text-white font-inter text-sm">
-                    {info.event.title}
-                  </p>
-                  <p className="text-gray-300 font-inter text-xs">
-                    {info.event.extendedProps.location}
-                  </p>
-                </div>
-              )}
-              eventClick={(info: { event: { id: string } }) =>
-                setSelectedEvent(
-                  events.find((e) => e.id === info.event.id) || null
-                )
-              }
-              height="auto"
-              views={{
-                listWeek: {
-                  eventTimeFormat: {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    meridiem: "short",
+            {formattedEvents.length > 0 ? (
+              <FullCalendar
+                plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
+                initialView="dayGridMonth"
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,listWeek",
+                }}
+                events={formattedEvents}
+                eventContent={(info: {
+                  event: { title: string; extendedProps: { location: string } };
+                }) => (
+                  <div className="p-1">
+                    <p className="text-white font-inter text-sm">
+                      {info.event.title}
+                    </p>
+                    <p className="text-gray-300 font-inter text-xs">
+                      {info.event.extendedProps.location}
+                    </p>
+                  </div>
+                )}
+                eventClick={(info: { event: { id: string } }) =>
+                  setSelectedEvent(
+                    events.find((e) => e.id === info.event.id) || null
+                  )
+                }
+                height="auto"
+                views={{
+                  listWeek: {
+                    eventTimeFormat: {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      meridiem: "short",
+                    },
                   },
-                },
-                dayGridMonth: {
-                  eventTimeFormat: {
-                    hour: "numeric",
-                    minute: "2-digit",
-                    meridiem: "short",
+                  dayGridMonth: {
+                    eventTimeFormat: {
+                      hour: "numeric",
+                      minute: "2-digit",
+                      meridiem: "short",
+                    },
                   },
-                },
-              }}
-              eventClassNames="border-none cursor-pointer"
-            />
+                }}
+                eventClassNames="border-none cursor-pointer"
+              />
+            ) : (
+              <p className="text-gray-300 font-inter">Loading calendar…</p>
+            )}
           </div>
         </section>
         {selectedEvent && (
