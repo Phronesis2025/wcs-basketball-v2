@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import { getUserRole } from "@/lib/actions";
+import { devError } from "@/lib/security";
 
 export default function AdminAnalytics() {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -27,7 +28,7 @@ export default function AdminAnalytics() {
           }
         }
       } catch (error) {
-        console.error("Error checking authorization:", error);
+        devError("Error checking authorization:", error);
       } finally {
         setIsLoading(false);
       }
