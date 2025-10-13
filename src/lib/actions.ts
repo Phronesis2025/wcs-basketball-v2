@@ -373,6 +373,103 @@ export async function addSchedule(data: {
   }
 }
 
+// Add recurring practice schedules
+export async function addRecurringPractice(data: {
+  team_id: string | null;
+  event_type: "Practice";
+  date_time: string;
+  title?: string | null;
+  location: string;
+  description?: string;
+  is_global?: boolean;
+  recurringType: "count" | "date";
+  recurringCount: number;
+  recurringEndDate?: string;
+  selectedDays: number[]; // Array of weekday numbers (0=Sunday, 1=Monday, etc.)
+}): Promise<Schedule[]> {
+  try {
+    const startDate = new Date(data.date_time);
+    const schedules: Schedule[] = [];
+    
+    // Calculate end date based on recurring type
+    let endDate: Date;
+    if (data.recurringType === "date" && data.recurringEndDate) {
+      endDate = new Date(data.recurringEndDate);
+    } else {
+      // For count type, calculate end date based on recurring count
+      const weeksToAdd = Math.ceil(data.recurringCount / data.selectedDays.length);
+      endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + (weeksToAdd * 7));
+    }
+
+    // Generate all recurring dates
+    const currentDate = new Date(startDate);
+    const generatedDates: Date[] = [];
+    
+    // Start from the beginning of the week containing the start date
+    const startOfWeek = new Date(currentDate);
+    startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+    
+    let weekStart = new Date(startOfWeek);
+    
+    while (weekStart <= endDate) {
+      // For each selected day of the week
+      for (const dayOfWeek of data.selectedDays) {
+        const eventDate = new Date(weekStart);
+        eventDate.setDate(weekStart.getDate() + dayOfWeek);
+        
+        // Only include dates that are >= start date and <= end date
+        if (eventDate >= startDate && eventDate <= endDate) {
+          generatedDates.push(new Date(eventDate));
+        }
+      }
+      // Move to next week
+      weekStart.setDate(weekStart.getDate() + 7);
+    }
+
+    // Limit to the specified count if using count type
+    const finalDates = data.recurringType === "count" 
+      ? generatedDates.slice(0, data.recurringCount)
+      : generatedDates;
+
+    devLog(`Creating ${finalDates.length} recurring practice schedules`);
+
+    // Create all schedule entries
+    for (const eventDate of finalDates) {
+      const insertData = {
+        team_id: data.is_global ? null : data.team_id,
+        event_type: data.event_type,
+        date_time: eventDate.toISOString(),
+        title: data.title,
+        location: data.location,
+        description: data.description,
+        is_global: data.is_global,
+      };
+
+      const { data: result, error } = await supabase
+        .from("schedules")
+        .insert(insertData)
+        .select()
+        .single();
+
+      if (error) {
+        devError("Supabase recurring schedule insert error:", error);
+        throw new Error(`Failed to create recurring schedule: ${error.message}`);
+      }
+
+      schedules.push(result);
+    }
+
+    devLog(`Successfully created ${schedules.length} recurring practice schedules`);
+    return schedules;
+  } catch (err: unknown) {
+    devError("Add recurring practice error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to add recurring practice";
+    throw new Error(errorMessage);
+  }
+}
+
 // Update schedule
 export async function updateSchedule(
   id: string,
