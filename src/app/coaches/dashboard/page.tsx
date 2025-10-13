@@ -18,6 +18,7 @@ import {
   updateSchedule,
   updateRecurringPractice,
   deleteSchedule,
+  bulkDeleteSchedules,
   addUpdate,
   updateUpdate,
   deleteUpdate,
@@ -132,7 +133,9 @@ export default function CoachesDashboard() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
-    type: "drill" | "game" | "practice" | "update";
+    type: "drill" | "game" | "practice" | "update" | "bulk_practices";
+    name?: string;
+    count?: number;
   } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [showProfanityModal, setShowProfanityModal] = useState(false);
@@ -322,7 +325,7 @@ export default function CoachesDashboard() {
   };
 
   // Delete all practices for the selected team
-  const handleDeleteAllPractices = async () => {
+  const handleDeleteAllPractices = () => {
     if (!selectedTeam || selectedTeam === "__GLOBAL__") {
       toast.error("Please select a team first");
       return;
@@ -337,30 +340,14 @@ export default function CoachesDashboard() {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete all ${practiceSchedules.length} practice(s) for this team? This action cannot be undone.`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      // Delete all practice schedules
-      const deletePromises = practiceSchedules.map((schedule) =>
-        deleteSchedule(schedule.id)
-      );
-
-      await Promise.all(deletePromises);
-
-      // Update local state
-      setSchedules((prev) =>
-        prev.filter((s) => !(s.event_type === "Practice" && s.team_id === selectedTeam))
-      );
-
-      toast.success(`Deleted ${practiceSchedules.length} practice(s) successfully!`);
-    } catch (error) {
-      console.error("Error deleting practices:", error);
-      toast.error("Failed to delete practices. Please try again.");
-    }
+    // Set up the delete confirmation modal
+    setDeleteTarget({
+      type: "bulk_practices",
+      id: selectedTeam,
+      name: `all ${practiceSchedules.length} practice(s)`,
+      count: practiceSchedules.length,
+    });
+    setIsDeleteModalOpen(true);
   };
 
   const confirmDelete = async () => {
@@ -396,6 +383,24 @@ export default function CoachesDashboard() {
         await deleteUpdate(deleteTarget.id, userId!, isAdmin);
         setUpdates((prev) => prev.filter((u) => u.id !== deleteTarget.id));
         toast.success("Update deleted successfully", {
+          duration: 3000,
+          position: "top-right",
+        });
+      } else if (deleteTarget.type === "bulk_practices") {
+        // Get all practice schedules for the team
+        const practiceSchedules = schedules.filter(
+          (s) => s.event_type === "Practice" && s.team_id === deleteTarget.id
+        );
+        
+        const scheduleIds = practiceSchedules.map((s) => s.id);
+        await bulkDeleteSchedules(scheduleIds, deleteTarget.id);
+        
+        // Update local state
+        setSchedules((prev) =>
+          prev.filter((s) => !(s.event_type === "Practice" && s.team_id === deleteTarget.id))
+        );
+        
+        toast.success(`Deleted ${deleteTarget.count} practice(s) successfully!`, {
           duration: 3000,
           position: "top-right",
         });
@@ -1764,7 +1769,7 @@ export default function CoachesDashboard() {
                     </button>
                     <button
                       onClick={handleDeleteAllPractices}
-                      className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-red-700"
+                      className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-red-700 transition-colors"
                     >
                       Delete All Practices
                     </button>
@@ -1953,11 +1958,14 @@ export default function CoachesDashboard() {
                     ? "Practice"
                     : deleteTarget?.type === "update"
                     ? "Update"
+                    : deleteTarget?.type === "bulk_practices"
+                    ? "All Practices"
                     : "Item"}
                 </h3>
                 <p className="text-sm text-gray-500 mb-6">
-                  This action cannot be undone. The {deleteTarget?.type} will be
-                  permanently removed.
+                  {deleteTarget?.type === "bulk_practices"
+                    ? `Are you sure you want to delete ${deleteTarget.name}? This action cannot be undone and will permanently remove all practice schedules for this team.`
+                    : `This action cannot be undone. The ${deleteTarget?.type} will be permanently removed.`}
                 </p>
                 <div className="flex space-x-3 justify-center">
                   <button

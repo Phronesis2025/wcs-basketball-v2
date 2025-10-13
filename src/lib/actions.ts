@@ -629,6 +629,58 @@ export async function deleteSchedule(
   }
 }
 
+// Bulk delete schedules (for coaches to delete all practices for their team)
+export async function bulkDeleteSchedules(
+  scheduleIds: string[],
+  teamId: string
+): Promise<void> {
+  try {
+    devLog("Bulk deleting schedules:", { count: scheduleIds.length, teamId });
+
+    if (!supabaseAdmin) {
+      throw new Error("Admin client not available");
+    }
+
+    // Verify all schedules belong to the specified team
+    const { data: schedules, error: fetchError } = await supabaseAdmin
+      .from("schedules")
+      .select("id, team_id, event_type")
+      .in("id", scheduleIds);
+
+    if (fetchError) {
+      devError("Error fetching schedules for bulk deletion:", fetchError);
+      throw new Error("Failed to fetch schedules");
+    }
+
+    // Verify all schedules belong to the team and are practices
+    const invalidSchedules = schedules.filter(
+      (s) => s.team_id !== teamId || s.event_type !== "Practice"
+    );
+
+    if (invalidSchedules.length > 0) {
+      throw new Error("Some schedules don't belong to the specified team or aren't practices");
+    }
+
+    // Bulk delete all schedules
+    const { error } = await supabaseAdmin
+      .from("schedules")
+      .update({ deleted_at: new Date().toISOString() })
+      .in("id", scheduleIds);
+
+    if (error) {
+      devError("Supabase bulk schedule delete error:", error);
+      throw new Error(error.message);
+    }
+
+    devLog(`Successfully bulk deleted ${scheduleIds.length} schedules`);
+  } catch (err: unknown) {
+    devError("Bulk delete schedules error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to bulk delete schedules";
+    throw new Error(errorMessage);
+  }
+}
+
 // Add team update
 export async function addUpdate(data: {
   team_id: string | null; // Allow null for global updates
