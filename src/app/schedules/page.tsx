@@ -187,8 +187,10 @@ export default function SchedulesPage() {
   // Desktop now mirrors the mobile custom calendar, so no need to format for FullCalendar
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 pt-20 sm:pt-24">
-      <div className="max-w-4xl mx-auto space-y-8">
+    <div className="bg-navy min-h-screen text-white">
+      <section className="pt-20 pb-12 sm:pt-24" aria-label="Schedules">
+        <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="space-y-8">
         <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
           Schedules
         </h1>
@@ -317,13 +319,15 @@ export default function SchedulesPage() {
             </div>
           </div>
         </section>
-        <EventDetailsModal
-          isOpen={!!selectedEvent}
-          event={selectedEvent}
-          teams={teamsData}
-          onClose={() => setSelectedEvent(null)}
-        />
-      </div>
+          </div>
+        </div>
+      </section>
+      <EventDetailsModal
+        isOpen={!!selectedEvent}
+        event={selectedEvent}
+        teams={teamsData}
+        onClose={() => setSelectedEvent(null)}
+      />
     </div>
   );
 }
