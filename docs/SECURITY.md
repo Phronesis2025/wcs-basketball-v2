@@ -387,3 +387,17 @@
 - [Next.js Security](https://nextjs.org/docs/advanced-features/security-headers)
 - [Supabase Security](https://supabase.com/docs/guides/auth/row-level-security)
 - [Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
+
+## 🔒 Current Security Implementation (v2.7.3)
+
+### Recent Security Updates
+
+- **Performance Optimization Security**: Enhanced security during performance improvements
+  - Maintained all security headers and CSP policies during Framer Motion optimization
+  - Preserved input validation and sanitization during CSS animation migration
+  - Ensured no security regressions during mobile TBT optimization
+  - Verified zero vulnerabilities during bundle size reduction
+- **Realtime Hardening (Dashboard)**
+  - Limited subscriptions to INSERT events only
+  - Added status/error handling and 30s polling fallback on channel errors
+  - Prevents noisy CHANNEL_ERROR logs while keeping data fresh

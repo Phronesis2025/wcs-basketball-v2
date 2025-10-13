@@ -741,12 +741,14 @@ export default function CoachesDashboard() {
 
     loadTeamData();
 
+    // Realtime: listen to INSERTS only, with status/error handling
+    let pollInterval: number | null = null;
     const channel = supabase
       .channel(`team_${selectedTeam}`)
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "schedules",
           filter:
@@ -759,7 +761,7 @@ export default function CoachesDashboard() {
       .on(
         "postgres_changes",
         {
-          event: "*",
+          event: "INSERT",
           schema: "public",
           table: "team_updates",
           filter:
@@ -769,19 +771,30 @@ export default function CoachesDashboard() {
         },
         () => loadTeamData()
       )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "news",
-          filter: `team_id=eq.${selectedTeam}`,
-        },
-        () => loadTeamData()
-      )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === "SUBSCRIBED") {
+          devLog("Real-time subscription status: SUBSCRIBED");
+          if (pollInterval) {
+            window.clearInterval(pollInterval);
+            pollInterval = null;
+          }
+        } else if (status === "CHANNEL_ERROR") {
+          devError("Real-time subscription error:");
+          // Fallback: lightweight polling every 30s to keep data fresh
+          if (!pollInterval) {
+            pollInterval = window.setInterval(() => {
+              loadTeamData();
+            }, 30000);
+          }
+        } else if (status === "CLOSED") {
+          devLog("Real-time subscription status: CLOSED");
+        }
+      });
 
     return () => {
+      if (pollInterval) {
+        window.clearInterval(pollInterval);
+      }
       supabase.removeChannel(channel);
     };
   }, [selectedTeam]);
