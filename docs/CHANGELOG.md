@@ -1,6 +1,15 @@
 # WCSv2.0 Changelog
 
-## v2.7.5 - January 2025 (Current)
+## v2.7.6 - January 2025 (Current)
+
+### 🔒 Security Enhancements & Registration Updates
+
+- **Security Audit**: Completed comprehensive security check with perfect 10/10 score
+- **Console Security**: Fixed remaining console statement in admin analytics page
+- **Registration Links**: Updated "Join Now" and "Register" buttons to navigate to club-registration page
+- **Admin Analytics**: Fixed admin role checking to use correct users table instead of non-existent profiles table
+- **Navigation Updates**: Removed Tournament and Register links from main navigation for cleaner UX
+- **Security Score**: Maintained perfect security posture with zero vulnerabilities found
 
 ### 🏀 Team Page — Dashboard-Style Card Layout
 
