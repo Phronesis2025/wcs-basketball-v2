@@ -321,6 +321,48 @@ export default function CoachesDashboard() {
     setEditingItem(null);
   };
 
+  // Delete all practices for the selected team
+  const handleDeleteAllPractices = async () => {
+    if (!selectedTeam || selectedTeam === "__GLOBAL__") {
+      toast.error("Please select a team first");
+      return;
+    }
+
+    const practiceSchedules = schedules.filter(
+      (s) => s.event_type === "Practice" && s.team_id === selectedTeam
+    );
+
+    if (practiceSchedules.length === 0) {
+      toast.error("No practices found to delete");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete all ${practiceSchedules.length} practice(s) for this team? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // Delete all practice schedules
+      const deletePromises = practiceSchedules.map((schedule) =>
+        deleteSchedule(schedule.id)
+      );
+
+      await Promise.all(deletePromises);
+
+      // Update local state
+      setSchedules((prev) =>
+        prev.filter((s) => !(s.event_type === "Practice" && s.team_id === selectedTeam))
+      );
+
+      toast.success(`Deleted ${practiceSchedules.length} practice(s) successfully!`);
+    } catch (error) {
+      console.error("Error deleting practices:", error);
+      toast.error("Failed to delete practices. Please try again.");
+    }
+  };
+
   const confirmDelete = async () => {
     if (!deleteTarget) return;
 
@@ -1713,12 +1755,20 @@ export default function CoachesDashboard() {
                       This week&apos;s practice
                     </p>
                   </div>
-                  <button
-                    onClick={() => openModal("Practice")}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700"
-                  >
-                    + Add Practice
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => openModal("Practice")}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700"
+                    >
+                      + Add Practice
+                    </button>
+                    <button
+                      onClick={handleDeleteAllPractices}
+                      className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-red-700"
+                    >
+                      Delete All Practices
+                    </button>
+                  </div>
                 </div>
                 <div className="space-y-3">
                   {schedules
