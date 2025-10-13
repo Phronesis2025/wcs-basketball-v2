@@ -111,6 +111,17 @@ export default function ScheduleModal({
         setPracticeDateTime(editingData.date_time);
         setPracticeLocation(editingData.location);
         setPracticeComments(editingData.description || "");
+        
+        // Check if this is a recurring practice
+        if (editingData.event_type === "Practice" && editingData.recurring_group_id) {
+          setIsRecurring(true);
+          // Set default recurring values for editing
+          setRecurringType("date");
+          setRecurringCount(4);
+          setSelectedDays([1, 3]); // Default to Tuesday and Thursday
+        } else {
+          setIsRecurring(false);
+        }
       } else if ("content" in editingData) {
         // Update data
         setUpdateTitle(editingData.title);

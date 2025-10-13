@@ -391,34 +391,36 @@ export async function addRecurringPractice(data: {
   try {
     const startDate = new Date(data.date_time);
     const schedules: Schedule[] = [];
-    
+
     // Calculate end date based on recurring type
     let endDate: Date;
     if (data.recurringType === "date" && data.recurringEndDate) {
       endDate = new Date(data.recurringEndDate);
     } else {
       // For count type, calculate end date based on recurring count
-      const weeksToAdd = Math.ceil(data.recurringCount / data.selectedDays.length);
+      const weeksToAdd = Math.ceil(
+        data.recurringCount / data.selectedDays.length
+      );
       endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + (weeksToAdd * 7));
+      endDate.setDate(endDate.getDate() + weeksToAdd * 7);
     }
 
     // Generate all recurring dates
     const currentDate = new Date(startDate);
     const generatedDates: Date[] = [];
-    
+
     // Start from the beginning of the week containing the start date
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-    
+
     let weekStart = new Date(startOfWeek);
-    
+
     while (weekStart <= endDate) {
       // For each selected day of the week
       for (const dayOfWeek of data.selectedDays) {
         const eventDate = new Date(weekStart);
         eventDate.setDate(weekStart.getDate() + dayOfWeek);
-        
+
         // Only include dates that are >= start date and <= end date
         if (eventDate >= startDate && eventDate <= endDate) {
           generatedDates.push(new Date(eventDate));
@@ -429,14 +431,17 @@ export async function addRecurringPractice(data: {
     }
 
     // Limit to the specified count if using count type
-    const finalDates = data.recurringType === "count" 
-      ? generatedDates.slice(0, data.recurringCount)
-      : generatedDates;
+    const finalDates =
+      data.recurringType === "count"
+        ? generatedDates.slice(0, data.recurringCount)
+        : generatedDates;
 
     devLog(`Creating ${finalDates.length} recurring practice schedules`);
 
     // Generate a unique group ID for this recurring series
-    const groupId = data.recurringGroupId || `recurring_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const groupId =
+      data.recurringGroupId ||
+      `recurring_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create all schedule entries
     for (const eventDate of finalDates) {
@@ -459,13 +464,17 @@ export async function addRecurringPractice(data: {
 
       if (error) {
         devError("Supabase recurring schedule insert error:", error);
-        throw new Error(`Failed to create recurring schedule: ${error.message}`);
+        throw new Error(
+          `Failed to create recurring schedule: ${error.message}`
+        );
       }
 
       schedules.push(result);
     }
 
-    devLog(`Successfully created ${schedules.length} recurring practice schedules`);
+    devLog(
+      `Successfully created ${schedules.length} recurring practice schedules`
+    );
     return schedules;
   } catch (err: unknown) {
     devError("Add recurring practice error:", err);
@@ -476,10 +485,12 @@ export async function addRecurringPractice(data: {
 }
 
 // Delete recurring practice group
-export async function deleteRecurringPracticeGroup(recurringGroupId: string): Promise<void> {
+export async function deleteRecurringPracticeGroup(
+  recurringGroupId: string
+): Promise<void> {
   try {
     devLog("Deleting recurring practice group:", recurringGroupId);
-    
+
     const { error } = await supabase
       .from("schedules")
       .delete()
@@ -494,7 +505,9 @@ export async function deleteRecurringPracticeGroup(recurringGroupId: string): Pr
   } catch (err: unknown) {
     devError("Delete recurring practice group error:", err);
     const errorMessage =
-      err instanceof Error ? err.message : "Failed to delete recurring practice group";
+      err instanceof Error
+        ? err.message
+        : "Failed to delete recurring practice group";
     throw new Error(errorMessage);
   }
 }
@@ -518,22 +531,26 @@ export async function updateRecurringPractice(
 ): Promise<Schedule[]> {
   try {
     devLog("Updating recurring practice group:", recurringGroupId);
-    
+
     // Delete existing recurring group
     await deleteRecurringPracticeGroup(recurringGroupId);
-    
+
     // Create new recurring group with same ID
     const newSchedules = await addRecurringPractice({
       ...data,
       recurringGroupId: recurringGroupId, // Keep the same group ID
     });
-    
-    devLog(`Successfully updated recurring practice group with ${newSchedules.length} schedules`);
+
+    devLog(
+      `Successfully updated recurring practice group with ${newSchedules.length} schedules`
+    );
     return newSchedules;
   } catch (err: unknown) {
     devError("Update recurring practice error:", err);
     const errorMessage =
-      err instanceof Error ? err.message : "Failed to update recurring practice";
+      err instanceof Error
+        ? err.message
+        : "Failed to update recurring practice";
     throw new Error(errorMessage);
   }
 }
