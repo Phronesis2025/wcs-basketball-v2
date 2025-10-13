@@ -347,7 +347,7 @@ export default function CoachesDashboard() {
       name: `all ${practiceSchedules.length} practice(s)`,
       count: practiceSchedules.length,
     });
-    setIsDeleteModalOpen(true);
+    setShowDeleteConfirm(true);
   };
 
   const confirmDelete = async () => {
@@ -1769,7 +1769,7 @@ export default function CoachesDashboard() {
                     </button>
                     <button
                       onClick={handleDeleteAllPractices}
-                      className="bg-red-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-red-700 transition-colors"
+                      className="bg-red text-white px-4 py-2 rounded-md text-sm font-inter hover:opacity-90 transition-opacity"
                     >
                       Delete All Practices
                     </button>
