@@ -17,15 +17,17 @@ export default function PracticeCard({
   canEdit = true,
   canDelete = true,
 }: PracticeCardProps) {
-  const formatDateTime = (dateTime: string) => {
+  const formatDateTimeChicago = (dateTime: string) => {
     const date = new Date(dateTime);
     return {
       day: date.toLocaleDateString("en-US", {
+        timeZone: "America/Chicago",
         weekday: "short",
         month: "short",
         day: "numeric",
       }),
       time: date.toLocaleTimeString("en-US", {
+        timeZone: "America/Chicago",
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
@@ -36,7 +38,7 @@ export default function PracticeCard({
   // Mock duration - in real app this would come from schedule data
   const duration = "2h";
 
-  const { day, time } = formatDateTime(schedule.date_time);
+  const { day, time } = formatDateTimeChicago(schedule.date_time);
 
   return (
     <div className="bg-white rounded-lg p-3 sm:p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">

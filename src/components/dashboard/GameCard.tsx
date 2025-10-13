@@ -17,9 +17,10 @@ export default function GameCard({
   canEdit = true,
   canDelete = true,
 }: GameCardProps) {
-  const formatDateTime = (dateTime: string) => {
+  const formatDateTimeChicago = (dateTime: string) => {
     const date = new Date(dateTime);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleString("en-US", {
+      timeZone: "America/Chicago",
       weekday: "long",
       month: "short",
       day: "numeric",
@@ -37,7 +38,7 @@ export default function GameCard({
             vs {schedule.opponent || "TBD"}
           </h4>
           <p className="text-sm text-gray-500 font-inter mt-1">
-            {formatDateTime(schedule.date_time)}
+            {formatDateTimeChicago(schedule.date_time)}
           </p>
         </div>
         <div className="flex items-center space-x-2">
