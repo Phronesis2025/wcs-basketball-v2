@@ -283,7 +283,36 @@ export default function CoachesDashboard() {
     item?: Schedule | TeamUpdate
   ) => {
     setModalType(type);
-    setEditingItem(item || null);
+    
+    // If editing a recurring practice, enhance the item with recurring pattern info
+    if (type === "Practice" && item && "recurring_group_id" in item && item.recurring_group_id) {
+      // Find all events in the same recurring group to determine the pattern
+      const recurringEvents = schedules.filter(s => 
+        s.recurring_group_id === item.recurring_group_id
+      ).sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime());
+      
+      // Extract the days of the week from all events
+      const selectedDays = [...new Set(recurringEvents.map(event => {
+        const eventDate = new Date(event.date_time);
+        return eventDate.getDay(); // 0=Sunday, 1=Monday, etc.
+      }))].sort();
+      
+      // Create enhanced editing item with recurring pattern
+      const enhancedItem = {
+        ...item,
+        recurringPattern: {
+          selectedDays,
+          recurringType: "date" as const, // Default to date type for editing
+          recurringCount: recurringEvents.length,
+          recurringEndDate: recurringEvents[recurringEvents.length - 1]?.date_time
+        }
+      };
+      
+      setEditingItem(enhancedItem);
+    } else {
+      setEditingItem(item || null);
+    }
+    
     setIsModalOpen(true);
   };
 
