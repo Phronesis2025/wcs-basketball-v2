@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -26,10 +25,8 @@ export default function LogoMarquee() {
       className="bg-navy/80 py-8 overflow-hidden"
       aria-label="Team Logos"
     >
-      <motion.div
-        className="flex items-center"
-        animate={{ x: ["0%", "-100%"] }}
-        transition={{ duration: 45, ease: "linear", repeat: Infinity }}
+      <div
+        className="flex items-center marquee"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         style={{ animationPlayState: isPaused ? "paused" : "running" }}
@@ -57,7 +54,7 @@ export default function LogoMarquee() {
             </div>
           </div>
         ))}
-      </motion.div>
+      </div>
     </section>
   );
 }

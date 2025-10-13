@@ -54,13 +54,14 @@ const getDifficultyColor = (difficulty: string) => {
 };
 
 export default function DrillsPage() {
-  const [drills, setDrills] = useState<PracticeDrill[]>([]);
   const [timeFilter, setTimeFilter] = useState<string>("all");
   const [skillFilter, setSkillFilter] = useState<string>("all");
-  const [error, setError] = useState<string | null>(null);
   const [selectedDrill, setSelectedDrill] = useState<PracticeDrill | null>(
     null
   );
+
+  const [drills, setDrills] = useState<PracticeDrill[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,6 +90,25 @@ export default function DrillsPage() {
     };
   }, []);
 
+  // Real-time subscription for new drills - DISABLED for performance
+  // useEffect(() => {
+  //   const channel = supabase
+  //     .channel("practice_drills")
+  //     .on(
+  //       "postgres_changes",
+  //       { event: "INSERT", schema: "public", table: "practice_drills" },
+  //       () => {
+  //         // Invalidate and refetch drills when new ones are added
+  //         // This will trigger a refetch with React Query
+  //         window.location.reload(); // Simple approach for now
+  //       }
+  //     )
+  //     .subscribe();
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, []);
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (selectedDrill) {
@@ -111,7 +131,7 @@ export default function DrillsPage() {
     { value: "under-5", label: "< 5 minutes" },
     { value: "5-10", label: "5-10 minutes" },
     { value: "10-15", label: "10-15 minutes" },
-    { value: "15-30", label: "15-30 minutes" }
+    { value: "15-30", label: "15-30 minutes" },
   ];
 
   const uniqueSkills = [...new Set(drills.flatMap((drill) => drill.skills))];
@@ -119,19 +139,20 @@ export default function DrillsPage() {
   // Function to categorize drill time into time buckets
   const getTimeCategory = (timeString: string) => {
     // Extract numeric value from time string (e.g., "15 minutes" -> 15)
-    const numericTime = parseInt(timeString.replace(/\D/g, ''));
-    
+    const numericTime = parseInt(timeString.replace(/\D/g, ""));
+
     if (numericTime < 5) return "under-5";
     if (numericTime >= 5 && numericTime <= 10) return "5-10";
     if (numericTime > 10 && numericTime <= 15) return "10-15";
     if (numericTime > 15 && numericTime <= 30) return "15-30";
-    
+
     // For times outside our categories, return null (will be filtered out)
     return null;
   };
 
   const filteredDrills = drills.filter((drill) => {
-    const timeMatch = timeFilter === "all" || getTimeCategory(drill.time) === timeFilter;
+    const timeMatch =
+      timeFilter === "all" || getTimeCategory(drill.time) === timeFilter;
     const skillMatch =
       skillFilter === "all" || drill.skills.includes(skillFilter);
     return timeMatch && skillMatch;
@@ -148,9 +169,12 @@ export default function DrillsPage() {
         </h1>
         {error && (
           <div className="mb-8 p-4 bg-gray-900/50 border border-red-500/50 rounded-lg">
-            <p className="text-red font-inter">{error}</p>
+            <p className="text-red font-inter">
+              Failed to load drills. Please try again.
+            </p>
           </div>
         )}
+
         <section className="mb-8" aria-label="Drill Filters">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -247,6 +271,7 @@ export default function DrillsPage() {
                           width={400}
                           height={192}
                           className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       ) : (
                         <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
@@ -431,6 +456,7 @@ export default function DrillsPage() {
                     width={800}
                     height={400}
                     className="w-full lg:w-3/4 lg:mx-auto h-auto rounded-lg"
+                    sizes="(max-width: 1024px) 100vw, 75vw"
                   />
                 </div>
               </div>

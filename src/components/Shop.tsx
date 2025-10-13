@@ -1,23 +1,18 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import Image from "next/image";
-import { useMediaQuery } from "react-responsive";
 
 export default function Shop() {
   const { ref, inView } = useInView({ triggerOnce: true });
-  const isMobile = useMediaQuery({ query: "(max-width: 767px)" });
 
   return (
     <section ref={ref} className="bg-navy py-12" aria-label="Shop Coming Soon">
       <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5 }}
-          className="text-center"
-          whileHover={isMobile ? {} : { scale: 1.05 }}
+        <div
+          className={`text-center shop-section ${
+            inView ? "shop-section-visible" : ""
+          }`}
         >
           <h2 className="text-white text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 uppercase">
             Gear Coming Soon
@@ -32,13 +27,14 @@ export default function Shop() {
               alt="Shop Coming Soon"
               fill
               className="object-cover"
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = "/images/shop-teaser.jpg";
               }}
             />
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

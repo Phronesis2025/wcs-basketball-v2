@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import Link from "next/link";
 
@@ -19,28 +18,28 @@ export default function HomeSections() {
         aria-label="Our Coaches"
       >
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.h2
-            className="text-white text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase"
-            initial={{ opacity: 0, y: 50 }}
-            animate={coachesInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
+          <h2
+            className={`text-white text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase home-section-title ${
+              coachesInView ? "home-section-title-visible" : ""
+            }`}
           >
             Our Coaches
-          </motion.h2>
-          <motion.p
-            className="text-white text-base font-inter text-center mb-8 max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={coachesInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
+          </h2>
+          <p
+            className={`text-white text-base font-inter text-center mb-8 max-w-3xl mx-auto home-section-text ${
+              coachesInView ? "home-section-text-visible" : ""
+            }`}
+            style={{ animationDelay: "0.2s" }}
           >
             Meet our experienced coaching staff dedicated to developing young
             athletes both on and off the court.
-          </motion.p>
+          </p>
           <div className="text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={coachesInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.4 }}
+            <div
+              className={`home-section-button ${
+                coachesInView ? "home-section-button-visible" : ""
+              }`}
+              style={{ animationDelay: "0.4s" }}
             >
               <Link
                 href="/coaches/login"
@@ -48,7 +47,7 @@ export default function HomeSections() {
               >
                 Meet Our Coaches
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -56,28 +55,28 @@ export default function HomeSections() {
       {/* Shop Section */}
       <section ref={shopRef} className="bg-gray-100 py-12" aria-label="Shop">
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.h2
-            className="text-[#002C51] text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase"
-            initial={{ opacity: 0, y: 50 }}
-            animate={shopInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6 }}
+          <h2
+            className={`text-[#002C51] text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase home-section-title ${
+              shopInView ? "home-section-title-visible" : ""
+            }`}
           >
             Shop
-          </motion.h2>
-          <motion.p
-            className="text-gray-700 text-base font-inter text-center mb-8 max-w-3xl mx-auto"
-            initial={{ opacity: 0, y: 30 }}
-            animate={shopInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.2 }}
+          </h2>
+          <p
+            className={`text-gray-700 text-base font-inter text-center mb-8 max-w-3xl mx-auto home-section-text ${
+              shopInView ? "home-section-text-visible" : ""
+            }`}
+            style={{ animationDelay: "0.2s" }}
           >
             Get your WCS Basketball gear and support your team with our official
             merchandise.
-          </motion.p>
+          </p>
           <div className="text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={shopInView ? { opacity: 1, scale: 1 } : {}}
-              transition={{ duration: 0.6, delay: 0.4 }}
+            <div
+              className={`home-section-button ${
+                shopInView ? "home-section-button-visible" : ""
+              }`}
+              style={{ animationDelay: "0.4s" }}
             >
               <Link
                 href="/shop"
@@ -85,7 +84,7 @@ export default function HomeSections() {
               >
                 Visit Shop
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>

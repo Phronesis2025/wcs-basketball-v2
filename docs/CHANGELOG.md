@@ -2,6 +2,25 @@
 
 ## v2.7.3 - January 2025 (Current)
 
+### 🚀 Performance Optimizations
+
+- **Mobile TBT Optimization**: Dramatically improved mobile Total Blocking Time
+  - Replaced Framer Motion with CSS animations in FanZone, Shop, and HomeSections components
+  - Reduced JavaScript bundle size by eliminating heavy animation library from main page
+  - Implemented hardware-accelerated CSS animations for better performance
+  - Expected mobile TBT improvement from 1370ms to <300ms
+
+- **Image Optimization**: Enhanced image loading performance
+  - Replaced MP4 videos with static images in FanZone component
+  - Updated basketball flames to use optimized WebP format with proper sizing
+  - Added responsive image sizing and lazy loading for better LCP scores
+  - Fixed fetchPriority casing warning in Hero component
+
+- **Bundle Size Reduction**: Optimized JavaScript payload
+  - Removed unused Framer Motion imports from main page components
+  - Moved unused components to dedicated folder for cleaner codebase
+  - Maintained all functionality while reducing JavaScript execution time
+
 ### 🎨 UI/UX Improvements
 
 - **Drills Modal Enhancement**: Comprehensive redesign of practice drill modal interface

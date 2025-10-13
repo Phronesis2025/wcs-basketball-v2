@@ -1,10 +1,10 @@
 "use client";
 
-import { motion, Variants } from "framer-motion";
+// Removed Framer Motion for better performance
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa"; // Simple arrow icons
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 interface Value {
   id: number;
@@ -98,9 +98,7 @@ export default function ValuesSection() {
   const [startIndex, setStartIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedValue, setSelectedValue] = useState<Value | null>(null);
-  const [slideDirection, setSlideDirection] = useState<"left" | "right" | null>(
-    null
-  );
+  // Removed slide direction state for simpler implementation
 
   const openModal = (value: Value) => {
     setSelectedValue(value);
@@ -113,45 +111,14 @@ export default function ValuesSection() {
   };
 
   const handlePrev = () => {
-    setSlideDirection("left");
     setStartIndex((prev) => (prev - 3 + values.length) % values.length);
   };
 
   const handleNext = () => {
-    setSlideDirection("right");
     setStartIndex((prev) => (prev + 3) % values.length);
   };
 
-  const getItemVariants = (): Variants => {
-    if (slideDirection === "left") {
-      return {
-        hidden: { opacity: 0, x: -200 },
-        visible: {
-          opacity: 1,
-          x: 0,
-          transition: { duration: 0.6, ease: "easeOut" },
-        },
-      };
-    } else if (slideDirection === "right") {
-      return {
-        hidden: { opacity: 0, x: 200 },
-        visible: {
-          opacity: 1,
-          x: 0,
-          transition: { duration: 0.6, ease: "easeOut" },
-        },
-      };
-    } else {
-      return {
-        hidden: { opacity: 0, y: 15 },
-        visible: {
-          opacity: 1,
-          y: 0,
-          transition: { duration: 0.4, ease: "easeOut" },
-        },
-      };
-    }
-  };
+  // Removed complex animation variants for better performance
 
   // Compute the 3 visible cards for the current page (wraps around)
   const visibleValues: Value[] = [0, 1, 2].map((offset) => {
@@ -173,12 +140,9 @@ export default function ValuesSection() {
         <div className="relative">
           <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-6 pb-4">
             {visibleValues.map((value) => (
-              <motion.div
-                key={`${value.id}-${startIndex}-${slideDirection}`}
-                className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow duration-300"
-                variants={getItemVariants()}
-                initial="hidden"
-                animate="visible"
+              <div
+                key={`${value.id}-${startIndex}`}
+                className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-xl transition-shadow duration-300 values-card"
                 onClick={() => openModal(value)}
                 onKeyDown={(e) => e.key === "Enter" && openModal(value)}
                 tabIndex={0}
@@ -215,7 +179,7 @@ export default function ValuesSection() {
                     Learn More
                   </Link>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
           <button
