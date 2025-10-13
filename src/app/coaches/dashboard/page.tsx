@@ -1584,6 +1584,18 @@ export default function CoachesDashboard() {
 
         {error && <p className="text-red-400 mb-4">Error: {error}</p>}
 
+        {/* Admin Analytics Button */}
+        {isAdmin && (
+          <div className="mb-6 flex justify-center">
+            <Link
+              href="/admin/analytics"
+              className="bg-red text-white font-bebas uppercase py-3 px-8 rounded-lg hover:bg-red-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+            >
+              📊 Analytics Dashboard
+            </Link>
+          </div>
+        )}
+
         {selectedTeam ? (
           <>
             {/* Statistics Cards */}
