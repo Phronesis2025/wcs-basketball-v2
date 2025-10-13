@@ -30,13 +30,21 @@ export default function EventDetailsModal({
 
   useEffect(() => {
     if (!isOpen) return;
+
+    // Prevent body scrolling when modal is open
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    document.body.style.overflow = "hidden";
+
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
     // focus first button
     firstBtnRef.current?.focus();
+
     return () => {
+      // Restore body scrolling when modal closes
+      document.body.style.overflow = originalStyle;
       document.removeEventListener("keydown", onKey);
     };
   }, [isOpen, onClose]);
@@ -47,7 +55,7 @@ export default function EventDetailsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 overflow-y-auto"
       role="dialog"
       aria-modal="true"
       aria-label="Event details"
@@ -57,9 +65,9 @@ export default function EventDetailsModal({
     >
       <div
         ref={ref}
-        className="w-full max-w-md bg-gray-900 border border-red-500/40 rounded-lg shadow-xl"
+        className="w-full max-w-md max-h-[90vh] bg-gray-900 border border-red-500/40 rounded-lg shadow-xl flex flex-col"
       >
-        <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+        <div className="p-4 border-b border-gray-800 flex items-center justify-between flex-shrink-0">
           <div
             className={`px-2 py-1 rounded-full text-xs font-inter ${bg} ${text}`}
           >
@@ -74,7 +82,7 @@ export default function EventDetailsModal({
             ✕
           </button>
         </div>
-        <div className="p-4 space-y-3 text-gray-200 font-inter">
+        <div className="p-4 space-y-3 text-gray-200 font-inter overflow-y-auto flex-1">
           <div>
             <div className="text-sm text-gray-400">Team</div>
             <div className="text-base">{teamName}</div>
@@ -106,7 +114,7 @@ export default function EventDetailsModal({
             </div>
           )}
         </div>
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-4 border-t border-gray-800 flex-shrink-0">
           <button
             onClick={onClose}
             className="w-full bg-gray-700 hover:bg-gray-600 text-white rounded-md py-2 font-inter"

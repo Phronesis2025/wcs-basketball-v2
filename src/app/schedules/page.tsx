@@ -247,37 +247,44 @@ export default function SchedulesPage() {
                     key={`${event.id}-${event.date_time}`}
                     className="text-gray-300 font-inter"
                   >
-                    <div className="flex items-center space-x-2">
-                      {(() => {
-                        const { bg } = eventTypeToColor(event.event_type);
-                        const textClass = bg.replace("bg-", "text-");
-                        return (
-                          <span className={`${textClass} font-bebas uppercase`}>
-                            {event.event_type}
-                          </span>
-                        );
-                      })()}
-                      <span> | </span>
-                      <span className="text-white">
-                        {event.is_global || !event.team_id
-                          ? "All Teams"
-                          : (
-                              teamsData.find((t) => t.id === event.team_id)
-                                ?.name || "Team"
-                            )
-                              .replace(/^\s*WCS\s*/i, "")
-                              .trim()}
-                      </span>
-                      <span> | </span>
-                      <span>
-                        {new Date(event.date_time).toLocaleString("en-US", {
-                          timeZone: "America/Chicago",
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                      </span>
-                      <span> | </span>
-                      <span>{event.location}</span>
+                    <div className="space-y-1">
+                      {/* First line: Event type and team name */}
+                      <div className="flex items-center space-x-2">
+                        {(() => {
+                          const { bg } = eventTypeToColor(event.event_type);
+                          const textClass = bg.replace("bg-", "text-");
+                          return (
+                            <span
+                              className={`${textClass} font-bebas uppercase`}
+                            >
+                              {event.event_type}
+                            </span>
+                          );
+                        })()}
+                        <span> | </span>
+                        <span className="text-white">
+                          {event.is_global || !event.team_id
+                            ? "All Teams"
+                            : (
+                                teamsData.find((t) => t.id === event.team_id)
+                                  ?.name || "Team"
+                              )
+                                .replace(/^\s*WCS\s*/i, "")
+                                .trim()}
+                        </span>
+                      </div>
+                      {/* Second line: Date/time and location */}
+                      <div className="flex items-center space-x-2 text-sm text-gray-400">
+                        <span>
+                          {new Date(event.date_time).toLocaleString("en-US", {
+                            timeZone: "America/Chicago",
+                            dateStyle: "short",
+                            timeStyle: "short",
+                          })}
+                        </span>
+                        <span> | </span>
+                        <span>{event.location}</span>
+                      </div>
                     </div>
                   </li>
                 ))}

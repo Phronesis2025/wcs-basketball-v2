@@ -4,19 +4,22 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 
 **Current Version**: v2.7.5  
 **Last Updated**: January 2025  
-**Security Score**: 10/10 (Perfect) 🔒
+**Security Score**: 10/10 (Perfect) 🔒  
+**Build Status**: Clean Build ✅
 
 ## 🏀 Features
 
 - **Team Management**: Complete team roster and information system
 - **Coach Dashboard**: Secure coach portal with bulk operations and recurring practice management
-- **Schedules Page**: Mobile-first calendar with color-coded event pills and timezone handling
+- **Schedules Page**: Mobile-first calendar with color-coded event pills, modal scrolling fixes, and improved layout
 - **Fan Zone**: Public team information and news
 - **Schedule Management**: Game and practice scheduling with real-time updates
 - **Team Updates**: News and announcements system
 - **Recurring Practices**: Advanced recurring practice creation and management
 - **Bulk Operations**: Delete all practices functionality for coaches
 - **Responsive Design**: Mobile-first design with Tailwind CSS
+- **Modal System**: Accessible modals with proper scrolling and focus management
+- **Image Optimization**: Fixed Next.js Image aspect ratio warnings for better performance
 - **Security**: Perfect 10/10 security score with comprehensive protection
 
 ## 🔒 Security

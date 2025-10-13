@@ -38,10 +38,18 @@
 - **Event Limit**: Show 3 pills per day with "+n more" expander for additional events
 - **Today Highlighting**: Subtle red-tinted background for current date
 - **Timezone Handling**: Proper Chicago timezone support for accurate date detection
+- **Modal System**: 
+  - Prevents main page scrolling when modal is open
+  - Internal scrolling for tall content with max-height constraints
+  - Accessible focus management and keyboard navigation
+- **Today's Events Layout**: 
+  - First line: Event type (colored) + team name
+  - Second line: Date/time + location (smaller, gray text)
 - **Responsive Design**: 
   - Mobile: Team name only, centered in pill
   - Desktop: Team name left-aligned, time right-aligned
 - **Bulk Operations**: "Delete All Practices" button with confirmation modal
+- **Image Optimization**: Fixed Next.js Image aspect ratio warnings
 - **Recurring Practices**: Advanced recurring practice management with group ID tracking
 - **Real-time Updates**: Live synchronization of schedule changes across all users
 

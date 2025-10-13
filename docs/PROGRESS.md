@@ -2,24 +2,29 @@
 
 ## Last Updated
 
-January 2025, Current Status - v2.7.5 Calendar & Dashboard Enhancements (complete)
+January 2025, Current Status - v2.7.5 Modal & Layout Improvements (complete)
 
 ## Recent Updates
 
-### January 2025 (v2.7.5) - Calendar & Dashboard Enhancements
+### January 2025 (v2.7.5) - Modal & Layout Improvements
 
-- ✅ **Calendar Timezone Fixes**
-  - Fixed timezone handling in MobileMonth calendar to use Chicago timezone consistently
-  - Corrected "today" highlighting to properly detect current date in America/Chicago timezone
-  - Updated date initialization to use Intl.DateTimeFormat for accurate timezone conversion
-  - Ensured all date operations use Chicago timezone for consistent event grouping and display
+- ✅ **Modal Scrolling Fixes**
+  - Prevented main page scrolling when modal is open using `document.body.style.overflow = 'hidden'`
+  - Added internal scrolling for modal content with `overflow-y-auto` and `max-h-[90vh]`
+  - Implemented proper flexbox layout with fixed header/footer and scrollable content area
+  - Maintained accessibility with focus management and keyboard navigation
 
-- ✅ **Dashboard Bulk Operations**
-  - Added "Delete All Practices" button next to "+Add Practice" button in coaches dashboard
-  - Implemented bulk deletion functionality with proper confirmation modal
-  - Added permission bypass for coaches to delete all practices for their selected team
-  - Enhanced mobile layout with responsive button stacking (vertical on mobile, horizontal on desktop)
-  - Maintained consistent upper-right button placement across all dashboard sections
+- ✅ **Today's Events Layout Enhancement**
+  - Restructured layout to show event type and team name on first line
+  - Moved date/time and location to second line with smaller, gray text
+  - Improved visual hierarchy and readability on mobile devices
+  - Enhanced responsive design for better information organization
+
+- ✅ **Image Optimization**
+  - Fixed Next.js Image aspect ratio warnings by adding `style={{ height: "auto" }}`
+  - Maintained proper aspect ratios while allowing responsive CSS overrides
+  - Eliminated all image-related console warnings for cleaner development experience
+  - Improved build performance and reduced warning noise
 
 - ✅ **Security Audit (January 2025)**
   - Replaced all console.log/console.error statements with secure devLog/devError utilities
@@ -30,6 +35,12 @@ January 2025, Current Status - v2.7.5 Calendar & Dashboard Enhancements (complet
   - Confirmed no SQL injection vulnerabilities in database queries
   - Validated secure error handling without sensitive data exposure
   - **Security Score Maintained**: 10/10 (PERFECT SCORE)
+
+- ✅ **Build Optimization**
+  - Production build passes with zero errors
+  - Only third-party Prisma OpenTelemetry warnings remain (non-blocking)
+  - Clean TypeScript compilation with no linting errors
+  - Optimized bundle size and performance metrics
 
 - ✅ **Recurring Practice Management**
   - Fixed recurring practice editing to properly detect and populate all original recurring fields

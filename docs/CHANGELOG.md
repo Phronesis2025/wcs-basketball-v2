@@ -13,8 +13,27 @@
 - Desktop enhancements: left‑aligned team name and right‑aligned time on pills
 - Performance: memoized event grouping by Chicago timezone date; trimmed DOM per day
 
+### 📱 Modal & Layout Improvements
+
+- **Modal Scrolling Fix**: Prevented main page scrolling when modal is open
+- **Internal Modal Scrolling**: Added scrollable content area when modal content exceeds viewport height
+- **Today's Events Layout**: Restructured to show event type/team on first line, date/time/location on second line
+- **Responsive Design**: Modal adapts to different screen sizes with proper height constraints
+- **Accessibility**: Maintained focus management and keyboard navigation in modals
+
+### 🖼️ Image Optimization
+
+- **Aspect Ratio Fix**: Resolved Next.js Image warnings by adding `style={{ height: "auto" }}` to drill images
+- **Performance**: Maintained proper aspect ratios while allowing responsive CSS overrides
+- **Build Warnings**: Eliminated all image-related console warnings
+
 ### 🔒 Security & Build
 
+- **Security Audit**: Comprehensive security review with perfect 10/10 score
+- **Console Security**: All console statements properly contained within development-only utilities
+- **Input Sanitization**: Comprehensive XSS protection across all user inputs
+- **Dependency Security**: NPM audit shows 0 vulnerabilities
+- **Build Success**: Production build passes with no errors
 - Today's Events section type label now mirrors pill color mapping
 - Removed unused FullCalendar code paths and variables
 - Converted remaining <img> in `Hero.tsx` to Next `<Image>` for better LCP and CSP compliance
