@@ -12,7 +12,7 @@ export default function Footer() {
     { name: "Teams", href: "/teams" },
     { name: "Schedules", href: "/schedules" },
     { name: "Coaches", href: "/coaches/login" },
-    { name: "News", href: "/news" },
+    { name: "Drills", href: "/drills" },
   ];
 
   const socialLinks = [
