@@ -82,6 +82,8 @@ Individual team pages with comprehensive information and management capabilities
 **Features:**
 
 - **Team Detail Pages**: Dynamic pages for each team with coaches, schedules, and updates
+- **Dashboard-Style Cards**: Modern card-based layout matching the coaches dashboard design
+- **Event Display**: Clean white cards showing upcoming 3 games and practices
 - **Coach Profiles**: Detailed coach information with bios and quotes
 - **Game Schedules**: Upcoming games and events with full-width display
 - **Team Updates**: Latest team news with carousel display
@@ -123,6 +125,7 @@ Unified mobile-first calendar system with color-coded event pills and comprehens
 - **Modal Scrolling**: Prevents main page scrolling when modal is open, with internal scrolling for tall content
 - **Today's Events Layout**: Two-line layout with event type/team on first line, date/time/location on second line
 - **Timezone Handling**: Proper Chicago timezone support for accurate date detection and highlighting
+- **Image Optimization**: Next.js Image components for better performance and CSP compliance
 - **Responsive Design**: Unified calendar experience across mobile and desktop devices
 - **Bulk Operations**: "Delete All Practices" functionality for coaches with confirmation modals
 - **Image Optimization**: Fixed Next.js Image aspect ratio warnings for better performance

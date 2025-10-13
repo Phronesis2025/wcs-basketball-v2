@@ -9,9 +9,10 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 
 ## 🏀 Features
 
-- **Team Management**: Complete team roster and information system
+- **Team Management**: Complete team roster and information system with dashboard-style card layouts
 - **Coach Dashboard**: Secure coach portal with bulk operations and recurring practice management
 - **Schedules Page**: Mobile-first calendar with color-coded event pills, modal scrolling fixes, and improved layout
+- **Team Pages**: Modern card-based design matching dashboard style with white theme and event limitations
 - **Fan Zone**: Public team information and news
 - **Schedule Management**: Game and practice scheduling with real-time updates
 - **Team Updates**: News and announcements system
