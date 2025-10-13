@@ -77,7 +77,7 @@ export default function Hero() {
             asChild
             className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-3"
           >
-            <Link href="/register" className="no-underline">
+            <Link href="/club-registration" className="no-underline">
               Join Now
             </Link>
           </Button>

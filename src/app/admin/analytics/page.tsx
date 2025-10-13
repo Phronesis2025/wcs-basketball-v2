@@ -14,18 +14,20 @@ export default function AdminAnalytics() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user);
-        
+
         if (user) {
           // Check if user has admin role using the same method as coaches dashboard
           const userData = await getUserRole(user.id);
-          if (userData?.role === 'admin') {
+          if (userData?.role === "admin") {
             setIsAuthorized(true);
           }
         }
       } catch (error) {
-        console.error('Error checking authorization:', error);
+        console.error("Error checking authorization:", error);
       } finally {
         setIsLoading(false);
       }
@@ -54,16 +56,17 @@ export default function AdminAnalytics() {
               <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 uppercase">
                 Access Denied
               </h1>
-              
+
               <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-8 mb-8">
                 <div className="text-6xl mb-4">🔒</div>
                 <h2 className="text-2xl font-bebas font-bold mb-4 text-red">
                   Admin Access Required
                 </h2>
                 <p className="text-lg font-inter text-gray-300 mb-6">
-                  This page is restricted to administrators only. You do not have permission to view analytics data.
+                  This page is restricted to administrators only. You do not
+                  have permission to view analytics data.
                 </p>
-                
+
                 {!user ? (
                   <div className="space-y-4">
                     <Link
@@ -110,7 +113,7 @@ export default function AdminAnalytics() {
             <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
               Admin Analytics
             </h1>
-            
+
             {/* Welcome Message */}
             <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 mb-8">
               <div className="text-center">
@@ -118,7 +121,8 @@ export default function AdminAnalytics() {
                   Analytics Dashboard
                 </h2>
                 <p className="text-lg font-inter text-gray-300">
-                  Welcome to the admin analytics dashboard. Here you can view comprehensive data about your basketball program.
+                  Welcome to the admin analytics dashboard. Here you can view
+                  comprehensive data about your basketball program.
                 </p>
               </div>
             </div>
@@ -129,8 +133,12 @@ export default function AdminAnalytics() {
               <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">Total Players</p>
-                    <p className="text-3xl font-bebas font-bold text-white">--</p>
+                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">
+                      Total Players
+                    </p>
+                    <p className="text-3xl font-bebas font-bold text-white">
+                      --
+                    </p>
                   </div>
                   <div className="text-4xl text-red">👥</div>
                 </div>
@@ -141,8 +149,12 @@ export default function AdminAnalytics() {
               <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">Active Teams</p>
-                    <p className="text-3xl font-bebas font-bold text-white">--</p>
+                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">
+                      Active Teams
+                    </p>
+                    <p className="text-3xl font-bebas font-bold text-white">
+                      --
+                    </p>
                   </div>
                   <div className="text-4xl text-red">🏀</div>
                 </div>
@@ -153,8 +165,12 @@ export default function AdminAnalytics() {
               <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">Upcoming Games</p>
-                    <p className="text-3xl font-bebas font-bold text-white">--</p>
+                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">
+                      Upcoming Games
+                    </p>
+                    <p className="text-3xl font-bebas font-bold text-white">
+                      --
+                    </p>
                   </div>
                   <div className="text-4xl text-red">📅</div>
                 </div>
@@ -165,8 +181,12 @@ export default function AdminAnalytics() {
               <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">Registration Rate</p>
-                    <p className="text-3xl font-bebas font-bold text-white">--%</p>
+                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">
+                      Registration Rate
+                    </p>
+                    <p className="text-3xl font-bebas font-bold text-white">
+                      --%
+                    </p>
                   </div>
                   <div className="text-4xl text-red">📊</div>
                 </div>
@@ -177,8 +197,12 @@ export default function AdminAnalytics() {
               <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">Avg. Practice Attendance</p>
-                    <p className="text-3xl font-bebas font-bold text-white">--%</p>
+                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">
+                      Avg. Practice Attendance
+                    </p>
+                    <p className="text-3xl font-bebas font-bold text-white">
+                      --%
+                    </p>
                   </div>
                   <div className="text-4xl text-red">✅</div>
                 </div>
@@ -189,8 +213,12 @@ export default function AdminAnalytics() {
               <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">Total Revenue</p>
-                    <p className="text-3xl font-bebas font-bold text-white">$--</p>
+                    <p className="text-sm font-inter text-gray-400 uppercase tracking-wide">
+                      Total Revenue
+                    </p>
+                    <p className="text-3xl font-bebas font-bold text-white">
+                      $--
+                    </p>
                   </div>
                   <div className="text-4xl text-red">💰</div>
                 </div>
@@ -202,7 +230,9 @@ export default function AdminAnalytics() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               {/* Player Growth Chart */}
               <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
-                <h3 className="text-xl font-bebas font-bold mb-4 text-red">Player Growth Over Time</h3>
+                <h3 className="text-xl font-bebas font-bold mb-4 text-red">
+                  Player Growth Over Time
+                </h3>
                 <div className="h-64 bg-gray-800/50 rounded-lg flex items-center justify-center">
                   <p className="text-gray-400 font-inter">Chart Coming Soon</p>
                 </div>
@@ -210,7 +240,9 @@ export default function AdminAnalytics() {
 
               {/* Team Performance Chart */}
               <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
-                <h3 className="text-xl font-bebas font-bold mb-4 text-red">Team Performance</h3>
+                <h3 className="text-xl font-bebas font-bold mb-4 text-red">
+                  Team Performance
+                </h3>
                 <div className="h-64 bg-gray-800/50 rounded-lg flex items-center justify-center">
                   <p className="text-gray-400 font-inter">Chart Coming Soon</p>
                 </div>
@@ -219,19 +251,27 @@ export default function AdminAnalytics() {
 
             {/* Recent Activity */}
             <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mb-8">
-              <h3 className="text-xl font-bebas font-bold mb-4 text-red">Recent Activity</h3>
+              <h3 className="text-xl font-bebas font-bold mb-4 text-red">
+                Recent Activity
+              </h3>
               <div className="space-y-3">
                 <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg">
                   <div className="w-2 h-2 bg-red rounded-full"></div>
-                  <p className="text-gray-300 font-inter">Analytics tracking will be implemented soon</p>
+                  <p className="text-gray-300 font-inter">
+                    Analytics tracking will be implemented soon
+                  </p>
                 </div>
                 <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg">
                   <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                  <p className="text-gray-300 font-inter">Real-time data monitoring coming soon</p>
+                  <p className="text-gray-300 font-inter">
+                    Real-time data monitoring coming soon
+                  </p>
                 </div>
                 <div className="flex items-center space-x-3 p-3 bg-gray-800/50 rounded-lg">
                   <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
-                  <p className="text-gray-300 font-inter">Export functionality will be available</p>
+                  <p className="text-gray-300 font-inter">
+                    Export functionality will be available
+                  </p>
                 </div>
               </div>
             </div>
