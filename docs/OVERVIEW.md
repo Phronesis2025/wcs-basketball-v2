@@ -7,7 +7,8 @@
 **Current Version**: v2.7.5  
 **Last Updated**: January 2025  
 **Status**: Production Ready ✅  
-**Security Score**: 10/10 (Perfect) 🔒
+**Security Score**: 10/10 (Perfect) 🔒  
+**Build Status**: Clean Build ✅
 
 ---
 
@@ -119,9 +120,12 @@ Unified mobile-first calendar system with color-coded event pills and comprehens
 
 - **Mobile-First Calendar**: Custom month grid with color-coded event pills (Game=red, Practice=green, Tournament=purple, Update/Meeting=yellow)
 - **Event Details Modal**: Accessible modal with full event information and team details
+- **Modal Scrolling**: Prevents main page scrolling when modal is open, with internal scrolling for tall content
+- **Today's Events Layout**: Two-line layout with event type/team on first line, date/time/location on second line
 - **Timezone Handling**: Proper Chicago timezone support for accurate date detection and highlighting
 - **Responsive Design**: Unified calendar experience across mobile and desktop devices
 - **Bulk Operations**: "Delete All Practices" functionality for coaches with confirmation modals
+- **Image Optimization**: Fixed Next.js Image aspect ratio warnings for better performance
 - **Recurring Practices**: Advanced recurring practice creation, editing, and management with group ID tracking
 - **Real-time Updates**: Live synchronization of schedule changes across all users
 - **Today Highlighting**: Visual indication of current date with timezone-aware detection

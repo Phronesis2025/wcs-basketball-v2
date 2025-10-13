@@ -271,6 +271,7 @@ export default function DrillsPage() {
                           width={400}
                           height={192}
                           className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
+                          style={{ height: "auto" }}
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         />
                       ) : (
