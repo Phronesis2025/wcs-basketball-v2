@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { getUserRole } from "@/lib/actions";
 
 export default function AdminAnalytics() {
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -17,14 +18,9 @@ export default function AdminAnalytics() {
         setUser(user);
         
         if (user) {
-          // Check if user has admin role (you'll need to implement this based on your auth system)
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-            
-          if (profile?.role === 'admin') {
+          // Check if user has admin role using the same method as coaches dashboard
+          const userData = await getUserRole(user.id);
+          if (userData?.role === 'admin') {
             setIsAuthorized(true);
           }
         }
