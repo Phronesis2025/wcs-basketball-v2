@@ -496,6 +496,7 @@ export async function updateUpdate(
     title?: string;
     content?: string;
     image_url?: string;
+    date_time?: string | null;
   }
 ): Promise<TeamUpdate> {
   try {

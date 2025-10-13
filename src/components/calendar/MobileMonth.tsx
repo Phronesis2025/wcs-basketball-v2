@@ -142,7 +142,7 @@ export default function MobileMonth({
               key={idx}
               className={`min-h-24 px-0.5 sm:px-1 py-1 rounded-md border ${
                 isToday
-                  ? "border-gray-700 bg-[rgba(41,49,70,1)]"
+                  ? "border-white bg-[rgba(41,49,70,1)]"
                   : inMonth
                   ? "border-red-500/30"
                   : "border-gray-800 bg-gray-900/30"
