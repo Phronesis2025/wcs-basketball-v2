@@ -1,22 +1,48 @@
 # WCSv2.0 Changelog
 
-## v2.7.3 - January 2025 (Current)
+## v2.7.4 - October 2025 (Current)
+
+### 🗓️ Schedules Page — Mobile-first Calendar Redesign
+
+- Replaced desktop FullCalendar with custom, mobile-first month grid to unify UX across devices
+- Color-coded event pills by type (Game=red, Practice=green, Tournament=purple, Update/Meeting=yellow)
+- Pills show team name ("All Teams" for global); tap/click opens an accessible details modal
+- Added month selector (Prev | Month | Next) and compact legend with pill colors
+- Limited visible pills per day to 3 with "+n more" expander
+- Today highlighting with subtle red‑tinted background
+- Desktop enhancements: left‑aligned team name and right‑aligned time on pills
+- Performance: memoized event grouping by Chicago timezone date; trimmed DOM per day
+
+### 🔒 Security & Build
+
+- Today’s Events section type label now mirrors pill color mapping
+- Removed unused FullCalendar code paths and variables
+- Converted remaining <img> in `Hero.tsx` to Next `<Image>` for better LCP and CSP compliance
+- Addressed React hook dependency warning in calendar with safe inline eslint directive
+- Production build passes; only third‑party Prisma OpenTelemetry warnings remain (non‑blocking)
+
+---
+
+## v2.7.3 - January 2025
 
 ### 🚀 Performance Optimizations
 
 - **Mobile TBT Optimization**: Dramatically improved mobile Total Blocking Time
+
   - Replaced Framer Motion with CSS animations in FanZone, Shop, and HomeSections components
   - Reduced JavaScript bundle size by eliminating heavy animation library from main page
   - Implemented hardware-accelerated CSS animations for better performance
   - Expected mobile TBT improvement from 1370ms to <300ms
 
 - **Image Optimization**: Enhanced image loading performance
+
   - Replaced MP4 videos with static images in FanZone component
   - Updated basketball flames to use optimized WebP format with proper sizing
   - Added responsive image sizing and lazy loading for better LCP scores
   - Fixed fetchPriority casing warning in Hero component
 
 - **Bundle Size Reduction**: Optimized JavaScript payload
+
   - Removed unused Framer Motion imports from main page components
   - Moved unused components to dedicated folder for cleaner codebase
   - Maintained all functionality while reducing JavaScript execution time

@@ -7,11 +7,9 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useTeams } from "@/hooks/useTeams";
 
-// Import FullCalendar normally - the code splitting will happen at the page level
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import listPlugin from "@fullcalendar/list";
+import MobileMonth from "@/components/calendar/MobileMonth";
+import EventDetailsModal from "@/components/calendar/EventDetailsModal";
+import { eventTypeToColor } from "@/lib/calendarColors";
 
 export default function SchedulesPage() {
   const [events, setEvents] = useState<Schedule[]>([]);
@@ -124,36 +122,7 @@ export default function SchedulesPage() {
     });
   }, [filteredEvents]);
 
-  const formattedEvents = filteredEvents.map((event) => {
-    const startDate = new Date(event.date_time); // treat as local timestamp
-    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000); // +1 hour duration
-    return {
-      id: event.id,
-      title:
-        event.event_type === "Update"
-          ? event.title || "Update"
-          : event.event_type,
-      start: startDate, // pass Date object (local)
-      end: endDate,
-      allDay: false,
-      backgroundColor:
-        event.event_type === "Game"
-          ? "#15803D"
-          : event.event_type === "Practice"
-          ? "#D91E18"
-          : event.event_type === "Tournament"
-          ? "#6B21A8"
-          : event.event_type === "Update"
-          ? "#3B82F6"
-          : "#F59E0B",
-      extendedProps: {
-        location: event.location,
-        opponent: event.opponent,
-        description: event.description,
-        eventType: event.event_type,
-      },
-    };
-  });
+  // Desktop now mirrors the mobile custom calendar, so no need to format for FullCalendar
 
   return (
     <div className="min-h-screen bg-black text-white p-4 pt-20 sm:pt-24">
@@ -214,8 +183,25 @@ export default function SchedulesPage() {
                 {todayEvents.map((event) => (
                   <li key={event.id} className="text-gray-300 font-inter">
                     <div className="flex items-center space-x-2">
-                      <span className="text-red font-bebas uppercase">
-                        {event.event_type}
+                      {(() => {
+                        const { bg } = eventTypeToColor(event.event_type);
+                        const textClass = bg.replace("bg-", "text-");
+                        return (
+                          <span className={`${textClass} font-bebas uppercase`}>
+                            {event.event_type}
+                          </span>
+                        );
+                      })()}
+                      <span> | </span>
+                      <span className="text-white">
+                        {event.is_global || !event.team_id
+                          ? "All Teams"
+                          : (
+                              teamsData.find((t) => t.id === event.team_id)
+                                ?.name || "Team"
+                            )
+                              .replace(/^\s*WCS\s*/i, "")
+                              .trim()}
                       </span>
                       <span> | </span>
                       <span>
@@ -239,85 +225,32 @@ export default function SchedulesPage() {
         <section aria-label="Schedules Calendar">
           <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4">
             <h2 className="text-2xl font-bebas mb-4">Team Schedules</h2>
-            {formattedEvents.length > 0 ? (
-              <FullCalendar
-                plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
-                initialView="dayGridMonth"
-                headerToolbar={{
-                  left: "prev,next today",
-                  center: "title",
-                  right: "dayGridMonth,timeGridWeek,listWeek",
-                }}
-                events={formattedEvents}
-                eventContent={(info: {
-                  event: { title: string; extendedProps: { location: string } };
-                }) => (
-                  <div className="p-1">
-                    <p className="text-white font-inter text-sm">
-                      {info.event.title}
-                    </p>
-                    <p className="text-gray-300 font-inter text-xs">
-                      {info.event.extendedProps.location}
-                    </p>
-                  </div>
-                )}
-                eventClick={(info: { event: { id: string } }) =>
-                  setSelectedEvent(
-                    events.find((e) => e.id === info.event.id) || null
-                  )
-                }
-                height="auto"
-                views={{
-                  listWeek: {
-                    eventTimeFormat: {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      meridiem: "short",
-                    },
-                  },
-                  dayGridMonth: {
-                    eventTimeFormat: {
-                      hour: "numeric",
-                      minute: "2-digit",
-                      meridiem: "short",
-                    },
-                  },
-                }}
-                eventClassNames="border-none cursor-pointer"
+            {/* Mobile calendar */}
+            <div className="block md:hidden">
+              <MobileMonth
+                events={filteredEvents}
+                teams={teamsData}
+                onSelectEvent={setSelectedEvent}
+                maxVisiblePerDay={3}
               />
-            ) : (
-              <p className="text-gray-300 font-inter">Loading calendar…</p>
-            )}
-          </div>
-        </section>
-        {selectedEvent && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 border border-red-500/50 rounded-lg p-4 max-w-lg w-full">
-              <h2 className="text-2xl font-bebas text-white mb-4">
-                {selectedEvent.event_type}
-              </h2>
-              <div className="space-y-2">
-                <p className="text-gray-300 font-inter">
-                  Time:
-                  {new Date(selectedEvent.date_time).toLocaleString("en-US", {
-                    timeZone: "America/Chicago",
-                    dateStyle: "short",
-                    timeStyle: "short",
-                  })}
-                </p>
-                <p className="text-gray-300 font-inter">
-                  Location: {selectedEvent.location}
-                </p>
-              </div>
-              <button
-                onClick={() => setSelectedEvent(null)}
-                className="bg-gray-700 text-white font-inter rounded p-2 mt-4 w-full"
-              >
-                Close
-              </button>
+            </div>
+            {/* Desktop calendar mirrors mobile style */}
+            <div className="hidden md:block">
+              <MobileMonth
+                events={filteredEvents}
+                teams={teamsData}
+                onSelectEvent={setSelectedEvent}
+                maxVisiblePerDay={3}
+              />
             </div>
           </div>
-        )}
+        </section>
+        <EventDetailsModal
+          isOpen={!!selectedEvent}
+          event={selectedEvent}
+          teams={teamsData}
+          onClose={() => setSelectedEvent(null)}
+        />
       </div>
     </div>
   );

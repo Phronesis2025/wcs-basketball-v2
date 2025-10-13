@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Hero() {
   return (
@@ -32,18 +33,14 @@ export default function Hero() {
 
       {/* Basketball Flames - Desktop Only (use <img> for animated asset, low priority) */}
       <div className="hidden sm:block absolute right-4 sm:right-60 lg:right-80 xl:right-96 top-1/2 transform -translate-y-1/2 translate-x-1/2 z-10">
-        <img
+        <Image
           src="/video/basketball-flames-optimized.webp"
           alt="Basketball flames animation"
           width={500}
           height={500}
           className="w-[500px] h-[500px] object-contain"
           loading="lazy"
-          decoding="async"
-          fetchPriority="low"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
+          priority={false}
         />
       </div>
 
@@ -63,18 +60,14 @@ export default function Hero() {
 
         {/* Basketball Flames - Mobile Only (use <img>, load lazily to avoid LCP hit) */}
         <div className="sm:hidden flex justify-center mb-6 pl-4">
-          <img
+          <Image
             src="/video/basketball-flames-optimized.webp"
             alt="Basketball flames animation"
             width={400}
             height={400}
             className="w-[400px] h-[400px] object-contain"
             loading="lazy"
-            decoding="async"
-            fetchPriority="low"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).style.display = "none";
-            }}
+            priority={false}
           />
         </div>
 
