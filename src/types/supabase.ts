@@ -31,6 +31,7 @@ export type Schedule = {
   opponent: string | null;
   description: string | null;
   is_global: boolean | null; // Already should be here from your migration
+  recurring_group_id: string | null; // For grouping recurring events
   created_by: string;
   created_at: string;
   deleted_at: string | null;
