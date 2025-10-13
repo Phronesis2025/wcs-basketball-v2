@@ -1708,25 +1708,21 @@ export default function CoachesDashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               {/* Upcoming Games */}
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase text-gray-900">
-                        Upcoming Games
-                      </h3>
-                      <p className="text-sm text-gray-500 font-inter mt-1">
-                        Next scheduled games
-                      </p>
-                    </div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bebas uppercase text-gray-900">
+                      Upcoming Games
+                    </h3>
+                    <p className="text-sm text-gray-500 font-inter mt-1">
+                      Next scheduled games
+                    </p>
                   </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => openModal("Game")}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors"
-                    >
-                      + Add Game
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => openModal("Game")}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors"
+                  >
+                    + Add Game
+                  </button>
                 </div>
                 <div className="space-y-3">
                   {schedules
@@ -1755,18 +1751,16 @@ export default function CoachesDashboard() {
 
               {/* Practice Schedule */}
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase text-gray-900">
-                        Practice Schedule
-                      </h3>
-                      <p className="text-sm text-gray-500 font-inter mt-1">
-                        This week&apos;s practice
-                      </p>
-                    </div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bebas uppercase text-gray-900">
+                      Practice Schedule
+                    </h3>
+                    <p className="text-sm text-gray-500 font-inter mt-1">
+                      This week&apos;s practice
+                    </p>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => openModal("Practice")}
                       className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors"
@@ -1808,25 +1802,21 @@ export default function CoachesDashboard() {
 
               {/* Recent Announcements */}
               <div className="bg-white rounded-lg p-6 shadow-sm">
-                <div className="mb-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <h3 className="text-xl font-bebas uppercase text-gray-900">
-                        Recent Announcements
-                      </h3>
-                      <p className="text-sm text-gray-500 font-inter mt-1">
-                        Latest Team Updates
-                      </p>
-                    </div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-xl font-bebas uppercase text-gray-900">
+                      Recent Announcements
+                    </h3>
+                    <p className="text-sm text-gray-500 font-inter mt-1">
+                      Latest Team Updates
+                    </p>
                   </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => openModal("Update")}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors"
-                    >
-                      + Add Update
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => openModal("Update")}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors"
+                  >
+                    + Add Update
+                  </button>
                 </div>
                 <div className="space-y-3">
                   {updates.slice(0, 3).map((update) => (
