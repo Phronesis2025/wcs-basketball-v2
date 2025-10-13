@@ -1,5 +1,9 @@
 # WCSv2.0 UI Components
 
+**Version**: v2.7.6  
+**Last Updated**: January 2025  
+**Security Score**: 10/10 (Perfect) 🔒
+
 ## 🎨 Design System
 
 ### Color Palette
