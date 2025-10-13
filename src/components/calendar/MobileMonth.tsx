@@ -25,7 +25,22 @@ export default function MobileMonth({
   maxVisiblePerDay = 3,
 }: MobileMonthProps) {
   const [expandedDays, setExpandedDays] = useState<Record<string, boolean>>({});
-  const [viewDate, setViewDate] = useState<Date>(currentDate ?? new Date());
+  const [viewDate, setViewDate] = useState<Date>(() => {
+    if (currentDate) return currentDate;
+    // Initialize with current date in Chicago timezone
+    const now = new Date();
+    const chicagoFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Chicago",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    const parts = chicagoFormatter.formatToParts(now);
+    const year = parts.find(p => p.type === "year")?.value;
+    const month = parts.find(p => p.type === "month")?.value;
+    const day = parts.find(p => p.type === "day")?.value;
+    return new Date(parseInt(year!), parseInt(month!) - 1, parseInt(day!));
+  });
 
   // keep view in sync if parent changes (only when month/year differs)
   useEffect(() => {
@@ -66,7 +81,22 @@ export default function MobileMonth({
   }, [events]);
 
   const days = useMemo(() => buildMonthMatrix(viewDate), [viewDate]);
-  const todayKey = useMemo(() => formatDateKeyChicago(new Date()), []);
+  const todayKey = useMemo(() => {
+    // Get current date in Chicago timezone for accurate "today" detection
+    const now = new Date();
+    // Use Intl.DateTimeFormat to get the date components in Chicago timezone
+    const chicagoFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Chicago",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    });
+    const parts = chicagoFormatter.formatToParts(now);
+    const year = parts.find(p => p.type === "year")?.value;
+    const month = parts.find(p => p.type === "month")?.value;
+    const day = parts.find(p => p.type === "day")?.value;
+    return `${year}-${month}-${day}`;
+  }, []);
 
   return (
     <div className="w-full">
