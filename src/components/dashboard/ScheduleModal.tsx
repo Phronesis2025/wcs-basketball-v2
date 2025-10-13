@@ -115,10 +115,29 @@ export default function ScheduleModal({
         // Check if this is a recurring practice
         if (editingData.event_type === "Practice" && editingData.recurring_group_id) {
           setIsRecurring(true);
-          // Set default recurring values for editing
-          setRecurringType("date");
-          setRecurringCount(4);
-          setSelectedDays([1, 3]); // Default to Tuesday and Thursday
+          
+          // Use enhanced recurring pattern data if available
+          if ("recurringPattern" in editingData && editingData.recurringPattern) {
+            const pattern = editingData.recurringPattern as {
+              selectedDays: number[];
+              recurringType: "count" | "date";
+              recurringCount: number;
+              recurringEndDate?: string;
+            };
+            setRecurringType(pattern.recurringType);
+            setRecurringCount(pattern.recurringCount);
+            setSelectedDays(pattern.selectedDays);
+            if (pattern.recurringEndDate) {
+              setRecurringEndDate(pattern.recurringEndDate);
+            }
+          } else {
+            // Fallback: extract from current event date
+            setRecurringType("date");
+            setRecurringCount(4);
+            const eventDate = new Date(editingData.date_time);
+            const dayOfWeek = eventDate.getDay();
+            setSelectedDays([dayOfWeek]);
+          }
         } else {
           setIsRecurring(false);
         }
