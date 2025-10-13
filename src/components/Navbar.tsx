@@ -147,7 +147,7 @@ export default function Navbar() {
                 </button>
               ) : (
                 <Link
-                  href="/register"
+                  href="/club-registration"
                   className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
                 >
                   Register
@@ -220,7 +220,7 @@ export default function Navbar() {
               </button>
             ) : (
               <Link
-                href="/register"
+                href="/club-registration"
                 className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
