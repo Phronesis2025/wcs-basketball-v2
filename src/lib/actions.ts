@@ -386,6 +386,7 @@ export async function addRecurringPractice(data: {
   recurringCount: number;
   recurringEndDate?: string;
   selectedDays: number[]; // Array of weekday numbers (0=Sunday, 1=Monday, etc.)
+  recurringGroupId?: string; // Optional: for grouping related recurring events
 }): Promise<Schedule[]> {
   try {
     const startDate = new Date(data.date_time);
@@ -424,7 +425,7 @@ export async function addRecurringPractice(data: {
         }
       }
       // Move to next week
-      weekStart.setDate(weekStart.getDate() + 7);
+      weekStart = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
     }
 
     // Limit to the specified count if using count type
@@ -433,6 +434,9 @@ export async function addRecurringPractice(data: {
       : generatedDates;
 
     devLog(`Creating ${finalDates.length} recurring practice schedules`);
+
+    // Generate a unique group ID for this recurring series
+    const groupId = data.recurringGroupId || `recurring_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     // Create all schedule entries
     for (const eventDate of finalDates) {
@@ -444,6 +448,7 @@ export async function addRecurringPractice(data: {
         location: data.location,
         description: data.description,
         is_global: data.is_global,
+        recurring_group_id: groupId, // Store group ID for future reference
       };
 
       const { data: result, error } = await supabase
@@ -466,6 +471,69 @@ export async function addRecurringPractice(data: {
     devError("Add recurring practice error:", err);
     const errorMessage =
       err instanceof Error ? err.message : "Failed to add recurring practice";
+    throw new Error(errorMessage);
+  }
+}
+
+// Delete recurring practice group
+export async function deleteRecurringPracticeGroup(recurringGroupId: string): Promise<void> {
+  try {
+    devLog("Deleting recurring practice group:", recurringGroupId);
+    
+    const { error } = await supabase
+      .from("schedules")
+      .delete()
+      .eq("recurring_group_id", recurringGroupId);
+
+    if (error) {
+      devError("Supabase delete recurring group error:", error);
+      throw new Error(error.message);
+    }
+
+    devLog("Successfully deleted recurring practice group");
+  } catch (err: unknown) {
+    devError("Delete recurring practice group error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to delete recurring practice group";
+    throw new Error(errorMessage);
+  }
+}
+
+// Update recurring practice (delete old group, create new group)
+export async function updateRecurringPractice(
+  recurringGroupId: string,
+  data: {
+    team_id: string | null;
+    event_type: "Practice";
+    date_time: string;
+    title?: string | null;
+    location: string;
+    description?: string;
+    is_global?: boolean;
+    recurringType: "count" | "date";
+    recurringCount: number;
+    recurringEndDate?: string;
+    selectedDays: number[];
+  }
+): Promise<Schedule[]> {
+  try {
+    devLog("Updating recurring practice group:", recurringGroupId);
+    
+    // Delete existing recurring group
+    await deleteRecurringPracticeGroup(recurringGroupId);
+    
+    // Create new recurring group with same ID
+    const newSchedules = await addRecurringPractice({
+      ...data,
+      recurringGroupId: recurringGroupId, // Keep the same group ID
+    });
+    
+    devLog(`Successfully updated recurring practice group with ${newSchedules.length} schedules`);
+    return newSchedules;
+  } catch (err: unknown) {
+    devError("Update recurring practice error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to update recurring practice";
     throw new Error(errorMessage);
   }
 }

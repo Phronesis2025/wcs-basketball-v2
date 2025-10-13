@@ -16,6 +16,7 @@ import {
   addSchedule,
   addRecurringPractice,
   updateSchedule,
+  updateRecurringPractice,
   deleteSchedule,
   addUpdate,
   updateUpdate,
@@ -351,24 +352,49 @@ export default function CoachesDashboard() {
 
       if (actualType === "Game" || actualType === "Practice") {
         if (editingItem && "event_type" in editingItem) {
-          // Update existing schedule
-          const updatedData = await updateSchedule(editingItem.id, {
-            event_type: data.event_type as
-              | "Game"
-              | "Practice"
-              | "Tournament"
-              | "Meeting",
-            date_time: data.date_time as string,
-            location: data.location as string,
-            opponent: (data.opponent as string) || undefined,
-            description: (data.description as string) || undefined,
-          });
-          setSchedules((prev) =>
-            prev.map((item) =>
-              item.id === updatedData.id ? updatedData : item
-            )
-          );
-          toast.success("Schedule updated!");
+          // Check if this is a recurring practice being edited
+          if (actualType === "Practice" && data.isRecurring && editingItem.recurring_group_id) {
+            // Update recurring practice group
+            const updatedSchedules = await updateRecurringPractice(editingItem.recurring_group_id, {
+              team_id: selectedTeam === "__GLOBAL__" ? null : selectedTeam,
+              event_type: "Practice",
+              date_time: new Date(data.date_time as string).toISOString(),
+              title: (data.title as string) || undefined,
+              location: data.location as string,
+              description: (data.description as string) || undefined,
+              is_global: selectedTeam === "__GLOBAL__",
+              recurringType: data.recurringType as "count" | "date",
+              recurringCount: data.recurringCount as number,
+              recurringEndDate: (data.recurringEndDate as string) || undefined,
+              selectedDays: data.selectedDays as number[],
+            });
+            
+            // Remove old schedules and add new ones
+            setSchedules((prev) => {
+              const filtered = prev.filter(item => item.recurring_group_id !== editingItem.recurring_group_id);
+              return [...filtered, ...updatedSchedules];
+            });
+            toast.success(`Updated recurring practice with ${updatedSchedules.length} schedules!`);
+          } else {
+            // Update single schedule
+            const updatedData = await updateSchedule(editingItem.id, {
+              event_type: data.event_type as
+                | "Game"
+                | "Practice"
+                | "Tournament"
+                | "Meeting",
+              date_time: data.date_time as string,
+              location: data.location as string,
+              opponent: (data.opponent as string) || undefined,
+              description: (data.description as string) || undefined,
+            });
+            setSchedules((prev) =>
+              prev.map((item) =>
+                item.id === updatedData.id ? updatedData : item
+              )
+            );
+            toast.success("Schedule updated!");
+          }
         } else {
           // Check if this is a recurring practice
           if (actualType === "Practice" && data.isRecurring) {
