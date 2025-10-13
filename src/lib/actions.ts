@@ -281,6 +281,30 @@ export async function fetchTeamUpdates(teamId: string): Promise<TeamUpdate[]> {
   }
 }
 
+// Fetch ALL team updates from every team
+export async function fetchAllTeamUpdates(): Promise<TeamUpdate[]> {
+  try {
+    const { data, error } = await supabase
+      .from("team_updates")
+      .select("*")
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      devError("Supabase all team updates fetch error:", error);
+      throw new Error(error.message);
+    }
+
+    devLog("Fetched all team updates:", { count: data?.length || 0 });
+    return data || [];
+  } catch (err: unknown) {
+    devError("All team updates fetch error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch all team updates";
+    throw new Error(errorMessage);
+  }
+}
+
 // Fetch news
 export async function fetchNews(teamId?: string): Promise<News[]> {
   try {
@@ -658,7 +682,9 @@ export async function bulkDeleteSchedules(
     );
 
     if (invalidSchedules.length > 0) {
-      throw new Error("Some schedules don't belong to the specified team or aren't practices");
+      throw new Error(
+        "Some schedules don't belong to the specified team or aren't practices"
+      );
     }
 
     // Bulk delete all schedules

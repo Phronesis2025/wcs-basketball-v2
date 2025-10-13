@@ -42,12 +42,12 @@ export default function Footer() {
 
   return (
     <footer className="bg-navy text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Mobile Layout */}
-        <div className="md:hidden space-y-8">
+        <div className="md:hidden space-y-6">
           {/* Logo - Centered at top */}
           <div className="flex justify-center">
-            <div className="w-48 h-24 relative">
+            <div className="w-40 h-20 relative">
               <Image
                 src="/logo.png"
                 alt="WCS Basketball Logo"
@@ -60,7 +60,7 @@ export default function Footer() {
 
           {/* Quick Links - Centered */}
           <div className="text-center">
-            <h3 className="font-bebas text-lg mb-4 text-white">QUICK LINKS</h3>
+            <h3 className="font-bebas text-lg mb-3 text-white">QUICK LINKS</h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-2 max-w-xs mx-auto justify-items-center">
               {navLinks.map((link) => (
                 <Link
@@ -76,12 +76,12 @@ export default function Footer() {
 
           {/* Stay Updated Text and Button - Centered */}
           <div className="text-center">
-            <p className="text-white font-inter text-sm mb-4">
+            <p className="text-white font-inter text-sm mb-3">
               Stay updated with the latest WCS news and events.
             </p>
             <Link
               href="/register"
-              className="inline-block bg-red text-white px-6 py-3 rounded hover:bg-red/90 transition-colors duration-200 text-sm font-medium"
+              className="inline-block bg-red text-white px-5 py-2 rounded hover:bg-red/90 transition-colors duration-200 text-sm font-medium"
             >
               Join Our Community
             </Link>
@@ -89,7 +89,7 @@ export default function Footer() {
 
           {/* Follow Us - Centered */}
           <div className="text-center">
-            <h3 className="font-bebas text-lg mb-4 text-white">FOLLOW US</h3>
+            <h3 className="font-bebas text-lg mb-3 text-white">FOLLOW US</h3>
             <div className="flex justify-center space-x-4">
               {socialLinks.map((social) => (
                 <a
@@ -115,10 +115,10 @@ export default function Footer() {
         </div>
 
         {/* Desktop Layout */}
-        <div className="hidden md:grid grid-cols-3 gap-8 items-center">
+        <div className="hidden md:grid grid-cols-3 gap-6 items-center">
           {/* Quick Links - Left */}
           <div>
-            <h3 className="font-bebas text-lg mb-4 text-white">QUICK LINKS</h3>
+            <h3 className="font-bebas text-lg mb-3 text-white">QUICK LINKS</h3>
             <div className="grid grid-cols-2 gap-x-8 gap-y-2">
               {navLinks.map((link) => (
                 <Link
@@ -134,7 +134,7 @@ export default function Footer() {
 
           {/* Logo - Center */}
           <div className="flex justify-center">
-            <div className="w-40 h-20 relative">
+            <div className="w-32 h-16 relative">
               <Image
                 src="/logo.png"
                 alt="WCS Basketball Logo"
@@ -147,8 +147,8 @@ export default function Footer() {
 
           {/* Follow Us - Right */}
           <div className="text-right">
-            <h3 className="font-bebas text-lg mb-4 text-white">FOLLOW US</h3>
-            <div className="flex justify-end space-x-3 mb-4">
+            <h3 className="font-bebas text-lg mb-3 text-white">FOLLOW US</h3>
+            <div className="flex justify-end space-x-3 mb-3">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
@@ -169,8 +169,8 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-            <div className="text-sm text-white font-inter mb-4">
-              <p className="mb-2">
+            <div className="text-sm text-white font-inter mb-3">
+              <p className="mb-1">
                 Stay updated with the latest WCS news and events.
               </p>
             </div>
@@ -187,8 +187,8 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
             <div className="text-sm text-gray-300 font-inter">
               © {currentYear} WCS Basketball. All rights reserved.
             </div>

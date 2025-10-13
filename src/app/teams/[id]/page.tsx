@@ -17,6 +17,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 import { devLog, devError } from "../../../lib/security";
 import TeamUpdates from "../../../components/TeamUpdates";
+import TeamGameCard from "../../../components/team/TeamGameCard";
+import TeamPracticeCard from "../../../components/team/TeamPracticeCard";
 
 type TeamPageProps = { params: Promise<{ id: string }> };
 
@@ -189,10 +191,10 @@ export default function TeamPage({ params }: TeamPageProps) {
     );
   }
 
-  const games = schedules.filter((s) => s.event_type === "Game").slice(0, 5);
+  const games = schedules.filter((s) => s.event_type === "Game").slice(0, 3);
   const practices = schedules
     .filter((s) => s.event_type === "Practice")
-    .slice(0, 5);
+    .slice(0, 3);
 
   return (
     <motion.div
@@ -356,50 +358,19 @@ export default function TeamPage({ params }: TeamPageProps) {
 
         {/* Game Schedule - Full Width */}
         <section className="mb-12" aria-label="Game Schedule">
-          <h2 className="text-2xl font-bebas uppercase mb-4 text-center">
+          <h2 className="text-2xl font-bebas uppercase mb-6 text-center">
             Game Schedule
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-inter">
-              <thead className="bg-gray-900/50">
-                <tr>
-                  <th className="p-2 text-red">Date/Time</th>
-                  <th className="p-2 text-red">Location</th>
-                  <th className="p-2 text-red">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {games.length > 0 ? (
-                  games.map((game) => (
-                    <tr key={game.id} className="border-b border-gray-700">
-                      <td className="p-2 text-gray-300">
-                        {new Date(game.date_time).toLocaleString("en-US", {
-                          timeZone: "America/Chicago",
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                      </td>
-                      <td className="p-2 text-gray-300">{game.location}</td>
-                      <td className="p-2">
-                        <Link
-                          href="/schedules"
-                          className="text-red hover:underline"
-                          aria-label={`View details for game on ${game.date_time}`}
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="p-2 text-gray-300">
-                      No games scheduled.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="space-y-4">
+            {games.length > 0 ? (
+              games.map((game) => (
+                <TeamGameCard key={game.id} schedule={game} />
+              ))
+            ) : (
+              <div className="bg-white rounded-lg p-6 text-center shadow-sm border border-gray-100">
+                <p className="text-gray-500 font-inter">No games scheduled.</p>
+              </div>
+            )}
           </div>
           <Link
             href="/schedules"
@@ -412,50 +383,21 @@ export default function TeamPage({ params }: TeamPageProps) {
 
         {/* Practice Schedule - Full Width */}
         <section aria-label="Practice Schedule">
-          <h2 className="text-2xl font-bebas uppercase mb-4 text-center">
+          <h2 className="text-2xl font-bebas uppercase mb-6 text-center">
             Practice Schedule
           </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left font-inter">
-              <thead className="bg-gray-900/50">
-                <tr>
-                  <th className="p-2 text-red">Date/Time</th>
-                  <th className="p-2 text-red">Location</th>
-                  <th className="p-2 text-red">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {practices.length > 0 ? (
-                  practices.map((practice) => (
-                    <tr key={practice.id} className="border-b border-gray-700">
-                      <td className="p-2 text-gray-300">
-                        {new Date(practice.date_time).toLocaleString("en-US", {
-                          timeZone: "America/Chicago",
-                          dateStyle: "short",
-                          timeStyle: "short",
-                        })}
-                      </td>
-                      <td className="p-2 text-gray-300">{practice.location}</td>
-                      <td className="p-2">
-                        <Link
-                          href="/schedules"
-                          className="text-red hover:underline"
-                          aria-label={`View details for practice on ${practice.date_time}`}
-                        >
-                          View
-                        </Link>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={3} className="p-2 text-gray-300">
-                      No practices scheduled.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+          <div className="space-y-4">
+            {practices.length > 0 ? (
+              practices.map((practice) => (
+                <TeamPracticeCard key={practice.id} schedule={practice} />
+              ))
+            ) : (
+              <div className="bg-white rounded-lg p-6 text-center shadow-sm border border-gray-100">
+                <p className="text-gray-500 font-inter">
+                  No practices scheduled.
+                </p>
+              </div>
+            )}
           </div>
           <Link
             href="/schedules"

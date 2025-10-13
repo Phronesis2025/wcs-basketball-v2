@@ -26,11 +26,31 @@
 
 ## 🧩 Implemented Components
 
+### Team Page (v2.7.5)
+
+- **Dashboard-Style Cards**: Modern card-based layout matching coaches dashboard design
+- **White Theme**: Clean white background with proper contrast and professional appearance
+- **Event Cards**:
+  - Game Cards: White background with red location badge
+  - Practice Cards: White background with green location badge
+  - Hover effects with subtle shadow transitions
+- **Event Limitation**: Display only upcoming 3 events for better focus and performance
+- **Responsive Design**: Cards stack vertically on mobile, maintain consistent spacing
+- **Empty States**: Styled empty state cards when no events are scheduled
+- **Typography**:
+  - Headings: `font-inter font-semibold text-gray-900`
+  - Body text: `text-gray-500` and `text-gray-600`
+  - Consistent with dashboard styling
+- **Card Structure**:
+  - Left side: Event title and date/time information
+  - Right side: Location badge with appropriate color coding
+  - Proper spacing and padding for readability
+
 ### Schedules Page (v2.7.5)
 
 - **Mobile-First Calendar**: Custom month grid with color-coded event pills
   - Game: Red (`bg-red`) with white text
-  - Practice: Green (`bg-green-700`) with white text  
+  - Practice: Green (`bg-green-700`) with white text
   - Tournament: Purple (`bg-purple-700`) with white text
   - Update/Meeting: Yellow (`bg-amber-500`) with black text
 - **Event Pills**: Show team name or "All Teams" for global events; click opens details modal
@@ -38,14 +58,14 @@
 - **Event Limit**: Show 3 pills per day with "+n more" expander for additional events
 - **Today Highlighting**: Subtle red-tinted background for current date
 - **Timezone Handling**: Proper Chicago timezone support for accurate date detection
-- **Modal System**: 
+- **Modal System**:
   - Prevents main page scrolling when modal is open
   - Internal scrolling for tall content with max-height constraints
   - Accessible focus management and keyboard navigation
-- **Today's Events Layout**: 
+- **Today's Events Layout**:
   - First line: Event type (colored) + team name
   - Second line: Date/time + location (smaller, gray text)
-- **Responsive Design**: 
+- **Responsive Design**:
   - Mobile: Team name only, centered in pill
   - Desktop: Team name left-aligned, time right-aligned
 - **Bulk Operations**: "Delete All Practices" button with confirmation modal

@@ -2,6 +2,16 @@
 
 ## v2.7.5 - January 2025 (Current)
 
+### 🏀 Team Page — Dashboard-Style Card Layout
+
+- **Card-Based Design**: Replaced table layouts with modern card components matching dashboard style
+- **White Theme**: Updated team page cards to use clean white background with proper contrast
+- **Event Limitation**: Limited display to upcoming 3 events for better focus and performance
+- **Responsive Cards**: Created `TeamGameCard` and `TeamPracticeCard` components with mobile-first design
+- **Consistent Styling**: Cards match dashboard appearance with proper badges, typography, and spacing
+- **Empty States**: Added styled empty state cards when no events are scheduled
+- **Performance**: Optimized rendering with proper component structure and hover effects
+
 ### 🗓️ Schedules Page — Mobile-first Calendar Redesign
 
 - Replaced desktop FullCalendar with custom, mobile-first month grid to unify UX across devices
@@ -29,8 +39,11 @@
 
 ### 🔒 Security & Build
 
-- **Security Audit**: Comprehensive security review with perfect 10/10 score
+- **Security Audit**: Comprehensive security review with perfect 10/10 score maintained
 - **Console Security**: All console statements properly contained within development-only utilities
+- **API Route Security**: Replaced console.error with devError in all API routes
+- **React Hook Security**: Fixed all React Hook dependency warnings with proper useCallback implementation
+- **Build Security**: Zero ESLint warnings, clean TypeScript compilation
 - **Input Sanitization**: Comprehensive XSS protection across all user inputs
 - **Dependency Security**: NPM audit shows 0 vulnerabilities
 - **Build Success**: Production build passes with no errors
