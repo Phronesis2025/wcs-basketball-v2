@@ -159,8 +159,9 @@ export default function DrillsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-navy text-white py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-navy text-white">
+      <section className="pt-20 pb-12 sm:pt-24" aria-label="Practice Drills">
+        <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
         <h1
           className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase"
           aria-label="Practice Drills"
@@ -307,7 +308,8 @@ export default function DrillsPage() {
             )}
           </div>
         </section>
-      </div>
+        </div>
+      </section>
 
       {/* Drill Details Modal */}
       {selectedDrill && (
