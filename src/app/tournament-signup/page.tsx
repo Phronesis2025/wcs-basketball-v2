@@ -1,20 +1,16 @@
 // src/app/tournament-signup/page.tsx
 "use client";
 
-import { useState } from "react";
+// import { useState } from "react";
 import Link from "next/link";
 
 export default function TournamentSignup() {
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     // TODO: Implement tournament signup logic
-    setTimeout(() => {
-      setIsLoading(false);
-      alert("Tournament signup functionality coming soon!");
-    }, 1000);
+    alert("Tournament signup functionality coming soon!");
   };
 
   return (

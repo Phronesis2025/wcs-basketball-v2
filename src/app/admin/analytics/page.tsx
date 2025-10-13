@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabaseClient";
 export default function AdminAnalytics() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<{ email?: string } | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {

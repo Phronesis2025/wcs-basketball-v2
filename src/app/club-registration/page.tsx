@@ -1,20 +1,16 @@
 // src/app/club-registration/page.tsx
 "use client";
 
-import { useState } from "react";
+// import { useState } from "react";
 import Link from "next/link";
 
 export default function ClubRegistration() {
-  const [isLoading, setIsLoading] = useState(false);
+  // const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     // TODO: Implement club registration logic
-    setTimeout(() => {
-      setIsLoading(false);
-      alert("Club registration functionality coming soon!");
-    }, 1000);
+    alert("Club registration functionality coming soon!");
   };
 
   return (
