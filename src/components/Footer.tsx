@@ -11,8 +11,6 @@ export default function Footer() {
     { name: "About", href: "/about" },
     { name: "Teams", href: "/teams" },
     { name: "Schedules", href: "/schedules" },
-    { name: "Tournament", href: "/tournament-signup" },
-    { name: "Register", href: "/club-registration" },
     { name: "Coaches", href: "/coaches/login" },
     { name: "Drills", href: "/drills" },
   ];
