@@ -423,6 +423,7 @@ export default function CoachesDashboard() {
               "update content"
             ),
             image_url: imageUrl,
+            date_time: data.date_time as string | null,
           });
           setUpdates((prev) =>
             prev.map((item) =>
@@ -718,6 +719,7 @@ export default function CoachesDashboard() {
 
     const loadTeamData = async () => {
       try {
+        console.log("loadTeamData called for team:", selectedTeam);
         const teamIdForFetch =
           selectedTeam === "__GLOBAL__" ? "__GLOBAL__" : selectedTeam;
         const [schedulesData, updatesData, drillsData] = await Promise.all([
@@ -727,6 +729,7 @@ export default function CoachesDashboard() {
             ? getPracticeDrills(selectedTeam)
             : Promise.resolve([]),
         ]);
+        console.log("Fetched updates data:", updatesData);
         setSchedules(schedulesData);
         setUpdates(updatesData);
         setDrills(drillsData);
@@ -741,10 +744,11 @@ export default function CoachesDashboard() {
 
     loadTeamData();
 
-    // Realtime: listen to INSERTS only, with status/error handling
+    // Realtime: listen to all CRUD operations, with status/error handling
     let pollInterval: number | null = null;
     const channel = supabase
-      .channel(`team_${selectedTeam}`)
+      .channel(`team_${selectedTeam}_updates`)
+      // Schedules table events
       .on(
         "postgres_changes",
         {
@@ -761,7 +765,93 @@ export default function CoachesDashboard() {
       .on(
         "postgres_changes",
         {
+          event: "UPDATE",
+          schema: "public",
+          table: "schedules",
+          filter:
+            selectedTeam === "__GLOBAL__"
+              ? `is_global=eq.true`
+              : `team_id=eq.${selectedTeam}`,
+        },
+        () => loadTeamData()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
+          schema: "public",
+          table: "schedules",
+          filter:
+            selectedTeam === "__GLOBAL__"
+              ? `is_global=eq.true`
+              : `team_id=eq.${selectedTeam}`,
+        },
+        () => loadTeamData()
+      )
+      // Team updates table events
+      .on(
+        "postgres_changes",
+        {
           event: "INSERT",
+          schema: "public",
+          table: "team_updates",
+          filter:
+            selectedTeam === "__GLOBAL__"
+              ? `is_global=eq.true`
+              : `team_id=eq.${selectedTeam}`,
+        },
+        () => loadTeamData()
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "team_updates",
+          filter:
+            selectedTeam === "__GLOBAL__"
+              ? `is_global=eq.true`
+              : `team_id=eq.${selectedTeam}`,
+        },
+        (payload) => {
+          console.log(
+            "Dashboard received team update UPDATE (filtered):",
+            payload.new
+          );
+          loadTeamData();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "team_updates",
+        },
+        (payload) => {
+          console.log(
+            "Dashboard received team update UPDATE (unfiltered):",
+            payload.new
+          );
+          // Only reload if this update is relevant to the current team
+          const update = payload.new as TeamUpdate;
+          const isRelevant =
+            selectedTeam === "__GLOBAL__"
+              ? update.is_global
+              : update.team_id === selectedTeam;
+
+          if (isRelevant) {
+            console.log("Update is relevant, reloading data");
+            loadTeamData();
+          } else {
+            console.log("Update is not relevant, skipping reload");
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "DELETE",
           schema: "public",
           table: "team_updates",
           filter:

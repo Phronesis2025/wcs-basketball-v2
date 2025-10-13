@@ -17,9 +17,11 @@ export default function AnnouncementCard({
   canEdit = true,
   canDelete = true,
 }: AnnouncementCardProps) {
-  const formatDateTime = (dateTime: string) => {
+  const formatDateTimeChicago = (dateTime: string) => {
     const date = new Date(dateTime);
-    return date.toLocaleDateString("en-US", {
+    // Use America/Chicago for consistency with schedules page
+    return date.toLocaleString("en-US", {
+      timeZone: "America/Chicago",
       weekday: "long",
       month: "short",
       day: "numeric",
@@ -42,7 +44,9 @@ export default function AnnouncementCard({
             {update.title}
           </h4>
           <p className="text-sm text-gray-500 font-inter mt-1">
-            {formatDateTime(update.created_at)}
+            {update.date_time
+              ? formatDateTimeChicago(update.date_time)
+              : formatDateTimeChicago(update.created_at)}
           </p>
         </div>
         <div className="flex items-start space-x-2 flex-shrink-0">
