@@ -1,6 +1,6 @@
 {
   "name": "wcsv2.0-new",
-  "version": "2.7.3",
+  "version": "2.7.5",
   "private": true,
   "scripts": {
     "dev": "next dev",

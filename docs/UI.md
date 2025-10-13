@@ -26,15 +26,24 @@
 
 ## 🧩 Implemented Components
 
-### Schedules Page (v2.7.4)
+### Schedules Page (v2.7.5)
 
-- Unified custom month grid for mobile and desktop
-- Event type pills: Game (red), Practice (green), Tournament (purple), Update/Meeting (yellow)
-- Pills show team name or "All Teams"; click opens details modal
-- Month navigation bar at top: Prev | Month | Next, with compact color legend
-- Show 3 pills per day; "+n more" expands remaining
-- Today highlighted with subtle red‑tinted background
-- Desktop-only: time on right side of pill; team name left‑aligned
+- **Mobile-First Calendar**: Custom month grid with color-coded event pills
+  - Game: Red (`bg-red`) with white text
+  - Practice: Green (`bg-green-700`) with white text  
+  - Tournament: Purple (`bg-purple-700`) with white text
+  - Update/Meeting: Yellow (`bg-amber-500`) with black text
+- **Event Pills**: Show team name or "All Teams" for global events; click opens details modal
+- **Month Navigation**: Prev | Month | Next buttons at top with compact color legend
+- **Event Limit**: Show 3 pills per day with "+n more" expander for additional events
+- **Today Highlighting**: Subtle red-tinted background for current date
+- **Timezone Handling**: Proper Chicago timezone support for accurate date detection
+- **Responsive Design**: 
+  - Mobile: Team name only, centered in pill
+  - Desktop: Team name left-aligned, time right-aligned
+- **Bulk Operations**: "Delete All Practices" button with confirmation modal
+- **Recurring Practices**: Advanced recurring practice management with group ID tracking
+- **Real-time Updates**: Live synchronization of schedule changes across all users
 
 ### 1. Coaches Dashboard – Complete Redesign (v2.6.1)
 
