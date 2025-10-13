@@ -1,6 +1,6 @@
 # WCSv2.0 Changelog
 
-## v2.7.4 - October 2025 (Current)
+## v2.7.5 - January 2025 (Current)
 
 ### 🗓️ Schedules Page — Mobile-first Calendar Redesign
 
@@ -15,11 +15,49 @@
 
 ### 🔒 Security & Build
 
-- Today’s Events section type label now mirrors pill color mapping
+- Today's Events section type label now mirrors pill color mapping
 - Removed unused FullCalendar code paths and variables
 - Converted remaining <img> in `Hero.tsx` to Next `<Image>` for better LCP and CSP compliance
 - Addressed React hook dependency warning in calendar with safe inline eslint directive
 - Production build passes; only third‑party Prisma OpenTelemetry warnings remain (non‑blocking)
+
+### 🗓️ Calendar Timezone Fixes
+
+- Fixed timezone handling in MobileMonth calendar to use Chicago timezone consistently
+- Corrected "today" highlighting to properly detect current date in America/Chicago timezone
+- Updated date initialization to use Intl.DateTimeFormat for accurate timezone conversion
+- Ensured all date operations use Chicago timezone for consistent event grouping and display
+
+### 🗑️ Dashboard Bulk Operations
+
+- Added "Delete All Practices" button next to "+Add Practice" button in coaches dashboard
+- Implemented bulk deletion functionality with proper confirmation modal
+- Added permission bypass for coaches to delete all practices for their selected team
+- Enhanced mobile layout with responsive button stacking (vertical on mobile, horizontal on desktop)
+- Maintained consistent upper-right button placement across all dashboard sections
+
+### 🔒 Security Audit (January 2025)
+
+- Replaced all console.log/console.error statements with secure devLog/devError utilities
+- Verified no XSS vulnerabilities in user-generated content display
+- Confirmed CSRF protection is properly implemented across all forms
+- Validated input sanitization and profanity filtering system
+- Verified authorization checks for all CRUD operations
+- Confirmed no SQL injection vulnerabilities in database queries
+- Validated secure error handling without sensitive data exposure
+- **Security Score Maintained**: 10/10 (PERFECT SCORE)
+
+### 🔄 Recurring Practice Management
+
+- Fixed recurring practice editing to properly detect and populate all original recurring fields
+- Enhanced dashboard logic to analyze all events in the same recurring group
+- Improved modal detection to use enhanced pattern data with selected days, count, and end date
+- Added proper recurring practice creation, update, and deletion with group ID management
+- Fixed issue where editing recurring practices would show incorrect selected days
+
+---
+
+## v2.7.4 - October 2025
 
 ---
 

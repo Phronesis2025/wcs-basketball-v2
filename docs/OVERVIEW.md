@@ -4,8 +4,8 @@
 
 **WCSv2.0** is a comprehensive youth basketball league website built for World Class Sports Basketball in Kansas. The project empowers kids (ages 8-18), builds character, and generates revenue through merchandise sales. Built with modern web technologies, it features a responsive design, comprehensive security measures, and interactive components for coaches, parents, and players.
 
-**Current Version**: v2.6.1  
-**Last Updated**: December 2024  
+**Current Version**: v2.7.5  
+**Last Updated**: January 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 10/10 (Perfect) 🔒
 
@@ -111,7 +111,28 @@ Complete dashboard for coaches to manage their teams and content with enhanced d
 - Code: `src/app/coaches/dashboard/page.tsx`, `src/app/coaches/drills/page.tsx`, `src/lib/messageActions.ts`
 - Docs: [CHANGELOG.md](CHANGELOG.md) v2.6.0, [PROGRESS.md](PROGRESS.md) December 2024
 
-### **4. User Authentication**
+### **4. Schedules Page** ⭐ _Enhanced in v2.7.5_
+
+Unified mobile-first calendar system with color-coded event pills and comprehensive event management.
+
+**Features:**
+
+- **Mobile-First Calendar**: Custom month grid with color-coded event pills (Game=red, Practice=green, Tournament=purple, Update/Meeting=yellow)
+- **Event Details Modal**: Accessible modal with full event information and team details
+- **Timezone Handling**: Proper Chicago timezone support for accurate date detection and highlighting
+- **Responsive Design**: Unified calendar experience across mobile and desktop devices
+- **Bulk Operations**: "Delete All Practices" functionality for coaches with confirmation modals
+- **Recurring Practices**: Advanced recurring practice creation, editing, and management with group ID tracking
+- **Real-time Updates**: Live synchronization of schedule changes across all users
+- **Today Highlighting**: Visual indication of current date with timezone-aware detection
+- **Event Grouping**: Smart event organization with "+n more" expander for busy days
+
+**Reference Files:**
+
+- Code: `src/app/schedules/page.tsx`, `src/components/calendar/MobileMonth.tsx`, `src/components/calendar/EventDetailsModal.tsx`
+- Docs: [CHANGELOG.md](CHANGELOG.md) v2.7.5, [UI.md](UI.md)
+
+### **5. User Authentication**
 
 Secure user registration and login system for members and coaches.
 

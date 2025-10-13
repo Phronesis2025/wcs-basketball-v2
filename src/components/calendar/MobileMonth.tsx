@@ -33,12 +33,12 @@ export default function MobileMonth({
       timeZone: "America/Chicago",
       year: "numeric",
       month: "2-digit",
-      day: "2-digit"
+      day: "2-digit",
     });
     const parts = chicagoFormatter.formatToParts(now);
-    const year = parts.find(p => p.type === "year")?.value;
-    const month = parts.find(p => p.type === "month")?.value;
-    const day = parts.find(p => p.type === "day")?.value;
+    const year = parts.find((p) => p.type === "year")?.value;
+    const month = parts.find((p) => p.type === "month")?.value;
+    const day = parts.find((p) => p.type === "day")?.value;
     return new Date(parseInt(year!), parseInt(month!) - 1, parseInt(day!));
   });
 
@@ -89,12 +89,12 @@ export default function MobileMonth({
       timeZone: "America/Chicago",
       year: "numeric",
       month: "2-digit",
-      day: "2-digit"
+      day: "2-digit",
     });
     const parts = chicagoFormatter.formatToParts(now);
-    const year = parts.find(p => p.type === "year")?.value;
-    const month = parts.find(p => p.type === "month")?.value;
-    const day = parts.find(p => p.type === "day")?.value;
+    const year = parts.find((p) => p.type === "year")?.value;
+    const month = parts.find((p) => p.type === "month")?.value;
+    const day = parts.find((p) => p.type === "day")?.value;
     return `${year}-${month}-${day}`;
   }, []);
 

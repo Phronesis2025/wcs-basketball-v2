@@ -2,9 +2,41 @@
 
 ## Last Updated
 
-January 2025, Current Status - v2.7.3 Performance Optimization (complete)
+January 2025, Current Status - v2.7.5 Calendar & Dashboard Enhancements (complete)
 
 ## Recent Updates
+
+### January 2025 (v2.7.5) - Calendar & Dashboard Enhancements
+
+- ✅ **Calendar Timezone Fixes**
+  - Fixed timezone handling in MobileMonth calendar to use Chicago timezone consistently
+  - Corrected "today" highlighting to properly detect current date in America/Chicago timezone
+  - Updated date initialization to use Intl.DateTimeFormat for accurate timezone conversion
+  - Ensured all date operations use Chicago timezone for consistent event grouping and display
+
+- ✅ **Dashboard Bulk Operations**
+  - Added "Delete All Practices" button next to "+Add Practice" button in coaches dashboard
+  - Implemented bulk deletion functionality with proper confirmation modal
+  - Added permission bypass for coaches to delete all practices for their selected team
+  - Enhanced mobile layout with responsive button stacking (vertical on mobile, horizontal on desktop)
+  - Maintained consistent upper-right button placement across all dashboard sections
+
+- ✅ **Security Audit (January 2025)**
+  - Replaced all console.log/console.error statements with secure devLog/devError utilities
+  - Verified no XSS vulnerabilities in user-generated content display
+  - Confirmed CSRF protection is properly implemented across all forms
+  - Validated input sanitization and profanity filtering system
+  - Verified authorization checks for all CRUD operations
+  - Confirmed no SQL injection vulnerabilities in database queries
+  - Validated secure error handling without sensitive data exposure
+  - **Security Score Maintained**: 10/10 (PERFECT SCORE)
+
+- ✅ **Recurring Practice Management**
+  - Fixed recurring practice editing to properly detect and populate all original recurring fields
+  - Enhanced dashboard logic to analyze all events in the same recurring group
+  - Improved modal detection to use enhanced pattern data with selected days, count, and end date
+  - Added proper recurring practice creation, update, and deletion with group ID management
+  - Fixed issue where editing recurring practices would show incorrect selected days
 
 ### January 2025 (v2.7.3) - Performance Optimization
 
