@@ -925,9 +925,13 @@ export default function CoachesDashboard() {
         // Fetch teams based on user role
         let teamsData: Team[];
         if (admin) {
-          // Admins see all teams
-          devLog("Fetching all teams for admin user");
-          teamsData = await fetchTeams();
+          // Admins see all teams (via server API to bypass RLS)
+          devLog("Fetching all teams for admin user via API");
+          const res = await fetch("/api/teams", { cache: "no-store" });
+          if (!res.ok) {
+            throw new Error(`Failed to fetch teams: ${res.status}`);
+          }
+          teamsData = await res.json();
         } else {
           // Coaches see only their assigned teams
           devLog("Fetching assigned teams for coach user:", user.id);
@@ -976,7 +980,11 @@ export default function CoachesDashboard() {
 
         // If Supabase reports SIGNED_OUT (or no session) but our custom auth exists,
         // ignore this event to prevent redirect loops
-        if ((event === "SIGNED_OUT" || !session) && customToken && customAuthenticated) {
+        if (
+          (event === "SIGNED_OUT" || !session) &&
+          customToken &&
+          customAuthenticated
+        ) {
           console.log(
             "🔐 [DASHBOARD DEBUG] Skipping redirect on SIGNED_OUT due to custom auth"
           );
@@ -1009,7 +1017,13 @@ export default function CoachesDashboard() {
               // Fetch teams based on user role
               let teamsData: Team[];
               if (admin) {
-                teamsData = await fetchTeams();
+                // Admins see all teams (via server API to bypass RLS)
+                devLog("Auth listener: fetching all teams for admin via API");
+                const res = await fetch("/api/teams", { cache: "no-store" });
+                if (!res.ok) {
+                  throw new Error(`Failed to fetch teams: ${res.status}`);
+                }
+                teamsData = await res.json();
               } else {
                 teamsData = await fetchTeamsByCoachId(session.user.id);
               }
