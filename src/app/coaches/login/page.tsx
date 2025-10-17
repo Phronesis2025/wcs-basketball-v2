@@ -120,6 +120,11 @@ export default function CoachesLogin() {
 
       const authData = await response.json();
 
+      // Set the session in the client-side Supabase client
+      if (authData.session) {
+        await supabase.auth.setSession(authData.session);
+      }
+
       // Debug: Confirm user ID before server action call
       devLog("Calling getUserRole with ID:", authData.user.id);
 
