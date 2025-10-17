@@ -63,6 +63,7 @@ export default function CoachesDashboard() {
   const [userName, setUserName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   // const [csrfToken, setCsrfToken] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   // const [imagePreview, setImagePreview] = useState<string | null>(null); // New: Mobile preview
@@ -769,6 +770,12 @@ export default function CoachesDashboard() {
   };
 
   useEffect(() => {
+    // Prevent multiple simultaneous calls
+    if (loading || authChecked) {
+      console.log("🔐 [DASHBOARD DEBUG] ⚠️ Already loading or auth checked, skipping duplicate call");
+      return;
+    }
+    
     const token = generateCSRFToken();
     // setCsrfToken(token);
     document.cookie = `csrf-token=${encodeURIComponent(
@@ -791,6 +798,7 @@ export default function CoachesDashboard() {
         
         if (!authToken || !isAuthenticated) {
           console.log("🔐 [DASHBOARD DEBUG] ❌ No auth token or authenticated flag - redirecting to login");
+          setAuthChecked(true);
           router.push("/coaches/login");
           return;
         }
@@ -802,6 +810,7 @@ export default function CoachesDashboard() {
         
         if (!session?.user) {
           console.log("🔐 [DASHBOARD DEBUG] ❌ No user in session - redirecting to login");
+          setAuthChecked(true);
           router.push("/coaches/login");
           return;
         }
@@ -809,6 +818,9 @@ export default function CoachesDashboard() {
         // Use the user data from the session directly
         const user = session.user;
         console.log("🔐 [DASHBOARD DEBUG] ✅ User authenticated:", user.id);
+        
+        // Mark authentication as checked to prevent duplicate calls
+        setAuthChecked(true);
 
         setUserId(user.id); // Set user ID for created_by
         // Set last login time to current time
@@ -857,7 +869,7 @@ export default function CoachesDashboard() {
     };
 
     fetchData();
-  }, [router]);
+  }, [loading, authChecked]); // Include dependencies to prevent infinite loops
 
   // Listen for authentication state changes
   useEffect(() => {
