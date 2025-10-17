@@ -33,17 +33,32 @@ export default function Navbar() {
 
   useEffect(() => {
     const checkAuthStatus = () => {
-      const isAuthenticated = localStorage.getItem('auth.authenticated');
-      const authToken = localStorage.getItem('supabase.auth.token');
+      // Try localStorage first, then sessionStorage as backup
+      let isAuthenticated = localStorage.getItem('auth.authenticated');
+      let authToken = localStorage.getItem('supabase.auth.token');
+      
+      // If localStorage is empty, try sessionStorage
+      if (!isAuthenticated || !authToken) {
+        isAuthenticated = sessionStorage.getItem('auth.authenticated');
+        authToken = sessionStorage.getItem('supabase.auth.token');
+        
+        // If found in sessionStorage, restore to localStorage
+        if (isAuthenticated && authToken) {
+          localStorage.setItem('auth.authenticated', isAuthenticated);
+          localStorage.setItem('supabase.auth.token', authToken);
+        }
+      }
       
       if (isAuthenticated && authToken) {
         try {
           const session = JSON.parse(authToken);
           setUser(session?.user?.email || 'authenticated');
         } catch {
-          // Clear invalid auth data
+          // Clear invalid auth data from both storages
           localStorage.removeItem('auth.authenticated');
           localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('auth.authenticated');
+          sessionStorage.removeItem('supabase.auth.token');
           setUser(null);
         }
       } else {
@@ -103,9 +118,11 @@ export default function Navbar() {
   }
 
   const handleSignOut = async () => {
-    // Clear our custom auth data
+    // Clear our custom auth data from both storages
     localStorage.removeItem('auth.authenticated');
     localStorage.removeItem('supabase.auth.token');
+    sessionStorage.removeItem('auth.authenticated');
+    sessionStorage.removeItem('supabase.auth.token');
     setUser(null);
     
     // Dispatch custom event to notify other components

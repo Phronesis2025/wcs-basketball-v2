@@ -145,6 +145,10 @@ export default function CoachesLogin() {
         // Set a flag to indicate successful authentication
         localStorage.setItem('auth.authenticated', 'true');
         
+        // Also store in sessionStorage as backup (survives page reloads)
+        sessionStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
+        sessionStorage.setItem('auth.authenticated', 'true');
+        
         console.log("🔐 [LOGIN DEBUG] Dispatching auth state change event...");
         // Dispatch custom event to notify navbar of auth state change
         window.dispatchEvent(new CustomEvent('authStateChanged', { 
@@ -178,7 +182,8 @@ export default function CoachesLogin() {
       console.log("🔐 [LOGIN DEBUG] Setting timeout for navigation to dashboard...");
       setTimeout(() => {
         console.log("🔐 [LOGIN DEBUG] Navigating to dashboard...");
-        router.push("/coaches/dashboard");
+        // Use replace instead of push to prevent back button issues
+        router.replace("/coaches/dashboard");
       }, 100);
     } catch (err: unknown) {
       devError("Login error:", err);
