@@ -278,10 +278,10 @@ export default function SchedulesPage() {
                           {/* First line: Event type and team name */}
                           <div className="flex items-center space-x-2">
                             {(() => {
-                              const { bg } = eventTypeToColor(event.event_type);
+                              const { bg, text } = eventTypeToColor(event.event_type);
                               return (
                                 <span
-                                  className={`${bg} text-white font-bebas uppercase font-bold text-lg px-3 py-1 rounded-md`}
+                                  className={`${bg} ${text} font-bebas uppercase font-bold text-lg px-3 py-1 rounded-md flex items-center justify-center`}
                                 >
                                   {event.event_type}
                                 </span>
