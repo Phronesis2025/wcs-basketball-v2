@@ -777,6 +777,9 @@ export default function CoachesDashboard() {
 
     const fetchData = async () => {
       try {
+        // Wait a moment for localStorage to be set if coming from login
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         // Check if user is authenticated using our custom method
         const authToken = localStorage.getItem('supabase.auth.token');
         const isAuthenticated = localStorage.getItem('auth.authenticated');

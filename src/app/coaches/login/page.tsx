@@ -151,8 +151,10 @@ export default function CoachesLogin() {
         localStorage.removeItem("login_timestamp");
       }
 
-      // Proceed to dashboard
-      router.push("/coaches/dashboard");
+      // Proceed to dashboard with a small delay to ensure localStorage is set
+      setTimeout(() => {
+        router.push("/coaches/dashboard");
+      }, 100);
     } catch (err: unknown) {
       devError("Login error:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
