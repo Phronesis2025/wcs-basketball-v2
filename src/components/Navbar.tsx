@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+// import { supabase } from "@/lib/supabaseClient"; // No longer needed with custom auth
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -32,19 +32,44 @@ export default function Navbar() {
   }, [lastScrollY]);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user ? user.email || null : null);
-    };
-    fetchUser();
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user.email || null);
+    const checkAuthStatus = () => {
+      const isAuthenticated = localStorage.getItem('auth.authenticated');
+      const authToken = localStorage.getItem('supabase.auth.token');
+      
+      if (isAuthenticated && authToken) {
+        try {
+          const session = JSON.parse(authToken);
+          setUser(session?.user?.email || 'authenticated');
+        } catch {
+          // Clear invalid auth data
+          localStorage.removeItem('auth.authenticated');
+          localStorage.removeItem('supabase.auth.token');
+          setUser(null);
+        }
+      } else {
+        setUser(null);
       }
-    );
-    return () => authListener.subscription.unsubscribe();
+    };
+
+    // Check auth status on mount
+    checkAuthStatus();
+
+    // Listen for storage changes (when user logs in/out in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth.authenticated' || e.key === 'supabase.auth.token') {
+        checkAuthStatus();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    // Also check periodically in case of localStorage issues
+    const interval = setInterval(checkAuthStatus, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
   // Lock scroll when mobile menu is open
@@ -67,7 +92,9 @@ export default function Navbar() {
   }
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    // Clear our custom auth data
+    localStorage.removeItem('auth.authenticated');
+    localStorage.removeItem('supabase.auth.token');
     setUser(null);
     window.location.href = "/";
   };

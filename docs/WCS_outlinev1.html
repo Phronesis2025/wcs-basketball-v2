@@ -13,17 +13,25 @@
     line-height: 1.6;
     background: #fff;
   }
-  h1, h2, h3 {
+  header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+  }
+  header img {
+    width: 150px;
+    height: auto;
+    margin-right: 20px;
+  }
+  header h1 {
+    font-size: 1.8em;
     color: #0a2b5a;
+    margin: 0;
+    border: none;
   }
-  h1 {
-    text-align: center;
-    border-bottom: 3px solid #0a2b5a;
-    padding-bottom: 0.4em;
-    margin-bottom: 1em;
-  }
-  section {
-    margin-bottom: 2em;
+  h2 {
+    color: #0a2b5a;
+    margin-top: 1.4em;
   }
   .section-title {
     background: #f2f5fa;
@@ -40,12 +48,6 @@
   li {
     margin-bottom: 0.4em;
   }
-  .highlight {
-    background: #eef2ff;
-    padding: 10px 14px;
-    border-radius: 6px;
-    margin: 1em 0;
-  }
   .footer {
     font-size: 0.9em;
     text-align: center;
@@ -58,7 +60,13 @@
 </head>
 <body>
 
-<h1>WCS Basketball – Walkthrough & Discussion Outline</h1>
+<header>
+  <img src="WCS Logo-transparentBG.png" alt="WCS Basketball Logo">
+  <div>
+    <h1>WCS Basketball – Walkthrough & Discussion Outline</h1>
+    <p><strong>Prepared by:</strong> [Your Name], [Your LLC Name]</p>
+  </div>
+</header>
 
 <section>
   <h2>Purpose of Meeting</h2>
@@ -73,46 +81,42 @@
 
   <div class="section-title">1. Warm-Up & Vision (2–3 min)</div>
   <ul>
-    <li>Begin with a relaxed conversation: <em>“Where do you see WCS going in the next 1, 2, or 5 years?”</em></li>
-    <li>Ask about any long-term ideas — growth, expansion, or outreach.</li>
-    <li>Lightly introduce how the site aligns with that vision of growth and professionalism.</li>
+    <li>Start conversationally: <em>“Where do you see WCS going in the next 1, 2, or 5 years?”</em></li>
+    <li>Ask about long-term goals — growth, community, player development.</li>
+    <li>Briefly tie in how the website reflects and supports that vision.</li>
   </ul>
 
   <div class="section-title">2. Site Introduction (1–2 min)</div>
   <ul>
-    <li>Open the live site on his computer and phone: <a href="https://wcs-basketball-v2.vercel.app">wcs-basketball-v2.vercel.app</a></li>
-    <li>Explain that it’s hosted on <strong>Vercel</strong> and tied to their club domain.</li>
-    <li>Mention that it’s a <strong>Progressive Web App</strong> — runs like a native app but easier to manage and install.</li>
+    <li>Show the live site on both desktop and mobile: <a href="https://wcs-basketball-v2.vercel.app">wcs-basketball-v2.vercel.app</a></li>
+    <li>Explain that it’s hosted on <strong>Vercel</strong> and linked to the club’s domain.</li>
+    <li>Mention it’s a <strong>Progressive Web App</strong> — fast, installable, and always up-to-date.</li>
   </ul>
 
   <div class="section-title">3. Guided Walkthrough (8–10 min)</div>
   <ul>
-    <li><strong>Home Page:</strong> Show the hero banner, animated basketball effect, and fan zone — sets a professional tone.</li>
-    <li><strong>Teams Page:</strong> Explore the grid layout and coach details; emphasize how easy it is for parents to find info.</li>
-    <li><strong>Schedules Page:</strong> Demonstrate the mobile-friendly calendar and color-coded events.</li>
-    <li><strong>Coaches Dashboard:</strong> Log in as a coach to show how updates, practices, and drills are managed.</li>
-    <li><strong>Practice Drills:</strong> Highlight the organized drill library and its potential for coaches to collaborate.</li>
-    <li>Show mobile view to reinforce how accessible and simple it is for parents.</li>
+    <li><strong>Home Page:</strong> Clean design, strong branding, and community-first tone.</li>
+    <li><strong>Teams Page:</strong> Easy to find rosters and coaches; great for new parents.</li>
+    <li><strong>Schedules Page:</strong> Color-coded, mobile-ready practice and game calendar.</li>
+    <li><strong>Coaches Dashboard:</strong> Demonstrate posting updates, practices, and drills.</li>
+    <li><strong>Practice Drills:</strong> Organized library — foundation for shared coaching resources.</li>
+    <li>Show mobile responsiveness to reinforce accessibility.</li>
   </ul>
 
   <div class="section-title">4. Discussion & Benefits (4–5 min)</div>
   <ul>
-    <li>Talk through the key benefits for:
-      <ul>
-        <li><strong>Parents:</strong> One location for all team info; mobile-friendly; real-time updates.</li>
-        <li><strong>Coaches:</strong> Easy scheduling, drill sharing, and communication tools.</li>
-        <li><strong>Club:</strong> Professional image and scalable foundation for growth.</li>
-      </ul>
-    </li>
-    <li>Discuss how this modern system reflects the 25-year legacy of WCS while preparing for the future.</li>
+    <li><strong>Parents:</strong> Centralized info, reliable updates, easy access on phones.</li>
+    <li><strong>Coaches:</strong> Streamlined communication, team updates, and drill sharing.</li>
+    <li><strong>Club:</strong> Professional digital presence reflecting 25 years of excellence.</li>
   </ul>
+  <p>Discuss how this site helps WCS evolve without complicating daily operations.</p>
 
   <div class="section-title">5. Next Steps (2–3 min)</div>
   <ul>
-    <li>Explain the path toward transferring the site to the club via your LLC.</li>
-    <li>Share that your LLC could act as WCS’s <strong>first sponsor</strong> — donating back the initial build fee to the club.</li>
-    <li>Clarify ongoing maintenance options and low monthly costs for hosting.</li>
-    <li>Invite feedback on the structure and timeline before formalizing anything.</li>
+    <li>Explain transferring ownership via your LLC and the proposed pricing structure.</li>
+    <li>Float idea: your LLC acts as WCS’s <strong>first sponsor</strong> by donating the build fee back.</li>
+    <li>Outline simple, low monthly maintenance plan.</li>
+    <li>Ask for feedback before finalizing transfer and setup.</li>
   </ul>
 
 </section>
@@ -120,10 +124,10 @@
 <section>
   <h2>Presentation Tips</h2>
   <ul>
-    <li>Keep the tone friendly and open — like a coach’s meeting rather than a sales pitch.</li>
-    <li>Use his computer and phone to show how seamless the experience is across devices.</li>
-    <li>Encourage questions throughout rather than saving them for the end.</li>
-    <li>End by emphasizing collaboration — that this site is built for the club, not just delivered to it.</li>
+    <li>Keep the tone collaborative and conversational — not formal.</li>
+    <li>Demonstrate live — use both computer and phone.</li>
+    <li>Encourage discussion as you go rather than waiting until the end.</li>
+    <li>Close by emphasizing partnership: “This site was built for WCS — with WCS.”</li>
   </ul>
 </section>
 

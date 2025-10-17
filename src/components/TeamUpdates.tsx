@@ -313,15 +313,15 @@ export default function TeamUpdates({
                     aria-label={`${teamName} update card`}
                   >
                     {/* Header Section */}
-                    <div className="flex-shrink-0 mb-4">
+                    <div className="flex-shrink-0 mb-3">
                       <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
                         {teamName} News
                       </h4>
-                      <h3 className="text-2xl font-bebas mt-2 text-white line-clamp-1 leading-tight overflow-hidden">
+                      <h3 className="text-xl font-bebas mt-2 text-white line-clamp-1 leading-tight overflow-hidden">
                         {sanitizeInput(update.title)}
                       </h3>
                       <p
-                        className="text-gray-300 font-inter leading-tight mt-4 text-sm lg:text-base overflow-hidden"
+                        className="text-gray-300 font-inter leading-tight mt-3 text-sm overflow-hidden"
                         style={{
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
@@ -334,10 +334,10 @@ export default function TeamUpdates({
                       </p>
                     </div>
 
-                    {/* Image Section - Takes up remaining space */}
-                    <div className="flex-1 mb-4">
+                    {/* Image Section - Fixed height to ensure button fits */}
+                    <div className="flex-shrink-0 mb-3">
                       {update.image_url ? (
-                        <div className="relative w-full h-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] rounded-md overflow-hidden">
+                        <div className="relative w-full h-32 rounded-md overflow-hidden">
                           <Image
                             src={update.image_url}
                             alt={update.title}
@@ -347,7 +347,7 @@ export default function TeamUpdates({
                           />
                         </div>
                       ) : updateTeam?.logo_url ? (
-                        <div className="relative w-full h-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] rounded-md overflow-hidden bg-gray-800/50">
+                        <div className="relative w-full h-32 rounded-md overflow-hidden bg-gray-800/50">
                           <Image
                             src={updateTeam?.logo_url || "/logos/logo2.png"}
                             alt={`${teamName} logo`}
@@ -357,7 +357,7 @@ export default function TeamUpdates({
                           />
                         </div>
                       ) : (
-                        <div className="w-full h-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] bg-gray-800/50 rounded-md flex items-center justify-center">
+                        <div className="w-full h-32 bg-gray-800/50 rounded-md flex items-center justify-center">
                           <span className="text-gray-500 text-sm">
                             No Image
                           </span>
@@ -366,7 +366,7 @@ export default function TeamUpdates({
                     </div>
 
                     {/* Button Section - Fixed at bottom with proper padding */}
-                    <div className="flex-shrink-0 pt-4">
+                    <div className="flex-shrink-0 mt-auto">
                       <button
                         onClick={(e) => {
                           e.preventDefault();
@@ -375,7 +375,7 @@ export default function TeamUpdates({
                             setSelectedUpdate(update);
                           }
                         }}
-                        className="w-full bg-red text-white font-bebas uppercase py-3 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                        className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm"
                         aria-label={`Read more about ${update.title}`}
                         type="button"
                       >
