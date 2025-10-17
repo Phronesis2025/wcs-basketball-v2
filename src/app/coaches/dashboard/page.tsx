@@ -898,7 +898,9 @@ export default function CoachesDashboard() {
 
         // Mark authentication as checked to prevent duplicate calls
         setAuthChecked(true);
-        console.log("🔐 [DASHBOARD DEBUG] ✅ Authentication successful, setting authChecked = true");
+        console.log(
+          "🔐 [DASHBOARD DEBUG] ✅ Authentication successful, setting authChecked = true"
+        );
 
         setUserId(user.id); // Set user ID for created_by
         // Set last login time to current time
@@ -953,6 +955,34 @@ export default function CoachesDashboard() {
   useEffect(() => {
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Supabase auth event:",
+          event,
+          "session?",
+          !!session
+        );
+
+        // Check for our custom auth (localStorage/sessionStorage)
+        const customToken =
+          localStorage.getItem("supabase.auth.token") ||
+          sessionStorage.getItem("supabase.auth.token");
+        const customAuthenticated =
+          localStorage.getItem("auth.authenticated") ||
+          sessionStorage.getItem("auth.authenticated");
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Custom auth present?",
+          !!(customToken && customAuthenticated)
+        );
+
+        // If Supabase reports SIGNED_OUT (or no session) but our custom auth exists,
+        // ignore this event to prevent redirect loops
+        if ((event === "SIGNED_OUT" || !session) && customToken && customAuthenticated) {
+          console.log(
+            "🔐 [DASHBOARD DEBUG] Skipping redirect on SIGNED_OUT due to custom auth"
+          );
+          return;
+        }
+
         if (event === "SIGNED_OUT" || !session) {
           router.push("/coaches/login");
         } else if (event === "SIGNED_IN" && session?.user) {
