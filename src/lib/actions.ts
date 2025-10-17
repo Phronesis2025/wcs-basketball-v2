@@ -38,7 +38,9 @@ type TeamWithCoaches = {
 // Fetch teams
 export async function fetchTeams(): Promise<Team[]> {
   try {
-    const { data, error } = await supabase
+    // Prefer admin client (bypasses RLS) when available
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
       .from("teams")
       .select(
         `
