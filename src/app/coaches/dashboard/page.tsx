@@ -933,9 +933,13 @@ export default function CoachesDashboard() {
           }
           teamsData = await res.json();
         } else {
-          // Coaches see only their assigned teams
-          devLog("Fetching assigned teams for coach user:", user.id);
-          teamsData = await fetchTeamsByCoachId(user.id);
+          // Coaches see only their assigned teams (via server API)
+          devLog("Fetching assigned teams for coach user via API:", user.id);
+          const res = await fetch(`/api/teams/by-coach?userId=${user.id}`, { cache: "no-store" });
+          if (!res.ok) {
+            throw new Error(`Failed to fetch coach teams: ${res.status}`);
+          }
+          teamsData = await res.json();
         }
         devLog("Teams loaded:", `${teamsData.length} teams`);
         setTeams(teamsData);
@@ -1025,7 +1029,13 @@ export default function CoachesDashboard() {
                 }
                 teamsData = await res.json();
               } else {
-                teamsData = await fetchTeamsByCoachId(session.user.id);
+                // Coaches see only their assigned teams (via server API)
+                devLog("Auth listener: fetching teams for coach via API");
+                const res = await fetch(`/api/teams/by-coach?userId=${session.user.id}`, { cache: "no-store" });
+                if (!res.ok) {
+                  throw new Error(`Failed to fetch coach teams: ${res.status}`);
+                }
+                teamsData = await res.json();
               }
               setTeams(teamsData);
             }
