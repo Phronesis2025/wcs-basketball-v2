@@ -312,15 +312,15 @@ export default function TeamUpdates({
                     role="group"
                     aria-label={`${teamName} update card`}
                   >
-                    {/* Header Section - Top left corner */}
-                    <div className="absolute top-4 left-4 z-10">
+                    {/* Header Section */}
+                    <div className="flex-shrink-0 p-4 pb-2">
                       <h4 className="text-red-600 font-bebas uppercase text-sm border-b border-red-500/50 pb-1">
                         {teamName} News
                       </h4>
                     </div>
 
-                    {/* Image Section - Top half of card */}
-                    <div className="flex-shrink-0 h-1/2 relative">
+                    {/* Image Section - Takes remaining space */}
+                    <div className="flex-1 relative">
                       {update.image_url ? (
                         <div className="relative w-full h-full overflow-hidden">
                           <Image
@@ -350,41 +350,39 @@ export default function TeamUpdates({
                       )}
                     </div>
 
-                    {/* Content Section - Bottom half of card */}
-                    <div className="flex-1 p-4 flex flex-col">
+                    {/* Content Section - Bottom of card */}
+                    <div className="flex-shrink-0 p-4 pt-2">
                       <h3 className="text-lg font-bebas text-white line-clamp-1 leading-tight overflow-hidden mb-2">
                         {sanitizeInput(update.title)}
                       </h3>
                       <p
-                        className="text-gray-300 font-inter leading-tight text-sm overflow-hidden flex-1"
+                        className="text-gray-300 font-inter leading-tight text-sm overflow-hidden mb-3"
                         style={{
                           display: "-webkit-box",
-                          WebkitLineClamp: 3,
+                          WebkitLineClamp: 2,
                           WebkitBoxOrient: "vertical",
                           lineHeight: "1.2em",
-                          maxHeight: "3.6em",
+                          maxHeight: "2.4em",
                         }}
                       >
                         {sanitizeInput(update.content)}
                       </p>
                       
-                      {/* Button Section - Bottom of content area */}
-                      <div className="flex-shrink-0 mt-3">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (!isDragging) {
-                              setSelectedUpdate(update);
-                            }
-                          }}
-                          className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm"
-                          aria-label={`Read more about ${update.title}`}
-                          type="button"
-                        >
-                          Read more
-                        </button>
-                      </div>
+                      {/* Button Section */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isDragging) {
+                            setSelectedUpdate(update);
+                          }
+                        }}
+                        className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm"
+                        aria-label={`Read more about ${update.title}`}
+                        type="button"
+                      >
+                        Read more
+                      </button>
                     </div>
                   </div>
                 </div>
