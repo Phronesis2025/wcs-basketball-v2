@@ -61,13 +61,24 @@ export default function Navbar() {
       }
     };
 
+    // Listen for custom auth state change events
+    const handleAuthStateChange = (e: CustomEvent) => {
+      if (e.detail?.authenticated) {
+        setUser(e.detail.user?.email || 'authenticated');
+      } else {
+        setUser(null);
+      }
+    };
+
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('authStateChanged', handleAuthStateChange as EventListener);
 
     // Also check periodically in case of localStorage issues
     const interval = setInterval(checkAuthStatus, 1000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authStateChanged', handleAuthStateChange as EventListener);
       clearInterval(interval);
     };
   }, []);
@@ -96,6 +107,12 @@ export default function Navbar() {
     localStorage.removeItem('auth.authenticated');
     localStorage.removeItem('supabase.auth.token');
     setUser(null);
+    
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new CustomEvent('authStateChanged', { 
+      detail: { authenticated: false } 
+    }));
+    
     window.location.href = "/";
   };
 

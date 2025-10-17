@@ -6,6 +6,7 @@ import * as Sentry from "@sentry/nextjs";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useTeams } from "@/hooks/useTeams";
+import { shouldUseRealtime } from "@/lib/networkUtils";
 
 import MobileMonth from "@/components/calendar/MobileMonth";
 import EventDetailsModal from "@/components/calendar/EventDetailsModal";
@@ -63,104 +64,113 @@ export default function SchedulesPage() {
     };
     fetchData();
 
-    // Realtime: listen for all CRUD operations
-    const channel = supabase
-      .channel("schedules_realtime")
-      // Schedules table events
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "schedules" },
-        (payload) => {
-          setEvents((prev) => [...prev, payload.new as Schedule]);
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "schedules" },
-        (payload) => {
-          setEvents((prev) =>
-            prev.map((event) =>
-              event.id === payload.new.id ? (payload.new as Schedule) : event
-            )
-          );
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "schedules" },
-        (payload) => {
-          setEvents((prev) =>
-            prev.filter((event) => event.id !== payload.old.id)
-          );
-        }
-      )
-      // Team updates table events
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "team_updates" },
-        (payload) => {
-          const update = payload.new as TeamUpdate;
-          if (update.date_time) {
-            const scheduleEvent = {
-              id: update.id,
-              event_type: "Update",
-              date_time: update.date_time,
-              title: update.title,
-              location: "N/A",
-              opponent: null,
-              description: update.content,
-              is_global: update.is_global || false,
-              created_by: update.created_by,
-              created_at: update.created_at,
-              deleted_at: update.deleted_at,
-            } as Schedule;
-            setEvents((prev) => [...prev, scheduleEvent]);
-          }
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "team_updates" },
-        (payload) => {
-          const update = payload.new as TeamUpdate;
-          const scheduleEvent = {
-            id: update.id,
-            event_type: "Update",
-            date_time: update.date_time,
-            title: update.title,
-            location: "N/A",
-            opponent: null,
-            description: update.content,
-            is_global: update.is_global || false,
-            created_by: update.created_by,
-            created_at: update.created_at,
-            deleted_at: update.deleted_at,
-          } as Schedule;
-
-          setEvents((prev) => {
-            // If date_time was removed, remove from events
-            if (!update.date_time) {
-              return prev.filter((event) => event.id !== update.id);
+    // Check if real-time should be enabled (skip for VPN users)
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    shouldUseRealtime().then((useRealtime) => {
+      if (useRealtime) {
+        // Realtime: listen for all CRUD operations
+        channel = supabase
+          .channel("schedules_realtime")
+          // Schedules table events
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "schedules" },
+            (payload) => {
+              setEvents((prev) => [...prev, payload.new as Schedule]);
             }
-            // Otherwise, update the event
-            return prev.map((event) =>
-              event.id === update.id ? scheduleEvent : event
-            );
-          });
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "team_updates" },
-        (payload) => {
-          setEvents((prev) =>
-            prev.filter((event) => event.id !== payload.old.id)
-          );
-        }
-      )
-      .subscribe();
+          )
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "schedules" },
+            (payload) => {
+              setEvents((prev) =>
+                prev.map((event) =>
+                  event.id === payload.new.id ? (payload.new as Schedule) : event
+                )
+              );
+            }
+          )
+          .on(
+            "postgres_changes",
+            { event: "DELETE", schema: "public", table: "schedules" },
+            (payload) => {
+              setEvents((prev) =>
+                prev.filter((event) => event.id !== payload.old.id)
+              );
+            }
+          )
+          // Team updates table events
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "team_updates" },
+            (payload) => {
+              const update = payload.new as TeamUpdate;
+              if (update.date_time) {
+                const scheduleEvent = {
+                  id: update.id,
+                  event_type: "Update",
+                  date_time: update.date_time,
+                  title: update.title,
+                  location: "N/A",
+                  opponent: null,
+                  description: update.content,
+                  is_global: update.is_global || false,
+                  created_by: update.created_by,
+                  created_at: update.created_at,
+                  deleted_at: update.deleted_at,
+                } as Schedule;
+                setEvents((prev) => [...prev, scheduleEvent]);
+              }
+            }
+          )
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "team_updates" },
+            (payload) => {
+              const update = payload.new as TeamUpdate;
+              const scheduleEvent = {
+                id: update.id,
+                event_type: "Update",
+                date_time: update.date_time,
+                title: update.title,
+                location: "N/A",
+                opponent: null,
+                description: update.content,
+                is_global: update.is_global || false,
+                created_by: update.created_by,
+                created_at: update.created_at,
+                deleted_at: update.deleted_at,
+              } as Schedule;
+
+              setEvents((prev) => {
+                // If date_time was removed, remove from events
+                if (!update.date_time) {
+                  return prev.filter((event) => event.id !== update.id);
+                }
+                // Otherwise, update the event
+                return prev.map((event) =>
+                  event.id === update.id ? scheduleEvent : event
+                );
+              });
+            }
+          )
+          .on(
+            "postgres_changes",
+            { event: "DELETE", schema: "public", table: "team_updates" },
+            (payload) => {
+              setEvents((prev) =>
+                prev.filter((event) => event.id !== payload.old.id)
+              );
+            }
+          )
+          .subscribe();
+      }
+    });
+
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, []);
 

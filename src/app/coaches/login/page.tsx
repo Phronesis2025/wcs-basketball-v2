@@ -125,6 +125,11 @@ export default function CoachesLogin() {
         localStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
         // Set a flag to indicate successful authentication
         localStorage.setItem('auth.authenticated', 'true');
+        
+        // Dispatch custom event to notify navbar of auth state change
+        window.dispatchEvent(new CustomEvent('authStateChanged', { 
+          detail: { authenticated: true, user: authData.user } 
+        }));
       }
 
       // Debug: Confirm user ID before server action call
