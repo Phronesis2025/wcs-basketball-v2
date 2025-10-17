@@ -778,6 +778,9 @@ export default function CoachesDashboard() {
       return;
     }
 
+    // Set loading to true immediately to prevent duplicate calls
+    setLoading(true);
+
     const token = generateCSRFToken();
     // setCsrfToken(token);
     document.cookie = `csrf-token=${encodeURIComponent(
@@ -830,24 +833,37 @@ export default function CoachesDashboard() {
           console.log(
             "🔐 [DASHBOARD DEBUG] ❌ No auth token or authenticated flag - redirecting to login"
           );
+          console.log("🔐 [DASHBOARD DEBUG] Auth token:", authToken);
+          console.log("🔐 [DASHBOARD DEBUG] Is authenticated:", isAuthenticated);
           setAuthChecked(true);
+          setLoading(false);
           router.push("/coaches/login");
           return;
         }
 
         // Parse the session token
-        const session = JSON.parse(authToken);
-        console.log("🔐 [DASHBOARD DEBUG] Session parsed successfully");
-        console.log(
-          "🔐 [DASHBOARD DEBUG] Session user exists:",
-          !!session?.user
-        );
+        let session;
+        try {
+          session = JSON.parse(authToken);
+          console.log("🔐 [DASHBOARD DEBUG] Session parsed successfully");
+          console.log(
+            "🔐 [DASHBOARD DEBUG] Session user exists:",
+            !!session?.user
+          );
+        } catch (parseError) {
+          console.error("🔐 [DASHBOARD DEBUG] ❌ Failed to parse session token:", parseError);
+          setAuthChecked(true);
+          setLoading(false);
+          router.push("/coaches/login");
+          return;
+        }
 
         if (!session?.user) {
           console.log(
             "🔐 [DASHBOARD DEBUG] ❌ No user in session - redirecting to login"
           );
           setAuthChecked(true);
+          setLoading(false);
           router.push("/coaches/login");
           return;
         }
@@ -906,7 +922,7 @@ export default function CoachesDashboard() {
     };
 
     fetchData();
-  }, [loading, authChecked]); // Include dependencies to prevent infinite loops
+  }, []); // Empty dependency array - only run once on mount
 
   // Listen for authentication state changes
   useEffect(() => {
