@@ -34,31 +34,31 @@ export default function Navbar() {
   useEffect(() => {
     const checkAuthStatus = () => {
       // Try localStorage first, then sessionStorage as backup
-      let isAuthenticated = localStorage.getItem('auth.authenticated');
-      let authToken = localStorage.getItem('supabase.auth.token');
-      
+      let isAuthenticated = localStorage.getItem("auth.authenticated");
+      let authToken = localStorage.getItem("supabase.auth.token");
+
       // If localStorage is empty, try sessionStorage
       if (!isAuthenticated || !authToken) {
-        isAuthenticated = sessionStorage.getItem('auth.authenticated');
-        authToken = sessionStorage.getItem('supabase.auth.token');
-        
+        isAuthenticated = sessionStorage.getItem("auth.authenticated");
+        authToken = sessionStorage.getItem("supabase.auth.token");
+
         // If found in sessionStorage, restore to localStorage
         if (isAuthenticated && authToken) {
-          localStorage.setItem('auth.authenticated', isAuthenticated);
-          localStorage.setItem('supabase.auth.token', authToken);
+          localStorage.setItem("auth.authenticated", isAuthenticated);
+          localStorage.setItem("supabase.auth.token", authToken);
         }
       }
-      
+
       if (isAuthenticated && authToken) {
         try {
           const session = JSON.parse(authToken);
-          setUser(session?.user?.email || 'authenticated');
+          setUser(session?.user?.email || "authenticated");
         } catch {
           // Clear invalid auth data from both storages
-          localStorage.removeItem('auth.authenticated');
-          localStorage.removeItem('supabase.auth.token');
-          sessionStorage.removeItem('auth.authenticated');
-          sessionStorage.removeItem('supabase.auth.token');
+          localStorage.removeItem("auth.authenticated");
+          localStorage.removeItem("supabase.auth.token");
+          sessionStorage.removeItem("auth.authenticated");
+          sessionStorage.removeItem("supabase.auth.token");
           setUser(null);
         }
       } else {
@@ -71,7 +71,7 @@ export default function Navbar() {
 
     // Listen for storage changes (when user logs in/out in another tab)
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'auth.authenticated' || e.key === 'supabase.auth.token') {
+      if (e.key === "auth.authenticated" || e.key === "supabase.auth.token") {
         checkAuthStatus();
       }
     };
@@ -79,21 +79,27 @@ export default function Navbar() {
     // Listen for custom auth state change events
     const handleAuthStateChange = (e: CustomEvent) => {
       if (e.detail?.authenticated) {
-        setUser(e.detail.user?.email || 'authenticated');
+        setUser(e.detail.user?.email || "authenticated");
       } else {
         setUser(null);
       }
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('authStateChanged', handleAuthStateChange as EventListener);
+    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener(
+      "authStateChanged",
+      handleAuthStateChange as EventListener
+    );
 
     // Also check periodically in case of localStorage issues
     const interval = setInterval(checkAuthStatus, 1000);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('authStateChanged', handleAuthStateChange as EventListener);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(
+        "authStateChanged",
+        handleAuthStateChange as EventListener
+      );
       clearInterval(interval);
     };
   }, []);
@@ -101,14 +107,14 @@ export default function Navbar() {
   // Lock scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     }
 
     // Cleanup function to reset overflow when component unmounts
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isMobileMenuOpen]);
 
@@ -118,19 +124,28 @@ export default function Navbar() {
   }
 
   const handleSignOut = async () => {
-    // Clear our custom auth data from both storages
-    localStorage.removeItem('auth.authenticated');
-    localStorage.removeItem('supabase.auth.token');
-    sessionStorage.removeItem('auth.authenticated');
-    sessionStorage.removeItem('supabase.auth.token');
-    setUser(null);
-    
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new CustomEvent('authStateChanged', { 
-      detail: { authenticated: false } 
-    }));
-    
-    window.location.href = "/";
+    try {
+      // Clear our custom auth data from both storages
+      localStorage.removeItem("auth.authenticated");
+      localStorage.removeItem("supabase.auth.token");
+      sessionStorage.removeItem("auth.authenticated");
+      sessionStorage.removeItem("supabase.auth.token");
+      setUser(null);
+
+      // Dispatch custom event to notify other components
+      window.dispatchEvent(
+        new CustomEvent("authStateChanged", {
+          detail: { authenticated: false },
+        })
+      );
+
+      // Perform hard redirect to home page to ensure complete sign out
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Error during sign out:", error);
+      // Even if there's an error, still redirect to home
+      window.location.href = "/";
+    }
   };
 
   const navLinks = [

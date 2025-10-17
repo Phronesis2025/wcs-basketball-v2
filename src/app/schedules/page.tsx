@@ -25,7 +25,7 @@ export default function SchedulesPage() {
       try {
         // Use server-side API to bypass VPN CORS issues
         const response = await fetch("/api/schedules");
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to fetch schedules");
@@ -85,7 +85,9 @@ export default function SchedulesPage() {
             (payload) => {
               setEvents((prev) =>
                 prev.map((event) =>
-                  event.id === payload.new.id ? (payload.new as Schedule) : event
+                  event.id === payload.new.id
+                    ? (payload.new as Schedule)
+                    : event
                 )
               );
             }
@@ -278,7 +280,9 @@ export default function SchedulesPage() {
                           {/* First line: Event type and team name */}
                           <div className="flex items-center space-x-2">
                             {(() => {
-                              const { bg, text } = eventTypeToColor(event.event_type);
+                              const { bg, text } = eventTypeToColor(
+                                event.event_type
+                              );
                               return (
                                 <span
                                   className={`${bg} ${text} font-bebas uppercase font-bold text-lg px-3 py-1 rounded-md flex items-center justify-center`}

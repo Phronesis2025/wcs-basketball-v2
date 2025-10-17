@@ -91,30 +91,26 @@ export async function createMessage(
       throw new Error("Message content cannot be empty");
     }
 
-    const { data, error } = await supabase
-      .from("coach_messages")
-      .insert({
-        author_id: authorId,
-        author_name: sanitizeInput(authorName),
+    // Use server-side API route to bypass RLS
+    const response = await fetch("/api/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         content: sanitizedContent,
-      })
-      .select()
-      .single();
+        authorId,
+        authorName: sanitizeInput(authorName),
+      }),
+    });
 
-    if (error) {
-      devError("Error creating message:", error);
-      // If table doesn't exist, provide helpful error message
-      if (
-        error.message.includes("relation") &&
-        error.message.includes("does not exist")
-      ) {
-        throw new Error(
-          "Message board tables not yet created. Please apply the database migration first."
-        );
-      }
-      throw new Error(error.message);
+    if (!response.ok) {
+      const errorData = await response.json();
+      devError("API create message failed:", errorData);
+      throw new Error(errorData.error || "Failed to create message");
     }
 
+    const data = await response.json();
     devLog("Successfully created message:", data.id);
     return data;
   } catch (err: unknown) {
@@ -151,22 +147,27 @@ export async function createReply(
       throw new Error("Reply content cannot be empty");
     }
 
-    const { data, error } = await supabase
-      .from("coach_message_replies")
-      .insert({
-        message_id: messageId,
-        author_id: authorId,
-        author_name: sanitizeInput(authorName),
+    // Use server-side API route to bypass RLS
+    const response = await fetch("/api/message-replies", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        messageId,
         content: sanitizedContent,
-      })
-      .select()
-      .single();
+        authorId,
+        authorName: sanitizeInput(authorName),
+      }),
+    });
 
-    if (error) {
-      devError("Error creating reply:", error);
-      throw new Error(error.message);
+    if (!response.ok) {
+      const errorData = await response.json();
+      devError("API create reply failed:", errorData);
+      throw new Error(errorData.error || "Failed to create reply");
     }
 
+    const data = await response.json();
     devLog("Successfully created reply:", data.id);
     return data;
   } catch (err: unknown) {

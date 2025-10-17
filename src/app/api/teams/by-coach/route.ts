@@ -42,10 +42,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    const teams = (data || []).map((item: any) => ({
-      ...item.teams,
-      coach_names: [],
-    }));
+    const teams = (data || []).map((item) => {
+      const t = (
+        item as unknown as {
+          teams: {
+            id: string;
+            name: string;
+            age_group: string;
+            gender: string;
+            grade_level: string;
+            logo_url: string | null;
+            season: string;
+            team_image: string | null;
+          };
+        }
+      ).teams;
+      return { ...t, coach_names: [] as string[] };
+    });
 
     return NextResponse.json(teams);
   } catch (err) {
@@ -56,5 +69,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-
-

@@ -28,8 +28,6 @@ import {
   fetchSchedulesByTeamId,
   fetchTeamUpdates,
   // fetchNews,
-  fetchTeams,
-  fetchTeamsByCoachId,
   getUserRole,
 } from "../../../lib/actions";
 import {
@@ -62,7 +60,7 @@ export default function CoachesDashboard() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
   // const [csrfToken, setCsrfToken] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
@@ -769,6 +767,7 @@ export default function CoachesDashboard() {
     }
   };
 
+  // Intentional one-time auth bootstrap
   useEffect(() => {
     // Prevent multiple simultaneous calls
     if (loading || authChecked) {
@@ -801,35 +800,35 @@ export default function CoachesDashboard() {
         let authToken = localStorage.getItem("supabase.auth.token");
         let isAuthenticated = localStorage.getItem("auth.authenticated");
 
-        console.log(
+        devLog(
           "🔐 [DASHBOARD DEBUG] Initial check - localStorage auth token:",
           !!authToken
         );
-        console.log(
+        devLog(
           "🔐 [DASHBOARD DEBUG] Initial check - localStorage authenticated:",
           isAuthenticated
         );
 
         // If localStorage is empty, try sessionStorage (survives page reloads)
         if (!authToken || !isAuthenticated) {
-          console.log(
+          devLog(
             "🔐 [DASHBOARD DEBUG] localStorage empty, checking sessionStorage..."
           );
           authToken = sessionStorage.getItem("supabase.auth.token");
           isAuthenticated = sessionStorage.getItem("auth.authenticated");
 
-          console.log(
+          devLog(
             "🔐 [DASHBOARD DEBUG] sessionStorage auth token:",
             !!authToken
           );
-          console.log(
+          devLog(
             "🔐 [DASHBOARD DEBUG] sessionStorage authenticated:",
             isAuthenticated
           );
 
           // If found in sessionStorage, restore to localStorage
           if (authToken && isAuthenticated) {
-            console.log(
+            devLog(
               "🔐 [DASHBOARD DEBUG] Restoring auth from sessionStorage to localStorage..."
             );
             localStorage.setItem("supabase.auth.token", authToken);
@@ -866,13 +865,13 @@ export default function CoachesDashboard() {
         let session;
         try {
           session = JSON.parse(authToken);
-          console.log("🔐 [DASHBOARD DEBUG] Session parsed successfully");
-          console.log(
+          devLog("🔐 [DASHBOARD DEBUG] Session parsed successfully");
+          devLog(
             "🔐 [DASHBOARD DEBUG] Session user exists:",
             !!session?.user
           );
         } catch (parseError) {
-          console.error(
+          devError(
             "🔐 [DASHBOARD DEBUG] ❌ Failed to parse session token:",
             parseError
           );
@@ -894,11 +893,11 @@ export default function CoachesDashboard() {
 
         // Use the user data from the session directly
         const user = session.user;
-        console.log("🔐 [DASHBOARD DEBUG] ✅ User authenticated:", user.id);
+        devLog("🔐 [DASHBOARD DEBUG] ✅ User authenticated:", user.id);
 
         // Mark authentication as checked to prevent duplicate calls
         setAuthChecked(true);
-        console.log(
+        devLog(
           "🔐 [DASHBOARD DEBUG] ✅ Authentication successful, setting authChecked = true"
         );
 
@@ -935,7 +934,9 @@ export default function CoachesDashboard() {
         } else {
           // Coaches see only their assigned teams (via server API)
           devLog("Fetching assigned teams for coach user via API:", user.id);
-          const res = await fetch(`/api/teams/by-coach?userId=${user.id}`, { cache: "no-store" });
+          const res = await fetch(`/api/teams/by-coach?userId=${user.id}`, {
+            cache: "no-store",
+          });
           if (!res.ok) {
             throw new Error(`Failed to fetch coach teams: ${res.status}`);
           }
@@ -957,7 +958,7 @@ export default function CoachesDashboard() {
     };
 
     fetchData();
-  }, []); // Empty dependency array - only run once on mount
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Listen for authentication state changes
   useEffect(() => {
@@ -977,7 +978,7 @@ export default function CoachesDashboard() {
         const customAuthenticated =
           localStorage.getItem("auth.authenticated") ||
           sessionStorage.getItem("auth.authenticated");
-        console.log(
+        devLog(
           "🔐 [DASHBOARD DEBUG] Custom auth present?",
           !!(customToken && customAuthenticated)
         );
@@ -989,9 +990,9 @@ export default function CoachesDashboard() {
           customToken &&
           customAuthenticated
         ) {
-          console.log(
-            "🔐 [DASHBOARD DEBUG] Skipping redirect on SIGNED_OUT due to custom auth"
-          );
+        devLog(
+          "🔐 [DASHBOARD DEBUG] Skipping redirect on SIGNED_OUT due to custom auth"
+        );
           return;
         }
 
@@ -1031,7 +1032,10 @@ export default function CoachesDashboard() {
               } else {
                 // Coaches see only their assigned teams (via server API)
                 devLog("Auth listener: fetching teams for coach via API");
-                const res = await fetch(`/api/teams/by-coach?userId=${session.user.id}`, { cache: "no-store" });
+                const res = await fetch(
+                  `/api/teams/by-coach?userId=${session.user.id}`,
+                  { cache: "no-store" }
+                );
                 if (!res.ok) {
                   throw new Error(`Failed to fetch coach teams: ${res.status}`);
                 }
@@ -1730,9 +1734,30 @@ export default function CoachesDashboard() {
             ))}
             <button
               onClick={async () => {
-                await supabase.auth.signOut();
-                router.push("/coaches/login");
-                setIsMobileMenuOpen(false);
+                try {
+                  // Clear our custom auth data from both storages
+                  localStorage.removeItem("auth.authenticated");
+                  localStorage.removeItem("supabase.auth.token");
+                  sessionStorage.removeItem("auth.authenticated");
+                  sessionStorage.removeItem("supabase.auth.token");
+
+                  // Dispatch custom event to notify other components
+                  window.dispatchEvent(
+                    new CustomEvent("authStateChanged", {
+                      detail: { authenticated: false },
+                    })
+                  );
+
+                  // Close mobile menu
+                  setIsMobileMenuOpen(false);
+
+                  // Perform hard redirect to login page
+                  window.location.href = "/coaches/login";
+                } catch (error) {
+                  console.error("Error during sign out:", error);
+                  // Even if there's an error, still redirect
+                  window.location.href = "/coaches/login";
+                }
               }}
               className="w-full text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
             >
