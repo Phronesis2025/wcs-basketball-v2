@@ -70,6 +70,10 @@ export default function CoachesLogin() {
     e.preventDefault();
     if (isLocked) return;
 
+    console.log("🔐 [LOGIN DEBUG] Starting login process...");
+    console.log("🔐 [LOGIN DEBUG] Email:", email);
+    console.log("🔐 [LOGIN DEBUG] Password length:", password.length);
+
     setLoading(true);
     setError(null);
 
@@ -92,16 +96,67 @@ export default function CoachesLogin() {
     const sanitizedEmail = sanitizeInput(email);
     const sanitizedPassword = sanitizeInput(password);
 
+    console.log("🔐 [LOGIN DEBUG] Sanitized email:", sanitizedEmail);
+    console.log("🔐 [LOGIN DEBUG] Sanitized password length:", sanitizedPassword.length);
+
     try {
-      // Sign in with Supabase Auth (client-side, anon key ok)
-      const { data: authData, error: signInError } =
-        await supabase.auth.signInWithPassword({
+      // Check if we're using placeholder values (indicates environment variable issues)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      console.log("🔐 [LOGIN DEBUG] Supabase URL:", supabaseUrl);
+      
+      if (!supabaseUrl || supabaseUrl.includes("placeholder")) {
+        console.error("🔐 [LOGIN DEBUG] ❌ Invalid Supabase URL");
+        throw new Error(
+          "Database connection not configured. Please check your network settings and try again."
+        );
+      }
+
+      console.log("🔐 [LOGIN DEBUG] Making request to /api/auth/login...");
+      
+      // Use server-side authentication to bypass CORS issues
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           email: sanitizedEmail,
           password: sanitizedPassword,
-        });
+        }),
+      });
 
-      if (signInError) {
-        throw new Error("Invalid email or password");
+      console.log("🔐 [LOGIN DEBUG] Response status:", response.status);
+      console.log("🔐 [LOGIN DEBUG] Response ok:", response.ok);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("🔐 [LOGIN DEBUG] ❌ Login failed:", errorData);
+        throw new Error(errorData.error || "Authentication failed");
+      }
+
+      const authData = await response.json();
+      console.log("🔐 [LOGIN DEBUG] ✅ Login successful!");
+      console.log("🔐 [LOGIN DEBUG] Auth data:", authData);
+
+      // Store session data in localStorage to bypass CORS issues
+      if (authData.session) {
+        console.log("🔐 [LOGIN DEBUG] Storing session in localStorage...");
+        localStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
+        // Set a flag to indicate successful authentication
+        localStorage.setItem('auth.authenticated', 'true');
+        
+        // Also store in sessionStorage as backup (survives page reloads)
+        sessionStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
+        sessionStorage.setItem('auth.authenticated', 'true');
+        
+        console.log("🔐 [LOGIN DEBUG] Dispatching auth state change event...");
+        // Dispatch custom event to notify navbar of auth state change
+        window.dispatchEvent(new CustomEvent('authStateChanged', { 
+          detail: { authenticated: true, user: authData.user } 
+        }));
+        console.log("🔐 [LOGIN DEBUG] Auth state change event dispatched");
+      } else {
+        console.warn("🔐 [LOGIN DEBUG] ⚠️ No session data in auth response");
       }
 
       // Debug: Confirm user ID before server action call
@@ -123,8 +178,13 @@ export default function CoachesLogin() {
         localStorage.removeItem("login_timestamp");
       }
 
-      // Proceed to dashboard
-      router.push("/coaches/dashboard");
+      // Proceed to dashboard with a small delay to ensure localStorage is set
+      console.log("🔐 [LOGIN DEBUG] Setting timeout for navigation to dashboard...");
+      setTimeout(() => {
+        console.log("🔐 [LOGIN DEBUG] Navigating to dashboard...");
+        // Use replace instead of push to prevent back button issues
+        router.replace("/coaches/dashboard");
+      }, 100);
     } catch (err: unknown) {
       devError("Login error:", err);
       setError(err instanceof Error ? err.message : "An error occurred");

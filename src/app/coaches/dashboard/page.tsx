@@ -63,6 +63,7 @@ export default function CoachesDashboard() {
   const [userName, setUserName] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   // const [csrfToken, setCsrfToken] = useState("");
   const [userId, setUserId] = useState<string | null>(null);
   // const [imagePreview, setImagePreview] = useState<string | null>(null); // New: Mobile preview
@@ -769,6 +770,14 @@ export default function CoachesDashboard() {
   };
 
   useEffect(() => {
+    // Prevent multiple simultaneous calls
+    if (loading || authChecked) {
+      console.log(
+        "🔐 [DASHBOARD DEBUG] ⚠️ Already loading or auth checked, skipping duplicate call"
+      );
+      return;
+    }
+
     const token = generateCSRFToken();
     // setCsrfToken(token);
     document.cookie = `csrf-token=${encodeURIComponent(
@@ -777,18 +786,77 @@ export default function CoachesDashboard() {
 
     const fetchData = async () => {
       try {
-        const { data: user } = await supabase.auth.getUser();
-        if (!user?.user) {
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Starting dashboard authentication check..."
+        );
+
+        // Wait a moment for localStorage to be set if coming from login
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
+        // Check if user is authenticated using our custom method
+        // Try localStorage first, then sessionStorage as backup
+        let authToken = localStorage.getItem("supabase.auth.token");
+        let isAuthenticated = localStorage.getItem("auth.authenticated");
+        
+        // If localStorage is empty, try sessionStorage (survives page reloads)
+        if (!authToken || !isAuthenticated) {
+          console.log("🔐 [DASHBOARD DEBUG] localStorage empty, checking sessionStorage...");
+          authToken = sessionStorage.getItem("supabase.auth.token");
+          isAuthenticated = sessionStorage.getItem("auth.authenticated");
+          
+          // If found in sessionStorage, restore to localStorage
+          if (authToken && isAuthenticated) {
+            console.log("🔐 [DASHBOARD DEBUG] Restoring auth from sessionStorage to localStorage...");
+            localStorage.setItem("supabase.auth.token", authToken);
+            localStorage.setItem("auth.authenticated", isAuthenticated);
+          }
+        }
+
+        console.log("🔐 [DASHBOARD DEBUG] Auth token exists:", !!authToken);
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Is authenticated flag:",
+          isAuthenticated
+        );
+
+        if (!authToken || !isAuthenticated) {
+          console.log(
+            "🔐 [DASHBOARD DEBUG] ❌ No auth token or authenticated flag - redirecting to login"
+          );
+          setAuthChecked(true);
           router.push("/coaches/login");
           return;
         }
 
-        setUserId(user.user.id); // Set user ID for created_by
+        // Parse the session token
+        const session = JSON.parse(authToken);
+        console.log("🔐 [DASHBOARD DEBUG] Session parsed successfully");
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Session user exists:",
+          !!session?.user
+        );
+
+        if (!session?.user) {
+          console.log(
+            "🔐 [DASHBOARD DEBUG] ❌ No user in session - redirecting to login"
+          );
+          setAuthChecked(true);
+          router.push("/coaches/login");
+          return;
+        }
+
+        // Use the user data from the session directly
+        const user = session.user;
+        console.log("🔐 [DASHBOARD DEBUG] ✅ User authenticated:", user.id);
+
+        // Mark authentication as checked to prevent duplicate calls
+        setAuthChecked(true);
+
+        setUserId(user.id); // Set user ID for created_by
         // Set last login time to current time
         setLastLoginTime(new Date());
         // Extract last name from email or use first_name
-        const email = user.user.email || "";
-        const firstName = user.user.user_metadata?.first_name || "";
+        const email = user.email || "";
+        const firstName = user.user_metadata?.first_name || "";
         const lastName = email.includes("@")
           ? email.split("@")[0].split(".").pop() || ""
           : "";
@@ -796,7 +864,7 @@ export default function CoachesDashboard() {
           lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
         setUserName(firstName || capitalizedLastName || email);
 
-        const userData = await getUserRole(user.user.id);
+        const userData = await getUserRole(user.id);
         if (!userData) {
           throw new Error("User role not found");
         }
@@ -811,8 +879,8 @@ export default function CoachesDashboard() {
           teamsData = await fetchTeams();
         } else {
           // Coaches see only their assigned teams
-          devLog("Fetching assigned teams for coach user:", user.user.id);
-          teamsData = await fetchTeamsByCoachId(user.user.id);
+          devLog("Fetching assigned teams for coach user:", user.id);
+          teamsData = await fetchTeamsByCoachId(user.id);
         }
         devLog("Teams loaded:", `${teamsData.length} teams`);
         setTeams(teamsData);
@@ -830,7 +898,7 @@ export default function CoachesDashboard() {
     };
 
     fetchData();
-  }, [router]);
+  }, [loading, authChecked]); // Include dependencies to prevent infinite loops
 
   // Listen for authentication state changes
   useEffect(() => {
