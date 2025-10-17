@@ -1,27 +1,26 @@
 /**
  * Profanity Filter Utility for WCS v2.0
  *
- * This utility provides comprehensive content filtering to detect and prevent
- * inappropriate language, profanity, and sexual content in user inputs.
+ * This utility provides focused content filtering to detect and prevent
+ * explicit curse words and inappropriate content in user inputs.
+ * Only blocks truly offensive language, not legitimate words.
  */
 
 /**
- * Comprehensive list of inappropriate words and phrases
- * Categories: profanity, sexual content, hate speech, violence
+ * Focused list of explicit curse words and inappropriate content
+ * Only blocks truly offensive language, not legitimate words
  */
 const PROFANITY_WORDS = new Set([
-  // Common profanity
-  "damn",
-  "hell",
-  "crap",
-  "shit",
+  // Explicit profanity only - most offensive words
   "fuck",
+  "fucking",
+  "fucked",
+  "shit",
+  "shitting",
   "bitch",
-  "ass",
+  "bitches",
   "asshole",
   "bastard",
-  "piss",
-  "pissed",
   "dick",
   "cock",
   "pussy",
@@ -34,47 +33,34 @@ const PROFANITY_WORDS = new Set([
   "retard",
   "retarded",
 
-  // Sexual content
-  "sex",
-  "sexual",
+  // Explicit sexual content only
   "porn",
   "pornography",
   "masturbat",
   "orgasm",
   "penis",
   "vagina",
-  "breast",
   "boob",
   "tits",
   "nude",
   "naked",
-  "strip",
   "stripper",
   "prostitut",
   "hooker",
   "escort",
 
-  // Violence and threats
-  "kill",
+  // Explicit violence and threats only - very specific
   "murder",
   "suicide",
   "bomb",
   "explosive",
   "weapon",
-  "gun",
-  "shoot",
   "stab",
   "stabbed",
-  "blood",
-  "violence",
   "threat",
   "threaten",
-  "harm",
-  "hurt",
-  "injure",
 
-  // Hate speech
-  "hate",
+  // Explicit hate speech only
   "racist",
   "racism",
   "discriminat",
@@ -84,8 +70,7 @@ const PROFANITY_WORDS = new Set([
   "hitler",
   "genocide",
 
-  // Drug-related
-  "drug",
+  // Explicit drug references only
   "cocaine",
   "heroin",
   "marijuana",
@@ -95,10 +80,9 @@ const PROFANITY_WORDS = new Set([
   "crack",
   "addict",
   "overdose",
-  "high",
   "stoned",
 
-  // Additional variations and common misspellings
+  // Common misspellings and obfuscations
   "f*ck",
   "f**k",
   "f***",
@@ -170,6 +154,24 @@ function normalizeText(text: string): string {
 }
 
 /**
+ * Normalize text for spaced-out profanity detection
+ * This removes spaces to catch attempts like "f u c k"
+ */
+function normalizeForSpacedProfanity(text: string): string {
+  let normalized = text.toLowerCase();
+
+  // Apply leet speak transformations
+  for (const { pattern, replacement } of LEET_PATTERNS) {
+    normalized = normalized.replace(pattern, replacement);
+  }
+
+  // Remove all spaces and special characters to catch spaced-out profanity
+  normalized = normalized.replace(/[^a-z0-9]/g, "");
+
+  return normalized;
+}
+
+/**
  * Check if text contains profanity or inappropriate content
  * @param text - The text to check
  * @returns Object with isProfane boolean and detected words array
@@ -191,22 +193,20 @@ export function checkProfanity(text: string): {
   for (const word of words) {
     if (word.length < 2) continue; // Skip single characters
 
-    // Direct match
+    // Direct match only - remove partial matching to avoid false positives
     if (PROFANITY_WORDS.has(word)) {
       detectedWords.push(word);
       continue;
     }
+  }
 
-    // Check for partial matches (for compound words) using word boundaries
-    for (const profaneWord of PROFANITY_WORDS) {
-      // Use word boundary regex to avoid false positives like "pass" matching "ass"
-      const wordBoundaryRegex = new RegExp(
-        `\\b${profaneWord.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
-        "i"
-      );
-      if (wordBoundaryRegex.test(word)) {
-        detectedWords.push(word);
-        break;
+  // Check for spaced-out profanity (e.g., "f u c k")
+  const spacedNormalized = normalizeForSpacedProfanity(text);
+  for (const profaneWord of PROFANITY_WORDS) {
+    if (spacedNormalized.includes(profaneWord)) {
+      // Only add if we haven't already detected this word
+      if (!detectedWords.includes(profaneWord)) {
+        detectedWords.push(profaneWord);
       }
     }
   }
@@ -284,15 +284,32 @@ export function validateInputForProfanity(
   errorMessage?: string;
   sanitizedValue?: string;
 } {
-  const { isProfane, severity } = checkProfanity(value);
+  const { isProfane, severity, detectedWords } = checkProfanity(value);
 
   if (!isProfane) {
     return { isValid: true };
   }
 
+  // Debug logging for development
+  if (process.env.NODE_ENV === "development") {
+    console.log(`Profanity detected in ${fieldName}:`, {
+      value,
+      detectedWords,
+      severity,
+    });
+  }
+
   const sanitizedValue = sanitizeProfanity(value);
 
+  // Create error message with specific flagged words
+  const flaggedWords = detectedWords.join(", ");
   let errorMessage = `The ${fieldName} contains inappropriate language. `;
+
+  if (detectedWords.length === 1) {
+    errorMessage += `The word "${flaggedWords}" is not allowed. `;
+  } else {
+    errorMessage += `The words "${flaggedWords}" are not allowed. `;
+  }
 
   if (severity === "high") {
     errorMessage += "Please use appropriate language.";

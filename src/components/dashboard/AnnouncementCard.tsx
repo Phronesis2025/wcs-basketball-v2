@@ -6,6 +6,7 @@ interface AnnouncementCardProps {
   update: TeamUpdate;
   onEdit?: (update: TeamUpdate) => void;
   onDelete?: (id: string) => void;
+  onView?: (update: TeamUpdate) => void;
   canEdit?: boolean;
   canDelete?: boolean;
 }
@@ -14,6 +15,7 @@ export default function AnnouncementCard({
   update,
   onEdit,
   onDelete,
+  onView,
   canEdit = true,
   canDelete = true,
 }: AnnouncementCardProps) {
@@ -37,7 +39,10 @@ export default function AnnouncementCard({
     update.title.toLowerCase().includes("urgent");
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+    <div
+      className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => onView?.(update)}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <h4 className="font-inter font-semibold text-gray-900 line-clamp-2 leading-tight">
@@ -59,7 +64,10 @@ export default function AnnouncementCard({
             <div className="flex space-x-1">
               {canEdit && (
                 <button
-                  onClick={() => onEdit(update)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(update);
+                  }}
                   className="text-gray-400 hover:text-gray-600 p-1"
                   aria-label="Edit announcement"
                 >
@@ -80,7 +88,10 @@ export default function AnnouncementCard({
               )}
               {canDelete && (
                 <button
-                  onClick={() => onDelete(update.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(update.id);
+                  }}
                   className="text-gray-400 hover:text-red-600 p-1"
                   aria-label="Delete announcement"
                 >

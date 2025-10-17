@@ -49,6 +49,7 @@ import {
 // Import new dashboard components
 import StatCard from "../../../components/dashboard/StatCard";
 import ScheduleModal from "../../../components/dashboard/ScheduleModal";
+import ViewModal from "../../../components/dashboard/ViewModal";
 import GameCard from "../../../components/dashboard/GameCard";
 import PracticeCard from "../../../components/dashboard/PracticeCard";
 import AnnouncementCard from "../../../components/dashboard/AnnouncementCard";
@@ -140,6 +141,15 @@ export default function CoachesDashboard() {
   const [submitting, setSubmitting] = useState(false);
   const [showProfanityModal, setShowProfanityModal] = useState(false);
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
+
+  // View modal state
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewingItem, setViewingItem] = useState<
+    Schedule | TeamUpdate | PracticeDrill | null
+  >(null);
+  const [viewItemType, setViewItemType] = useState<
+    "game" | "practice" | "update" | "drill"
+  >("game");
 
   // Carousel navigation functions (unused in new design)
   // const nextUpdate = () => {
@@ -286,20 +296,32 @@ export default function CoachesDashboard() {
     item?: Schedule | TeamUpdate
   ) => {
     setModalType(type);
-    
+
     // If editing a recurring practice, enhance the item with recurring pattern info
-    if (type === "Practice" && item && "recurring_group_id" in item && item.recurring_group_id) {
+    if (
+      type === "Practice" &&
+      item &&
+      "recurring_group_id" in item &&
+      item.recurring_group_id
+    ) {
       // Find all events in the same recurring group to determine the pattern
-      const recurringEvents = schedules.filter(s => 
-        s.recurring_group_id === item.recurring_group_id
-      ).sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime());
-      
+      const recurringEvents = schedules
+        .filter((s) => s.recurring_group_id === item.recurring_group_id)
+        .sort(
+          (a, b) =>
+            new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+        );
+
       // Extract the days of the week from all events
-      const selectedDays = [...new Set(recurringEvents.map(event => {
-        const eventDate = new Date(event.date_time);
-        return eventDate.getDay(); // 0=Sunday, 1=Monday, etc.
-      }))].sort();
-      
+      const selectedDays = [
+        ...new Set(
+          recurringEvents.map((event) => {
+            const eventDate = new Date(event.date_time);
+            return eventDate.getDay(); // 0=Sunday, 1=Monday, etc.
+          })
+        ),
+      ].sort();
+
       // Create enhanced editing item with recurring pattern
       const enhancedItem = {
         ...item,
@@ -307,21 +329,37 @@ export default function CoachesDashboard() {
           selectedDays,
           recurringType: "date" as const, // Default to date type for editing
           recurringCount: recurringEvents.length,
-          recurringEndDate: recurringEvents[recurringEvents.length - 1]?.date_time
-        }
+          recurringEndDate:
+            recurringEvents[recurringEvents.length - 1]?.date_time,
+        },
       };
-      
+
       setEditingItem(enhancedItem);
     } else {
       setEditingItem(item || null);
     }
-    
+
     setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingItem(null);
+  };
+
+  // View modal handlers
+  const openViewModal = (
+    item: Schedule | TeamUpdate | PracticeDrill,
+    type: "game" | "practice" | "update" | "drill"
+  ) => {
+    setViewingItem(item);
+    setViewItemType(type);
+    setIsViewModalOpen(true);
+  };
+
+  const closeViewModal = () => {
+    setIsViewModalOpen(false);
+    setViewingItem(null);
   };
 
   // Delete all practices for the selected team
@@ -391,19 +429,25 @@ export default function CoachesDashboard() {
         const practiceSchedules = schedules.filter(
           (s) => s.event_type === "Practice" && s.team_id === deleteTarget.id
         );
-        
+
         const scheduleIds = practiceSchedules.map((s) => s.id);
         await bulkDeleteSchedules(scheduleIds, deleteTarget.id);
-        
+
         // Update local state
         setSchedules((prev) =>
-          prev.filter((s) => !(s.event_type === "Practice" && s.team_id === deleteTarget.id))
+          prev.filter(
+            (s) =>
+              !(s.event_type === "Practice" && s.team_id === deleteTarget.id)
+          )
         );
-        
-        toast.success(`Deleted ${deleteTarget.count} practice(s) successfully!`, {
-          duration: 3000,
-          position: "top-right",
-        });
+
+        toast.success(
+          `Deleted ${deleteTarget.count} practice(s) successfully!`,
+          {
+            duration: 3000,
+            position: "top-right",
+          }
+        );
       }
 
       setShowDeleteConfirm(false);
@@ -429,10 +473,7 @@ export default function CoachesDashboard() {
       if (actualType === "Game" || actualType === "Practice") {
         if (editingItem && "event_type" in editingItem) {
           // Check if this is a recurring practice being edited
-          if (
-            actualType === "Practice" &&
-            editingItem.recurring_group_id
-          ) {
+          if (actualType === "Practice" && editingItem.recurring_group_id) {
             // Update recurring practice group
             const updatedSchedules = await updateRecurringPractice(
               editingItem.recurring_group_id,
@@ -730,7 +771,9 @@ export default function CoachesDashboard() {
   useEffect(() => {
     const token = generateCSRFToken();
     // setCsrfToken(token);
-    document.cookie = `csrf-token=${token}; Path=/; SameSite=Strict`;
+    document.cookie = `csrf-token=${encodeURIComponent(
+      token
+    )}; Path=/; SameSite=Strict`;
 
     const fetchData = async () => {
       try {
@@ -1748,6 +1791,7 @@ export default function CoachesDashboard() {
                         onDelete={() =>
                           handleDeleteSchedule(schedule.id, "Game")
                         }
+                        onView={(s) => openViewModal(s, "game")}
                         canEdit={canEditSchedule(schedule)}
                         canDelete={canDeleteSchedule(schedule)}
                       />
@@ -1799,6 +1843,7 @@ export default function CoachesDashboard() {
                         onDelete={() =>
                           handleDeleteSchedule(schedule.id, "Practice")
                         }
+                        onView={(s) => openViewModal(s, "practice")}
                         canEdit={canEditSchedule(schedule)}
                         canDelete={canDeleteSchedule(schedule)}
                       />
@@ -1837,6 +1882,7 @@ export default function CoachesDashboard() {
                       update={update}
                       onEdit={(u) => openModal("Update", u)}
                       onDelete={handleDeleteUpdate}
+                      onView={(u) => openViewModal(u, "update")}
                       canEdit={canEditUpdate(update)}
                       canDelete={canDeleteUpdate(update)}
                     />
@@ -1882,6 +1928,7 @@ export default function CoachesDashboard() {
                           setDeleteTarget({ id: drill.id, type: "drill" });
                           setShowDeleteConfirm(true);
                         }}
+                        onView={(d) => openViewModal(d, "drill")}
                       />
                     ))
                   ) : (
@@ -1936,6 +1983,14 @@ export default function CoachesDashboard() {
           type={modalType}
           editingData={editingItem}
           loading={loading}
+        />
+
+        {/* View Modal */}
+        <ViewModal
+          isOpen={isViewModalOpen}
+          onClose={closeViewModal}
+          item={viewingItem}
+          itemType={viewItemType}
         />
 
         {/* Delete Confirmation Modal */}
