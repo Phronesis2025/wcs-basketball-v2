@@ -34,7 +34,7 @@ export default function Hero() {
       {/* Basketball Flames - Desktop Only (use <img> for animated asset, low priority) */}
       <div className="hidden sm:block absolute right-4 sm:right-60 lg:right-80 xl:right-96 top-1/2 transform -translate-y-1/2 translate-x-1/2 z-10">
         <Image
-          src="/video/basketball-flames-optimized.webp"
+          src="/video/basketball-flames.webp"
           alt="Basketball flames animation"
           width={500}
           height={500}
