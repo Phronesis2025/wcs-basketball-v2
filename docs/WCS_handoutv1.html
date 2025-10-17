@@ -1,149 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WCS Basketball Website Overview</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>WCS Basketball — Website Overview</title>
 <style>
-  body {
-    font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: #222;
-    margin: 40px auto;
-    max-width: 850px;
-    line-height: 1.6;
-    background: #fff;
+  :root{
+    --brand:#0a2b5a;
+    --accent:#e53935;
+    --muted:#6b7280;
+    --bg:#ffffff;
+    --paper:#fbfdff;
+    --card:#f7f9fc;
+    --maxw:900px;
+    --pad:34px;
+    font-family: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
   }
-  h1, h2, h3 {
-    color: #0a2b5a;
+  html,body{background:var(--paper);margin:0;padding:30px;color:#111;}
+  .container{
+    max-width:var(--maxw);
+    margin:0 auto;
+    background:var(--bg);
+    border-radius:8px;
+    box-shadow:0 8px 30px rgba(12,18,31,0.06);
+    padding:var(--pad);
+    box-sizing:border-box;
   }
-  h1 {
-    text-align: center;
-    border-bottom: 3px solid #0a2b5a;
-    padding-bottom: 0.4em;
-    margin-bottom: 1em;
+
+  header{
+    display:flex;
+    gap:18px;
+    align-items:center;
+    border-bottom:1px solid #e6eef9;
+    padding-bottom:18px;
+    margin-bottom:18px;
   }
-  section {
-    margin-bottom: 2em;
+  header img{
+    width:138px;
+    height:auto;
+    object-fit:contain;
+    display:block;
   }
-  .section-title {
-    background: #f2f5fa;
-    padding: 8px 14px;
-    border-left: 5px solid #0a2b5a;
-    font-size: 1.1em;
-    font-weight: 600;
-    margin-top: 1.4em;
+  .hdr-text{
+    flex:1;
+    min-width:0;
   }
-  ul {
-    margin-top: 0.3em;
-    margin-bottom: 0.6em;
+  .title{
+    font-size:20px;
+    color:var(--brand);
+    margin:0 0 6px 0;
+    letter-spacing:0.2px;
+    font-weight:700;
   }
-  li {
-    margin-bottom: 0.3em;
+  .sub{
+    margin:0;color:var(--muted);font-size:13px;
   }
-  .highlight {
-    background: #eef2ff;
-    padding: 10px 14px;
-    border-radius: 6px;
-    margin: 1em 0;
+
+  .meta {
+    text-align:right;
+    min-width:170px;
+    font-size:13px;
+    color:var(--muted);
   }
-  .footer {
-    font-size: 0.9em;
-    text-align: center;
-    color: #666;
-    border-top: 1px solid #ccc;
-    margin-top: 2em;
-    padding-top: 1em;
+
+  main{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start;}
+  @media (max-width:940px){ main{grid-template-columns:1fr; } .meta{ text-align:left; } }
+
+  section{background:transparent;border-radius:6px;padding:0;margin:0;}
+  h2{color:var(--brand);font-size:16px;margin:6px 0 12px 0;}
+  p{margin:0 0 10px 0;color:#222;font-size:14px;}
+  ul{margin:6px 0 12px 18px;color:#222;}
+  li{margin:8px 0;font-size:14px;line-height:1.45}
+
+  .card{
+    background:var(--card);
+    padding:12px 14px;
+    border-radius:8px;
+    border:1px solid rgba(10,43,90,0.04);
+  }
+
+  .feature{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    margin-bottom:12px;
+  }
+  .badge{
+    min-width:40px;
+    height:40px;
+    border-radius:8px;
+    background:linear-gradient(180deg,rgba(10,43,90,0.06),rgba(10,43,90,0.02));
+    display:inline-grid;
+    place-items:center;
+    font-weight:700;
+    color:var(--brand);
+    font-size:13px;
+  }
+
+  .section-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:8px;
+  }
+  .small{
+    color:var(--muted);font-size:13px;
+  }
+
+  .highlight{
+    background:linear-gradient(180deg,#fff 0%,#fbfdff 100%);
+    border-left:4px solid var(--brand);
+    padding:12px 14px;
+    border-radius:6px;
+    margin:10px 0 14px 0;
+    box-shadow:0 2px 8px rgba(10,43,90,0.03);
+  }
+
+  .footer{
+    margin-top:20px;
+    border-top:1px solid #e6eef9;
+    padding-top:14px;
+    color:var(--muted);
+    font-size:13px;
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+
+  /* printable tweaks */
+  @media print {
+    body{padding:0;background:#fff;}
+    .container{box-shadow:none;border-radius:0;padding:18px;margin:0;}
+    header img{width:120px;}
   }
 </style>
 </head>
 <body>
+  <div class="container">
+    <header>
+      <img src="WCS Logo-transparentBG.png" alt="WCS Logo">
+      <div class="hdr-text">
+        <div class="title">WCS Basketball — Website Overview</div>
+        <div class="sub">A concise reference for club leadership — features, technical notes, and next steps.</div>
+      </div>
+      <div class="meta">
+        <div><strong>Prepared by:</strong><br>[Your Name] — [Your LLC Name]</div>
+        <div style="margin-top:8px"><strong>Date:</strong><br>2025</div>
+      </div>
+    </header>
 
-<h1>WCS Basketball Website Overview</h1>
+    <main>
+      <!-- left column -->
+      <div>
+        <section>
+          <h2>Project Purpose</h2>
+          <p>The WCS website provides a modern, mobile-first hub for families, coaches, and club leadership. It centralizes schedules, team news, coach resources, and supports future growth opportunities (shop, sponsors, and community programs).</p>
+        </section>
 
-<section>
-  <h2>Project Purpose</h2>
-  <p>
-    The new WCS Basketball Club website was developed to modernize how the club communicates, organizes, and presents itself to families and the wider community.
-    It provides a unified digital home for players, parents, and coaches — reflecting the club’s 25-year legacy while positioning WCS for future growth.
-  </p>
-</section>
+        <section style="margin-top:14px">
+          <div class="section-title">
+            <h2>Key Public Features</h2>
+            <div class="small">User-focused & mobile-ready</div>
+          </div>
 
-<section>
-  <h2>Key Features</h2>
+          <div class="card">
+            <div class="feature">
+              <div class="badge">1</div>
+              <div>
+                <strong>Home</strong>
+                <p class="small">Hero banner, Fan Zone links, Recent News and upcoming features — fast first impression for families and sponsors.</p>
+              </div>
+            </div>
 
-  <div class="section-title">Public-Facing Features</div>
-  <ul>
-    <li><strong>Home Page:</strong> Highlights club identity with a hero banner, fan zone links, recent news, and upcoming features.</li>
-    <li><strong>About Page:</strong> Shares WCS’s history, mission, and values for families and potential sponsors.</li>
-    <li><strong>Teams Page:</strong> Displays all active teams dynamically.</li>
-    <li><strong>Team Detail Pages:</strong> Dedicated team pages showing coaches, updates, and schedules.</li>
-    <li><strong>Schedule Page:</strong> Central hub for game, practice, and event schedules accessible to parents on any device.</li>
-    <li><strong>Practice Drills Library:</strong> Curated collection of drills to support WCS and guest coaches.</li>
-  </ul>
+            <div class="feature">
+              <div class="badge">2</div>
+              <div>
+                <strong>About</strong>
+                <p class="small">Club history, mission & values — ideal for building trust with new families and potential sponsors.</p>
+              </div>
+            </div>
 
-  <div class="section-title">Coaches Dashboard</div>
-  <ul>
-    <li>Secure login for authorized coaches.</li>
-    <li>Update team schedules, news, and drills directly from the dashboard.</li>
-    <li>Instant synchronization to public pages for parents and players.</li>
-  </ul>
+            <div class="feature">
+              <div class="badge">3</div>
+              <div>
+                <strong>Teams & Team Pages</strong>
+                <p class="small">Dynamic team listings and dedicated team pages with coach info, news and schedules — a one-stop place for parents.</p>
+              </div>
+            </div>
 
-  <div class="section-title">Hosting & Access</div>
-  <ul>
-    <li>Deployed on <strong>Vercel</strong> with WCS’s existing domain.</li>
-    <li>Responsive design — optimized for desktop, tablet, and mobile.</li>
-    <li>Functions as a <strong>Progressive Web App (PWA)</strong> — can be “installed” on phones like a native app.</li>
-  </ul>
-</section>
+            <div class="feature">
+              <div class="badge">4</div>
+              <div>
+                <strong>Schedules</strong>
+                <p class="small">Mobile-first calendar with color-coded events (games/practices) and quick filters for parents and coaches.</p>
+              </div>
+            </div>
 
-<section>
-  <h2>Technical Overview</h2>
-  <ul>
-    <li><strong>Framework:</strong> Next.js (React-based Progressive Web App)</li>
-    <li><strong>Hosting:</strong> Vercel Cloud Platform</li>
-    <li><strong>Database / API:</strong> Integrated backend endpoints for teams, news, and schedules</li>
-    <li><strong>UI / Styling:</strong> Tailwind CSS and component-based design for scalability</li>
-    <li><strong>Authentication:</strong> Secure coach login via session-based system</li>
-  </ul>
-</section>
+            <div class="feature">
+              <div class="badge">5</div>
+              <div>
+                <strong>Practice Drills Library</strong>
+                <p class="small">Curated drills for coaches — supports volunteer and new coaches with structured practice plans.</p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-<section>
-  <h2>PWA vs. Native Mobile App</h2>
-  <div class="highlight">
-    <p><strong>Progressive Web App (PWA):</strong>  
-    Works through any web browser but can be installed on a phone’s home screen. It updates automatically, costs less to maintain, and provides offline caching and push notifications.</p>
+        <section style="margin-top:14px">
+          <h2>Coaches Dashboard</h2>
+          <div class="card">
+            <ul>
+              <li>Secure coach login to manage schedules, post team updates, and organize drills.</li>
+              <li>Instant sync to public pages so parents always see the latest information.</li>
+              <li>Designed to reduce administrative overhead and minimize communication errors.</li>
+            </ul>
+          </div>
+        </section>
 
-    <p><strong>Native Mobile App:</strong>  
-    Requires App Store / Google Play submission and separate development for iOS and Android. Offers deeper phone integration but is more expensive to build and maintain.</p>
+        <section style="margin-top:14px">
+          <h2>Technical Snapshot</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Frontend:</strong> Next.js (PWA), React + TypeScript, Tailwind CSS</li>
+              <li><strong>Hosting:</strong> Vercel (production deployments, CDN)</li>
+              <li><strong>Database / Auth:</strong> Supabase (Postgres + Auth + Storage)</li>
+              <li><strong>Monitoring & Tools:</strong> Sentry, Vercel Analytics, Upstash Redis (rate-limits)</li>
+            </ul>
+          </div>
+        </section>
 
-    <p><strong>For WCS:</strong>  
-    A PWA offers 90% of the benefits of a native app at a fraction of the cost — ideal for a youth sports organization focused on accessibility and sustainability.</p>
+        <section style="margin-top:14px">
+          <h2>Security & Privacy</h2>
+          <div class="card">
+            <ul>
+              <li>Supabase Auth with role-based access control (admin, coach, parent, guest).</li>
+              <li>Row-Level Security (RLS) for fine-grained data access.</li>
+              <li>All data encrypted at rest; CSRF protection on forms.</li>
+              <li>Privacy policy page included; GDPR checklist recommended for full compliance.</li>
+            </ul>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- right column -->
+      <aside>
+        <section>
+          <h2>Quick Demo Checklist</h2>
+          <div class="card">
+            <ul>
+              <li>Open homepage (desktop + phone) — show hero & fan zone</li>
+              <li>Teams → pick team → show coach, updates, schedule</li>
+              <li>Open Schedules → filter by team → open event details</li>
+              <li>Login as coach → add practice → show it appears</li>
+              <li>Show Drills library → filter → open drill detail</li>
+            </ul>
+          </div>
+        </section>
+
+        <section style="margin-top:14px">
+          <h2>PWA vs Native App</h2>
+          <div class="highlight">
+            <strong>Progressive Web App (PWA)</strong>
+            <p class="small">Installs from the browser to a phone home screen, works offline for basic views, updates instantly with deployments, and costs far less to build and maintain than native apps.</p>
+            <strong style="display:block;margin-top:8px">Native Mobile App</strong>
+            <p class="small">Built separately for iOS and Android, distributed via App Stores, offers deeper device integration but requires higher development & maintenance costs.</p>
+            <p style="margin-top:8px;font-weight:600">Recommendation: Start with the PWA (current approach) — add a native app only if later analytics justify the investment.</p>
+          </div>
+        </section>
+
+        <section style="margin-top:14px">
+          <h2>Future Opportunities</h2>
+          <div class="card">
+            <ul>
+              <li><strong>Online Shop:</strong> Merchandise sales to fund operations.</li>
+              <li><strong>Sponsors:</strong> Local business sponsorships — logo placement, event sponsorship.</li>
+              <li><strong>Scholarship Fund:</strong> Use sponsor revenue for need-based scholarships.</li>
+              <li><strong>Notifications:</strong> PWA push or email/SMS for last-minute changes.</li>
+              <li><strong>Community:</strong> Photo galleries, volunteer sign-ups, fundraising pages.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section style="margin-top:14px">
+          <h2>Known Limitations</h2>
+          <div class="card">
+            <ul>
+              <li>Tournament page & shop are currently placeholders (planned features).</li>
+              <li>Parent notification channels (email/SMS) not yet configured.</li>
+              <li>Accessibility improvements recommended: alt tags, color contrast checks.</li>
+            </ul>
+          </div>
+        </section>
+
+      </aside>
+    </main>
+
+    <div class="footer">
+      <div>Prepared by <strong>[Your Name]</strong> • <em>[Your LLC Name]</em></div>
+      <div>Deployed on Vercel • Built with Next.js • © 2025 WCS Basketball Club</div>
+    </div>
   </div>
-</section>
-
-<section>
-  <h2>Future Opportunities</h2>
-  <ul>
-    <li><strong>Online Shop:</strong> Sell team and club gear to generate revenue.</li>
-    <li><strong>Sponsorship Integration:</strong> Display sponsor logos and links to support club funding.</li>
-    <li><strong>Scholarship Program:</strong> Channel sponsorship funds to help families with financial barriers.</li>
-    <li><strong>Push Notifications:</strong> Real-time updates for weather cancellations or game reminders.</li>
-    <li><strong>Community Additions:</strong> Photo gallery, highlights, or volunteer sign-up areas.</li>
-  </ul>
-</section>
-
-<section>
-  <h2>Summary</h2>
-  <p>
-    The WCS Basketball Website provides a foundation for stronger communication, engagement, and growth.  
-    It honors the club’s 25-year tradition while giving parents, coaches, and players an easy, reliable tool to stay connected — wherever they are.
-  </p>
-</section>
-
-<div class="footer">
-  <p>Developed and presented by Jason Boyer — Powered by Next.js & Vercel</p>
-  <p>© 2025 WCS Basketball Club. All rights reserved.</p>
-</div>
-
 </body>
 </html>
