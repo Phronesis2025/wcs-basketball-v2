@@ -279,10 +279,29 @@ export default function SchedulesPage() {
                           <div className="flex items-center space-x-2">
                             {(() => {
                               const { bg } = eventTypeToColor(event.event_type);
-                              const textClass = bg.replace("bg-", "text-");
+                              // Convert Tailwind color classes to hex values
+                              const getColorHex = (colorClass: string) => {
+                                switch (colorClass) {
+                                  case "bg-red":
+                                    return "#dc2626"; // red-600
+                                  case "bg-green-700":
+                                    return "#15803d"; // green-700
+                                  case "bg-purple-700":
+                                    return "#7c3aed"; // purple-700
+                                  case "bg-yellow-400":
+                                    return "#facc15"; // yellow-400
+                                  default:
+                                    return "#facc15"; // yellow-400 as default
+                                }
+                              };
+                              const colorHex = getColorHex(bg);
                               return (
                                 <span
-                                  className={`${textClass} font-bebas uppercase`}
+                                  className="text-white font-bebas uppercase font-bold text-lg"
+                                  style={{
+                                    textShadow: `2px 2px 0 ${colorHex}, -2px -2px 0 ${colorHex}, 2px -2px 0 ${colorHex}, -2px 2px 0 ${colorHex}`,
+                                    WebkitTextStroke: `1px ${colorHex}`
+                                  }}
                                 >
                                   {event.event_type}
                                 </span>
