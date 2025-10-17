@@ -22,53 +22,16 @@ export default function SchedulesPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Use the same robust data fetching pattern as team pages
-        // This provides better error handling and fallback mechanisms
-
-        // Fetch all schedules using the global team ID (same as dashboard)
-        const { data: schedules, error: schedulesError } = await supabase
-          .from("schedules")
-          .select("*")
-          .is("deleted_at", null)
-          .order("date_time", { ascending: true });
-
-        if (schedulesError) {
-          console.error("Schedules fetch error:", schedulesError);
-          // Continue with empty schedules array rather than failing completely
+        // Use server-side API to bypass VPN CORS issues
+        const response = await fetch("/api/schedules");
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to fetch schedules");
         }
 
-        // Fetch updates with date_time
-        const { data: updates, error: updatesError } = await supabase
-          .from("team_updates")
-          .select("*")
-          .not("date_time", "is", null)
-          .is("deleted_at", null)
-          .order("date_time", { ascending: true });
-
-        if (updatesError) {
-          console.error("Updates fetch error:", updatesError);
-          // Continue with empty updates array rather than failing completely
-        }
-
-        // Combine schedules and updates, converting updates to schedule format
-        const allEvents = [
-          ...(schedules || []),
-          ...(updates || []).map((update) => ({
-            id: update.id,
-            event_type: "Update",
-            date_time: update.date_time,
-            title: update.title,
-            location: "N/A",
-            opponent: null,
-            description: update.content,
-            is_global: update.is_global || false,
-            created_by: update.created_by,
-            created_at: update.created_at,
-            deleted_at: update.deleted_at,
-          })),
-        ];
-
-        setEvents(allEvents as Schedule[]);
+        const data = await response.json();
+        setEvents(data.events as Schedule[]);
 
         // Clear any previous errors on successful fetch
         setError(null);
