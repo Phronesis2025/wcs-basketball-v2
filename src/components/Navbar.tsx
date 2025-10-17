@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+// import { supabase } from "@/lib/supabaseClient"; // No longer needed with custom auth
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -32,19 +32,70 @@ export default function Navbar() {
   }, [lastScrollY]);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user ? user.email || null : null);
-    };
-    fetchUser();
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user.email || null);
+    const checkAuthStatus = () => {
+      // Try localStorage first, then sessionStorage as backup
+      let isAuthenticated = localStorage.getItem('auth.authenticated');
+      let authToken = localStorage.getItem('supabase.auth.token');
+      
+      // If localStorage is empty, try sessionStorage
+      if (!isAuthenticated || !authToken) {
+        isAuthenticated = sessionStorage.getItem('auth.authenticated');
+        authToken = sessionStorage.getItem('supabase.auth.token');
+        
+        // If found in sessionStorage, restore to localStorage
+        if (isAuthenticated && authToken) {
+          localStorage.setItem('auth.authenticated', isAuthenticated);
+          localStorage.setItem('supabase.auth.token', authToken);
+        }
       }
-    );
-    return () => authListener.subscription.unsubscribe();
+      
+      if (isAuthenticated && authToken) {
+        try {
+          const session = JSON.parse(authToken);
+          setUser(session?.user?.email || 'authenticated');
+        } catch {
+          // Clear invalid auth data from both storages
+          localStorage.removeItem('auth.authenticated');
+          localStorage.removeItem('supabase.auth.token');
+          sessionStorage.removeItem('auth.authenticated');
+          sessionStorage.removeItem('supabase.auth.token');
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    // Check auth status on mount
+    checkAuthStatus();
+
+    // Listen for storage changes (when user logs in/out in another tab)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'auth.authenticated' || e.key === 'supabase.auth.token') {
+        checkAuthStatus();
+      }
+    };
+
+    // Listen for custom auth state change events
+    const handleAuthStateChange = (e: CustomEvent) => {
+      if (e.detail?.authenticated) {
+        setUser(e.detail.user?.email || 'authenticated');
+      } else {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('authStateChanged', handleAuthStateChange as EventListener);
+
+    // Also check periodically in case of localStorage issues
+    const interval = setInterval(checkAuthStatus, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authStateChanged', handleAuthStateChange as EventListener);
+      clearInterval(interval);
+    };
   }, []);
 
   // Lock scroll when mobile menu is open
@@ -67,8 +118,18 @@ export default function Navbar() {
   }
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    // Clear our custom auth data from both storages
+    localStorage.removeItem('auth.authenticated');
+    localStorage.removeItem('supabase.auth.token');
+    sessionStorage.removeItem('auth.authenticated');
+    sessionStorage.removeItem('supabase.auth.token');
     setUser(null);
+    
+    // Dispatch custom event to notify other components
+    window.dispatchEvent(new CustomEvent('authStateChanged', { 
+      detail: { authenticated: false } 
+    }));
+    
     window.location.href = "/";
   };
 

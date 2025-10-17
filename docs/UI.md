@@ -2,7 +2,8 @@
 
 **Version**: v2.7.6  
 **Last Updated**: January 2025  
-**Security Score**: 10/10 (Perfect) 🔒
+**Security Score**: 10/10 (Perfect) 🔒  
+**Live URL**: https://wcs-basketball-v2.vercel.app
 
 ## 🎨 Design System
 
@@ -30,7 +31,7 @@
 
 ## 🧩 Implemented Components
 
-### Team Page (v2.7.5)
+### Team Page (v2.7.6)
 
 - **Dashboard-Style Cards**: Modern card-based layout matching coaches dashboard design
 - **White Theme**: Clean white background with proper contrast and professional appearance
@@ -49,8 +50,10 @@
   - Left side: Event title and date/time information
   - Right side: Location badge with appropriate color coding
   - Proper spacing and padding for readability
+- **Security Enhancements**: Enhanced input sanitization and XSS protection
+- **Image Optimization**: Fixed Next.js Image aspect ratio warnings
 
-### Schedules Page (v2.7.5)
+### Schedules Page (v2.7.6)
 
 - **Mobile-First Calendar**: Custom month grid with color-coded event pills
   - Game: Red (`bg-red`) with white text

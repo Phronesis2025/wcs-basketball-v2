@@ -194,6 +194,7 @@ export default function TeamUpdates({
       aria-label="All Team Updates"
       className="mt-8 mb-12 space-y-4"
     >
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 className="text-2xl font-bebas uppercase text-center">
         All Team Updates
       </h2>
@@ -307,19 +308,55 @@ export default function TeamUpdates({
                   } p-3 box-border`}
                 >
                   <div
-                    className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 shadow-sm h-[32rem] flex flex-col w-full mb-8"
+                    className="bg-gray-900/50 border border-red-500/50 rounded-lg shadow-sm h-[28rem] flex flex-col w-full mb-8 overflow-hidden"
                     role="group"
                     aria-label={`${teamName} update card`}
                   >
-                    <div className="flex-shrink-0">
-                      <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
+                    {/* Header Section */}
+                    <div className="flex-shrink-0 p-4 pb-2">
+                      <h4 className="text-red-600 font-bebas uppercase text-sm border-b border-red-500/50 pb-1">
                         {teamName} News
                       </h4>
-                      <h3 className="text-2xl font-bebas mt-2 text-white line-clamp-1 leading-tight overflow-hidden">
+                    </div>
+
+                    {/* Image Section - Takes remaining space */}
+                    <div className="flex-1 relative">
+                      {update.image_url ? (
+                        <div className="relative w-full h-full overflow-hidden">
+                          <Image
+                            src={update.image_url}
+                            alt={update.title}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          />
+                        </div>
+                      ) : updateTeam?.logo_url ? (
+                        <div className="relative w-full h-full overflow-hidden bg-gray-800/50">
+                          <Image
+                            src={updateTeam?.logo_url || "/logos/logo2.png"}
+                            alt={`${teamName} logo`}
+                            fill
+                            className="object-contain p-4"
+                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-full bg-gray-800/50 flex items-center justify-center">
+                          <span className="text-gray-500 text-sm">
+                            No Image
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Content Section - Bottom of card */}
+                    <div className="flex-shrink-0 p-4 pt-2">
+                      <h3 className="text-lg font-bebas text-white line-clamp-1 leading-tight overflow-hidden mb-2">
                         {sanitizeInput(update.title)}
                       </h3>
                       <p
-                        className="text-gray-300 font-inter leading-tight mt-4 text-sm lg:text-base overflow-hidden"
+                        className="text-gray-300 font-inter leading-tight text-sm overflow-hidden mb-3"
                         style={{
                           display: "-webkit-box",
                           WebkitLineClamp: 2,
@@ -330,55 +367,22 @@ export default function TeamUpdates({
                       >
                         {sanitizeInput(update.content)}
                       </p>
-                    </div>
-
-                    <div className="flex-1 flex flex-col justify-between mt-4">
-                      <div className="flex-shrink-0 mb-4">
-                        {update.image_url ? (
-                          <div className="relative w-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] rounded-md overflow-hidden">
-                            <Image
-                              src={update.image_url}
-                              alt={update.title}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            />
-                          </div>
-                        ) : updateTeam?.logo_url ? (
-                          <div className="relative w-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] rounded-md overflow-hidden bg-gray-800/50">
-                            <Image
-                              src={updateTeam?.logo_url || "/logos/logo2.png"}
-                              alt={`${teamName} logo`}
-                              fill
-                              className="object-contain p-4"
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-full aspect-[16/9] md:aspect-[16/10] lg:aspect-[4/3] bg-gray-800/50 rounded-md flex items-center justify-center">
-                            <span className="text-gray-500 text-sm">
-                              No Image
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-shrink-0 py-4 pb-6">
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (!isDragging) {
-                              setSelectedUpdate(update);
-                            }
-                          }}
-                          className="w-full bg-red text-white font-bebas uppercase py-3 px-4 rounded-lg hover:bg-red-600 transition-colors"
-                          aria-label={`Read more about ${update.title}`}
-                          type="button"
-                        >
-                          Read more
-                        </button>
-                      </div>
+                      
+                      {/* Button Section */}
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (!isDragging) {
+                            setSelectedUpdate(update);
+                          }
+                        }}
+                        className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm"
+                        aria-label={`Read more about ${update.title}`}
+                        type="button"
+                      >
+                        Read more
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -449,6 +453,7 @@ export default function TeamUpdates({
           </motion.div>
         </motion.div>
       )}
+      </div>
     </section>
   );
 }

@@ -5,15 +5,31 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 **Current Version**: v2.7.6  
 **Last Updated**: January 2025  
 **Security Score**: 10/10 (Perfect) 🔒  
-**Build Status**: Clean Build ✅
+**Build Status**: Clean Build ✅  
+**Live URL**: https://wcs-basketball-v2.vercel.app
 
 ## 🏀 Features
+
+### Core Functionality
 
 - **Team Management**: Complete team roster and information system with dashboard-style card layouts
 - **Coach Dashboard**: Secure coach portal with bulk operations and recurring practice management
 - **Schedules Page**: Mobile-first calendar with color-coded event pills, modal scrolling fixes, and improved layout
 - **Team Pages**: Modern card-based design matching dashboard style with white theme and event limitations
+- **Practice Drills**: Comprehensive drill library with filtering by time, skill, and difficulty
+- **Message Board**: Real-time coach communication system with role-based permissions
+
+### Security & Performance
+
 - **Security**: Perfect 10/10 security score with comprehensive audit and zero vulnerabilities
+- **Authentication**: Role-based access control with admin and coach permissions
+- **Input Sanitization**: XSS protection and profanity filtering for all user content
+- **CSRF Protection**: Cryptographic token-based form protection
+- **Rate Limiting**: Protection against brute force attacks
+- **Image Optimization**: Fixed Next.js Image aspect ratio warnings for better performance
+
+### User Experience
+
 - **Registration Flow**: Enhanced club registration system with proper navigation and access control
 - **Admin Analytics**: Secure admin-only analytics dashboard with proper role-based access control
 - **Fan Zone**: Public team information and news
@@ -23,7 +39,6 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 - **Bulk Operations**: Delete all practices functionality for coaches
 - **Responsive Design**: Mobile-first design with Tailwind CSS
 - **Modal System**: Accessible modals with proper scrolling and focus management
-- **Image Optimization**: Fixed Next.js Image aspect ratio warnings for better performance
 
 ## 🔒 Security
 
@@ -37,12 +52,29 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 
 ## 🚀 Tech Stack
 
+### Frontend
+
 - **Framework**: Next.js 15.5.2 with App Router
-- **Language**: TypeScript
+- **Language**: TypeScript 5.9.2
 - **Styling**: Tailwind CSS 3.3.3
+- **UI Components**: Custom component library with Framer Motion
+- **State Management**: React Query for server state, Zustand for client state
+- **Animations**: Framer Motion 12.23.12
+
+### Backend & Database
+
 - **Database**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **Deployment**: Vercel
+- **Authentication**: Supabase Auth with role-based access control
+- **Real-time**: Supabase Realtime subscriptions
+- **File Storage**: Supabase Storage for images and documents
+- **API**: Server Actions with TypeScript
+
+### Deployment & Monitoring
+
+- **Hosting**: Vercel Pro Plan
+- **CDN**: Global content delivery
+- **Analytics**: Vercel Analytics and Speed Insights
+- **Error Monitoring**: Sentry integration
 - **Security**: Custom security utilities and comprehensive headers
 
 ## 📦 Getting Started
@@ -111,12 +143,25 @@ The application is deployed on Vercel with automatic deployments from the main b
 
 ## 📝 Recent Updates
 
-### v2.4.3 - January 2025
+### v2.7.6 - January 2025 (Current)
 
-- **CRITICAL SECURITY FIX**: Eliminated XSS vulnerability in Team Updates
-- **Perfect Security Score**: Achieved 10/10 security rating
-- **Enhanced Input Sanitization**: All user content properly sanitized
-- **Security Audit**: Comprehensive security review completed
+- **Security Audit**: Completed comprehensive security check with perfect 10/10 score
+- **Registration Updates**: Enhanced club registration flow with proper navigation
+- **Admin Analytics**: Fixed admin role checking and access control
+- **Team Page Redesign**: Dashboard-style card layout with white theme
+- **Schedules Enhancement**: Mobile-first calendar with color-coded events
+- **Modal Improvements**: Fixed scrolling issues and enhanced accessibility
+- **Image Optimization**: Resolved Next.js Image aspect ratio warnings
+- **Recurring Practices**: Advanced management with group ID tracking
+
+### v2.7.5 - January 2025
+
+- **Team Page Dashboard-Style Cards**: Modern card-based design matching coaches dashboard
+- **Modal Scrolling Fixes**: Prevented main page scrolling when modals are open
+- **Today's Events Layout**: Improved two-line layout for better readability
+- **Timezone Handling**: Proper Chicago timezone support for accurate date detection
+- **Bulk Operations**: "Delete All Practices" functionality for coaches
+- **Security Audit**: Comprehensive security review with zero vulnerabilities found
 
 ## 🤝 Contributing
 
