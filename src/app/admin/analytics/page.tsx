@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabaseClient";
 import { getUserRole } from "@/lib/actions";
 import { devError } from "@/lib/security";
 
@@ -15,17 +14,35 @@ export default function AdminAnalytics() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        // Use the same custom authentication method as coaches dashboard
+        let authToken = localStorage.getItem("supabase.auth.token");
+        let isAuthenticated = localStorage.getItem("auth.authenticated");
+
+        // If localStorage is empty, try sessionStorage (survives page reloads)
+        if (!authToken || !isAuthenticated) {
+          authToken = sessionStorage.getItem("supabase.auth.token");
+          isAuthenticated = sessionStorage.getItem("auth.authenticated");
+        }
+
+        if (!authToken || !isAuthenticated) {
+          setIsLoading(false);
+          return;
+        }
+
+        // Parse the session token
+        const session = JSON.parse(authToken);
+        if (!session?.user) {
+          setIsLoading(false);
+          return;
+        }
+
+        const user = session.user;
         setUser(user);
 
-        if (user) {
-          // Check if user has admin role using the same method as coaches dashboard
-          const userData = await getUserRole(user.id);
-          if (userData?.role === "admin") {
-            setIsAuthorized(true);
-          }
+        // Check if user has admin role
+        const userData = await getUserRole(user.id);
+        if (userData?.role === "admin") {
+          setIsAuthorized(true);
         }
       } catch (error) {
         devError("Error checking authorization:", error);
