@@ -148,7 +148,7 @@
         <div class="sub">A concise reference for club leadership — features, technical notes, and next steps.</div>
       </div>
       <div class="meta">
-        <div><strong>Prepared by:</strong><br>[Your Name] — [Your LLC Name]</div>
+        <div><strong>Prepared by:</strong><br>Jason Boyer</div>
         <div style="margin-top:8px"><strong>Date:</strong><br>2025</div>
       </div>
     </header>
@@ -214,9 +214,19 @@
           <h2>Coaches Dashboard</h2>
           <div class="card">
             <ul>
-              <li>Secure coach/admin login to manage schedules, post team updates, and organize drills.</li>
+              <li><strong>Secure coach & admin login</strong> to manage schedules, post team updates, and organize drills.</li>
               <li>Instant sync to public pages so parents always see the latest information.</li>
               <li>Designed to reduce administrative overhead and minimize communication errors.</li>
+            </ul>
+          </div>
+        </section>
+
+        <section style="margin-top:14px">
+          <h2>Parent Dashboard</h2>
+          <div class="card">
+            <ul>
+              <li>Account-specific view for parents: child profiles, payment history, registration status, and message history.</li>
+              <li>Parents can quickly find everything related to their family in one secure place.</li>
             </ul>
           </div>
         </section>
@@ -241,6 +251,7 @@
               <li>Row-Level Security (RLS) for fine-grained data access.</li>
               <li>All data encrypted at rest; CSRF protection on forms.</li>
               <li>Privacy policy page included; GDPR checklist recommended for full compliance.</li>
+              <li>All form submissions (schedules, updates, drills, messages) pass through a profanity filter to block malicious or offensive language before displaying publicly.</li>
             </ul>
           </div>
         </section>
@@ -256,8 +267,9 @@
               <li>Open homepage (desktop + phone) — show hero & fan zone</li>
               <li>Teams → pick team → show coach, updates, schedule</li>
               <li>Open Schedules → filter by team → open event details</li>
-              <li>Login as coach → add practice → show it appears</li>
+              <li>Login as coach/admin → add practice → show it appears</li>
               <li>Show Drills library → filter → open drill detail</li>
+              <li>Open Parent Dashboard → show child profile & payment history</li>
             </ul>
           </div>
         </section>
@@ -278,9 +290,8 @@
           <div class="card">
             <ul>
               <li><strong>Online Shop:</strong> Merchandise sales to fund operations.</li>
-              <li><strong>Sponsors:</strong> Local business sponsorships — logo placement, event sponsorship.</li>
-              <li><strong>Scholarship Fund:</strong> Use sponsor revenue for need-based scholarships.</li>
-              <li><strong>Notifications:</strong> PWA push or email/SMS for last-minute changes.</li>
+              <li><strong>Sponsors & Scholarship Fund:</strong> Combine sponsor support with a dedicated scholarship program so sponsor revenue helps families in need.</li>
+              <li><strong>Notifications:</strong> Consider push (PWA) or email for important last-minute updates.</li>
               <li><strong>Community:</strong> Photo galleries, volunteer sign-ups, fundraising pages.</li>
             </ul>
           </div>
@@ -290,9 +301,12 @@
           <h2>Known Limitations</h2>
           <div class="card">
             <ul>
-              <li>Tournament page & shop are currently placeholders (planned features).</li>
-              <li>Parent notification channels (email/SMS) not yet configured.</li>
-              <li>Accessibility improvements recommended: alt tags, color contrast checks.</li>
+              <li>The <strong>tournament</strong> page and the <strong>register</strong> page are currently in progress and being implemented now.</li>
+              <li>The <strong>shop</strong> page will be added in the next version update (e-commerce integration planned).</li>
+              <li>Parent notification channels (email/SMS) are not configured yet — push notifications via PWA are available but may require additional setup.</li>
+              <li>Accessibility improvements recommended: additional alt text on some images and color contrast tweaks in a few sections.</li>
+              <li>Analytics data is limited currently (new deployment) — recommend monitoring usage in the first 3 months to inform priorities.</li>
+              <li>No native mobile app at this time (PWA is active) — native apps can be considered later if there is demand.</li>
             </ul>
           </div>
         </section>
@@ -301,7 +315,7 @@
     </main>
 
     <div class="footer">
-      <div>Prepared by <strong>[Your Name]</strong> • <em>[Your LLC Name]</em></div>
+      <div>Prepared by <strong>Jason Boyer</strong></div>
       <div>Deployed on Vercel • Built with Next.js • © 2025 WCS Basketball Club</div>
     </div>
   </div>
