@@ -101,30 +101,24 @@ export default function CoachesLogin() {
         );
       }
 
-      // Sign in with Supabase Auth (client-side, anon key ok)
-      const { data: authData, error: signInError } =
-        await supabase.auth.signInWithPassword({
+      // Use server-side authentication to bypass CORS issues
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
           email: sanitizedEmail,
           password: sanitizedPassword,
-        });
+        }),
+      });
 
-      if (signInError) {
-        // Provide more specific error messages based on the error type
-        if (
-          signInError.message.includes("fetch") ||
-          signInError.message.includes("network")
-        ) {
-          throw new Error(
-            "Network connection issue. Please check your internet connection and try again. If you&apos;re using a VPN, try switching servers or disabling it temporarily."
-          );
-        } else if (signInError.message.includes("CORS")) {
-          throw new Error(
-            "Connection blocked by security settings. If you&apos;re using a VPN, try switching servers or disabling it temporarily."
-          );
-        } else {
-          throw new Error("Invalid email or password");
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Authentication failed");
       }
+
+      const authData = await response.json();
 
       // Debug: Confirm user ID before server action call
       devLog("Calling getUserRole with ID:", authData.user.id);

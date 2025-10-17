@@ -194,6 +194,7 @@ export default function TeamUpdates({
       aria-label="All Team Updates"
       className="mt-8 mb-12 space-y-4"
     >
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 className="text-2xl font-bebas uppercase text-center">
         All Team Updates
       </h2>
@@ -307,7 +308,7 @@ export default function TeamUpdates({
                   } p-3 box-border`}
                 >
                   <div
-                    className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 shadow-sm h-[32rem] flex flex-col w-full mb-8"
+                    className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 shadow-sm h-[28rem] flex flex-col w-full mb-8"
                     role="group"
                     aria-label={`${teamName} update card`}
                   >
@@ -449,6 +450,7 @@ export default function TeamUpdates({
           </motion.div>
         </motion.div>
       )}
+      </div>
     </section>
   );
 }
