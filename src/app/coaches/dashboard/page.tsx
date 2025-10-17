@@ -797,22 +797,30 @@ export default function CoachesDashboard() {
         // Try localStorage first, then sessionStorage as backup
         let authToken = localStorage.getItem("supabase.auth.token");
         let isAuthenticated = localStorage.getItem("auth.authenticated");
-        
+
         // If localStorage is empty, try sessionStorage (survives page reloads)
         if (!authToken || !isAuthenticated) {
-          console.log("🔐 [DASHBOARD DEBUG] localStorage empty, checking sessionStorage...");
+          console.log(
+            "🔐 [DASHBOARD DEBUG] localStorage empty, checking sessionStorage..."
+          );
           authToken = sessionStorage.getItem("supabase.auth.token");
           isAuthenticated = sessionStorage.getItem("auth.authenticated");
-          
+
           // If found in sessionStorage, restore to localStorage
           if (authToken && isAuthenticated) {
-            console.log("🔐 [DASHBOARD DEBUG] Restoring auth from sessionStorage to localStorage...");
+            console.log(
+              "🔐 [DASHBOARD DEBUG] Restoring auth from sessionStorage to localStorage..."
+            );
             localStorage.setItem("supabase.auth.token", authToken);
             localStorage.setItem("auth.authenticated", isAuthenticated);
           }
         }
 
         console.log("🔐 [DASHBOARD DEBUG] Auth token exists:", !!authToken);
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Auth token value:",
+          authToken?.substring(0, 50) + "..."
+        );
         console.log(
           "🔐 [DASHBOARD DEBUG] Is authenticated flag:",
           isAuthenticated
