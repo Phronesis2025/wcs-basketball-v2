@@ -777,6 +777,8 @@ export default function CoachesDashboard() {
 
     const fetchData = async () => {
       try {
+        console.log("🔐 [DASHBOARD DEBUG] Starting dashboard authentication check...");
+        
         // Wait a moment for localStorage to be set if coming from login
         await new Promise(resolve => setTimeout(resolve, 200));
         
@@ -784,20 +786,29 @@ export default function CoachesDashboard() {
         const authToken = localStorage.getItem('supabase.auth.token');
         const isAuthenticated = localStorage.getItem('auth.authenticated');
         
+        console.log("🔐 [DASHBOARD DEBUG] Auth token exists:", !!authToken);
+        console.log("🔐 [DASHBOARD DEBUG] Is authenticated flag:", isAuthenticated);
+        
         if (!authToken || !isAuthenticated) {
+          console.log("🔐 [DASHBOARD DEBUG] ❌ No auth token or authenticated flag - redirecting to login");
           router.push("/coaches/login");
           return;
         }
 
         // Parse the session token
         const session = JSON.parse(authToken);
+        console.log("🔐 [DASHBOARD DEBUG] Session parsed successfully");
+        console.log("🔐 [DASHBOARD DEBUG] Session user exists:", !!session?.user);
+        
         if (!session?.user) {
+          console.log("🔐 [DASHBOARD DEBUG] ❌ No user in session - redirecting to login");
           router.push("/coaches/login");
           return;
         }
 
         // Use the user data from the session directly
         const user = session.user;
+        console.log("🔐 [DASHBOARD DEBUG] ✅ User authenticated:", user.id);
 
         setUserId(user.id); // Set user ID for created_by
         // Set last login time to current time
