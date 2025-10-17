@@ -780,6 +780,7 @@ export default function CoachesDashboard() {
 
     // Set loading to true immediately to prevent duplicate calls
     setLoading(true);
+    setAuthChecked(true); // Mark as checked immediately to prevent loops
 
     const token = generateCSRFToken();
     // setCsrfToken(token);
@@ -800,6 +801,9 @@ export default function CoachesDashboard() {
         // Try localStorage first, then sessionStorage as backup
         let authToken = localStorage.getItem("supabase.auth.token");
         let isAuthenticated = localStorage.getItem("auth.authenticated");
+        
+        console.log("🔐 [DASHBOARD DEBUG] Initial check - localStorage auth token:", !!authToken);
+        console.log("🔐 [DASHBOARD DEBUG] Initial check - localStorage authenticated:", isAuthenticated);
 
         // If localStorage is empty, try sessionStorage (survives page reloads)
         if (!authToken || !isAuthenticated) {
@@ -808,6 +812,9 @@ export default function CoachesDashboard() {
           );
           authToken = sessionStorage.getItem("supabase.auth.token");
           isAuthenticated = sessionStorage.getItem("auth.authenticated");
+          
+          console.log("🔐 [DASHBOARD DEBUG] sessionStorage auth token:", !!authToken);
+          console.log("🔐 [DASHBOARD DEBUG] sessionStorage authenticated:", isAuthenticated);
 
           // If found in sessionStorage, restore to localStorage
           if (authToken && isAuthenticated) {
@@ -834,7 +841,10 @@ export default function CoachesDashboard() {
             "🔐 [DASHBOARD DEBUG] ❌ No auth token or authenticated flag - redirecting to login"
           );
           console.log("🔐 [DASHBOARD DEBUG] Auth token:", authToken);
-          console.log("🔐 [DASHBOARD DEBUG] Is authenticated:", isAuthenticated);
+          console.log(
+            "🔐 [DASHBOARD DEBUG] Is authenticated:",
+            isAuthenticated
+          );
           setAuthChecked(true);
           setLoading(false);
           router.push("/coaches/login");
@@ -851,7 +861,10 @@ export default function CoachesDashboard() {
             !!session?.user
           );
         } catch (parseError) {
-          console.error("🔐 [DASHBOARD DEBUG] ❌ Failed to parse session token:", parseError);
+          console.error(
+            "🔐 [DASHBOARD DEBUG] ❌ Failed to parse session token:",
+            parseError
+          );
           setAuthChecked(true);
           setLoading(false);
           router.push("/coaches/login");
