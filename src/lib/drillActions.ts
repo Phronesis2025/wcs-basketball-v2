@@ -110,30 +110,17 @@ export async function createPracticeDrill(
       throw new Error("Category is required");
     }
 
-    const { data, error } = await supabase
-      .from("practice_drills")
-      .insert({
-        team_id: drillData.team_id,
-        title: drillData.title.trim(),
-        skills: drillData.skills,
-        equipment: drillData.equipment,
-        time: drillData.time.trim(),
-        instructions: drillData.instructions.trim(),
-        additional_info: drillData.additional_info?.trim() || null,
-        benefits: drillData.benefits.trim(),
-        difficulty: drillData.difficulty.trim(),
-        category: drillData.category.trim(),
-        week_number: 1, // Default week number since we removed the field
-        image_url: drillData.image_url || null,
-        created_by: userId,
-      })
-      .select()
-      .single();
-
-    if (error) {
-      devError("Error creating practice drill:", error);
-      throw new Error(error.message);
+    const resp = await fetch("/api/drills", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ drillData, userId }),
+    });
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      devError("API create drill failed:", body);
+      throw new Error(body.error || "Failed to create practice drill");
     }
+    const data = await resp.json();
 
     devLog("Successfully created practice drill:", data.id);
     return data;
@@ -156,53 +143,17 @@ export async function updatePracticeDrill(
     devLog("Updating practice drill:", drillId);
 
     // Check if user has permission to update this drill
-    const { data: existingDrill, error: fetchError } = await supabase
-      .from("practice_drills")
-      .select("created_by, team_id")
-      .eq("id", drillId)
-      .single();
-
-    if (fetchError) {
-      devError("Error fetching drill for update:", fetchError);
-      throw new Error("Drill not found");
+    const resp = await fetch("/api/drills", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ drillId, drillData, userId, isAdmin }),
+    });
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      devError("API update drill failed:", body);
+      throw new Error(body.error || "Failed to update practice drill");
     }
-
-    if (!isAdmin && existingDrill.created_by !== userId) {
-      throw new Error("You can only update drills you created");
-    }
-
-    // Prepare update data
-    const updateData: Record<string, unknown> = {};
-    if (drillData.title !== undefined)
-      updateData.title = drillData.title.trim();
-    if (drillData.skills !== undefined) updateData.skills = drillData.skills;
-    if (drillData.equipment !== undefined)
-      updateData.equipment = drillData.equipment;
-    if (drillData.time !== undefined) updateData.time = drillData.time.trim();
-    if (drillData.instructions !== undefined)
-      updateData.instructions = drillData.instructions.trim();
-    if (drillData.additional_info !== undefined)
-      updateData.additional_info = drillData.additional_info?.trim() || null;
-    if (drillData.benefits !== undefined)
-      updateData.benefits = drillData.benefits.trim();
-    if (drillData.difficulty !== undefined)
-      updateData.difficulty = drillData.difficulty.trim();
-    if (drillData.category !== undefined)
-      updateData.category = drillData.category.trim();
-    if (drillData.image_url !== undefined)
-      updateData.image_url = drillData.image_url;
-
-    const { data, error } = await supabase
-      .from("practice_drills")
-      .update(updateData)
-      .eq("id", drillId)
-      .select()
-      .single();
-
-    if (error) {
-      devError("Error updating practice drill:", error);
-      throw new Error(error.message);
-    }
+    const data = await resp.json();
 
     devLog("Successfully updated practice drill:", drillId);
     return data;
@@ -224,29 +175,15 @@ export async function deletePracticeDrill(
     devLog("Deleting practice drill:", drillId);
 
     // Check if user has permission to delete this drill
-    const { data: existingDrill, error: fetchError } = await supabase
-      .from("practice_drills")
-      .select("created_by")
-      .eq("id", drillId)
-      .single();
-
-    if (fetchError) {
-      devError("Error fetching drill for deletion:", fetchError);
-      throw new Error("Drill not found");
-    }
-
-    if (!isAdmin && existingDrill.created_by !== userId) {
-      throw new Error("You can only delete drills you created");
-    }
-
-    const { error } = await supabase
-      .from("practice_drills")
-      .delete()
-      .eq("id", drillId);
-
-    if (error) {
-      devError("Error deleting practice drill:", error);
-      throw new Error(error.message);
+    const resp = await fetch("/api/drills", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ drillId, userId, isAdmin }),
+    });
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      devError("API delete drill failed:", body);
+      throw new Error(body.error || "Failed to delete practice drill");
     }
 
     devLog("Successfully deleted practice drill:", drillId);

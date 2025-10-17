@@ -346,14 +346,16 @@ export async function deleteMessage(
       throw new Error("You can only delete your own messages");
     }
 
-    // Prefer secure RPC that bypasses table RLS safely (SECURITY DEFINER)
-    const { error } = await supabase.rpc("soft_delete_coach_message", {
-      p_message_id: id,
+    // Call server API using admin client to bypass RLS
+    const resp = await fetch("/api/messages/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messageId: id, requesterId: authorId, isAdmin }),
     });
-
-    if (error) {
-      devError("Error deleting message:", error);
-      throw new Error(error.message);
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      devError("API delete message failed:", body);
+      throw new Error(body.error || "Failed to delete message");
     }
 
     devLog("Successfully deleted message:", id);
