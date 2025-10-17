@@ -772,10 +772,12 @@ export default function CoachesDashboard() {
   useEffect(() => {
     // Prevent multiple simultaneous calls
     if (loading || authChecked) {
-      console.log("🔐 [DASHBOARD DEBUG] ⚠️ Already loading or auth checked, skipping duplicate call");
+      console.log(
+        "🔐 [DASHBOARD DEBUG] ⚠️ Already loading or auth checked, skipping duplicate call"
+      );
       return;
     }
-    
+
     const token = generateCSRFToken();
     // setCsrfToken(token);
     document.cookie = `csrf-token=${encodeURIComponent(
@@ -784,20 +786,42 @@ export default function CoachesDashboard() {
 
     const fetchData = async () => {
       try {
-        console.log("🔐 [DASHBOARD DEBUG] Starting dashboard authentication check...");
-        
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Starting dashboard authentication check..."
+        );
+
         // Wait a moment for localStorage to be set if coming from login
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
+        await new Promise((resolve) => setTimeout(resolve, 200));
+
         // Check if user is authenticated using our custom method
-        const authToken = localStorage.getItem('supabase.auth.token');
-        const isAuthenticated = localStorage.getItem('auth.authenticated');
+        // Try localStorage first, then sessionStorage as backup
+        let authToken = localStorage.getItem("supabase.auth.token");
+        let isAuthenticated = localStorage.getItem("auth.authenticated");
         
-        console.log("🔐 [DASHBOARD DEBUG] Auth token exists:", !!authToken);
-        console.log("🔐 [DASHBOARD DEBUG] Is authenticated flag:", isAuthenticated);
-        
+        // If localStorage is empty, try sessionStorage (survives page reloads)
         if (!authToken || !isAuthenticated) {
-          console.log("🔐 [DASHBOARD DEBUG] ❌ No auth token or authenticated flag - redirecting to login");
+          console.log("🔐 [DASHBOARD DEBUG] localStorage empty, checking sessionStorage...");
+          authToken = sessionStorage.getItem("supabase.auth.token");
+          isAuthenticated = sessionStorage.getItem("auth.authenticated");
+          
+          // If found in sessionStorage, restore to localStorage
+          if (authToken && isAuthenticated) {
+            console.log("🔐 [DASHBOARD DEBUG] Restoring auth from sessionStorage to localStorage...");
+            localStorage.setItem("supabase.auth.token", authToken);
+            localStorage.setItem("auth.authenticated", isAuthenticated);
+          }
+        }
+
+        console.log("🔐 [DASHBOARD DEBUG] Auth token exists:", !!authToken);
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Is authenticated flag:",
+          isAuthenticated
+        );
+
+        if (!authToken || !isAuthenticated) {
+          console.log(
+            "🔐 [DASHBOARD DEBUG] ❌ No auth token or authenticated flag - redirecting to login"
+          );
           setAuthChecked(true);
           router.push("/coaches/login");
           return;
@@ -806,10 +830,15 @@ export default function CoachesDashboard() {
         // Parse the session token
         const session = JSON.parse(authToken);
         console.log("🔐 [DASHBOARD DEBUG] Session parsed successfully");
-        console.log("🔐 [DASHBOARD DEBUG] Session user exists:", !!session?.user);
-        
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Session user exists:",
+          !!session?.user
+        );
+
         if (!session?.user) {
-          console.log("🔐 [DASHBOARD DEBUG] ❌ No user in session - redirecting to login");
+          console.log(
+            "🔐 [DASHBOARD DEBUG] ❌ No user in session - redirecting to login"
+          );
           setAuthChecked(true);
           router.push("/coaches/login");
           return;
@@ -818,7 +847,7 @@ export default function CoachesDashboard() {
         // Use the user data from the session directly
         const user = session.user;
         console.log("🔐 [DASHBOARD DEBUG] ✅ User authenticated:", user.id);
-        
+
         // Mark authentication as checked to prevent duplicate calls
         setAuthChecked(true);
 
