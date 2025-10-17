@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>WCS Basketball — Phase 1: Professional Development Cost Estimate</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; line-height:1.5; color:#0b1220; background:#f7fafc; padding:28px; }
+    h1 { font-size:28px; margin:0 0 8px; color:#0f172a; }
+    h2 { font-size:18px; margin:20px 0 8px; color:#0b1220; }
+    p.lead { margin:4px 0 18px; color:#334155; }
+    .meta { font-size:13px; color:#475569; margin-bottom:18px; }
+    table { width:100%; border-collapse:collapse; margin:14px 0 24px; background:white; box-shadow:0 1px 0 rgba(2,6,23,0.04); }
+    th, td { padding:10px 12px; text-align:left; border-bottom:1px solid #eef2f7; font-size:14px; }
+    th { background:#f1f5f9; color:#0f172a; font-weight:600; }
+    .col-n { text-align:right; font-variant-numeric:tabular-nums; }
+    .muted { color:#64748b; font-size:13px; }
+    .note { background:#fff; border-left:4px solid #60a5fa; padding:10px 12px; margin:10px 0 20px; color:#0f172a; }
+    .big { font-size:20px; font-weight:700; color:#0b1220; }
+    .green { color:#0b845d; }
+    .red { color:#9b1c1c; }
+    .footer { font-size:13px; color:#475569; margin-top:26px; }
+    .two-col { display:grid; grid-template-columns: 1fr 320px; gap:18px; align-items:start; }
+    .boxed { background:white; padding:12px; box-shadow:0 1px 0 rgba(2,6,23,0.04); border-radius:8px; }
+    @media (max-width:920px){ .two-col { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+  <h1>WCS Basketball — Phase 1</h1>
+  <p class="lead">Detailed cost estimate to build the Phase 1 web application described in your development specification, broken down by feature and delivered as a single-page HTML cost report.</p>
+
+  <div class="meta">Source: <span class="muted">WCS Basketball Development Specification (user-supplied).</span> File reference: :contentReference[oaicite:0]{index=0}</div>
+
+  <div class="note">
+    <strong>Quick summary:</strong>
+    <ul style="margin:6px 0 0 18px;">
+      <li>Estimated engineering effort: <strong>1,380 hours</strong></li>
+      <li>Three pricing tiers shown: <strong>US Agency (premium)</strong>, <strong>Freelance mixed team (mid)</strong>, and <strong>Offshore agency (low)</strong>.</li>
+      <li>Estimated development cost (base): <strong>US Agency: $276,000</strong> • <strong>Freelance Team: $165,600</strong> • <strong>Offshore Agency: $62,100</strong>.</li>
+      <li>First-year budget (includes 20% contingency + 15% annual maintenance): <strong>US Agency: $372,600</strong> • <strong>Freelance Team: $223,560</strong> • <strong>Offshore Agency: $83,835</strong>.</li>
+    </ul>
+  </div>
+
+  <h2>Assumptions & rates used</h2>
+  <div class="boxed">
+    <p class="muted">Estimates assume a professional team building to the specification included in the supplied file (pages, RLS security, Supabase integration, real-time subscriptions, custom mobile calendar, coaches dashboard, practice drills library, role-based access controls, image uploads, and PWA/mobile-first behavior).</p>
+    <ul class="muted">
+      <li>Work estimate (detailed below): <strong>1,380 hours</strong>.</li>
+      <li>Hourly rate assumptions:
+        <ul>
+          <li><strong>US Agency</strong>: $200 / hour (full-service agency with senior engineers, PM, QA).</li>
+          <li><strong>Freelance Mixed Team</strong>: $120 / hour (mix of mid-senior freelancers, contract PM).</li>
+          <li><strong>Offshore Agency</strong>: $45 / hour (lower-cost offshore team with PM).</li>
+        </ul>
+      </li>
+      <li>Contingency applied: <strong>20%</strong> (project risk, scope creep).</li>
+      <li>Annual maintenance (first-year): <strong>15% of development cost</strong> to cover updates, bug fixes, small feature tweaks, security patches, dependency upgrades.</li>
+      <li>Timeline estimate based on a 2–3 person core team + support (design/QA/PM): <strong>4–6 months (realistic)</strong>. See timeline later in this file.</li>
+    </ul>
+  </div>
+
+  <h2>Feature-by-feature breakdown (hours & cost)</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Feature / Work item</th>
+        <th class="col-n">Hours</th>
+        <th class="col-n">US Agency ($200/hr)</th>
+        <th class="col-n">Freelance Team ($120/hr)</th>
+        <th class="col-n">Offshore Agency ($45/hr)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Setup & configuration (Next.js, Supabase, CI/CD, infra)</td><td class="col-n">80</td><td class="col-n">$16,000</td><td class="col-n">$9,600</td><td class="col-n">$3,600</td></tr>
+      <tr><td>Home / Landing page (hero, video, marquee, updates)</td><td class="col-n">40</td><td class="col-n">$8,000</td><td class="col-n">$4,800</td><td class="col-n">$1,800</td></tr>
+      <tr><td>Teams listing page (filters, search, cards)</td><td class="col-n">60</td><td class="col-n">$12,000</td><td class="col-n">$7,200</td><td class="col-n">$2,700</td></tr>
+      <tr><td>Team detail page (identity, coaches, updates, schedule)</td><td class="col-n">80</td><td class="col-n">$16,000</td><td class="col-n">$9,600</td><td class="col-n">$3,600</td></tr>
+      <tr><td>Schedules & custom calendar (mobile-first calendar component)</td><td class="col-n">120</td><td class="col-n">$24,000</td><td class="col-n">$14,400</td><td class="col-n">$5,400</td></tr>
+      <tr><td>Practice drills library (filtering, detail modal)</td><td class="col-n">60</td><td class="col-n">$12,000</td><td class="col-n">$7,200</td><td class="col-n">$2,700</td></tr>
+      <tr><td>Coaches dashboard (CRUD, schedule mgmt, analytics access)</td><td class="col-n">160</td><td class="col-n">$32,000</td><td class="col-n">$19,200</td><td class="col-n">$7,200</td></tr>
+      <tr><td>Auth & Security (Supabase Auth, RLS, CSRF, rate-limit)</td><td class="col-n">80</td><td class="col-n">$16,000</td><td class="col-n">$9,600</td><td class="col-n">$3,600</td></tr>
+      <tr><td>Realtime subscriptions (schedules, messages, updates)</td><td class="col-n">80</td><td class="col-n">$16,000</td><td class="col-n">$9,600</td><td class="col-n">$3,600</td></tr>
+      <tr><td>Admin analytics (placeholder + charts wiring)</td><td class="col-n">40</td><td class="col-n">$8,000</td><td class="col-n">$4,800</td><td class="col-n">$1,800</td></tr>
+      <tr><td>Backend & DB design + APIs (Postgres, RLS policies)</td><td class="col-n">160</td><td class="col-n">$32,000</td><td class="col-n">$19,200</td><td class="col-n">$7,200</td></tr>
+      <tr><td>File upload & storage (Supabase Storage, image handling)</td><td class="col-n">40</td><td class="col-n">$8,000</td><td class="col-n">$4,800</td><td class="col-n">$1,800</td></tr>
+      <tr><td>Search, image optimization, lazy-loading</td><td class="col-n">40</td><td class="col-n">$8,000</td><td class="col-n">$4,800</td><td class="col-n">$1,800</td></tr>
+      <tr><td>Testing & QA (unit, E2E, accessibility, manual testing)</td><td class="col-n">120</td><td class="col-n">$24,000</td><td class="col-n">$14,400</td><td class="col-n">$5,400</td></tr>
+      <tr><td>Performance tuning & deployment (Vercel, CDN, monitoring)</td><td class="col-n">40</td><td class="col-n">$8,000</td><td class="col-n">$4,800</td><td class="col-n">$1,800</td></tr>
+      <tr><td>Project management, meetings, specs refinement</td><td class="col-n">120</td><td class="col-n">$24,000</td><td class="col-n">$14,400</td><td class="col-n">$5,400</td></tr>
+      <tr><td>Polish, docs, accessibility fixes, handoff</td><td class="col-n">60</td><td class="col-n">$12,000</td><td class="col-n">$7,200</td><td class="col-n">$2,700</td></tr>
+
+      <tr>
+        <th>Total</th>
+        <th class="col-n">1,380</th>
+        <th class="col-n">$276,000</th>
+        <th class="col-n">$165,600</th>
+        <th class="col-n">$62,100</th>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Contingency & maintenance (first-year)</h2>
+  <div class="boxed">
+    <p class="muted">Project contingency (20%) and a recommended annual maintenance budget (15% of dev cost) are added below to give a realistic first-year budget.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Tier</th>
+          <th class="col-n">Base dev cost</th>
+          <th class="col-n">+20% contingency</th>
+          <th class="col-n">Annual maintenance (15% of base)</th>
+          <th class="col-n">First-year total (dev + contingency + maintenance)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>US Agency</td><td class="col-n">$276,000</td><td class="col-n">$55,200</td><td class="col-n">$41,400</td><td class="col-n"><strong>$372,600</strong></td></tr>
+        <tr><td>Freelance Team</td><td class="col-n">$165,600</td><td class="col-n">$33,120</td><td class="col-n">$24,840</td><td class="col-n"><strong>$223,560</strong></td></tr>
+        <tr><td>Offshore Agency</td><td class="col-n">$62,100</td><td class="col-n">$12,420</td><td class="col-n">$9,315</td><td class="col-n"><strong>$83,835</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Timeline estimate (staffing scenarios)</h2>
+  <div class="two-col">
+    <div class="boxed">
+      <p class="muted"><strong>Realistic timeline</strong> depends on team size & availability:</p>
+      <ul class="muted">
+        <li><strong>Small core team (2 devs + 1 designer/QA/PM part-time):</strong> ~20–28 weeks (5–7 months)</li>
+        <li><strong>Medium team (3–4 engineers + designer + PM + QA):</strong> ~14–20 weeks (3.5–5 months)</li>
+        <li><strong>Fast-track (agency, full team):</strong> ~10–14 weeks (2.5–3.5 months) — premium cost, more parallel work.</li>
+      </ul>
+      <p class="muted">These timelines include discovery, design iteration, development, testing, and deployment. Real-time features, calendar complexity, and RLS security are the biggest schedule drivers.</p>
+    </div>
+
+    <div class="boxed">
+      <p class="muted"><strong>Recommended key hires for Phase 1</strong></p>
+      <ul class="muted">
+        <li>1–2 Senior Frontend Engineers (Next.js, TypeScript, Tailwind)</li>
+        <li>1 Backend Engineer (Supabase/Postgres, RLS, API)</li>
+        <li>1 Product/Project Manager (part/full time)</li>
+        <li>1 UI/UX Designer (PWA, mobile-first patterns)</li>
+        <li>1 QA Engineer (E2E + accessibility)</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Risk, scope items & optional add-ons</h2>
+  <div class="boxed">
+    <ul class="muted">
+      <li><strong>High-risk / high-effort:</strong> Custom mobile calendar (touch UX + recurring events), RLS policy correctness, and real-time synchronization across devices. If you accept simplified calendar features, costs/time reduce significantly (estimate: −40–60 hours).</li>
+      <li><strong>Optional add-ons (extra cost):</strong> e-commerce shop integration, advanced analytics (data warehouse + BI dashboards), tournament bracket management, or push notifications — each is typically +$8k–$30k depending on scope.</li>
+      <li><strong>Third-party & infra costs (not included):</strong> Supabase paid tier, Vercel plan, monitoring (Sentry), image CDN, and domain/SSL. Expect $50–$500+/month depending on scale.</li>
+    </ul>
+  </div>
+
+  <h2>Notes & recommendations</h2>
+  <div class="boxed">
+    <ol class="muted">
+      <li><strong>Start with an MVP variant:</strong> Launch core features (teams, team page, schedules basic, coaches login, drills library) before full real-time and full calendar features. This can reduce initial cost by ~20–35%.</li>
+      <li><strong>Security review:</strong> Budget an independent security/RLS review (8–20 hours) before launch — this prevents data exposure issues with role-based data. Highly recommended for youth sports data.</li>
+      <li><strong>Acceptance criteria:</strong> Define clear acceptance tests for scheduling/recurring rules and RLS behaviors — these are the most ambiguous spec areas and often cause rework.</li>
+      <li><strong>Design system:</strong> Reuse UI components (Tailwind + shared component library) to reduce long-term costs; allocate ~40–80 hours early to create reusable components.</li>
+    </ol>
+  </div>
+
+  <h2>What I delivered in this file</h2>
+  <div class="boxed">
+    <p class="muted">This HTML file breaks down the Phase 1 feature set (from your spec) into estimated hours and costs across three realistic market-rate tiers, includes contingency & first-year maintenance, timeline guidance, and recommended hiring. The estimate is based on the specification you uploaded. File reference: :contentReference[oaicite:1]{index=1}</p>
+  </div>
+
+  <div class="footer">
+    <p><strong>If you'd like:</strong> I can (choose one) — <em>convert this estimate into a downloadable PDF</em>, <em>produce a prioritized MVP scope with a reduced cost</em>, or <em>create a contractor-ready RFP (one-page + acceptance criteria)</em>. Tell me which and I’ll produce it immediately in this chat.</p>
+  </div>
+
+</body>
+</html>

@@ -174,7 +174,7 @@ export function getCSRFTokenFromCookies(): string | null {
 
   const cookies = document.cookie.split(";").reduce((acc, cookie) => {
     const [key, value] = cookie.trim().split("=");
-    acc[key] = decodeURIComponent(value);
+    acc[key] = value ? decodeURIComponent(value) : "";
     return acc;
   }, {} as Record<string, string>);
 

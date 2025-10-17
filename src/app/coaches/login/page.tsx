@@ -31,7 +31,9 @@ export default function CoachesLogin() {
   useEffect(() => {
     // Check if user is already authenticated
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
         router.push("/coaches/dashboard");
         return;
@@ -42,7 +44,9 @@ export default function CoachesLogin() {
     // Generate CSRF token for form security (best practice to prevent CSRF attacks)
     const token = generateCSRFToken();
     setCsrfToken(token);
-    document.cookie = `csrf-token=${token}; Path=/; SameSite=Strict`;
+    document.cookie = `csrf-token=${encodeURIComponent(
+      token
+    )}; Path=/; SameSite=Strict`;
 
     // Client-side rate limiting to prevent brute-force (5 attempts/5 min)
     const storedAttempts = localStorage.getItem("login_attempts");
@@ -74,7 +78,11 @@ export default function CoachesLogin() {
       .split("; ")
       .find((row) => row.startsWith("csrf-token="))
       ?.split("=")[1];
-    if (!validateCSRFToken(csrfToken, storedCsrf || "")) {
+
+    // Decode the URL-encoded token from the cookie
+    const decodedStoredCsrf = storedCsrf ? decodeURIComponent(storedCsrf) : "";
+
+    if (!validateCSRFToken(csrfToken, decodedStoredCsrf)) {
       setError("Invalid CSRF token");
       setLoading(false);
       return;
@@ -142,59 +150,59 @@ export default function CoachesLogin() {
     <div className="min-h-screen bg-black text-white p-4">
       <div className="pt-20 sm:pt-24">
         <div className="w-full max-w-md space-y-8 mx-auto">
-        <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
-          WCS Coaches
-        </h1>
-        {error && <p className="text-red font-inter text-center">{error}</p>}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <input type="hidden" name="csrf-token" value={csrfToken} />
-          <div>
-            <label htmlFor="email" className="block text-sm font-inter">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+          <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
+            WCS Coaches
+          </h1>
+          {error && <p className="text-red font-inter text-center">{error}</p>}
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input type="hidden" name="csrf-token" value={csrfToken} />
+            <div>
+              <label htmlFor="email" className="block text-sm font-inter">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                disabled={isLocked || loading}
+                required
+                autoComplete="username"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-inter">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                disabled={isLocked || loading}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600"
               disabled={isLocked || loading}
-              required
-              autoComplete="username"
-            />
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+          <div className="text-center mt-4">
+            <Link
+              href="/teams"
+              className="text-red hover:underline font-inter"
+              aria-label="Back to teams"
+            >
+              ← Back to Teams
+            </Link>
           </div>
-          <div>
-            <label htmlFor="password" className="block text-sm font-inter">
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-              disabled={isLocked || loading}
-              required
-              autoComplete="current-password"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600"
-            disabled={isLocked || loading}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-        <div className="text-center mt-4">
-          <Link
-            href="/teams"
-            className="text-red hover:underline font-inter"
-            aria-label="Back to teams"
-          >
-            ← Back to Teams
-          </Link>
-        </div>
         </div>
       </div>
     </div>

@@ -6,6 +6,7 @@ interface GameCardProps {
   schedule: Schedule;
   onEdit?: (schedule: Schedule) => void;
   onDelete?: (id: string) => void;
+  onView?: (schedule: Schedule) => void;
   canEdit?: boolean;
   canDelete?: boolean;
 }
@@ -14,6 +15,7 @@ export default function GameCard({
   schedule,
   onEdit,
   onDelete,
+  onView,
   canEdit = true,
   canDelete = true,
 }: GameCardProps) {
@@ -31,7 +33,10 @@ export default function GameCard({
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+    <div
+      className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => onView?.(schedule)}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <h4 className="font-inter font-semibold text-gray-900">
@@ -49,7 +54,10 @@ export default function GameCard({
             <div className="flex space-x-1">
               {canEdit && (
                 <button
-                  onClick={() => onEdit(schedule)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(schedule);
+                  }}
                   className="text-gray-400 hover:text-gray-600 p-1"
                   aria-label="Edit game"
                 >
@@ -70,7 +78,10 @@ export default function GameCard({
               )}
               {canDelete && (
                 <button
-                  onClick={() => onDelete(schedule.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(schedule.id);
+                  }}
                   className="text-gray-400 hover:text-red-600 p-1"
                   aria-label="Delete game"
                 >

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost Estimate Breakdown for WCS Basketball Web Application</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 20px; }
+        h1, h2 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .total { font-weight: bold; font-size: 1.2em; }
+    </style>
+</head>
+<body>
+    <h1>Cost Estimate Breakdown for Developing the WCS Basketball Web Application</h1>
+    <p>This breakdown is based on the provided development specification document. I've used the estimated development times from the document as a foundation, interpreting them as man-weeks (assuming 40 hours per week) for a professional development team.</p>
+    <p>Key assumptions:</p>
+    <ul>
+        <li>Blended hourly rate: $120/hour (typical for a US-based or high-quality professional team, including frontend/backend devs, a project manager, and QA; rates can vary by location—offshore teams might be 50-70% lower).</li>
+        <li>Total estimated man-hours: Approximately 1,080 hours (derived from the document's realistic 20-24 week estimate, averaged and broken down).</li>
+        <li>Costs include development, basic testing, and integration but exclude ongoing maintenance, hosting (e.g., Supabase/Vercel fees), or post-launch support.</li>
+        <li>Breakdown follows the document's structure, focusing on major sections like architecture, pages (grouped), database, features, and technical details. Overlaps (e.g., real-time in pages) are accounted for in allocations.</li>
+        <li>Estimates are approximate; actual costs depend on team size, experience, scope changes, and location. For precision, get quotes from agencies.</li>
+    </ul>
+
+    <h2>Breakdown by Major Sections</h2>
+    <table>
+        <tr>
+            <th>Section</th>
+            <th>Description</th>
+            <th>Estimated Man-Hours</th>
+            <th>Estimated Cost ($120/hr)</th>
+        </tr>
+        <tr>
+            <td>Core Application Architecture - Frontend Setup & Configuration</td>
+            <td>Includes setting up Next.js 14 with App Router, TypeScript, Tailwind CSS, Framer Motion, React Query, Sentry, and Vercel Analytics.</td>
+            <td>60</td>
+            <td>$7,200</td>
+        </tr>
+        <tr>
+            <td>Core Application Architecture - Backend & Database Setup</td>
+            <td>Supabase integration, PostgreSQL with RLS, Supabase Auth, Storage, and real-time subscriptions setup.</td>
+            <td>60</td>
+            <td>$7,200</td>
+        </tr>
+        <tr>
+            <td>Core Application Architecture - Security Features</td>
+            <td>CSRF validation, input sanitization, profanity filtering, rate limiting, RLS policies, and role-based access control implementation.</td>
+            <td>100</td>
+            <td>$12,000</td>
+        </tr>
+        <tr>
+            <td>Page Structure & Functionality - Core Pages & Components</td>
+            <td>Development of main pages including Home (hero, marquee, carousel), Teams (grid, cards, search), Individual Team (details, schedules, updates), Schedules (custom calendar, filters, modals), and Practice Drills (library, filters, modals). Includes responsive design, animations, and data fetching.</td>
+            <td>200</td>
+            <td>$24,000</td>
+        </tr>
+        <tr>
+            <td>Page Structure & Functionality - Coaches Dashboard & Admin Features</td>
+            <td>Dashboard for team management, schedule CRUD, recurring events, updates, drills, message board, bulk operations, and admin analytics placeholder.</td>
+            <td>140</td>
+            <td>$16,800</td>
+        </tr>
+        <tr>
+            <td>Page Structure & Functionality - Coaches Login & Additional Pages</td>
+            <td>Secure login page with auth and rate limiting; simple placeholders for About, Shop, News, Privacy, Terms, Refund, and Club Registration.</td>
+            <td>100</td>
+            <td>$12,000</td>
+        </tr>
+        <tr>
+            <td>Database Schema</td>
+            <td>Design and implementation of tables: teams, coaches, team_coaches, schedules, team_updates, practice_drills, coach_messages, coach_message_replies, users. Includes relationships, indexes, and RLS policies.</td>
+            <td>60</td>
+            <td>$7,200</td>
+        </tr>
+        <tr>
+            <td>Key Features & Functionality - Real-time Updates & Subscriptions</td>
+            <td>Live updates for schedules, announcements, messages; Supabase real-time integration across components.</td>
+            <td>100</td>
+            <td>$12,000</td>
+        </tr>
+        <tr>
+            <td>Key Features & Functionality - Role-based Access Control & Schedule Management</td>
+            <td>Admin/coach permissions, UI rendering based on roles; event creation, recurring practices, bulk deletes.</td>
+            <td>80</td>
+            <td>$9,600</td>
+        </tr>
+        <tr>
+            <td>Key Features & Functionality - Content Management & File Uploads</td>
+            <td>Updates with images, drill library; secure file uploads, optimization, and moderation.</td>
+            <td>60</td>
+            <td>$7,200</td>
+        </tr>
+        <tr>
+            <td>Key Features & Functionality - Mobile-first Design & Performance Optimization</td>
+            <td>Responsive layouts, touch support, lazy loading, image optimization, code splitting.</td>
+            <td>100</td>
+            <td>$12,000</td>
+        </tr>
+        <tr>
+            <td>Technical Implementation Details</td>
+            <td>State management (React Query, hooks), styling/UI, data fetching, error handling (Sentry, boundaries), performance tweaks.</td>
+            <td>60</td>
+            <td>$7,200</td>
+        </tr>
+        <tr>
+            <td>Testing & Bug Fixes</td>
+            <td>Unit/integration testing, bug fixing, cross-browser/device testing, using tools like Playwright.</td>
+            <td>60</td>
+            <td>$7,200</td>
+        </tr>
+    </table>
+
+    <h2 class="total">Total Estimated Cost for the Entire Package: $129,600</h2>
+    <p>Range: $100,000 - $150,000 (depending on team location, exact scope, and efficiencies like using boilerplates). This aligns with industry averages for a mid-complexity full-stack web app with real-time features and custom components.</p>
+</body>
+</html>

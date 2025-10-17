@@ -6,9 +6,15 @@ interface DrillCardProps {
   drill: PracticeDrill;
   onEdit?: () => void;
   onDelete?: () => void;
+  onView?: (drill: PracticeDrill) => void;
 }
 
-export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
+export default function DrillCard({
+  drill,
+  onEdit,
+  onDelete,
+  onView,
+}: DrillCardProps) {
   const getCategoryColor = (category: string) => {
     // Normalize the category by trimming whitespace and converting to lowercase for comparison
     const normalizedCategory = category?.trim().toLowerCase();
@@ -54,7 +60,10 @@ export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
   };
 
   return (
-    <div className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+    <div
+      className="bg-white rounded-lg p-4 shadow-sm border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+      onClick={() => onView?.(drill)}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <h4 className="font-inter font-semibold text-gray-900 mb-2">
@@ -91,7 +100,10 @@ export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
         {onEdit && onDelete && (
           <div className="flex space-x-1 ml-3 flex-shrink-0">
             <button
-              onClick={onEdit}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit();
+              }}
               className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
               aria-label="Edit drill"
             >
@@ -110,7 +122,10 @@ export default function DrillCard({ drill, onEdit, onDelete }: DrillCardProps) {
               </svg>
             </button>
             <button
-              onClick={onDelete}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete();
+              }}
               className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
               aria-label="Delete drill"
             >

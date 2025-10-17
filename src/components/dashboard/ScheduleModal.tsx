@@ -103,21 +103,33 @@ export default function ScheduleModal({
       // Populate form fields based on editing data
       if ("event_type" in editingData) {
         // Schedule data
-        setGameDateTime(editingData.date_time);
+        // Convert ISO timestamp to datetime-local format
+        const formatForDateTimeLocal = (isoString: string) => {
+          const date = new Date(isoString);
+          return date.toISOString().slice(0, 16); // "yyyy-MM-ddTHH:mm"
+        };
+
+        setGameDateTime(formatForDateTimeLocal(editingData.date_time));
         setGameOpponent(editingData.opponent || "");
         setGameLocation(editingData.location);
         setGameComments(editingData.description || "");
         setPracticeTitle(editingData.description || "");
-        setPracticeDateTime(editingData.date_time);
+        setPracticeDateTime(formatForDateTimeLocal(editingData.date_time));
         setPracticeLocation(editingData.location);
         setPracticeComments(editingData.description || "");
-        
+
         // Check if this is a recurring practice
-        if (editingData.event_type === "Practice" && editingData.recurring_group_id) {
+        if (
+          editingData.event_type === "Practice" &&
+          editingData.recurring_group_id
+        ) {
           setIsRecurring(true);
-          
+
           // Use enhanced recurring pattern data if available
-          if ("recurringPattern" in editingData && editingData.recurringPattern) {
+          if (
+            "recurringPattern" in editingData &&
+            editingData.recurringPattern
+          ) {
             const pattern = editingData.recurringPattern as {
               selectedDays: number[];
               recurringType: "count" | "date";
@@ -128,7 +140,9 @@ export default function ScheduleModal({
             setRecurringCount(pattern.recurringCount);
             setSelectedDays(pattern.selectedDays);
             if (pattern.recurringEndDate) {
-              setRecurringEndDate(pattern.recurringEndDate);
+              // Convert ISO timestamp to date format for date input
+              const date = new Date(pattern.recurringEndDate);
+              setRecurringEndDate(date.toISOString().slice(0, 10)); // "yyyy-MM-dd"
             }
           } else {
             // Fallback: extract from current event date
@@ -145,6 +159,14 @@ export default function ScheduleModal({
         // Update data
         setUpdateTitle(editingData.title);
         setUpdateContent(editingData.content);
+        // Convert ISO timestamp to datetime-local format if date_time exists
+        if (editingData.date_time) {
+          const formatForDateTimeLocal = (isoString: string) => {
+            const date = new Date(isoString);
+            return date.toISOString().slice(0, 16); // "yyyy-MM-ddTHH:mm"
+          };
+          setUpdateDateTime(formatForDateTimeLocal(editingData.date_time));
+        }
       } else if ("skills" in editingData) {
         // Practice drill data
         setDrillTitle(editingData.title);
