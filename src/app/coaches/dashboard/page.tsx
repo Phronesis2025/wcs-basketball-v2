@@ -780,7 +780,6 @@ export default function CoachesDashboard() {
 
     // Set loading to true immediately to prevent duplicate calls
     setLoading(true);
-    setAuthChecked(true); // Mark as checked immediately to prevent loops
 
     const token = generateCSRFToken();
     // setCsrfToken(token);
@@ -801,9 +800,15 @@ export default function CoachesDashboard() {
         // Try localStorage first, then sessionStorage as backup
         let authToken = localStorage.getItem("supabase.auth.token");
         let isAuthenticated = localStorage.getItem("auth.authenticated");
-        
-        console.log("🔐 [DASHBOARD DEBUG] Initial check - localStorage auth token:", !!authToken);
-        console.log("🔐 [DASHBOARD DEBUG] Initial check - localStorage authenticated:", isAuthenticated);
+
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Initial check - localStorage auth token:",
+          !!authToken
+        );
+        console.log(
+          "🔐 [DASHBOARD DEBUG] Initial check - localStorage authenticated:",
+          isAuthenticated
+        );
 
         // If localStorage is empty, try sessionStorage (survives page reloads)
         if (!authToken || !isAuthenticated) {
@@ -812,9 +817,15 @@ export default function CoachesDashboard() {
           );
           authToken = sessionStorage.getItem("supabase.auth.token");
           isAuthenticated = sessionStorage.getItem("auth.authenticated");
-          
-          console.log("🔐 [DASHBOARD DEBUG] sessionStorage auth token:", !!authToken);
-          console.log("🔐 [DASHBOARD DEBUG] sessionStorage authenticated:", isAuthenticated);
+
+          console.log(
+            "🔐 [DASHBOARD DEBUG] sessionStorage auth token:",
+            !!authToken
+          );
+          console.log(
+            "🔐 [DASHBOARD DEBUG] sessionStorage authenticated:",
+            isAuthenticated
+          );
 
           // If found in sessionStorage, restore to localStorage
           if (authToken && isAuthenticated) {
@@ -887,6 +898,7 @@ export default function CoachesDashboard() {
 
         // Mark authentication as checked to prevent duplicate calls
         setAuthChecked(true);
+        console.log("🔐 [DASHBOARD DEBUG] ✅ Authentication successful, setting authChecked = true");
 
         setUserId(user.id); // Set user ID for created_by
         // Set last login time to current time
