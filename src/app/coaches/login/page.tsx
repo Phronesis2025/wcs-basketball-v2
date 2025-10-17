@@ -93,6 +93,14 @@ export default function CoachesLogin() {
     const sanitizedPassword = sanitizeInput(password);
 
     try {
+      // Check if we're using placeholder values (indicates environment variable issues)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+      if (!supabaseUrl || supabaseUrl.includes("placeholder")) {
+        throw new Error(
+          "Database connection not configured. Please check your network settings and try again."
+        );
+      }
+
       // Sign in with Supabase Auth (client-side, anon key ok)
       const { data: authData, error: signInError } =
         await supabase.auth.signInWithPassword({
@@ -101,7 +109,21 @@ export default function CoachesLogin() {
         });
 
       if (signInError) {
-        throw new Error("Invalid email or password");
+        // Provide more specific error messages based on the error type
+        if (
+          signInError.message.includes("fetch") ||
+          signInError.message.includes("network")
+        ) {
+          throw new Error(
+            "Network connection issue. Please check your internet connection and try again. If you&apos;re using a VPN, try switching servers or disabling it temporarily."
+          );
+        } else if (signInError.message.includes("CORS")) {
+          throw new Error(
+            "Connection blocked by security settings. If you&apos;re using a VPN, try switching servers or disabling it temporarily."
+          );
+        } else {
+          throw new Error("Invalid email or password");
+        }
       }
 
       // Debug: Confirm user ID before server action call
