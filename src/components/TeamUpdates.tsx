@@ -308,36 +308,21 @@ export default function TeamUpdates({
                   } p-3 box-border`}
                 >
                   <div
-                    className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 shadow-sm h-[28rem] flex flex-col w-full mb-8"
+                    className="bg-gray-900/50 border border-red-500/50 rounded-lg shadow-sm h-[28rem] flex flex-col w-full mb-8 overflow-hidden"
                     role="group"
                     aria-label={`${teamName} update card`}
                   >
-                    {/* Header Section */}
-                    <div className="flex-shrink-0 mb-3">
-                      <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
+                    {/* Header Section - Top left corner */}
+                    <div className="absolute top-4 left-4 z-10">
+                      <h4 className="text-red-600 font-bebas uppercase text-sm border-b border-red-500/50 pb-1">
                         {teamName} News
                       </h4>
-                      <h3 className="text-xl font-bebas mt-2 text-white line-clamp-1 leading-tight overflow-hidden">
-                        {sanitizeInput(update.title)}
-                      </h3>
-                      <p
-                        className="text-gray-300 font-inter leading-tight mt-3 text-sm overflow-hidden"
-                        style={{
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          lineHeight: "1.2em",
-                          maxHeight: "2.4em",
-                        }}
-                      >
-                        {sanitizeInput(update.content)}
-                      </p>
                     </div>
 
-                    {/* Image Section - Fixed height to ensure button fits */}
-                    <div className="flex-shrink-0 mb-3">
+                    {/* Image Section - Top half of card */}
+                    <div className="flex-shrink-0 h-1/2 relative">
                       {update.image_url ? (
-                        <div className="relative w-full h-32 rounded-md overflow-hidden">
+                        <div className="relative w-full h-full overflow-hidden">
                           <Image
                             src={update.image_url}
                             alt={update.title}
@@ -347,7 +332,7 @@ export default function TeamUpdates({
                           />
                         </div>
                       ) : updateTeam?.logo_url ? (
-                        <div className="relative w-full h-32 rounded-md overflow-hidden bg-gray-800/50">
+                        <div className="relative w-full h-full overflow-hidden bg-gray-800/50">
                           <Image
                             src={updateTeam?.logo_url || "/logos/logo2.png"}
                             alt={`${teamName} logo`}
@@ -357,7 +342,7 @@ export default function TeamUpdates({
                           />
                         </div>
                       ) : (
-                        <div className="w-full h-32 bg-gray-800/50 rounded-md flex items-center justify-center">
+                        <div className="w-full h-full bg-gray-800/50 flex items-center justify-center">
                           <span className="text-gray-500 text-sm">
                             No Image
                           </span>
@@ -365,22 +350,41 @@ export default function TeamUpdates({
                       )}
                     </div>
 
-                    {/* Button Section - Fixed at bottom with proper padding */}
-                    <div className="flex-shrink-0 mt-auto">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (!isDragging) {
-                            setSelectedUpdate(update);
-                          }
+                    {/* Content Section - Bottom half of card */}
+                    <div className="flex-1 p-4 flex flex-col">
+                      <h3 className="text-lg font-bebas text-white line-clamp-1 leading-tight overflow-hidden mb-2">
+                        {sanitizeInput(update.title)}
+                      </h3>
+                      <p
+                        className="text-gray-300 font-inter leading-tight text-sm overflow-hidden flex-1"
+                        style={{
+                          display: "-webkit-box",
+                          WebkitLineClamp: 3,
+                          WebkitBoxOrient: "vertical",
+                          lineHeight: "1.2em",
+                          maxHeight: "3.6em",
                         }}
-                        className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm"
-                        aria-label={`Read more about ${update.title}`}
-                        type="button"
                       >
-                        Read more
-                      </button>
+                        {sanitizeInput(update.content)}
+                      </p>
+                      
+                      {/* Button Section - Bottom of content area */}
+                      <div className="flex-shrink-0 mt-3">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isDragging) {
+                              setSelectedUpdate(update);
+                            }
+                          }}
+                          className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm"
+                          aria-label={`Read more about ${update.title}`}
+                          type="button"
+                        >
+                          Read more
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

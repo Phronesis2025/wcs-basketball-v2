@@ -788,28 +788,13 @@ export default function CoachesDashboard() {
 
         // Parse the session token
         const session = JSON.parse(authToken);
-        if (!session?.access_token) {
+        if (!session?.user) {
           router.push("/coaches/login");
           return;
         }
 
-        // Get user information from our server-side API
-        const userResponse = await fetch("/api/auth/user", {
-          headers: {
-            "Authorization": `Bearer ${session.access_token}`,
-          },
-        });
-
-        if (!userResponse.ok) {
-          // Clear invalid auth data and redirect to login
-          localStorage.removeItem('supabase.auth.token');
-          localStorage.removeItem('auth.authenticated');
-          router.push("/coaches/login");
-          return;
-        }
-
-        const userResponseData = await userResponse.json();
-        const user = userResponseData.user;
+        // Use the user data from the session directly
+        const user = session.user;
 
         setUserId(user.id); // Set user ID for created_by
         // Set last login time to current time
