@@ -365,8 +365,8 @@ export default function TeamUpdates({
                       )}
                     </div>
 
-                    {/* Button Section - Fixed at bottom */}
-                    <div className="flex-shrink-0">
+                    {/* Button Section - Fixed at bottom with proper padding */}
+                    <div className="flex-shrink-0 pt-4">
                       <button
                         onClick={(e) => {
                           e.preventDefault();

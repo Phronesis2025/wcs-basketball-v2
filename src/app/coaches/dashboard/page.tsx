@@ -777,18 +777,46 @@ export default function CoachesDashboard() {
 
     const fetchData = async () => {
       try {
-        const { data: user } = await supabase.auth.getUser();
-        if (!user?.user) {
+        // Check if user is authenticated using our custom method
+        const authToken = localStorage.getItem('supabase.auth.token');
+        const isAuthenticated = localStorage.getItem('auth.authenticated');
+        
+        if (!authToken || !isAuthenticated) {
           router.push("/coaches/login");
           return;
         }
 
-        setUserId(user.user.id); // Set user ID for created_by
+        // Parse the session token
+        const session = JSON.parse(authToken);
+        if (!session?.access_token) {
+          router.push("/coaches/login");
+          return;
+        }
+
+        // Get user information from our server-side API
+        const userResponse = await fetch("/api/auth/user", {
+          headers: {
+            "Authorization": `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (!userResponse.ok) {
+          // Clear invalid auth data and redirect to login
+          localStorage.removeItem('supabase.auth.token');
+          localStorage.removeItem('auth.authenticated');
+          router.push("/coaches/login");
+          return;
+        }
+
+        const userResponseData = await userResponse.json();
+        const user = userResponseData.user;
+
+        setUserId(user.id); // Set user ID for created_by
         // Set last login time to current time
         setLastLoginTime(new Date());
         // Extract last name from email or use first_name
-        const email = user.user.email || "";
-        const firstName = user.user.user_metadata?.first_name || "";
+        const email = user.email || "";
+        const firstName = user.user_metadata?.first_name || "";
         const lastName = email.includes("@")
           ? email.split("@")[0].split(".").pop() || ""
           : "";
@@ -796,7 +824,7 @@ export default function CoachesDashboard() {
           lastName.charAt(0).toUpperCase() + lastName.slice(1).toLowerCase();
         setUserName(firstName || capitalizedLastName || email);
 
-        const userData = await getUserRole(user.user.id);
+        const userData = await getUserRole(user.id);
         if (!userData) {
           throw new Error("User role not found");
         }
@@ -811,8 +839,8 @@ export default function CoachesDashboard() {
           teamsData = await fetchTeams();
         } else {
           // Coaches see only their assigned teams
-          devLog("Fetching assigned teams for coach user:", user.user.id);
-          teamsData = await fetchTeamsByCoachId(user.user.id);
+          devLog("Fetching assigned teams for coach user:", user.id);
+          teamsData = await fetchTeamsByCoachId(user.id);
         }
         devLog("Teams loaded:", `${teamsData.length} teams`);
         setTeams(teamsData);

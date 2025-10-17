@@ -120,9 +120,11 @@ export default function CoachesLogin() {
 
       const authData = await response.json();
 
-      // Set the session in the client-side Supabase client
+      // Store session data in localStorage to bypass CORS issues
       if (authData.session) {
-        await supabase.auth.setSession(authData.session);
+        localStorage.setItem('supabase.auth.token', JSON.stringify(authData.session));
+        // Set a flag to indicate successful authentication
+        localStorage.setItem('auth.authenticated', 'true');
       }
 
       // Debug: Confirm user ID before server action call
