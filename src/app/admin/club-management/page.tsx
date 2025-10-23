@@ -29,6 +29,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import AddCoachModal from "@/components/dashboard/AddCoachModal";
 import AddTeamModal from "@/components/dashboard/AddTeamModal";
 import AddPlayerModal from "@/components/dashboard/AddPlayerModal";
+import CoachDetailModal from "@/components/CoachDetailModal";
 import toast from "react-hot-toast";
 import {
   addSchedule,
@@ -90,6 +91,7 @@ function ClubManagementContent() {
   const [showEditCoachModal, setShowEditCoachModal] = useState(false);
   const [showEditTeamModal, setShowEditTeamModal] = useState(false);
   const [showEditPlayerModal, setShowEditPlayerModal] = useState(false);
+  const [showCoachDetailModal, setShowCoachDetailModal] = useState(false);
 
   // View modal states
   const [viewingItem, setViewingItem] = useState<
@@ -103,6 +105,10 @@ function ClubManagementContent() {
   const [editingCoach, setEditingCoach] = useState<any | null>(null);
   const [editingTeam, setEditingTeam] = useState<Team | null>(null);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
+
+  // Coach detail modal states
+  const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
+  const [coachLoginStats, setCoachLoginStats] = useState<any>(null);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [editingUpdate, setEditingUpdate] = useState<TeamUpdate | null>(null);
   const [editingDrill, setEditingDrill] = useState<PracticeDrill | null>(null);
@@ -543,6 +549,27 @@ function ClubManagementContent() {
     setShowEditCoachModal(true);
   };
 
+  const handleViewCoach = async (coach: any) => {
+    console.log("View coach clicked, coach data:", coach);
+    setSelectedCoach(coach);
+    
+    // Fetch login statistics for this coach
+    try {
+      const stats = await getCoachLoginStats(coach.id);
+      setCoachLoginStats(stats);
+    } catch (error) {
+      devError("Error fetching coach login stats:", error);
+      setCoachLoginStats({
+        total_logins: 0,
+        last_login_at: null,
+        first_login_at: null,
+        is_active: true,
+      });
+    }
+    
+    setShowCoachDetailModal(true);
+  };
+
   const handleEditTeam = (team: Team) => {
     console.log("Edit team clicked, team data:", team);
     setEditingTeam(team);
@@ -630,13 +657,35 @@ function ClubManagementContent() {
     }
   };
 
-  const getCoachLoginStats = (email: string) => {
-    // Mock function - in real app this would fetch from API
-    return {
-      total_logins: 0,
-      last_login_at: null,
-      is_active: true,
-    };
+  const getCoachLoginStats = async (coachId: string) => {
+    try {
+      const response = await fetch(`/api/admin/coaches/${coachId}/login-stats`, {
+        headers: {
+          "x-user-id": userId || "",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.loginStats;
+      } else {
+        devError("Failed to fetch coach login stats:", response.status);
+        return {
+          total_logins: 0,
+          last_login_at: null,
+          first_login_at: null,
+          is_active: true,
+        };
+      }
+    } catch (error) {
+      devError("Error fetching coach login stats:", error);
+      return {
+        total_logins: 0,
+        last_login_at: null,
+        first_login_at: null,
+        is_active: true,
+      };
+    }
   };
 
   // Dashboard helper functions
@@ -1260,6 +1309,7 @@ function ClubManagementContent() {
                 setPlayerForm={mockSetState}
                 getCoachLoginStats={getCoachLoginStats}
                 handleEditCoach={handleEditCoach}
+                handleViewCoach={handleViewCoach}
                 handleEditTeam={handleEditTeam}
                 handleEditPlayer={handleEditPlayer}
                 handleDeleteCoach={handleDeleteCoach}
@@ -2188,6 +2238,15 @@ function ClubManagementContent() {
           teams={teams}
           loading={false}
           isManageTab={true}
+        />
+
+        {/* Coach Detail Modal */}
+        <CoachDetailModal
+          isOpen={showCoachDetailModal}
+          onClose={() => setShowCoachDetailModal(false)}
+          coach={selectedCoach}
+          teams={teams}
+          loginStats={coachLoginStats}
         />
       </div>
     </div>
