@@ -13,6 +13,7 @@ The Club Management System is a comprehensive administrative interface for manag
 ## 🏗️ System Architecture
 
 ### Frontend Stack
+
 - **Framework**: Next.js 15.5.2 with App Router
 - **Styling**: Tailwind CSS 3.3.3
 - **Language**: TypeScript 5.9.2
@@ -20,6 +21,7 @@ The Club Management System is a comprehensive administrative interface for manag
 - **Authentication**: Supabase Auth
 
 ### Backend Stack
+
 - **Database**: Supabase PostgreSQL
 - **API**: Next.js API Routes
 - **Security**: Row Level Security (RLS) policies
@@ -27,6 +29,7 @@ The Club Management System is a comprehensive administrative interface for manag
 - **File Storage**: Supabase Storage
 
 ### Security Features
+
 - **Rate Limiting**: 100 requests/minute per IP
 - **XSS Protection**: Enhanced input sanitization
 - **CSRF Protection**: Token-based form protection
@@ -37,12 +40,14 @@ The Club Management System is a comprehensive administrative interface for manag
 ## 📋 Core Features
 
 ### 1. Admin Dashboard
+
 - **Overview Tab**: Real-time statistics and analytics
 - **Manage Tab**: CRUD operations for coaches, teams, and players
 - **Analytics Tab**: Performance metrics and user statistics
 - **Error Logs Tab**: System monitoring and debugging
 
 ### 2. Coach Dashboard
+
 - **Team Management**: Assign and manage team rosters
 - **Schedule Creation**: Games, practices, and events
 - **Team Updates**: News and announcements
@@ -50,6 +55,7 @@ The Club Management System is a comprehensive administrative interface for manag
 - **Message Board**: Real-time communication
 
 ### 3. Player Management
+
 - **Player Profiles**: Complete player information
 - **Parent/Guardian Info**: Emergency contacts and communication
 - **Team Assignment**: Age and gender compatibility validation
@@ -60,6 +66,7 @@ The Club Management System is a comprehensive administrative interface for manag
 ### Database Schema
 
 #### Core Tables
+
 - **users**: Authentication and role management
 - **coaches**: Coach profiles and team assignments
 - **teams**: Team information and metadata
@@ -70,6 +77,7 @@ The Club Management System is a comprehensive administrative interface for manag
 - **coach_messages**: Real-time messaging system
 
 #### Security Tables
+
 - **audit_logs**: Security event tracking
 - **error_logs**: System error monitoring
 - **login_statistics**: Authentication analytics
@@ -77,6 +85,7 @@ The Club Management System is a comprehensive administrative interface for manag
 ### API Routes
 
 #### Admin Routes
+
 - `/api/admin/coaches` - Coach management
 - `/api/admin/teams` - Team management
 - `/api/admin/players` - Player management
@@ -84,6 +93,7 @@ The Club Management System is a comprehensive administrative interface for manag
 - `/api/admin/errors` - Error monitoring
 
 #### Coach Routes
+
 - `/api/coaches` - Coach dashboard data
 - `/api/coaches/players` - Team player management
 - `/api/schedules` - Schedule management
@@ -94,6 +104,7 @@ The Club Management System is a comprehensive administrative interface for manag
 ### Security Implementation
 
 #### Rate Limiting
+
 ```typescript
 // In-memory rate limiting for development
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -102,6 +113,7 @@ const WINDOW_MS = 60 * 1000; // 1 minute
 ```
 
 #### Security Headers
+
 ```typescript
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -114,6 +126,7 @@ const securityHeaders = {
 ```
 
 #### Input Sanitization
+
 ```typescript
 export function sanitizeInput(input: string): string {
   return input
@@ -129,6 +142,7 @@ export function sanitizeInput(input: string): string {
 ## 🎯 User Interface
 
 ### Admin Interface
+
 - **Dark Theme**: Navy blue background with red accents
 - **Tab Navigation**: Overview, Manage, Analytics, Error Logs
 - **Modal System**: Add/Edit/Delete operations
@@ -136,6 +150,7 @@ export function sanitizeInput(input: string): string {
 - **Mobile Responsive**: Optimized for all devices
 
 ### Coach Interface
+
 - **Card-based Layout**: Modern dashboard design
 - **Statistics Grid**: Next Game, New Updates, New Messages, Practice Drills
 - **Modal Forms**: Unified creation system
@@ -145,6 +160,7 @@ export function sanitizeInput(input: string): string {
 ## 📊 Performance Metrics
 
 ### Build Performance
+
 - **Build Time**: ~6.5 seconds (optimized)
 - **Bundle Size**: 163 kB First Load JS
 - **TypeScript**: Zero compilation errors
@@ -152,6 +168,7 @@ export function sanitizeInput(input: string): string {
 - **Security Score**: 10/10 (Perfect)
 
 ### Runtime Performance
+
 - **API Response Time**: <200ms average
 - **Database Queries**: Optimized with proper indexing
 - **Real-time Updates**: <100ms latency
@@ -160,6 +177,7 @@ export function sanitizeInput(input: string): string {
 ## 🔒 Security Audit Results
 
 ### Critical Issues Fixed
+
 - ✅ **Leaked Password Protection**: Enabled in Supabase Auth
 - ✅ **MFA Options**: Enhanced multi-factor authentication
 - ✅ **Postgres Version**: Upgraded to latest version
@@ -167,6 +185,7 @@ export function sanitizeInput(input: string): string {
 - ✅ **Foreign Key Indexes**: Added for better performance and security
 
 ### Security Enhancements
+
 - ✅ **Input Validation**: Enhanced XSS protection
 - ✅ **Rate Limiting**: API protection against abuse
 - ✅ **Security Headers**: Comprehensive HTTP security
@@ -176,6 +195,7 @@ export function sanitizeInput(input: string): string {
 ## 🚀 Deployment
 
 ### Production Environment
+
 - **Platform**: Vercel
 - **URL**: https://wcs-basketball-v2.vercel.app
 - **Database**: Supabase (Production)
@@ -183,6 +203,7 @@ export function sanitizeInput(input: string): string {
 - **SSL**: Automatic HTTPS
 
 ### Environment Variables
+
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
@@ -200,6 +221,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ## 🔄 Recent Updates (v2.7.8)
 
 ### Security Audit & Build Optimization
+
 - Comprehensive security test using Supabase advisors
 - Fixed critical security vulnerabilities
 - Optimized RLS policies and database indexes
@@ -212,6 +234,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 - Achieved successful production build
 
 ### CSP Trusted Types Fix
+
 - Resolved "TrustedHTML assignment" error on login page
 - Removed overly restrictive Trusted Types directives from CSP
 - Maintained all security features while ensuring Next.js compatibility
@@ -219,6 +242,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 - Application now functions properly without CSP conflicts
 
 ### Code Quality Improvements
+
 - Replaced `any` types with proper TypeScript types
 - Fixed unused variable warnings across API routes
 - Enhanced error handling with proper type safety
@@ -228,6 +252,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ## 🎯 Next Steps
 
 ### Planned Enhancements
+
 - **E-commerce Integration**: Stripe payment processing
 - **Parent Portal**: Player stats and communication
 - **Advanced Analytics**: Performance metrics and reporting
@@ -235,6 +260,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 - **API Documentation**: OpenAPI/Swagger documentation
 
 ### Maintenance
+
 - Regular security audits
 - Performance monitoring and optimization
 - Database maintenance and backups

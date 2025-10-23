@@ -43,6 +43,7 @@ interface AdminOverviewContentProps {
   setPlayerForm: (form: any) => void;
   getCoachLoginStats: (email: string) => any;
   handleEditCoach: (coach: Coach) => void;
+  handleViewCoach: (coach: Coach) => void;
   handleEditTeam: (team: Team) => void;
   handleEditPlayer: (player: Player) => void;
   handleDeleteCoach: (coach: Coach) => void;
@@ -75,6 +76,7 @@ export default function AdminOverviewContent({
   setPlayerForm,
   getCoachLoginStats,
   handleEditCoach,
+  handleViewCoach,
   handleEditTeam,
   handleEditPlayer,
   handleDeleteCoach,
@@ -190,10 +192,11 @@ export default function AdminOverviewContent({
                 >
                   {/* Desktop Layout */}
                   <div
-                    className="hidden md:grid items-center w-full"
+                    className="hidden md:grid items-center w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
                     style={{
                       gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr auto",
                     }}
+                    onClick={() => handleViewCoach(coach)}
                   >
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full flex items-center justify-center mr-2 overflow-hidden">
@@ -301,7 +304,7 @@ export default function AdminOverviewContent({
                   {/* Mobile Layout */}
                   <div
                     className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
-                    onClick={() => handleEditCoach(coach)}
+                    onClick={() => handleViewCoach(coach)}
                   >
                     {/* Avatar */}
                     <div className="w-10 h-10 rounded-full flex items-center justify-center mr-3 overflow-hidden">
