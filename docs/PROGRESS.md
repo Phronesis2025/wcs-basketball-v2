@@ -36,7 +36,7 @@ January 2025, Current Status - v2.7.8 Security Audit & Build Optimization (compl
   - Created centralized security utilities (`src/lib/securityMiddleware.ts`)
   - Implemented consistent security headers across all API responses
   - Added rate limiting with in-memory storage for development
-  - Enhanced CSP policies with trusted types and frame protection
+  - Enhanced CSP policies with frame protection (removed Trusted Types for Next.js compatibility)
   - Improved error handling with secure response creation
 
 - ✅ **Build System Optimization**
@@ -46,6 +46,13 @@ January 2025, Current Status - v2.7.8 Security Audit & Build Optimization (compl
   - Resolved quote escaping issues in delete confirmation modals
   - Fixed unused imports and variable declarations
   - Achieved successful production build with zero errors
+
+- ✅ **CSP Trusted Types Fix**
+
+  - Resolved "TrustedHTML assignment" error on login page
+  - Removed overly restrictive Trusted Types directives from CSP
+  - Maintained all security features while ensuring Next.js compatibility
+  - Fixed production deployment login issues
 
 - ✅ **Code Quality Improvements**
 

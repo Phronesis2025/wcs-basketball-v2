@@ -2,13 +2,16 @@
 
 ## Overview
 
-This guide provides step-by-step instructions to test all forms and fields in both the Manage tab and Coach tab of the club management system.
+This guide provides step-by-step instructions to test all forms and fields in both the Manage tab and Coach tab of the club management system. Updated for v2.7.8 with enhanced security features and improved user experience.
 
 ## Prerequisites
 
 - Admin access with credentials: `jason.boyer@wcs.com` / `test123`
 - Coach access with credentials: `david.dupy@WCS.com` / `WCS2025sports`
 - Development server running on `http://localhost:3000`
+- **Security Features**: Rate limiting (100 requests/minute), XSS protection, CSRF tokens
+- **Build Status**: Clean production build with zero errors
+- **CSP Issues**: Resolved Trusted Types compatibility issues
 
 ---
 
