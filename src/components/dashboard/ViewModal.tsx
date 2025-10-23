@@ -1,6 +1,7 @@
 // src/components/dashboard/ViewModal.tsx
 import React from "react";
 import { Schedule, TeamUpdate, PracticeDrill } from "../../types/supabase";
+import { useScrollLock } from "@/hooks/useScrollLock";
 import { sanitizeInput } from "../../lib/security";
 
 interface ViewModalProps {
@@ -16,6 +17,9 @@ export default function ViewModal({
   item,
   itemType,
 }: ViewModalProps) {
+  // Lock scroll when modal is open
+  useScrollLock(isOpen);
+
   if (!isOpen || !item) return null;
 
   const formatDateTimeChicago = (dateTime: string) => {

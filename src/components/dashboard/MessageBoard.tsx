@@ -15,6 +15,7 @@ import {
   pinMessage,
 } from "../../lib/messageActions";
 import { devLog, devError, validateInput } from "../../lib/security";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface MessageBoardProps {
   userId: string;
@@ -37,6 +38,9 @@ export default function MessageBoard({
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editingReply, setEditingReply] = useState<string | null>(null);
+
+  // Lock scroll when any modal is open
+  useScrollLock(showNewMessageModal || !!editingMessage || !!editingReply);
   const [editText, setEditText] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -216,6 +220,18 @@ export default function MessageBoard({
 
   const handleNewMessage = async () => {
     if (!newMessageText.trim() || submitting) return;
+
+    // Add userId validation
+    if (!userId || userId === "") {
+      toast.error(
+        "User session not ready. Please wait a moment and try again.",
+        {
+          duration: 4000,
+          position: "top-right",
+        }
+      );
+      return;
+    }
 
     // Validate message for profanity
     const validation = validateInput(newMessageText, "message");

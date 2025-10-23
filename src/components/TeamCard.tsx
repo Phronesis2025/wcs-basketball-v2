@@ -3,7 +3,6 @@
 import { Team } from "@/types/supabase";
 import Image from "next/image";
 import Link from "next/link";
-import { devError } from "@/lib/security";
 
 interface TeamCardProps {
   team: Team;
@@ -13,15 +12,19 @@ export default function TeamCard({ team }: TeamCardProps) {
   return (
     <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 flex flex-col items-center h-80">
       <Image
-        src={team.logo_url || "/logos/logo2.png"}
+        src={
+          team.logo_url ||
+          "https://htgkddahhgugesktujds.supabase.co/storage/v1/object/public/images/logos/placeholder-logo%20(2).png"
+        }
         alt={`${team.name} logo`}
         width={100}
         height={100}
         className="rounded-full object-cover mb-4 flex-shrink-0"
         sizes="100px"
         onError={(e) => {
-          devError(`Image load error for ${team.name} logo: ${team.logo_url}`);
-          e.currentTarget.src = "/logos/logo2.png";
+          // Silently fallback to default logo without logging error
+          e.currentTarget.src =
+            "https://htgkddahhgugesktujds.supabase.co/storage/v1/object/public/images/logos/placeholder-logo%20(2).png";
         }}
       />
       <div className="flex flex-col items-center flex-1 justify-between w-full">

@@ -30,7 +30,7 @@ const values = [
     title: "Teamwork",
     description:
       "Playing unselfishly and supporting others on and off the court.",
-    image: "/images/teamwork.png",
+    image: "/images/placeholder-news-1.webp",
   },
   {
     title: "Leadership",
@@ -63,7 +63,10 @@ const values = [
 export default function About() {
   return (
     <div className="bg-navy min-h-screen text-white">
-      <section className="pt-20 pb-12 sm:pt-24" aria-label="About WCS Basketball">
+      <section
+        className="pt-20 pb-12 sm:pt-24"
+        aria-label="About WCS Basketball"
+      >
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 uppercase">

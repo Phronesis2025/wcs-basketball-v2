@@ -205,17 +205,22 @@ export async function updateMessage(
     }
 
     // Check if user can update this message
-    const { data: existingMessage, error: fetchError } = await supabase
+    const { data: existingMessages, error: fetchError } = await supabase
       .from("coach_messages")
       .select("author_id")
       .eq("id", id)
-      .is("deleted_at", null)
-      .single();
+      .is("deleted_at", null);
 
     if (fetchError) {
       devError("Error fetching message for update:", fetchError);
       throw new Error("Message not found");
     }
+
+    if (!existingMessages || existingMessages.length === 0) {
+      throw new Error("Message not found");
+    }
+
+    const existingMessage = existingMessages[0];
 
     if (!isAdmin && existingMessage.author_id !== authorId) {
       throw new Error("You can only update your own messages");
@@ -227,16 +232,19 @@ export async function updateMessage(
         content: sanitizedContent,
       })
       .eq("id", id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       devError("Error updating message:", error);
       throw new Error(error.message);
     }
 
-    devLog("Successfully updated message:", data.id);
-    return data;
+    if (!data || data.length === 0) {
+      throw new Error("Message not found or update failed");
+    }
+
+    devLog("Successfully updated message:", data[0].id);
+    return data[0];
   } catch (err: unknown) {
     devError("Error in updateMessage:", err);
     const errorMessage =
@@ -272,17 +280,22 @@ export async function updateReply(
     }
 
     // Check if user can update this reply
-    const { data: existingReply, error: fetchError } = await supabase
+    const { data: existingReplies, error: fetchError } = await supabase
       .from("coach_message_replies")
       .select("author_id")
       .eq("id", id)
-      .is("deleted_at", null)
-      .single();
+      .is("deleted_at", null);
 
     if (fetchError) {
       devError("Error fetching reply for update:", fetchError);
       throw new Error("Reply not found");
     }
+
+    if (!existingReplies || existingReplies.length === 0) {
+      throw new Error("Reply not found");
+    }
+
+    const existingReply = existingReplies[0];
 
     if (!isAdmin && existingReply.author_id !== authorId) {
       throw new Error("You can only update your own replies");
@@ -294,16 +307,19 @@ export async function updateReply(
         content: sanitizedContent,
       })
       .eq("id", id)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       devError("Error updating reply:", error);
       throw new Error(error.message);
     }
 
-    devLog("Successfully updated reply:", data.id);
-    return data;
+    if (!data || data.length === 0) {
+      throw new Error("Reply not found or update failed");
+    }
+
+    devLog("Successfully updated reply:", data[0].id);
+    return data[0];
   } catch (err: unknown) {
     devError("Error in updateReply:", err);
     const errorMessage =
@@ -329,17 +345,22 @@ export async function deleteMessage(
     devLog("Current user for delete:", { user: user?.id, authError });
 
     // Check if user can delete this message
-    const { data: existingMessage, error: fetchError } = await supabase
+    const { data: existingMessages, error: fetchError } = await supabase
       .from("coach_messages")
       .select("author_id")
       .eq("id", id)
-      .is("deleted_at", null)
-      .single();
+      .is("deleted_at", null);
 
     if (fetchError) {
       devError("Error fetching message for deletion:", fetchError);
       throw new Error("Message not found");
     }
+
+    if (!existingMessages || existingMessages.length === 0) {
+      throw new Error("Message not found");
+    }
+
+    const existingMessage = existingMessages[0];
 
     devLog("Existing message data:", { existingMessage, authorId, isAdmin });
 
@@ -378,17 +399,22 @@ export async function deleteReply(
     devLog("Deleting reply:", { id, authorId, isAdmin });
 
     // Check if user can delete this reply
-    const { data: existingReply, error: fetchError } = await supabase
+    const { data: existingReplies, error: fetchError } = await supabase
       .from("coach_message_replies")
       .select("author_id")
       .eq("id", id)
-      .is("deleted_at", null)
-      .single();
+      .is("deleted_at", null);
 
     if (fetchError) {
       devError("Error fetching reply for deletion:", fetchError);
       throw new Error("Reply not found");
     }
+
+    if (!existingReplies || existingReplies.length === 0) {
+      throw new Error("Reply not found");
+    }
+
+    const existingReply = existingReplies[0];
 
     if (!isAdmin && existingReply.author_id !== authorId) {
       throw new Error("You can only delete your own replies");
@@ -427,33 +453,20 @@ export async function pinMessage(
       throw new Error("Only admins can pin/unpin messages");
     }
 
-    // Get current pin status
-    const { data: currentMessage, error: fetchError } = await supabase
-      .from("coach_messages")
-      .select("is_pinned")
-      .eq("id", id)
-      .is("deleted_at", null)
-      .single();
+    // Call server API using admin client to bypass RLS
+    const resp = await fetch("/api/messages/pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messageId: id, requesterId: "admin", isAdmin }),
+    });
 
-    if (fetchError) {
-      devError("Error fetching message for pin:", fetchError);
-      throw new Error("Message not found");
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      devError("API pin message failed:", body);
+      throw new Error(body.error || "Failed to pin/unpin message");
     }
 
-    const { data, error } = await supabase
-      .from("coach_messages")
-      .update({
-        is_pinned: !currentMessage.is_pinned,
-      })
-      .eq("id", id)
-      .select()
-      .single();
-
-    if (error) {
-      devError("Error pinning/unpinning message:", error);
-      throw new Error(error.message);
-    }
-
+    const data = await resp.json();
     devLog("Successfully toggled pin status for message:", id);
     return data;
   } catch (err: unknown) {

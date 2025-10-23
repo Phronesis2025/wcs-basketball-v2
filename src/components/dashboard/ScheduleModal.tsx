@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Schedule, TeamUpdate, PracticeDrill } from "../../types/supabase";
 import { validateInput } from "../../lib/security";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface ScheduleModalProps {
   type: "Game" | "Practice" | "Update" | "Drill";
   editingData?: Schedule | TeamUpdate | PracticeDrill | null;
   loading?: boolean;
+  selectedTeamId?: string;
 }
 
 export default function ScheduleModal({
@@ -21,10 +23,14 @@ export default function ScheduleModal({
   type,
   editingData,
   loading = false,
+  selectedTeamId,
 }: ScheduleModalProps) {
   const [activeTab, setActiveTab] = useState<
     "Game" | "Practice" | "Update" | "Drill"
   >("Game");
+
+  // Lock scroll when modal is open
+  useScrollLock(isOpen);
 
   // Game form fields
   const [gameType, setGameType] = useState<"game" | "tournament">("game");
@@ -111,11 +117,11 @@ export default function ScheduleModal({
 
         setGameDateTime(formatForDateTimeLocal(editingData.date_time));
         setGameOpponent(editingData.opponent || "");
-        setGameLocation(editingData.location);
+        setGameLocation(editingData.location || "");
         setGameComments(editingData.description || "");
-        setPracticeTitle(editingData.description || "");
+        setPracticeTitle(editingData.title || editingData.description || "");
         setPracticeDateTime(formatForDateTimeLocal(editingData.date_time));
-        setPracticeLocation(editingData.location);
+        setPracticeLocation(editingData.location || "");
         setPracticeComments(editingData.description || "");
 
         // Check if this is a recurring practice
@@ -157,8 +163,8 @@ export default function ScheduleModal({
         }
       } else if ("content" in editingData) {
         // Update data
-        setUpdateTitle(editingData.title);
-        setUpdateContent(editingData.content);
+        setUpdateTitle(editingData.title || "");
+        setUpdateContent(editingData.content || "");
         // Convert ISO timestamp to datetime-local format if date_time exists
         if (editingData.date_time) {
           const formatForDateTimeLocal = (isoString: string) => {
@@ -169,13 +175,13 @@ export default function ScheduleModal({
         }
       } else if ("skills" in editingData) {
         // Practice drill data
-        setDrillTitle(editingData.title);
+        setDrillTitle(editingData.title || "");
         setDrillSkills(editingData.skills || []);
         setDrillEquipment(editingData.equipment || []);
-        setDrillTime(editingData.time);
-        setDrillInstructions(editingData.instructions);
+        setDrillTime(editingData.time || "");
+        setDrillInstructions(editingData.instructions || "");
         setDrillAdditionalInfo(editingData.additional_info || "");
-        setDrillBenefits(editingData.benefits);
+        setDrillBenefits(editingData.benefits || "");
         setDrillDifficulty(
           editingData.difficulty as
             | "Basic"
@@ -257,6 +263,54 @@ export default function ScheduleModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // IMPROVED WORKAROUND: Read datetime directly from DOM for all datetime inputs
+    const getDateTimeValue = (stateValue: string, inputSelector: string) => {
+      if (stateValue) return stateValue;
+      const input = document.querySelector(inputSelector) as HTMLInputElement;
+      return input?.value || "";
+    };
+
+    const actualGameDateTime = getDateTimeValue(
+      gameDateTime,
+      'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
+    );
+    const actualPracticeDateTime = getDateTimeValue(
+      practiceDateTime,
+      'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
+    );
+    const actualUpdateDateTime = getDateTimeValue(
+      updateDateTime,
+      'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
+    );
+
+    // Additional fallback - try to find any datetime input in the current form
+    const fallbackDateTime = () => {
+      const inputs = document.querySelectorAll('input[type="datetime-local"]');
+      for (const input of inputs) {
+        if (input.value && input.value.trim() !== "") {
+          console.log("Found datetime input with value:", input.value);
+          return input.value;
+        }
+      }
+      console.log("No datetime input found with value");
+      return "";
+    };
+
+    const finalPracticeDateTime = actualPracticeDateTime || fallbackDateTime();
+    const finalGameDateTime = actualGameDateTime || fallbackDateTime();
+    const finalUpdateDateTime = actualUpdateDateTime || fallbackDateTime();
+
+    // Debug logging
+    console.log("Form submission debug:", {
+      activeTab,
+      gameDateTime,
+      practiceDateTime,
+      updateDateTime,
+      actualGameDateTime,
+      actualPracticeDateTime,
+      actualUpdateDateTime,
+    });
+
     // Validate all text inputs for profanity
     const validationErrors: string[] = [];
 
@@ -327,21 +381,23 @@ export default function ScheduleModal({
     switch (activeTab) {
       case "Game":
         formData = {
-          formType: "Game",
+          // No formType column in schedules table; infer on client
           event_type: gameType === "tournament" ? "Tournament" : "Game",
-          date_time: gameDateTime,
-          end_date_time: gameType === "tournament" ? gameEndDateTime : null,
+          team_id: selectedTeamId,
+          date_time: finalGameDateTime,
           opponent: gameOpponent,
           location: gameLocation,
           description: gameComments,
+          gameDateTime: finalGameDateTime, // Pass actual value for form submission
         };
         break;
       case "Practice":
         formData = {
-          formType: "Practice",
+          // No formType column in schedules table; infer on client
           event_type: "Practice",
+          team_id: selectedTeamId,
           title: practiceTitle,
-          date_time: practiceDateTime,
+          date_time: finalPracticeDateTime,
           location: practiceLocation,
           description: practiceComments,
           duration: practiceDuration,
@@ -357,11 +413,11 @@ export default function ScheduleModal({
           formType: "Update",
           title: updateTitle,
           content: updateContent,
-          date_time: updateDateTime || null,
+          date_time: finalUpdateDateTime || null,
           image: updateImage,
           isImportant,
           // If date_time is provided, also save to schedules table
-          saveToSchedules: !!updateDateTime,
+          saveToSchedules: !!finalUpdateDateTime,
         };
         break;
       case "Drill":
@@ -395,7 +451,12 @@ export default function ScheduleModal({
         break;
     }
 
-    onSubmit(formData);
+    try {
+      onSubmit(formData);
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      // Error handling is managed by the parent component
+    }
   };
 
   const toggleDay = (dayIndex: number) => {

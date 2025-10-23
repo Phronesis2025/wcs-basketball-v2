@@ -14,7 +14,7 @@ const cards = [
   {
     title: "Our Values",
     description: "Teamwork, discipline, and passion drive our community.",
-    image: "/images/teamwork.png",
+    image: "/images/placeholder-news-1.webp",
     href: "/about",
   },
   {

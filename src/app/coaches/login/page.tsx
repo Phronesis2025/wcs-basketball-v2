@@ -15,6 +15,7 @@ import {
 export default function CoachesLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   // Password reset functionality temporarily disabled
   // const [newPassword, setNewPassword] = useState("");
   // const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,7 +35,7 @@ export default function CoachesLogin() {
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
-        router.push("/coaches/dashboard");
+        router.push("/admin/club-management");
         return;
       }
     };
@@ -88,10 +89,7 @@ export default function CoachesLogin() {
     devLog("🔐 [LOGIN DEBUG] CSRF token validation:");
     devLog("🔐 [LOGIN DEBUG] Generated token:", csrfToken);
     devLog("🔐 [LOGIN DEBUG] Stored token:", decodedStoredCsrf);
-    devLog(
-      "🔐 [LOGIN DEBUG] Tokens match:",
-      csrfToken === decodedStoredCsrf
-    );
+    devLog("🔐 [LOGIN DEBUG] Tokens match:", csrfToken === decodedStoredCsrf);
 
     // Temporarily disable CSRF validation to fix login issue
     // TODO: Re-enable CSRF validation once login flow is working
@@ -204,9 +202,7 @@ export default function CoachesLogin() {
       }
 
       // Proceed to dashboard with a small delay to ensure localStorage is set
-      devLog(
-        "🔐 [LOGIN DEBUG] Setting timeout for navigation to dashboard..."
-      );
+      devLog("🔐 [LOGIN DEBUG] Setting timeout for navigation to dashboard...");
       setTimeout(() => {
         devLog("🔐 [LOGIN DEBUG] Navigating to dashboard...");
         devLog(
@@ -218,7 +214,7 @@ export default function CoachesLogin() {
           !!localStorage.getItem("supabase.auth.token")
         );
         // Use replace instead of push to prevent back button issues
-        router.replace("/coaches/dashboard");
+        router.replace("/admin/club-management");
       }, 100);
     } catch (err: unknown) {
       devError("Login error:", err);
@@ -270,16 +266,61 @@ export default function CoachesLogin() {
               <label htmlFor="password" className="block text-sm font-inter">
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
-                disabled={isLocked || loading}
-                required
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full mt-1 p-2 pr-10 bg-gray-800 text-white rounded-md border border-gray-700"
+                  disabled={isLocked || loading}
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white focus:outline-none"
+                  disabled={isLocked || loading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
             <button
               type="submit"

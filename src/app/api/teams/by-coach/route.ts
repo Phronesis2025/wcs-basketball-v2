@@ -30,12 +30,15 @@ export async function GET(request: NextRequest) {
           grade_level,
           logo_url,
           season,
-          team_image
+          team_image,
+          is_active
         ),
         coaches!inner(user_id)
       `
       )
-      .eq("coaches.user_id", userId);
+      .eq("coaches.user_id", userId)
+      .eq("teams.is_active", true)
+      .eq("teams.is_deleted", false);
 
     if (error) {
       devError("API teams/by-coach fetch error:", error);
@@ -60,7 +63,12 @@ export async function GET(request: NextRequest) {
       return { ...t, coach_names: [] as string[] };
     });
 
-    return NextResponse.json(teams);
+    // Remove duplicates based on team ID
+    const uniqueTeams = teams.filter(
+      (team, index, self) => index === self.findIndex((t) => t.id === team.id)
+    );
+
+    return NextResponse.json(uniqueTeams);
   } catch (err) {
     devError("Unexpected error in /api/teams/by-coach:", err);
     return NextResponse.json(

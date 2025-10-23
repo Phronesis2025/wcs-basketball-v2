@@ -40,6 +40,7 @@ export default function TestAuth() {
             coach_names: team.coach_names || [],
             video_url: team.video_url || null,
             team_image: team.team_image || null,
+            is_active: true,
           }))
         );
       }

@@ -4,6 +4,7 @@ import React, { useEffect, useRef } from "react";
 import { Schedule, Team } from "@/types/supabase";
 import { eventTypeToColor } from "@/lib/calendarColors";
 import { formatDateTimeChicago } from "@/lib/date";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 type Props = {
   isOpen: boolean;
@@ -18,6 +19,9 @@ export default function EventDetailsModal({
   teams,
   onClose,
 }: Props) {
+  // Lock scroll when modal is open
+  useScrollLock(isOpen);
+
   const ref = useRef<HTMLDivElement>(null);
   const firstBtnRef = useRef<HTMLButtonElement>(null);
 

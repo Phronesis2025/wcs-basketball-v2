@@ -866,10 +866,7 @@ export default function CoachesDashboard() {
         try {
           session = JSON.parse(authToken);
           devLog("🔐 [DASHBOARD DEBUG] Session parsed successfully");
-          devLog(
-            "🔐 [DASHBOARD DEBUG] Session user exists:",
-            !!session?.user
-          );
+          devLog("🔐 [DASHBOARD DEBUG] Session user exists:", !!session?.user);
         } catch (parseError) {
           devError(
             "🔐 [DASHBOARD DEBUG] ❌ Failed to parse session token:",
@@ -990,9 +987,9 @@ export default function CoachesDashboard() {
           customToken &&
           customAuthenticated
         ) {
-        devLog(
-          "🔐 [DASHBOARD DEBUG] Skipping redirect on SIGNED_OUT due to custom auth"
-        );
+          devLog(
+            "🔐 [DASHBOARD DEBUG] Skipping redirect on SIGNED_OUT due to custom auth"
+          );
           return;
         }
 
@@ -1823,14 +1820,14 @@ export default function CoachesDashboard() {
 
         {error && <p className="text-red-400 mb-4">Error: {error}</p>}
 
-        {/* Admin Analytics Button */}
+        {/* Admin Dashboard Button */}
         {isAdmin && (
           <div className="mb-6 flex justify-center">
             <Link
-              href="/admin/analytics"
+              href="/admin/club-management"
               className="bg-red text-white font-bebas uppercase py-3 px-8 rounded-lg hover:bg-red-600 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
             >
-              📊 Analytics Dashboard
+              📊 Admin Dashboard
             </Link>
           </div>
         )}

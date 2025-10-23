@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Team, TeamUpdate } from "../types/supabase";
 import { sanitizeInput, devError } from "../lib/security";
 import { useInView } from "react-intersection-observer";
+import { useScrollLock } from "@/hooks/useScrollLock";
 // Remove server action import - we'll use API route instead
 
 interface TeamUpdatesProps {
@@ -34,6 +35,9 @@ export default function TeamUpdates({
 }: TeamUpdatesProps) {
   const [selectedUpdate, setSelectedUpdate] = useState<TeamUpdate | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Lock scroll when modal is open
+  useScrollLock(!!selectedUpdate);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -57,7 +61,7 @@ export default function TeamUpdates({
 
   // Fetch updates and teams if not provided
   useEffect(() => {
-    if (!updates && inView && !isLoading && fetchedUpdates.length === 0) {
+    if (!updates && !isLoading && fetchedUpdates.length === 0) {
       setIsLoading(true);
       Promise.all([
         fetch("/api/team-updates").then((res) => res.json()),
@@ -76,7 +80,7 @@ export default function TeamUpdates({
           setIsLoading(false);
         });
     }
-  }, [updates, inView, isLoading, fetchedUpdates.length]);
+  }, [updates, isLoading, fetchedUpdates.length]);
 
   // Calculate how many cards to show based on screen size and swiping setting
   const getCardsToShow = useCallback(() => {
@@ -195,264 +199,264 @@ export default function TeamUpdates({
       className="mt-8 mb-12 space-y-4"
     >
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h2 className="text-2xl font-bebas uppercase text-center">
-        All Team Updates
-      </h2>
-      {showViewMoreText && (
-        <p className="text-center text-gray-400 text-sm font-inter mt-2">
-          View your teams page for more updates
-        </p>
-      )}
-      {isLoading ? (
-        <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
-          <p className="text-gray-300 font-inter">Loading updates…</p>
-        </div>
-      ) : displayUpdates && displayUpdates.length > 0 ? (
-        <div className="relative overflow-hidden group">
-          {/* Left Arrow */}
-          {!disableSwiping &&
-            displayUpdates &&
-            displayUpdates.length > cardsToShow &&
-            currentIndex > 0 && (
-              <button
-                onClick={() => {
-                  const newIndex = Math.max(0, currentIndex - 1);
-                  setCurrentIndex(newIndex);
-                }}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
-                aria-label="Previous updates"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+        <h2 className="text-2xl font-bebas uppercase text-center">
+          All Team Updates
+        </h2>
+        {showViewMoreText && (
+          <p className="text-center text-gray-400 text-sm font-inter mt-2">
+            View your teams page for more updates
+          </p>
+        )}
+        {isLoading ? (
+          <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
+            <p className="text-gray-300 font-inter">Loading updates…</p>
+          </div>
+        ) : displayUpdates && displayUpdates.length > 0 ? (
+          <div className="relative overflow-hidden group">
+            {/* Left Arrow */}
+            {!disableSwiping &&
+              displayUpdates &&
+              displayUpdates.length > cardsToShow &&
+              currentIndex > 0 && (
+                <button
+                  onClick={() => {
+                    const newIndex = Math.max(0, currentIndex - 1);
+                    setCurrentIndex(newIndex);
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+                  aria-label="Previous updates"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
-                </svg>
-              </button>
-            )}
-
-          {/* Right Arrow */}
-          {!disableSwiping &&
-            displayUpdates &&
-            displayUpdates.length > cardsToShow &&
-            currentIndex < maxIndex && (
-              <button
-                onClick={() => {
-                  const newIndex = Math.min(maxIndex, currentIndex + 1);
-                  setCurrentIndex(newIndex);
-                }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
-                aria-label="Next updates"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
-              </button>
-            )}
-
-          <motion.div
-            ref={containerRef}
-            className={`flex ${
-              disableSwiping
-                ? "cursor-default"
-                : "cursor-grab active:cursor-grabbing"
-            }`}
-            drag={disableSwiping ? false : "x"}
-            dragConstraints={
-              disableSwiping ? { left: 0, right: 0 } : getDragConstraints()
-            }
-            dragElastic={0.1}
-            onDragStart={disableSwiping ? undefined : handleDragStart}
-            onDragEnd={disableSwiping ? undefined : handleDragEnd}
-            animate={{ x: disableSwiping ? 0 : getTranslateX() }}
-            transition={{
-              type: "spring",
-              stiffness: 400,
-              damping: 35,
-              mass: 0.8,
-            }}
-          >
-            {displayUpdates.map((update) => {
-              const updateTeam = update.team_id
-                ? teamsMap.get(update.team_id)
-                : null;
-              const teamName =
-                updateTeam?.name || (update.is_global ? "All Teams" : "Team");
-
-              return (
-                <div
-                  key={update.id}
-                  className={`flex-shrink-0 ${
-                    cardsToShow === 3
-                      ? "w-1/3"
-                      : cardsToShow === 2
-                      ? "w-1/2"
-                      : "w-full"
-                  } p-3 box-border`}
-                >
-                  <div
-                    className="bg-gray-900/50 border border-red-500/50 rounded-lg shadow-sm h-[28rem] flex flex-col w-full mb-8 overflow-hidden"
-                    role="group"
-                    aria-label={`${teamName} update card`}
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    {/* Header Section */}
-                    <div className="flex-shrink-0 p-4 pb-2">
-                      <h4 className="text-red-600 font-bebas uppercase text-sm border-b border-red-500/50 pb-1">
-                        {teamName} News
-                      </h4>
-                    </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                </button>
+              )}
 
-                    {/* Image Section - Takes remaining space */}
-                    <div className="flex-1 relative">
-                      {update.image_url ? (
-                        <div className="relative w-full h-full overflow-hidden">
-                          <Image
-                            src={update.image_url}
-                            alt={update.title}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          />
-                        </div>
-                      ) : updateTeam?.logo_url ? (
-                        <div className="relative w-full h-full overflow-hidden bg-gray-800/50">
-                          <Image
-                            src={updateTeam?.logo_url || "/logos/logo2.png"}
-                            alt={`${teamName} logo`}
-                            fill
-                            className="object-contain p-4"
-                            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                          />
-                        </div>
-                      ) : (
-                        <div className="w-full h-full bg-gray-800/50 flex items-center justify-center">
-                          <span className="text-gray-500 text-sm">
-                            No Image
-                          </span>
-                        </div>
-                      )}
-                    </div>
+            {/* Right Arrow */}
+            {!disableSwiping &&
+              displayUpdates &&
+              displayUpdates.length > cardsToShow &&
+              currentIndex < maxIndex && (
+                <button
+                  onClick={() => {
+                    const newIndex = Math.min(maxIndex, currentIndex + 1);
+                    setCurrentIndex(newIndex);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100"
+                  aria-label="Next updates"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
+              )}
 
-                    {/* Content Section - Bottom of card */}
-                    <div className="flex-shrink-0 p-4 pt-2">
-                      <h3 className="text-lg font-bebas text-white line-clamp-1 leading-tight overflow-hidden mb-2">
-                        {sanitizeInput(update.title)}
-                      </h3>
-                      <p
-                        className="text-gray-300 font-inter leading-tight text-sm overflow-hidden mb-3"
-                        style={{
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          lineHeight: "1.2em",
-                          maxHeight: "2.4em",
-                        }}
-                      >
-                        {sanitizeInput(update.content)}
-                      </p>
-                      
-                      {/* Button Section */}
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (!isDragging) {
-                            setSelectedUpdate(update);
-                          }
-                        }}
-                        className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm"
-                        aria-label={`Read more about ${update.title}`}
-                        type="button"
-                      >
-                        Read more
-                      </button>
+            <motion.div
+              ref={containerRef}
+              className={`flex ${
+                disableSwiping
+                  ? "cursor-default"
+                  : "cursor-grab active:cursor-grabbing"
+              }`}
+              drag={disableSwiping ? false : "x"}
+              dragConstraints={
+                disableSwiping ? { left: 0, right: 0 } : getDragConstraints()
+              }
+              dragElastic={0.1}
+              onDragStart={disableSwiping ? undefined : handleDragStart}
+              onDragEnd={disableSwiping ? undefined : handleDragEnd}
+              animate={{ x: disableSwiping ? 0 : getTranslateX() }}
+              transition={{
+                type: "spring",
+                stiffness: 400,
+                damping: 35,
+                mass: 0.8,
+              }}
+            >
+              {displayUpdates.map((update) => {
+                const updateTeam = update.team_id
+                  ? teamsMap.get(update.team_id)
+                  : null;
+                const teamName =
+                  updateTeam?.name || (update.is_global ? "All Teams" : "Team");
+
+                return (
+                  <div
+                    key={update.id}
+                    className={`flex-shrink-0 ${
+                      cardsToShow === 3
+                        ? "w-1/3"
+                        : cardsToShow === 2
+                        ? "w-1/2"
+                        : "w-full"
+                    } p-3 box-border`}
+                  >
+                    <div
+                      className="bg-gray-900/50 border border-red-500/50 rounded-lg shadow-sm h-[28rem] flex flex-col w-full mb-8 overflow-hidden"
+                      role="group"
+                      aria-label={`${teamName} update card`}
+                    >
+                      {/* Header Section */}
+                      <div className="flex-shrink-0 p-4 pb-2">
+                        <h4 className="text-red-600 font-bebas uppercase text-sm border-b border-red-500/50 pb-1">
+                          {teamName} News
+                        </h4>
+                      </div>
+
+                      {/* Image Section - Takes remaining space */}
+                      <div className="flex-1 relative">
+                        {update.image_url ? (
+                          <div className="relative w-full h-full overflow-hidden">
+                            <Image
+                              src={update.image_url}
+                              alt={update.title}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            />
+                          </div>
+                        ) : updateTeam?.logo_url ? (
+                          <div className="relative w-full h-full overflow-hidden bg-gray-800/50">
+                            <Image
+                              src={updateTeam?.logo_url || "/logos/logo2.png"}
+                              alt={`${teamName} logo`}
+                              fill
+                              className="object-contain p-4"
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-full h-full bg-gray-800/50 flex items-center justify-center">
+                            <span className="text-gray-500 text-sm">
+                              No Image
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Content Section - Bottom of card */}
+                      <div className="flex-shrink-0 p-4 pt-2">
+                        <h3 className="text-lg font-bebas text-white line-clamp-1 leading-tight overflow-hidden mb-2">
+                          {sanitizeInput(update.title)}
+                        </h3>
+                        <p
+                          className="text-gray-300 font-inter leading-tight text-sm overflow-hidden mb-3"
+                          style={{
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            lineHeight: "1.2em",
+                            maxHeight: "2.4em",
+                          }}
+                        >
+                          {sanitizeInput(update.content)}
+                        </p>
+
+                        {/* Button Section */}
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!isDragging) {
+                              setSelectedUpdate(update);
+                            }
+                          }}
+                          className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors text-sm"
+                          aria-label={`Read more about ${update.title}`}
+                          type="button"
+                        >
+                          Read more
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </motion.div>
-        </div>
-      ) : (
-        <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
-          <p className="text-gray-300 font-inter">No updates available</p>
-        </div>
-      )}
-      {selectedUpdate && (
-        <motion.div
-          variants={modalVariants}
-          initial="hidden"
-          animate="visible"
-          className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center p-4 z-[9999]"
-          role="dialog"
-          aria-labelledby="modal-title"
-          onClick={() => setSelectedUpdate(null)}
-        >
+                );
+              })}
+            </motion.div>
+          </div>
+        ) : (
+          <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
+            <p className="text-gray-300 font-inter">No updates available</p>
+          </div>
+        )}
+        {selectedUpdate && (
           <motion.div
-            className="bg-black border border-red-500/50 rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center p-4 z-[9999]"
+            role="dialog"
+            aria-labelledby="modal-title"
+            onClick={() => setSelectedUpdate(null)}
           >
-            <div className="flex-shrink-0">
-              <h3 className="text-red-600 font-bebas uppercase text-base">
-                {selectedUpdate?.team_id
-                  ? teamsMap.get(selectedUpdate.team_id)?.name ||
-                    (selectedUpdate.is_global ? "All Teams" : "Team")
-                  : "Team"}{" "}
-                News
-              </h3>
-              <h2
-                id="modal-title"
-                className="text-2xl font-bebas mt-2 text-white"
-              >
-                {sanitizeInput(selectedUpdate.title)}
-              </h2>
-            </div>
+            <motion.div
+              className="bg-black border border-red-500/50 rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex-shrink-0">
+                <h3 className="text-red-600 font-bebas uppercase text-base">
+                  {selectedUpdate?.team_id
+                    ? teamsMap.get(selectedUpdate.team_id)?.name ||
+                      (selectedUpdate.is_global ? "All Teams" : "Team")
+                    : "Team"}{" "}
+                  News
+                </h3>
+                <h2
+                  id="modal-title"
+                  className="text-2xl font-bebas mt-2 text-white"
+                >
+                  {sanitizeInput(selectedUpdate.title)}
+                </h2>
+              </div>
 
-            <div className="flex-1 overflow-y-auto mt-4">
-              <p className="text-gray-300 font-inter leading-relaxed">
-                {sanitizeInput(selectedUpdate.content)}
-              </p>
-              {selectedUpdate.image_url && (
-                <Image
-                  src={selectedUpdate.image_url}
-                  alt={selectedUpdate.title}
-                  width={400}
-                  height={320}
-                  className="w-full h-auto max-h-64 sm:max-h-80 object-contain rounded-md mt-4"
-                  sizes="100vw"
-                />
-              )}
-            </div>
+              <div className="flex-1 overflow-y-auto mt-4">
+                <p className="text-gray-300 font-inter leading-relaxed">
+                  {sanitizeInput(selectedUpdate.content)}
+                </p>
+                {selectedUpdate.image_url && (
+                  <Image
+                    src={selectedUpdate.image_url}
+                    alt={selectedUpdate.title}
+                    width={400}
+                    height={320}
+                    className="w-full h-auto max-h-64 sm:max-h-80 object-contain rounded-md mt-4"
+                    sizes="100vw"
+                  />
+                )}
+              </div>
 
-            <div className="flex-shrink-0 mt-4">
-              <button
-                onClick={() => setSelectedUpdate(null)}
-                className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
-                aria-label="Close modal"
-              >
-                Close
-              </button>
-            </div>
+              <div className="flex-shrink-0 mt-4">
+                <button
+                  onClick={() => setSelectedUpdate(null)}
+                  className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                  aria-label="Close modal"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
       </div>
     </section>
   );

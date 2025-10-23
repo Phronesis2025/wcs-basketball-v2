@@ -9,6 +9,13 @@ export type Team = {
   season: string;
   team_image: string | null;
   coach_names: string[];
+  coaches?: Array<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  }>;
+  is_active: boolean;
 };
 
 export type Coach = {
@@ -19,6 +26,8 @@ export type Coach = {
   bio: string;
   image_url: string | null;
   quote: string;
+  is_active: boolean;
+  role?: string;
 };
 
 export type Schedule = {
@@ -111,4 +120,90 @@ export type CoachMessageReply = {
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
+};
+
+// Analytics Dashboard Types
+export type ErrorLog = {
+  id: string;
+  severity: "critical" | "error" | "warning" | "info";
+  message: string;
+  stack_trace: string | null;
+  user_id: string | null;
+  page_url: string | null;
+  user_agent: string | null;
+  ip_address: string | null;
+  error_code: string | null;
+  resolved: boolean;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  created_at: string;
+};
+
+export type LoginLog = {
+  id: string;
+  user_id: string;
+  login_at: string;
+  ip_address: string | null;
+  user_agent: string | null;
+  success: boolean;
+  failure_reason: string | null;
+  session_duration: number | null;
+};
+
+export type LoginStatistic = {
+  user_id: string;
+  email: string;
+  role: string;
+  total_logins: number;
+  last_login_at: string | null;
+  first_login_at: string | null;
+  is_active: boolean;
+};
+
+export type ErrorStatistics = {
+  total_errors: number;
+  critical_errors: number;
+  error_count: number;
+  warning_count: number;
+  info_count: number;
+  resolved_errors: number;
+  unresolved_errors: number;
+};
+
+export type AnalyticsStats = {
+  errorStats: ErrorStatistics;
+  loginStats: LoginStatistic[];
+  performanceMetrics: {
+    averagePageLoadTime: number;
+    errorRate: number;
+    uptime: number;
+  };
+  trafficMetrics: {
+    totalPageViews: number;
+    uniqueVisitors: number;
+    topPages: Array<{ page: string; views: number }>;
+    deviceBreakdown: {
+      mobile: number;
+      desktop: number;
+    };
+  };
+};
+
+// Player Management Types
+export type Player = {
+  id: string;
+  team_id: string;
+  name: string;
+  jersey_number: number | null;
+  grade: string | null;
+  date_of_birth: string | null;
+  age: number | null;
+  gender: string | null;
+  parent_name: string | null;
+  parent_email: string | null;
+  parent_phone: string | null;
+  emergency_contact: string | null;
+  emergency_phone: string | null;
+  created_at: string;
+  is_active: boolean;
 };

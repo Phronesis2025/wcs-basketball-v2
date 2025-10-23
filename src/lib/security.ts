@@ -88,6 +88,12 @@ export function sanitizeInput(input: string): string {
 
   return input
     .replace(/[<>]/g, "") // Remove potential HTML tags
+    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, "") // Remove event handlers
+    .replace(/<script[^>]*>.*?<\/script>/gi, "") // Remove script tags
+    .replace(/<iframe[^>]*>.*?<\/iframe>/gi, "") // Remove iframe tags
+    .replace(/<object[^>]*>.*?<\/object>/gi, "") // Remove object tags
+    .replace(/<embed[^>]*>.*?<\/embed>/gi, "") // Remove embed tags
     .trim() // Remove leading/trailing whitespace
     .substring(0, 1000); // Limit length to prevent DoS
 }
