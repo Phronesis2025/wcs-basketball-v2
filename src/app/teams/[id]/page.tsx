@@ -295,12 +295,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                         className="rounded-full flex-shrink-0"
                         sizes="70px"
                         onError={(e) => {
-                          devError(
-                            `Image load error for coach ${coach.first_name} ${coach.last_name}: ${coach.image_url}`
-                          );
-                          Sentry.captureMessage(
-                            `Failed to load coach image for ${coach.first_name} ${coach.last_name}: ${coach.image_url}`
-                          );
+                          // Silently fallback to default logo without logging error
                           e.currentTarget.src = "/logos/logo2.png";
                         }}
                       />

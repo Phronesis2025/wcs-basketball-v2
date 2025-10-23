@@ -33,14 +33,74 @@ type TeamWithCoaches = {
   season: string;
   team_image: string | null;
   team_coaches?: TeamCoachData[];
+  is_active?: boolean;
 };
 
-// Fetch teams
-export async function fetchTeams(): Promise<Team[]> {
+// Soft delete functions
+export async function softDeleteCoach(coachId: string): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin
+      .from("coaches")
+      .update({ is_deleted: true })
+      .eq("id", coachId);
+
+    if (error) {
+      devError("Soft delete coach error:", error);
+      throw new Error("Failed to delete coach");
+    }
+  } catch (err: unknown) {
+    devError("Soft delete coach error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to delete coach";
+    throw new Error(errorMessage);
+  }
+}
+
+export async function softDeleteTeam(teamId: string): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin
+      .from("teams")
+      .update({ is_deleted: true })
+      .eq("id", teamId);
+
+    if (error) {
+      devError("Soft delete team error:", error);
+      throw new Error("Failed to delete team");
+    }
+  } catch (err: unknown) {
+    devError("Soft delete team error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to delete team";
+    throw new Error(errorMessage);
+  }
+}
+
+export async function softDeletePlayer(playerId: string): Promise<void> {
+  try {
+    const { error } = await supabaseAdmin
+      .from("players")
+      .update({ is_deleted: true })
+      .eq("id", playerId);
+
+    if (error) {
+      devError("Soft delete player error:", error);
+      throw new Error("Failed to delete player");
+    }
+  } catch (err: unknown) {
+    devError("Soft delete player error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to delete player";
+    throw new Error(errorMessage);
+  }
+}
+
+// Fetch all teams (including inactive) for management purposes
+export async function fetchAllTeams(): Promise<Team[]> {
   try {
     // Prefer admin client (bypasses RLS) when available
     const client = supabaseAdmin || supabase;
-    const { data, error } = await client
+    // Get all teams (including inactive)
+    const { data: teams, error: teamsError } = await client
       .from("teams")
       .select(
         `
@@ -52,40 +112,132 @@ export async function fetchTeams(): Promise<Team[]> {
         logo_url,
         season,
         team_image,
-        team_coaches(coaches(first_name, last_name))
+        is_active
       `
       )
+      .eq("is_deleted", false)
       .order("name", { ascending: true });
 
-    if (error) {
-      devError("Supabase teams fetch error:", error);
-      throw new Error(error.message);
+    if (teamsError) {
+      devError("Supabase teams fetch error:", teamsError);
+      throw new Error(teamsError.message);
     }
 
-    if (!data) {
+    if (!teams) {
       devLog("No teams data returned from Supabase");
       return [];
     }
 
-    return (
-      data?.map((team: TeamWithCoaches) => ({
-        ...team,
-        coach_names:
-          team.team_coaches
-            ?.map((tc: TeamCoachData) => {
-              if (!tc.coaches || !Array.isArray(tc.coaches)) {
-                return [];
-              }
-              return tc.coaches
-                .map(
-                  (coach: { first_name: string; last_name: string }) =>
-                    `${coach.first_name} ${coach.last_name}`
+    // Then get coach names for each team
+    const teamsWithCoaches = await Promise.all(
+      teams.map(async (team) => {
+        const { data: coachData } = await client
+          .from("team_coaches")
+          .select(
+            `
+                coaches!inner(
+                  first_name,
+                  last_name
                 )
-                .join(", ");
+              `
+          )
+          .eq("team_id", team.id);
+
+        const coachNames =
+          coachData
+            ?.map((tc: any) => {
+              if (!tc.coaches) {
+                return null;
+              }
+              return `${tc.coaches.first_name} ${tc.coaches.last_name}`;
             })
-            .flat() || [],
-      })) || []
+            .filter(Boolean) || [];
+
+        return {
+          ...team,
+          coach_names: coachNames,
+        };
+      })
     );
+
+    return teamsWithCoaches;
+  } catch (err: unknown) {
+    devError("Fetch all teams error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch teams";
+    throw new Error(errorMessage);
+  }
+}
+
+// Fetch teams (only active) for public use
+export async function fetchTeams(): Promise<Team[]> {
+  try {
+    // Prefer admin client (bypasses RLS) when available
+    const client = supabaseAdmin || supabase;
+    // First get all teams
+    const { data: teams, error: teamsError } = await client
+      .from("teams")
+      .select(
+        `
+        id,
+        name,
+        age_group,
+        gender,
+        grade_level,
+        logo_url,
+        season,
+        team_image,
+        is_active
+      `
+      )
+      .eq("is_deleted", false)
+      .eq("is_active", true)
+      .order("name", { ascending: true });
+
+    if (teamsError) {
+      devError("Supabase teams fetch error:", teamsError);
+      throw new Error(teamsError.message);
+    }
+
+    if (!teams) {
+      devLog("No teams data returned from Supabase");
+      return [];
+    }
+
+    // Then get coach names for each team
+    const teamsWithCoaches = await Promise.all(
+      teams.map(async (team) => {
+        const { data: coachData } = await client
+          .from("team_coaches")
+          .select(
+            `
+                coaches!inner(
+                  first_name,
+                  last_name
+                )
+              `
+          )
+          .eq("team_id", team.id);
+
+        const coachNames =
+          coachData
+            ?.map((tc: any) => {
+              if (!tc.coaches) {
+                return null;
+              }
+              return `${tc.coaches.first_name} ${tc.coaches.last_name}`;
+            })
+            .filter(Boolean) || [];
+
+        return {
+          ...team,
+          is_active: true,
+          coach_names: coachNames,
+        };
+      })
+    );
+
+    return teamsWithCoaches;
   } catch (err: unknown) {
     devError("Fetch teams error:", err);
     const errorMessage =
@@ -97,7 +249,10 @@ export async function fetchTeams(): Promise<Team[]> {
 // Fetch team by ID
 export async function fetchTeamById(id: string): Promise<Team | null> {
   try {
-    const { data, error } = await supabase
+    const client = supabaseAdmin || supabase;
+
+    // First get the team data
+    const { data: team, error: teamError } = await client
       .from("teams")
       .select(
         `
@@ -108,39 +263,50 @@ export async function fetchTeamById(id: string): Promise<Team | null> {
         grade_level,
         logo_url,
         season,
-        team_image,
-        team_coaches(coaches(first_name, last_name))
+        team_image
       `
       )
       .eq("id", id)
+      .eq("is_deleted", false)
       .single();
 
-    if (error) {
-      devError("Supabase team fetch error:", error);
-      throw new Error(error.message);
+    if (teamError) {
+      devError("Supabase team fetch error:", teamError);
+      throw new Error(teamError.message);
     }
 
-    if (!data) {
+    if (!team) {
       devLog("No team data returned for ID:", id);
       return null;
     }
 
+    // Then get coach names
+    const { data: coachData } = await client
+      .from("team_coaches")
+      .select(
+        `
+        coaches!inner(
+          first_name,
+          last_name
+        )
+      `
+      )
+      .eq("team_id", id);
+
+    const coachNames =
+      coachData
+        ?.map((tc: any) => {
+          if (!tc.coaches) {
+            return null;
+          }
+          return `${tc.coaches.first_name} ${tc.coaches.last_name}`;
+        })
+        .filter(Boolean) || [];
+
     return {
-      ...data,
-      coach_names:
-        data.team_coaches
-          ?.map((tc: TeamCoachData) => {
-            if (!tc.coaches || !Array.isArray(tc.coaches)) {
-              return [];
-            }
-            return tc.coaches
-              .map(
-                (coach: { first_name: string; last_name: string }) =>
-                  `${coach.first_name} ${coach.last_name}`
-              )
-              .join(", ");
-          })
-          .flat() || [],
+      ...team,
+      is_active: true,
+      coach_names: coachNames,
     };
   } catch (err: unknown) {
     devError("Fetch team error:", err);
@@ -153,7 +319,10 @@ export async function fetchTeamById(id: string): Promise<Team | null> {
 // Fetch coaches by team ID
 export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
   try {
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS (since this is a public read operation)
+    const client = supabaseAdmin || supabase;
+
+    const { data, error } = await client
       .from("team_coaches")
       .select("coaches(*)")
       .eq("team_id", teamId);
@@ -168,7 +337,22 @@ export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
       return [];
     }
 
-    return data.map((item: TeamCoachRelation) => item.coaches).flat();
+    devLog("Raw coaches data:", data);
+
+    // Extract coaches from the nested structure
+    // The data structure is: [{ coaches: { id, first_name, last_name, ... } }]
+    const coaches = data
+      .map((item: any) => item.coaches)
+      .filter((coach: any) => coach !== null && coach !== undefined);
+
+    const activeCoaches = coaches.filter(
+      (coach: Coach) => coach.is_active !== false
+    );
+
+    devLog(
+      `Found ${coaches.length} coaches, ${activeCoaches.length} active for team ${teamId}`
+    );
+    return activeCoaches;
   } catch (err: unknown) {
     devError("Fetch coaches error:", err);
     const errorMessage =
@@ -194,12 +378,15 @@ export async function fetchTeamsByCoachId(
           grade_level,
           logo_url,
           season,
-          team_image
+          team_image,
+          is_active
         ),
         coaches!inner(user_id)
       `
       )
-      .eq("coaches.user_id", coachUserId);
+      .eq("coaches.user_id", coachUserId)
+      .eq("teams.is_active", true)
+      .eq("teams.is_deleted", false);
 
     if (error) {
       devError("Supabase teams by coach fetch error:", error);
@@ -230,7 +417,10 @@ export async function fetchSchedulesByTeamId(
   teamId: string
 ): Promise<Schedule[]> {
   try {
-    let query = supabase.from("schedules").select("*").is("deleted_at", null);
+    let query = supabaseAdmin
+      .from("schedules")
+      .select("*")
+      .is("deleted_at", null);
 
     if (teamId === "__GLOBAL__") {
       query = query.eq("is_global", true);
@@ -262,7 +452,7 @@ export async function fetchTeamUpdates(teamId: string): Promise<TeamUpdate[]> {
       teamId === "__GLOBAL__"
         ? `is_global.eq.true`
         : `team_id.eq.${teamId},is_global.eq.true`;
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("team_updates")
       .select("*")
       .or(orFilter)
@@ -286,7 +476,9 @@ export async function fetchTeamUpdates(teamId: string): Promise<TeamUpdate[]> {
 // Fetch ALL team updates from every team
 export async function fetchAllTeamUpdates(): Promise<TeamUpdate[]> {
   try {
-    const { data, error } = await supabase
+    // Use admin client to bypass RLS for public team updates
+    const client = supabaseAdmin || supabase;
+    const { data, error } = await client
       .from("team_updates")
       .select("*")
       .is("deleted_at", null)
@@ -368,16 +560,21 @@ export async function addSchedule(data: {
   opponent?: string;
   description?: string;
   is_global?: boolean;
+  created_by?: string; // Allow passing user ID from client
 }): Promise<Schedule> {
   try {
-    // If it's global, ensure team_id is null
+    // Handle "__GLOBAL__" case - convert to null and set is_global
     const insertData = { ...data };
-    if (data.is_global) {
+    if (data.team_id === "__GLOBAL__" || data.is_global) {
       insertData.team_id = null; // Override to null for program-wide
+      insertData.is_global = true;
     }
 
+    // Use admin client to bypass RLS (since server actions don't have user context)
+    const client = supabaseAdmin || supabase;
+
     // Insert into Supabase
-    const { data: result, error } = await supabase
+    const { data: result, error } = await client
       .from("schedules")
       .insert(insertData)
       .select()
@@ -469,6 +666,9 @@ export async function addRecurringPractice(data: {
       data.recurringGroupId ||
       `recurring_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+    // Use admin client to bypass RLS (since server actions don't have user context)
+    const client = supabaseAdmin || supabase;
+
     // Create all schedule entries
     for (const eventDate of finalDates) {
       const insertData = {
@@ -482,7 +682,7 @@ export async function addRecurringPractice(data: {
         recurring_group_id: groupId, // Store group ID for future reference
       };
 
-      const { data: result, error } = await supabase
+      const { data: result, error } = await client
         .from("schedules")
         .insert(insertData)
         .select()
@@ -593,7 +793,8 @@ export async function updateSchedule(
   }
 ): Promise<Schedule> {
   try {
-    const { data: result, error } = await supabase
+    devLog("Updating schedule:", { id, data });
+    const { data: result, error } = await supabaseAdmin
       .from("schedules")
       .update(data)
       .eq("id", id)
@@ -623,7 +824,7 @@ export async function deleteSchedule(
 ): Promise<void> {
   try {
     // Check if user has permission to delete this schedule
-    const { data: existingSchedule, error: fetchError } = await supabase
+    const { data: existingSchedule, error: fetchError } = await supabaseAdmin
       .from("schedules")
       .select("created_by")
       .eq("id", id)
@@ -638,7 +839,7 @@ export async function deleteSchedule(
       throw new Error("You can only delete schedules you created");
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("schedules")
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);
@@ -726,10 +927,11 @@ export async function addUpdate(data: {
       throw new Error("Admin client not available");
     }
 
-    // If it's global, ensure team_id is null
+    // Handle "__GLOBAL__" case - convert to null and set is_global
     const insertData = { ...data };
-    if (data.is_global) {
+    if (data.team_id === "__GLOBAL__" || data.is_global) {
       insertData.team_id = null; // Override to null for program-wide
+      insertData.is_global = true;
     }
 
     const { data: result, error } = await supabaseAdmin

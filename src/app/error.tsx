@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import * as Sentry from '@sentry/nextjs';
-import { useEffect } from 'react';
+import * as Sentry from "@sentry/nextjs";
+import { useEffect } from "react";
+import { logClientError } from "@/lib/errorActions";
 
 export default function Error({
   error,
@@ -13,13 +14,22 @@ export default function Error({
   useEffect(() => {
     // Log the error to Sentry
     Sentry.captureException(error);
+
+    // Also log to database for admin dashboard
+    logClientError(error, {
+      pageUrl: typeof window !== "undefined" ? window.location.href : undefined,
+      userAgent:
+        typeof window !== "undefined" ? window.navigator.userAgent : undefined,
+    });
   }, [error]);
 
   return (
     <div className="bg-navy min-h-screen text-white flex items-center justify-center">
       <div className="text-center">
         <h1 className="text-4xl font-bebas mb-4">Something went wrong!</h1>
-        <p className="text-lg mb-6">We&apos;re sorry, but something unexpected happened.</p>
+        <p className="text-lg mb-6">
+          We&apos;re sorry, but something unexpected happened.
+        </p>
         <button
           onClick={reset}
           className="bg-red text-white px-6 py-3 rounded hover:bg-opacity-90 transition duration-300"

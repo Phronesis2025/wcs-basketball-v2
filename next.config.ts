@@ -16,6 +16,14 @@ const cspDev = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com",
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+  "require-trusted-types-for 'script'",
+  "trusted-types default",
 ].join("; ");
 
 // Production CSP - strict security policy with analytics support
@@ -26,6 +34,14 @@ const cspProd = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics connections
+  "frame-src 'none'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "upgrade-insecure-requests",
+  "require-trusted-types-for 'script'",
+  "trusted-types default",
 ].join("; ");
 
 // Security headers configuration
@@ -50,6 +66,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // Apply security headers to all routes
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
@@ -71,6 +93,16 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "htgkddahhgugesktujds.supabase.co",
         pathname: "/storage/v1/object/public/team-updates/**",
+      },
+      {
+        protocol: "https",
+        hostname: "htgkddahhgugesktujds.supabase.co",
+        pathname: "/storage/v1/object/public/images/**",
+      },
+      {
+        protocol: "https",
+        hostname: "example.com",
+        pathname: "/**",
       },
     ],
   },

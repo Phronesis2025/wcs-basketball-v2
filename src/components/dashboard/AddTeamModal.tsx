@@ -1,0 +1,591 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { Team } from "@/types/supabase";
+import { validateInput } from "@/lib/security";
+import Image from "next/image";
+import DeleteConfirmModal from "./DeleteConfirmModal";
+import ManageDeleteConfirmModal from "./ManageDeleteConfirmModal";
+import { useScrollLock } from "@/hooks/useScrollLock";
+
+interface AddTeamModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (teamData: Partial<Team>) => void;
+  onDelete?: (team: Team) => void;
+  editingTeam?: Team | null;
+  loading?: boolean;
+  isManageTab?: boolean; // New prop to distinguish Manage tab from Coach tab
+}
+
+export default function AddTeamModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  onDelete,
+  editingTeam,
+  loading = false,
+  isManageTab = false,
+}: AddTeamModalProps) {
+  const [formData, setFormData] = useState({
+    name: "",
+    ageGroup: "",
+    gender: "",
+    logoUrl: "",
+    is_active: true,
+  });
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
+  const [selectedLogoFile, setSelectedLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string>("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // Lock scroll when modal is open
+  useScrollLock(isOpen);
+
+  // Initialize form when editing
+  useEffect(() => {
+    console.log("AddTeamModal useEffect - editingTeam:", editingTeam);
+    if (editingTeam) {
+      console.log("Populating form with team data:", {
+        name: editingTeam.name,
+        ageGroup: editingTeam.age_group,
+        is_active: editingTeam.is_active,
+      });
+      setFormData({
+        name: editingTeam.name || "",
+        ageGroup: editingTeam.age_group || "",
+        gender: editingTeam.gender || "",
+        logoUrl: editingTeam.logo_url || "",
+        is_active: editingTeam.is_active ?? true,
+      });
+      setLogoPreview(editingTeam.logo_url || "");
+      setImagePreview(editingTeam.team_image || "");
+    } else {
+      setFormData({
+        name: "",
+        ageGroup: "",
+        gender: "",
+        logoUrl: "",
+        is_active: true,
+      });
+      setLogoPreview("");
+      setImagePreview("");
+    }
+  }, [editingTeam]);
+
+  const handleInputChange = (field: string, value: string | boolean) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedLogoFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setLogoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadLogo = async (file: File, teamName: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("teamName", teamName);
+
+    const response = await fetch("/api/upload/team-logo", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to upload logo");
+    }
+
+    const data = await response.json();
+    return data.url;
+  };
+
+  const uploadImage = async (file: File, teamName: string): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("teamName", teamName);
+
+    const response = await fetch("/api/upload/team-image", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to upload team image");
+    }
+
+    const data = await response.json();
+    return data.url;
+  };
+
+  const scrollToFirstError = (errors: Record<string, string>) => {
+    const firstErrorField = Object.keys(errors)[0];
+    if (firstErrorField) {
+      const element =
+        document.querySelector(`[name="${firstErrorField}"]`) ||
+        document.querySelector(`input[id*="${firstErrorField}"]`) ||
+        document.querySelector(`select[id*="${firstErrorField}"]`);
+
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        // Focus the element for better UX
+        (element as HTMLElement).focus();
+      }
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    const profanityErrors: string[] = [];
+
+    // Validate required fields
+    if (!formData.name.trim()) {
+      newErrors.name = "Team name is required";
+    }
+    if (!formData.ageGroup.trim()) {
+      newErrors.ageGroup = "Age group is required";
+    }
+    if (!formData.gender.trim()) {
+      newErrors.gender = "Gender is required";
+    }
+
+    // Check for profanity
+    const fieldsToCheck = [
+      { value: formData.name, field: "name" },
+      { value: formData.ageGroup, field: "ageGroup" },
+    ];
+
+    fieldsToCheck.forEach(({ value, field }) => {
+      if (value && !validateInput(value)) {
+        profanityErrors.push(`${field} contains inappropriate content`);
+      }
+    });
+
+    setErrors(newErrors);
+    setProfanityErrors(profanityErrors);
+
+    // Scroll to first error if validation fails
+    if (Object.keys(newErrors).length > 0) {
+      setTimeout(() => scrollToFirstError(newErrors), 100);
+    }
+
+    return Object.keys(newErrors).length === 0 && profanityErrors.length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
+    setUploadingLogo(true);
+    setUploadingImage(true);
+
+    try {
+      let logoUrl = formData.logoUrl;
+      let imageUrl = "";
+
+      // Upload logo if a new file is selected
+      if (selectedLogoFile) {
+        logoUrl = await uploadLogo(selectedLogoFile, formData.name.trim());
+      }
+
+      // Upload team image if a new file is selected
+      if (selectedImageFile) {
+        imageUrl = await uploadImage(selectedImageFile, formData.name.trim());
+      }
+
+      const teamData = {
+        name: formData.name.trim(),
+        age_group: formData.ageGroup.trim(),
+        gender: formData.gender.trim(),
+        team_image: imageUrl,
+        logo_url: logoUrl,
+        is_active: formData.is_active,
+      };
+
+      onSubmit(teamData);
+    } catch (error) {
+      console.error("Error uploading files:", error);
+      setErrors((prev) => ({
+        ...prev,
+        logo: "Failed to upload files. Please try again.",
+      }));
+    } finally {
+      setUploadingLogo(false);
+      setUploadingImage(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!editingTeam || !onDelete) return;
+
+    setDeleting(true);
+    try {
+      await onDelete(editingTeam);
+      setShowDeleteConfirm(false);
+    } catch (error) {
+      console.error("Delete error:", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <h2 className="text-2xl font-bebas uppercase text-gray-900">
+            {editingTeam ? "Edit Team" : "Add Team"}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          {/* Profanity Errors */}
+          {profanityErrors.length > 0 && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              <h4 className="font-semibold">Content Issues:</h4>
+              <ul className="list-disc list-inside">
+                {profanityErrors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Team Name */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Team Name *
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                  errors.name ? "border-red-500" : "border-gray-300"
+                }`}
+                placeholder="Enter team name"
+              />
+              {errors.name && (
+                <p className="text-[red] text-sm mt-1 font-medium">
+                  {errors.name}
+                </p>
+              )}
+            </div>
+
+            {/* Age Group */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Age Group *
+              </label>
+              <select
+                name="ageGroup"
+                value={formData.ageGroup}
+                onChange={(e) => handleInputChange("ageGroup", e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                  errors.ageGroup ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Select age group</option>
+                <option value="U8">U8 (Under 8)</option>
+                <option value="U10">U10 (Under 10)</option>
+                <option value="U12">U12 (Under 12)</option>
+                <option value="U14">U14 (Under 14)</option>
+                <option value="U16">U16 (Under 16)</option>
+                <option value="U18">U18 (Under 18)</option>
+              </select>
+              {errors.ageGroup && (
+                <p className="text-[red] text-sm mt-1 font-medium">
+                  {errors.ageGroup}
+                </p>
+              )}
+            </div>
+
+            {/* Gender */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Gender *
+              </label>
+              <select
+                name="gender"
+                value={formData.gender}
+                onChange={(e) => handleInputChange("gender", e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                  errors.gender ? "border-red-500" : "border-gray-300"
+                }`}
+              >
+                <option value="">Select gender</option>
+                <option value="Boys">Boys</option>
+                <option value="Girls">Girls</option>
+                <option value="Mixed">Mixed</option>
+                <option value="Coed">Coed</option>
+              </select>
+              {errors.gender && (
+                <p className="text-[red] text-sm mt-1 font-medium">
+                  {errors.gender}
+                </p>
+              )}
+            </div>
+
+            {/* Active Status */}
+            <div>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) =>
+                    handleInputChange("is_active", e.target.checked)
+                  }
+                  className="mr-2"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Active Team
+                </span>
+              </label>
+            </div>
+
+            {/* Team Logo Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Team Logo
+              </label>
+              <div className="flex items-center space-x-4">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoFileChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Upload a logo file (PNG, JPG, etc.) - will be renamed to
+                    logo-
+                    {formData.name
+                      .toLowerCase()
+                      .replace(/[^a-z0-9\s-]/g, "")
+                      .replace(/\s+/g, "-")}
+                    .png
+                  </p>
+                </div>
+                {logoPreview && (
+                  <div className="w-16 h-16 relative">
+                    <Image
+                      src={logoPreview}
+                      alt="Logo preview"
+                      fill
+                      className="object-contain rounded"
+                    />
+                  </div>
+                )}
+              </div>
+              {errors.logo && (
+                <p className="text-[red] text-sm mt-1 font-medium">
+                  {errors.logo}
+                </p>
+              )}
+            </div>
+
+            {/* Team Image Upload */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Team Image
+              </label>
+              <div className="flex items-center space-x-4">
+                <div className="flex-1">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageFileChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Upload a team image file (PNG, JPG, etc.) - will be renamed
+                    to
+                    {formData.name
+                      .toLowerCase()
+                      .replace(/[^a-z0-9\s-]/g, "")
+                      .replace(/\s+/g, "-")}
+                    .png
+                  </p>
+                </div>
+                {imagePreview && (
+                  <div className="w-16 h-16 relative">
+                    <Image
+                      src={imagePreview}
+                      alt="Team image preview"
+                      fill
+                      className="object-cover rounded"
+                    />
+                  </div>
+                )}
+              </div>
+              {errors.image && (
+                <p className="text-[red] text-sm mt-1 font-medium">
+                  {errors.image}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Form Actions */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            {/* Mobile Layout - Stacked buttons */}
+            <div className="flex flex-col space-y-3 md:hidden">
+              {/* Delete Button - Only show when editing */}
+              {editingTeam && onDelete && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full px-4 py-3 text-white bg-red rounded-md hover:bg-red-600 transition-colors"
+                >
+                  Delete Team
+                </button>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="flex-1 px-4 py-3 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || uploadingLogo || uploadingImage}
+                  className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {loading || uploadingLogo || uploadingImage
+                    ? "Saving..."
+                    : editingTeam
+                    ? "Update Team"
+                    : "Add Team"}
+                </button>
+              </div>
+            </div>
+
+            {/* Desktop Layout - Horizontal buttons */}
+            <div className="hidden md:flex justify-between">
+              {/* Delete Button - Only show when editing */}
+              {editingTeam && onDelete && (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="px-4 py-2 text-white bg-red rounded-md hover:bg-red-600 transition-colors"
+                >
+                  Delete Team
+                </button>
+              )}
+
+              {/* Right side buttons */}
+              <div className="flex space-x-3 ml-auto">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading || uploadingLogo || uploadingImage}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {loading || uploadingLogo || uploadingImage
+                    ? "Saving..."
+                    : editingTeam
+                    ? "Update Team"
+                    : "Add Team"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {isManageTab ? (
+        <ManageDeleteConfirmModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Team"
+          message="Are you sure you want to delete this team? This action cannot be undone."
+          itemName={editingTeam ? editingTeam.name : ""}
+          itemType="team"
+          loading={deleting}
+        />
+      ) : (
+        <DeleteConfirmModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDeleteConfirm}
+          title="Delete Team"
+          message="Are you sure you want to delete this team? This action cannot be undone."
+          itemName={editingTeam ? editingTeam.name : ""}
+          loading={deleting}
+        />
+      )}
+    </div>
+  );
+}

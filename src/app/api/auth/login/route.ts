@@ -4,7 +4,7 @@ import { devLog, devError } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   devLog("🔐 [SERVER DEBUG] Login API called");
-  
+
   try {
     const { email, password } = await request.json();
     devLog("🔐 [SERVER DEBUG] Email:", email);
@@ -55,6 +55,22 @@ export async function POST(request: NextRequest) {
     devLog("🔐 [SERVER DEBUG] Session exists:", !!data.session);
 
     devLog("Server-side login successful for user:", data.user.id);
+
+    // Track login event for analytics
+    try {
+      const { trackLogin } = await import("@/lib/analytics");
+      await trackLogin(data.user.id, {
+        ipAddress:
+          request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          request.headers.get("x-real-ip") ||
+          undefined,
+        userAgent: request.headers.get("user-agent") || undefined,
+        success: true,
+      });
+    } catch (trackingError) {
+      devError("Failed to track login event:", trackingError);
+      // Don't fail the login if tracking fails
+    }
 
     // Return user data without sensitive information
     return NextResponse.json({

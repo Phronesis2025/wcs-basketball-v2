@@ -2,6 +2,7 @@
 "use client";
 import React, { useState, ReactNode } from "react";
 import { motion } from "framer-motion";
+import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface DialogProps {
   children: ReactNode;
@@ -23,6 +24,9 @@ interface DialogComponent extends React.FC<DialogProps> {
 
 const Dialog: DialogComponent = ({ children, className }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  // Lock scroll when dialog is open
+  useScrollLock(isOpen);
 
   return (
     <div className={className}>

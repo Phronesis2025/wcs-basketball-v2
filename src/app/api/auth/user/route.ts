@@ -22,11 +22,22 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7); // Remove "Bearer " prefix
 
+    devLog("Token received (first 50 chars):", token.substring(0, 50) + "...");
+    devLog("Token length:", token.length);
+
     // Verify the token and get user information
-    const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await supabaseAdmin.auth.getUser(token);
 
     if (error || !user) {
       devError("User verification error:", error);
+      devError("Token validation failed. Error details:", {
+        error: error?.message,
+        status: error?.status,
+        name: error?.name,
+      });
       return NextResponse.json(
         { error: "Invalid or expired token" },
         { status: 401 }
