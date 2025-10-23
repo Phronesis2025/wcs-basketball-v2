@@ -22,8 +22,6 @@ const cspDev = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   "upgrade-insecure-requests",
-  "require-trusted-types-for 'script'",
-  "trusted-types default",
 ].join("; ");
 
 // Production CSP - strict security policy with analytics support
@@ -40,8 +38,6 @@ const cspProd = [
   "form-action 'self'",
   "frame-ancestors 'none'",
   "upgrade-insecure-requests",
-  "require-trusted-types-for 'script'",
-  "trusted-types default",
 ].join("; ");
 
 // Security headers configuration
