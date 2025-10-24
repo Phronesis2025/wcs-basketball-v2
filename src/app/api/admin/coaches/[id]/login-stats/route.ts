@@ -1,11 +1,15 @@
 import { NextRequest } from "next/server";
 import { supabaseAdmin } from "../../../../../../lib/supabaseClient";
 import { devError } from "../../../../../../lib/security";
-import { checkRateLimit, createSecureResponse, createErrorResponse } from "../../../../../../lib/securityMiddleware";
+import {
+  checkRateLimit,
+  createSecureResponse,
+  createErrorResponse,
+} from "../../../../../../lib/securityMiddleware";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Rate limiting
@@ -41,12 +45,13 @@ export async function GET(
       return createErrorResponse("Admin access required", 403);
     }
 
-    const coachId = params.id;
+    // Await params in Next.js 15
+    const { id: coachId } = await params;
 
-    // Get coach information
+    // Get coach information including user_id
     const { data: coach, error: coachError } = await supabaseAdmin!
       .from("coaches")
-      .select("id, email, first_name, last_name")
+      .select("id, email, first_name, last_name, user_id")
       .eq("id", coachId)
       .single();
 
@@ -54,28 +59,38 @@ export async function GET(
       return createErrorResponse("Coach not found", 404);
     }
 
-    // Get login statistics for this coach
-    const { data: loginStats, error: loginError } = await supabaseAdmin!
-      .from("login_statistics")
-      .select("*")
-      .eq("email", coach.email)
-      .single();
+    if (!coach.user_id) {
+      return createErrorResponse("Coach not linked to user account", 404);
+    }
 
-    if (loginError && loginError.code !== "PGRST116") {
-      // PGRST116 is "not found" error, which is acceptable
+    // Get login statistics for this coach using the user_id
+    const { data: loginLogs, error: loginError } = await supabaseAdmin!
+      .from("login_logs")
+      .select("login_at, success")
+      .eq("user_id", coach.user_id)
+      .eq("success", true)
+      .order("login_at", { ascending: false });
+
+    if (loginError) {
       devError("Error fetching login statistics:", loginError);
       return createErrorResponse("Failed to fetch login statistics", 500);
     }
 
-    // If no login statistics found, return default values
-    const defaultStats = {
-      total_logins: 0,
-      last_login_at: null,
-      first_login_at: null,
-      is_active: true,
-    };
+    // Calculate statistics from the login logs
+    const totalLogins = loginLogs?.length || 0;
+    const lastLogin =
+      loginLogs && loginLogs.length > 0 ? loginLogs[0].login_at : null;
+    const firstLogin =
+      loginLogs && loginLogs.length > 0
+        ? loginLogs[loginLogs.length - 1].login_at
+        : null;
 
-    const stats = loginStats || defaultStats;
+    const stats = {
+      total_logins: totalLogins,
+      last_login_at: lastLogin,
+      first_login_at: firstLogin,
+      is_active: totalLogins > 0,
+    };
 
     return createSecureResponse({
       coach: {

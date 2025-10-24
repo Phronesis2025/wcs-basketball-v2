@@ -8,6 +8,7 @@ import { useScrollLock } from "@/hooks/useScrollLock";
 interface CoachDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onEdit?: () => void;
   coach: Coach | null;
   teams: Team[];
   loginStats: {
@@ -21,6 +22,7 @@ interface CoachDetailModalProps {
 export default function CoachDetailModal({
   isOpen,
   onClose,
+  onEdit,
   coach,
   teams,
   loginStats,
@@ -32,7 +34,9 @@ export default function CoachDetailModal({
 
   // Get teams assigned to this coach
   const assignedTeams = teams.filter((team: Team) =>
-    team.coaches?.some((teamCoach) => teamCoach.email === coach.email)
+    team.team_coaches?.some(
+      (teamCoach: any) => teamCoach.coaches?.email === coach.email
+    )
   );
 
   // Format dates
@@ -66,13 +70,22 @@ export default function CoachDetailModal({
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-4">
             <div className="relative w-16 h-16">
-              <Image
-                className="rounded-full object-cover"
-                src={coach.image_url || "/images/default-avatar.png"}
-                alt={`${coach.first_name} ${coach.last_name}`}
-                width={64}
-                height={64}
-              />
+              {coach.image_url ? (
+                <Image
+                  className="rounded-full object-cover"
+                  src={coach.image_url}
+                  alt={`${coach.first_name} ${coach.last_name}`}
+                  width={64}
+                  height={64}
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                  <span className="text-gray-600 font-bold text-xl">
+                    {coach.first_name[0]}
+                    {coach.last_name[0]}
+                  </span>
+                </div>
+              )}
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
@@ -81,14 +94,48 @@ export default function CoachDetailModal({
               <p className="text-gray-600">{coach.email}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center space-x-2">
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+                title="Edit Coach"
+              >
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+              title="Close"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -99,7 +146,9 @@ export default function CoachDetailModal({
               {/* Bio */}
               {coach.bio && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Bio</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Bio
+                  </h3>
                   <p className="text-gray-700">{coach.bio}</p>
                 </div>
               )}
@@ -107,27 +156,42 @@ export default function CoachDetailModal({
               {/* Quote */}
               {coach.quote && (
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Quote</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    Quote
+                  </h3>
                   <p className="text-gray-700 italic">"{coach.quote}"</p>
                 </div>
               )}
 
               {/* Team Information */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Team Information</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  Team Information
+                </h3>
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-gray-600">Teams Assigned:</span>
-                    <span className="text-lg font-bold text-blue-600">{assignedTeams.length}</span>
+                    <span className="text-sm font-medium text-gray-600">
+                      Teams Assigned:
+                    </span>
+                    <span className="text-lg font-bold text-blue-600">
+                      {assignedTeams.length}
+                    </span>
                   </div>
-                  
+
                   {assignedTeams.length > 0 ? (
                     <div className="space-y-2">
-                      <p className="text-sm font-medium text-gray-600 mb-2">Team Names:</p>
+                      <p className="text-sm font-medium text-gray-600 mb-2">
+                        Team Names:
+                      </p>
                       <div className="space-y-1">
                         {assignedTeams.map((team) => (
-                          <div key={team.id} className="flex items-center justify-between bg-white rounded px-3 py-2">
-                            <span className="text-sm text-gray-900">{team.name}</span>
+                          <div
+                            key={team.id}
+                            className="flex items-center justify-between bg-white rounded px-3 py-2"
+                          >
+                            <span className="text-sm text-gray-900">
+                              {team.name}
+                            </span>
                             <span className="text-xs text-gray-500">
                               {team.age_group} - {team.gender}
                             </span>
@@ -144,12 +208,16 @@ export default function CoachDetailModal({
 
             {/* Right Column - Login Statistics */}
             <div className="space-y-6">
-              <h3 className="text-lg font-semibold text-gray-900">Login Statistics</h3>
-              
+              <h3 className="text-lg font-semibold text-gray-900">
+                Login Statistics
+              </h3>
+
               <div className="bg-gray-50 rounded-lg p-4 space-y-4">
                 {/* Total Logins */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Total Logins:</span>
+                  <span className="text-sm font-medium text-gray-600">
+                    Total Logins:
+                  </span>
                   <span className="text-lg font-bold text-green-600">
                     {loginStats?.total_logins || 0}
                   </span>
@@ -157,19 +225,28 @@ export default function CoachDetailModal({
 
                 {/* Last Login */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Last Login:</span>
+                  <span className="text-sm font-medium text-gray-600">
+                    Last Login:
+                  </span>
                   <div className="text-right">
                     <div className="text-sm text-gray-900">
                       {formatDate(loginStats?.last_login_at)}
                     </div>
                     {daysSinceLogin !== null && (
-                      <div className={`text-xs ${
-                        daysSinceLogin > 30 ? 'text-red-600' : 
-                        daysSinceLogin > 7 ? 'text-yellow-600' : 'text-green-600'
-                      }`}>
-                        {daysSinceLogin === 0 ? 'Today' : 
-                         daysSinceLogin === 1 ? 'Yesterday' : 
-                         `${daysSinceLogin} days ago`}
+                      <div
+                        className={`text-xs ${
+                          daysSinceLogin > 30
+                            ? "text-red-600"
+                            : daysSinceLogin > 7
+                            ? "text-yellow-600"
+                            : "text-green-600"
+                        }`}
+                      >
+                        {daysSinceLogin === 0
+                          ? "Today"
+                          : daysSinceLogin === 1
+                          ? "Yesterday"
+                          : `${daysSinceLogin} days ago`}
                       </div>
                     )}
                   </div>
@@ -177,7 +254,9 @@ export default function CoachDetailModal({
 
                 {/* First Login */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">First Login:</span>
+                  <span className="text-sm font-medium text-gray-600">
+                    First Login:
+                  </span>
                   <span className="text-sm text-gray-900">
                     {formatDate(loginStats?.first_login_at)}
                   </span>
@@ -185,41 +264,53 @@ export default function CoachDetailModal({
 
                 {/* Status */}
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Status:</span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    loginStats?.is_active 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-red-100 text-red-800'
-                  }`}>
-                    {loginStats?.is_active ? 'Active' : 'Inactive'}
+                  <span className="text-sm font-medium text-gray-600">
+                    Status:
+                  </span>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      loginStats?.is_active
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {loginStats?.is_active ? "Active" : "Inactive"}
                   </span>
                 </div>
               </div>
 
               {/* Activity Summary */}
               <div className="bg-blue-50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-blue-900 mb-2">Activity Summary</h4>
+                <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                  Activity Summary
+                </h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-blue-700">Teams Managed:</span>
-                    <span className="font-medium text-blue-900">{assignedTeams.length}</span>
+                    <span className="font-medium text-blue-900">
+                      {assignedTeams.length}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-blue-700">Login Frequency:</span>
                     <span className="font-medium text-blue-900">
-                      {loginStats?.total_logins > 0 
-                        ? `${Math.round(loginStats.total_logins / 30)} per month`
-                        : 'No logins'
-                      }
+                      {loginStats?.total_logins > 0
+                        ? `${Math.round(
+                            loginStats.total_logins / 30
+                          )} per month`
+                        : "No logins"}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-blue-700">Last Activity:</span>
                     <span className="font-medium text-blue-900">
-                      {daysSinceLogin === null ? 'Never' :
-                       daysSinceLogin === 0 ? 'Today' :
-                       daysSinceLogin === 1 ? 'Yesterday' :
-                       `${daysSinceLogin} days ago`}
+                      {daysSinceLogin === null
+                        ? "Never"
+                        : daysSinceLogin === 0
+                        ? "Today"
+                        : daysSinceLogin === 1
+                        ? "Yesterday"
+                        : `${daysSinceLogin} days ago`}
                     </span>
                   </div>
                 </div>

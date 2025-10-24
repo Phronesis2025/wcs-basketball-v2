@@ -13,6 +13,7 @@ export async function GET() {
         first_name, 
         last_name, 
         email, 
+        image_url,
         is_active,
         users!inner(role)
       `
@@ -31,6 +32,7 @@ export async function GET() {
           first_name, 
           last_name, 
           email,
+          image_url,
           users!inner(role)
         `
           )

@@ -15,6 +15,8 @@ export async function GET() {
         gender, 
         grade_level, 
         season, 
+        logo_url,
+        team_image,
         is_active,
         team_coaches(
           coaches(
@@ -24,6 +26,12 @@ export async function GET() {
             email,
             is_active
           )
+        ),
+        players(
+          id,
+          name,
+          is_active,
+          is_deleted
         )
       `
       )
@@ -42,6 +50,8 @@ export async function GET() {
           gender, 
           grade_level, 
           season,
+          logo_url,
+          team_image,
           team_coaches(
             coaches(
               id,
@@ -49,6 +59,12 @@ export async function GET() {
               last_name,
               email
             )
+          ),
+          players(
+            id,
+            name,
+            is_active,
+            is_deleted
           )
         `
         )

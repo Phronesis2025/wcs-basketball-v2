@@ -10,20 +10,34 @@ This document maps each form field in the WCS Basketball club management system 
 
 ### **Table: `coaches`**
 
-| Form Field    | Database Column | Data Type | Required | Notes                       |
-| ------------- | --------------- | --------- | -------- | --------------------------- |
-| First Name    | `first_name`    | `text`    | ✅ Yes   |                             |
-| Last Name     | `last_name`     | `text`    | ✅ Yes   |                             |
-| Email         | `email`         | `text`    | ✅ Yes   | Unique identifier           |
-| Bio           | `bio`           | `text`    | ❌ No    | Optional description        |
-| Quote         | `quote`         | `text`    | ❌ No    | Optional motivational quote |
-| Image         | `image_url`     | `text`    | ❌ No    | URL to uploaded image       |
-| Active Status | `is_active`     | `boolean` | ✅ Yes   | Default: `true`             |
+| Form Field     | Database Column | Data Type | Required | Notes                       |
+| -------------- | --------------- | --------- | -------- | --------------------------- |
+| First Name     | `first_name`    | `text`    | ✅ Yes   |                             |
+| Last Name      | `last_name`     | `text`    | ✅ Yes   |                             |
+| Email          | `email`         | `text`    | ✅ Yes   | Unique identifier           |
+| Bio            | `bio`           | `text`    | ❌ No    | Optional description        |
+| Quote          | `quote`         | `text`    | ❌ No    | Optional motivational quote |
+| Image          | `image_url`     | `text`    | ❌ No    | URL to uploaded image       |
+| Active Status  | `is_active`     | `boolean` | ✅ Yes   | Default: `true`             |
+| Deleted Status | `is_deleted`    | `boolean` | ✅ Yes   | Soft delete flag            |
 
 ### **Related Tables**
 
 - **`users`**: Contains authentication data linked by `email`
 - **`auth.users`**: Supabase Auth table for login credentials
+- **`team_coaches`**: Junction table linking coaches to teams
+
+---
+
+## 🔗 **TEAM-COACH RELATIONSHIPS**
+
+### **Table: `team_coaches`**
+
+| Form Field   | Database Column | Data Type     | Required | Notes                        |
+| ------------ | --------------- | ------------- | -------- | ---------------------------- |
+| Team ID      | `team_id`       | `uuid`        | ✅ Yes   | Foreign key to teams table   |
+| Coach ID     | `coach_id`      | `uuid`        | ✅ Yes   | Foreign key to coaches table |
+| Created Date | `created_at`    | `timestamptz` | ✅ Yes   | Auto-generated timestamp     |
 
 ---
 
@@ -31,14 +45,17 @@ This document maps each form field in the WCS Basketball club management system 
 
 ### **Table: `teams`**
 
-| Form Field    | Database Column | Data Type | Required | Notes                                |
-| ------------- | --------------- | --------- | -------- | ------------------------------------ |
-| Team Name     | `name`          | `text`    | ✅ Yes   |                                      |
-| Age Group     | `age_group`     | `text`    | ✅ Yes   | Options: U8, U10, U12, U14, U16, U18 |
-| Description   | `description`   | `text`    | ❌ No    | Optional team description            |
-| Logo          | `logo_url`      | `text`    | ❌ No    | URL to uploaded logo                 |
-| Team Image    | `team_image`    | `text`    | ❌ No    | URL to uploaded team photo           |
-| Active Status | `is_active`     | `boolean` | ✅ Yes   | Default: `true`                      |
+| Form Field     | Database Column | Data Type | Required | Notes                                |
+| -------------- | --------------- | --------- | -------- | ------------------------------------ |
+| Team Name      | `name`          | `text`    | ✅ Yes   |                                      |
+| Age Group      | `age_group`     | `text`    | ✅ Yes   | Options: U8, U10, U12, U14, U16, U18 |
+| Gender         | `gender`        | `text`    | ✅ Yes   | Options: Male, Female, Co-ed         |
+| Grade Level    | `grade_level`   | `text`    | ❌ No    | School grade level                   |
+| Season         | `season`        | `text`    | ❌ No    | Season/year (e.g., 2024-2025)        |
+| Logo           | `logo_url`      | `text`    | ❌ No    | URL to uploaded logo                 |
+| Team Image     | `team_image`    | `text`    | ❌ No    | URL to uploaded team photo           |
+| Active Status  | `is_active`     | `boolean` | ✅ Yes   | Default: `true`                      |
+| Deleted Status | `is_deleted`    | `boolean` | ✅ Yes   | Soft delete flag                     |
 
 ### **Storage Locations**
 
@@ -51,15 +68,30 @@ This document maps each form field in the WCS Basketball club management system 
 
 ### **Table: `players`**
 
-| Form Field      | Database Column | Data Type | Required | Notes                         |
-| --------------- | --------------- | --------- | -------- | ----------------------------- |
-| First Name      | `first_name`    | `text`    | ✅ Yes   |                               |
-| Last Name       | `last_name`     | `text`    | ✅ Yes   |                               |
-| Date of Birth   | `date_of_birth` | `date`    | ✅ Yes   | Used for age calculation      |
-| Age             | `age`           | `integer` | ✅ Yes   | Calculated from date_of_birth |
-| Gender          | `gender`        | `text`    | ✅ Yes   | Options: Male, Female, Other  |
-| Team Assignment | `team_id`       | `uuid`    | ❌ No    | Foreign key to teams table    |
-| Active Status   | `is_active`     | `boolean` | ✅ Yes   | Default: `true`               |
+| Form Field              | Database Column           | Data Type | Required | Notes                         |
+| ----------------------- | ------------------------- | --------- | -------- | ----------------------------- |
+| Player Name             | `name`                    | `text`    | ✅ Yes   | Full name of player           |
+| Jersey Number           | `jersey_number`           | `integer` | ❌ No    | Player's jersey number        |
+| Grade                   | `grade`                   | `text`    | ❌ No    | School grade level            |
+| Date of Birth           | `date_of_birth`           | `date`    | ✅ Yes   | Used for age calculation      |
+| Age                     | `age`                     | `integer` | ✅ Yes   | Calculated from date_of_birth |
+| Gender                  | `gender`                  | `text`    | ✅ Yes   | Options: Male, Female, Other  |
+| Team Assignment         | `team_id`                 | `uuid`    | ❌ No    | Foreign key to teams table    |
+| Parent/Guardian Name    | `parent_name`             | `text`    | ❌ No    | Parent or guardian name       |
+| Parent Email            | `parent_email`            | `text`    | ❌ No    | Parent/guardian email         |
+| Parent Phone            | `parent_phone`            | `text`    | ❌ No    | Parent/guardian phone         |
+| Emergency Contact       | `emergency_contact`       | `text`    | ❌ No    | Emergency contact name        |
+| Emergency Phone         | `emergency_phone`         | `text`    | ❌ No    | Emergency contact phone       |
+| Player Phone            | `phone`                   | `text`    | ❌ No    | Player's direct phone         |
+| Player Email            | `email`                   | `text`    | ❌ No    | Player's direct email         |
+| Player Image            | `image_url`               | `text`    | ❌ No    | URL to player photo           |
+| Medical Conditions      | `medical_conditions`      | `text`    | ❌ No    | Medical conditions/notes      |
+| Allergies               | `allergies`               | `text`    | ❌ No    | Known allergies               |
+| Emergency Contact Name  | `emergency_contact_name`  | `text`    | ❌ No    | Alternative emergency contact |
+| Emergency Contact Phone | `emergency_contact_phone` | `text`    | ❌ No    | Alternative emergency phone   |
+| Birth Date              | `birth_date`              | `date`    | ❌ No    | Alternative birth date field  |
+| Active Status           | `is_active`               | `boolean` | ✅ Yes   | Default: `true`               |
+| Deleted Status          | `is_deleted`              | `boolean` | ✅ Yes   | Soft delete flag              |
 
 ### **Related Tables**
 
@@ -199,6 +231,7 @@ This document maps each form field in the WCS Basketball club management system 
 ### **Primary Relationships**
 
 - **Teams → Players**: `teams.id` → `players.team_id`
+- **Teams ↔ Coaches**: `teams.id` ↔ `coaches.id` (via `team_coaches` junction table)
 - **Users → Schedules**: `users.id` → `schedules.created_by`
 - **Teams → Schedules**: `teams.id` → `schedules.team_id`
 - **Users → Team Updates**: `users.id` → `team_updates.coach_id`
@@ -259,6 +292,26 @@ This document maps each form field in the WCS Basketball club management system 
 
 ---
 
-_Last Updated: October 22, 2025_  
+## 📝 **RECENT SCHEMA UPDATES**
+
+### **December 2024 Updates**
+
+- **Added missing fields to players table**: `phone`, `email`, `image_url`, `medical_conditions`, `allergies`, `emergency_contact_name`, `emergency_contact_phone`, `birth_date`
+- **Added missing fields to teams table**: `gender`, `grade_level`, `season`, `is_deleted`
+- **Added missing fields to coaches table**: `is_deleted`
+- **Added team_coaches junction table**: Proper many-to-many relationship between teams and coaches
+- **Updated API routes**: Added missing fields to admin API endpoints for complete data retrieval
+- **Enhanced modal components**: Updated TeamDetailModal and PlayerDetailModal to display all available fields
+
+### **Database Schema Changes Made**
+
+1. **Players Table**: Extended with additional contact and medical information fields
+2. **Teams Table**: Added gender, grade level, and season fields for better team categorization
+3. **Team-Coach Relationships**: Implemented proper junction table for many-to-many relationships
+4. **Soft Delete Support**: Added `is_deleted` flags to all major tables
+
+---
+
+_Last Updated: December 2024_  
 _Database Version: Supabase PostgreSQL_  
-_Schema Version: 1.0_
+_Schema Version: 1.1_
