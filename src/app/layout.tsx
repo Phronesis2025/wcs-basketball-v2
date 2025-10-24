@@ -6,7 +6,6 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTop";
 import QueryProvider from "../components/QueryProvider"; // Re-enabled
-import DevAuthClear from "../components/DevAuthClear";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "react-hot-toast";
@@ -134,7 +133,6 @@ export default function RootLayout({
           <Navbar />
           {children}
           <ConditionalFooter />
-          <DevAuthClear />
           {/* Vercel Analytics for user behavior tracking */}
           <Analytics />
 

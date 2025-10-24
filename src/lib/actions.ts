@@ -1012,7 +1012,7 @@ export async function deleteUpdate(
 ): Promise<void> {
   try {
     // Check if user has permission to delete this update
-    const { data: existingUpdate, error: fetchError } = await supabase
+    const { data: existingUpdate, error: fetchError } = await supabaseAdmin
       .from("team_updates")
       .select("created_by")
       .eq("id", id)
@@ -1027,7 +1027,7 @@ export async function deleteUpdate(
       throw new Error("You can only delete updates you created");
     }
 
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("team_updates")
       .update({ deleted_at: new Date().toISOString() })
       .eq("id", id);

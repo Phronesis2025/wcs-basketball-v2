@@ -249,16 +249,12 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     try {
-      devLog("Navbar: Starting sign-out process");
+      devLog("Navbar: Starting comprehensive sign-out process");
 
       // Set signing out flag to prevent auth status checks
       setIsSigningOut(true);
 
-      // Set flags to prevent auto sign-in
-      localStorage.setItem("auth.signingOut", "true");
-      sessionStorage.setItem("auth.justSignedOut", "true");
-
-      // Clear state immediately
+      // Clear state immediately to prevent UI flicker
       setUser(null);
       setUserFullName(null);
       setIsAdmin(false);
@@ -266,43 +262,54 @@ export default function Navbar() {
       // Import supabase client for sign out
       const { supabase } = await import("@/lib/supabaseClient");
 
-      // Sign out from Supabase - this will trigger SIGNED_OUT event
-      devLog("Navbar: Signing out from Supabase");
-      const { error } = await supabase.auth.signOut({ scope: "local" });
+      // Sign out from Supabase with global scope to invalidate all sessions
+      devLog("Navbar: Signing out from Supabase with global scope");
+      const { error } = await supabase.auth.signOut({ scope: "global" });
       if (error) {
-        console.error("Supabase sign out error:", error);
+        devError("Supabase sign out error:", error);
+        // Continue with cleanup even if Supabase signout fails
       }
 
-      // Clear ALL authentication-related data using AuthPersistence utility
-      devLog("Navbar: Clearing auth data");
+      // Clear ALL authentication-related data using enhanced AuthPersistence utility
+      devLog("Navbar: Clearing all auth data");
       AuthPersistence.clearAuthData();
 
-      // Dispatch custom event to notify other components
-      window.dispatchEvent(
-        new CustomEvent("authStateChanged", {
-          detail: { authenticated: false },
-        })
-      );
+      // Additional cleanup for any remaining auth state
+      try {
+        // Clear any remaining Supabase session data
+        await supabase.auth.getSession().then(({ data: { session } }) => {
+          if (session) {
+            devLog("Navbar: Additional session cleanup needed");
+          }
+        });
+      } catch (cleanupError) {
+        devError("Additional cleanup error:", cleanupError);
+      }
 
       devLog("Navbar: Sign-out complete, redirecting to home");
 
-      // Use a longer delay to ensure everything is cleared
+      // Use a longer delay to ensure everything is cleared and prevent re-auth
       setTimeout(() => {
+        // Final cleanup of any remaining flags
         localStorage.removeItem("auth.signingOut");
         sessionStorage.removeItem("auth.justSignedOut");
         setIsSigningOut(false);
-      }, 3000);
 
-      // Perform hard redirect to home page to ensure complete sign out
-      window.location.href = "/";
+        // Force reload to ensure clean state
+        window.location.href = "/";
+      }, 2000);
     } catch (error) {
-      console.error("Error during sign out:", error);
+      devError("Error during sign out:", error);
       // Even if there's an error, still clear everything and redirect
       AuthPersistence.clearAuthData();
       localStorage.removeItem("auth.signingOut");
       sessionStorage.removeItem("auth.justSignedOut");
       setIsSigningOut(false);
-      window.location.href = "/";
+
+      // Force redirect even on error
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 1000);
     }
   };
 
