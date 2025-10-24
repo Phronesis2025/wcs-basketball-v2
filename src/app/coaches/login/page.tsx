@@ -205,9 +205,37 @@ export default function CoachesLogin() {
       // Debug: Confirm user ID before server action call
       devLog("Calling getUserRole with ID:", authData.user.id);
 
-      // For now, allow all authenticated users to proceed
-      // TODO: Implement proper role checking when server actions are working
-      devLog("User authenticated successfully:", authData.user.id);
+      // Check if user needs to reset password
+      try {
+        const { data: userData, error: userError } = await supabase
+          .from("users")
+          .select("id, email, role, password_reset")
+          .eq("id", authData.user.id)
+          .single();
+
+        if (userError) {
+          devError("Failed to fetch user data:", userError);
+          setError("Failed to load user data");
+          setLoading(false);
+          return;
+        }
+
+        devLog("User data:", userData);
+
+        // If user needs password reset, redirect to setup page
+        if (userData.password_reset) {
+          devLog("User needs password reset, redirecting to setup page");
+          router.replace("/coaches/setup-password");
+          return;
+        }
+
+        devLog("User authenticated successfully:", authData.user.id);
+      } catch (error) {
+        devError("Error checking user password reset status:", error);
+        setError("Failed to verify account status");
+        setLoading(false);
+        return;
+      }
 
       // Increment login attempts (rate limiting continuation)
       const newAttempts = attempts + 1;

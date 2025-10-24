@@ -243,7 +243,25 @@ export default function MessageBoard({
 
     try {
       setSubmitting(true);
-      await createMessage(validation.sanitizedValue, userId, userName);
+
+      // Fetch current coach name from database
+      let currentCoachName = userName;
+      try {
+        const { data: coachData, error: coachError } = await supabase
+          .from("coaches")
+          .select("first_name, last_name")
+          .eq("user_id", userId)
+          .single();
+
+        if (!coachError && coachData) {
+          currentCoachName = `${coachData.first_name} ${coachData.last_name}`;
+        }
+      } catch (error) {
+        devError("Error fetching coach name for message:", error);
+        // Continue with existing userName as fallback
+      }
+
+      await createMessage(validation.sanitizedValue, userId, currentCoachName);
       setNewMessageText("");
       setShowNewMessageModal(false);
       toast.success("Message posted successfully", {
@@ -550,7 +568,27 @@ export default function MessageBoard({
               try {
                 const testMessage = `Test message at ${new Date().toLocaleTimeString()}`;
                 devLog("Creating test message:", testMessage);
-                await createMessage(testMessage, userId, userName);
+
+                // Fetch current coach name for test message too
+                let currentCoachName = userName;
+                try {
+                  const { data: coachData, error: coachError } = await supabase
+                    .from("coaches")
+                    .select("first_name, last_name")
+                    .eq("user_id", userId)
+                    .single();
+
+                  if (!coachError && coachData) {
+                    currentCoachName = `${coachData.first_name} ${coachData.last_name}`;
+                  }
+                } catch (error) {
+                  devError(
+                    "Error fetching coach name for test message:",
+                    error
+                  );
+                }
+
+                await createMessage(testMessage, userId, currentCoachName);
                 devLog("Test message created successfully");
 
                 // Force refresh the messages to show the new one

@@ -364,20 +364,43 @@ export default function Navbar() {
               <div className="flex items-center space-x-4">
                 <span className="text-gray-900 font-inter text-sm sm:text-base">
                   Coach{" "}
-                  {(
-                    userFullName?.split(" ").pop() ||
-                    user?.split("@")[0]?.split(".").pop() ||
-                    ""
-                  )
-                    .charAt(0)
-                    .toUpperCase() +
-                    (
-                      userFullName?.split(" ").pop() ||
-                      user?.split("@")[0]?.split(".").pop() ||
-                      ""
-                    )
-                      .slice(1)
-                      .toLowerCase()}
+                  {(() => {
+                    const fullName = userFullName || user?.split("@")[0] || "";
+                    const nameParts = fullName.split(" ");
+
+                    if (nameParts.length >= 2) {
+                      // Full name with spaces: "Jason Boyer"
+                      const firstName = nameParts[0];
+                      const lastName = nameParts[nameParts.length - 1];
+                      return `${firstName.charAt(0).toUpperCase()}. ${lastName
+                        .charAt(0)
+                        .toUpperCase()}${lastName.slice(1).toLowerCase()}`;
+                    } else if (nameParts.length === 1) {
+                      // Single name or email format: "jason.boyer" or "Jason"
+                      const name = nameParts[0];
+
+                      // Check if it contains dots (email format)
+                      if (name.includes(".")) {
+                        const dotParts = name.split(".");
+                        if (dotParts.length >= 2) {
+                          const firstName = dotParts[0];
+                          const lastName = dotParts[dotParts.length - 1];
+                          return `${firstName
+                            .charAt(0)
+                            .toUpperCase()}. ${lastName
+                            .charAt(0)
+                            .toUpperCase()}${lastName.slice(1).toLowerCase()}`;
+                        }
+                      }
+
+                      // Single name without dots
+                      return (
+                        name.charAt(0).toUpperCase() +
+                        name.slice(1).toLowerCase()
+                      );
+                    }
+                    return "User";
+                  })()}
                 </span>
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}

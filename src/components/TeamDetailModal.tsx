@@ -92,11 +92,11 @@ export default function TeamDetailModal({
           <div className="flex items-center space-x-4">
             {/* Team Logo */}
             <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-              {team.image_url ? (
+              {team.logo_url ? (
                 <Image
                   className="rounded-full object-cover"
-                  src={team.image_url}
-                  alt={team.name}
+                  src={team.logo_url}
+                  alt={`${team.name} logo`}
                   width={64}
                   height={64}
                 />
@@ -132,6 +132,49 @@ export default function TeamDetailModal({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Team Photo Section */}
+          {team.team_image && (
+            <div>
+              <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                Team Photo
+              </h4>
+              <div className="relative w-full max-w-md mx-auto">
+                <Image
+                  src={`${team.team_image}?t=${Date.now()}`}
+                  alt={`${team.name} team photo`}
+                  width={400}
+                  height={300}
+                  className="w-full h-64 object-cover rounded-lg shadow-md"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* View Team Page Link */}
+          <div className="text-center">
+            <a
+              href={`/teams/${team.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <svg
+                className="w-4 h-4 mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                />
+              </svg>
+              View Team Page
+            </a>
           </div>
 
           {/* Coaches Section */}

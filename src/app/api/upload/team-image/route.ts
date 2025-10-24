@@ -4,9 +4,16 @@ import { devLog, devError } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("🖼️ Team Image Upload API - Starting upload process");
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const teamName = formData.get("teamName") as string;
+
+    console.log("🖼️ Team Image Upload API - Received:", {
+      fileName: file?.name,
+      fileSize: file?.size,
+      teamName,
+    });
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -36,8 +43,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate filename following the pattern: <team-name>.png
+    // Remove "WCS" prefix if present and sanitize the name
     const sanitizedTeamName = teamName
       .toLowerCase()
+      .replace(/^wcs\s+/, "") // Remove "WCS " prefix if present
       .replace(/[^a-z0-9\s-]/g, "") // Remove special characters except spaces and hyphens
       .replace(/\s+/g, "-") // Replace spaces with hyphens
       .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen
@@ -51,12 +60,24 @@ export async function POST(request: NextRequest) {
     const fileBuffer = await file.arrayBuffer();
 
     // Upload to Supabase storage using admin client (bypasses RLS)
+    console.log("🖼️ Team Image Upload API - About to upload to Supabase:", {
+      filePath,
+      fileSize: fileBuffer.byteLength,
+      contentType: file.type,
+      upsert: true,
+    });
+
     const { data, error } = await supabaseAdmin.storage
       .from("images")
       .upload(filePath, fileBuffer, {
         contentType: file.type,
         upsert: true, // Allow overwriting existing files
       });
+
+    console.log("🖼️ Team Image Upload API - Supabase upload result:", {
+      data,
+      error,
+    });
 
     if (error) {
       devError("Failed to upload team image:", error);
@@ -72,6 +93,10 @@ export async function POST(request: NextRequest) {
     } = supabaseAdmin.storage.from("images").getPublicUrl(filePath);
 
     devLog("Successfully uploaded team image:", { fileName, publicUrl });
+    console.log("🖼️ Team Image Upload API - Upload successful:", {
+      fileName,
+      publicUrl,
+    });
 
     return NextResponse.json({
       success: true,

@@ -16,6 +16,12 @@ interface AddTeamModalProps {
   editingTeam?: Team | null;
   loading?: boolean;
   isManageTab?: boolean; // New prop to distinguish Manage tab from Coach tab
+  coaches?: Array<{
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  }>; // Available coaches
 }
 
 export default function AddTeamModal({
@@ -26,6 +32,7 @@ export default function AddTeamModal({
   editingTeam,
   loading = false,
   isManageTab = false,
+  coaches = [],
 }: AddTeamModalProps) {
   const [formData, setFormData] = useState({
     name: "",
@@ -33,6 +40,7 @@ export default function AddTeamModal({
     gender: "",
     logoUrl: "",
     is_active: true,
+    coachIds: [] as string[],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -64,6 +72,7 @@ export default function AddTeamModal({
         gender: editingTeam.gender || "",
         logoUrl: editingTeam.logo_url || "",
         is_active: editingTeam.is_active ?? true,
+        coachIds: editingTeam.coaches?.map((coach) => coach.id) || [],
       });
       setLogoPreview(editingTeam.logo_url || "");
       setImagePreview(editingTeam.team_image || "");
@@ -74,6 +83,7 @@ export default function AddTeamModal({
         gender: "",
         logoUrl: "",
         is_active: true,
+        coachIds: [],
       });
       setLogoPreview("");
       setImagePreview("");
@@ -86,6 +96,22 @@ export default function AddTeamModal({
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
+  };
+
+  const handleCoachSelection = (coachId: string, isSelected: boolean) => {
+    setFormData((prev) => {
+      if (isSelected) {
+        if (!prev.coachIds.includes(coachId)) {
+          return { ...prev, coachIds: [...prev.coachIds, coachId] };
+        }
+      } else {
+        return {
+          ...prev,
+          coachIds: prev.coachIds.filter((id) => id !== coachId),
+        };
+      }
+      return prev;
+    });
   };
 
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +128,7 @@ export default function AddTeamModal({
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    console.log("🖼️ Team Image File Selected:", file);
     if (file) {
       setSelectedImageFile(file);
       const reader = new FileReader();
@@ -132,21 +159,33 @@ export default function AddTeamModal({
   };
 
   const uploadImage = async (file: File, teamName: string): Promise<string> => {
+    console.log("🖼️ uploadImage function called with:", {
+      fileName: file.name,
+      fileSize: file.size,
+      teamName,
+    });
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("teamName", teamName);
 
+    console.log("🖼️ Making API call to /api/upload/team-image");
     const response = await fetch("/api/upload/team-image", {
       method: "POST",
       body: formData,
     });
 
+    console.log("🖼️ API response status:", response.status);
+    console.log("🖼️ API response ok:", response.ok);
+
     if (!response.ok) {
       const errorData = await response.json();
+      console.error("🖼️ API error response:", errorData);
       throw new Error(errorData.error || "Failed to upload team image");
     }
 
     const data = await response.json();
+    console.log("🖼️ API success response:", data);
     return data.url;
   };
 
@@ -227,8 +266,16 @@ export default function AddTeamModal({
       }
 
       // Upload team image if a new file is selected
+      console.log("🖼️ Checking for team image upload:", {
+        selectedImageFile,
+        hasFile: !!selectedImageFile,
+      });
       if (selectedImageFile) {
+        console.log("🖼️ Uploading team image...");
         imageUrl = await uploadImage(selectedImageFile, formData.name.trim());
+        console.log("🖼️ Team image uploaded successfully:", imageUrl);
+      } else {
+        console.log("🖼️ No team image file selected, using existing image");
       }
 
       const teamData = {
@@ -238,6 +285,7 @@ export default function AddTeamModal({
         team_image: imageUrl,
         logo_url: logoUrl,
         is_active: formData.is_active,
+        coach_ids: formData.coachIds,
       };
 
       onSubmit(teamData);
@@ -403,6 +451,50 @@ export default function AddTeamModal({
               </label>
             </div>
 
+            {/* Coach Selection */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Assign Coaches
+              </label>
+              <div className="border border-gray-300 rounded-md p-3 max-h-40 overflow-y-auto">
+                {coaches.length === 0 ? (
+                  <p className="text-gray-500 text-sm">No coaches available</p>
+                ) : (
+                  <div className="space-y-2">
+                    {coaches.map((coach) => (
+                      <label
+                        key={coach.id}
+                        className="flex items-center space-x-2 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.coachIds.includes(coach.id)}
+                          onChange={(e) =>
+                            handleCoachSelection(coach.id, e.target.checked)
+                          }
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <span className="text-sm text-gray-900">
+                          {coach.first_name} {coach.last_name} ({coach.email})
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {formData.coachIds.length > 0 && (
+                <p className="text-sm text-gray-600 mt-1">
+                  {formData.coachIds.length} coach
+                  {formData.coachIds.length !== 1 ? "es" : ""} selected
+                </p>
+              )}
+              {errors.coachIds && (
+                <p className="text-[red] text-sm mt-1 font-medium">
+                  {errors.coachIds}
+                </p>
+              )}
+            </div>
+
             {/* Team Logo Upload */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -421,6 +513,7 @@ export default function AddTeamModal({
                     logo-
                     {formData.name
                       .toLowerCase()
+                      .replace(/^wcs\s+/, "")
                       .replace(/[^a-z0-9\s-]/g, "")
                       .replace(/\s+/g, "-")}
                     .png
@@ -459,9 +552,10 @@ export default function AddTeamModal({
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Upload a team image file (PNG, JPG, etc.) - will be renamed
-                    to
+                    to{" "}
                     {formData.name
                       .toLowerCase()
+                      .replace(/^wcs\s+/, "")
                       .replace(/[^a-z0-9\s-]/g, "")
                       .replace(/\s+/g, "-")}
                     .png

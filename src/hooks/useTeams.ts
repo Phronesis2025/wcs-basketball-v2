@@ -18,7 +18,7 @@ export function useTeams() {
   return useQuery({
     queryKey: teamKeys.lists(),
     queryFn: fetchTeams,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 }

@@ -56,8 +56,22 @@ export default function CoachDetailModal({
     if (!loginStats?.last_login_at) return null;
     const lastLogin = new Date(loginStats.last_login_at);
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - lastLogin.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    // Set both dates to start of day for accurate day comparison
+    const lastLoginDate = new Date(
+      lastLogin.getFullYear(),
+      lastLogin.getMonth(),
+      lastLogin.getDate()
+    );
+    const todayDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+
+    const diffTime = todayDate.getTime() - lastLoginDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
     return diffDays;
   };
 
@@ -317,16 +331,6 @@ export default function CoachDetailModal({
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex justify-end p-6 border-t border-gray-200">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
-          >
-            Close
-          </button>
         </div>
       </div>
     </div>

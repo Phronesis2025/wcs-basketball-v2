@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
       gradeLevel,
       season,
       coachEmails, // Changed from coachEmail to coachEmails array
+      coach_id, // Single coach ID
       logoUrl,
       logo_url, // Support both naming conventions
       teamImageUrl,
@@ -42,18 +43,23 @@ export async function POST(request: NextRequest) {
     } = await request.json();
 
     // Validate required fields
+    if (!teamName || !ageGroup || !gender) {
+      return NextResponse.json(
+        {
+          error: "Team name, age group, and gender are required",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Validate coach assignment (either coach_id or coachEmails)
     if (
-      !teamName ||
-      !ageGroup ||
-      !gender ||
-      !coachEmails ||
-      !Array.isArray(coachEmails) ||
-      coachEmails.length === 0
+      !coach_id &&
+      (!coachEmails || !Array.isArray(coachEmails) || coachEmails.length === 0)
     ) {
       return NextResponse.json(
         {
-          error:
-            "Team name, age group, gender, and at least one coach are required",
+          error: "Either a coach ID or coach emails are required",
         },
         { status: 400 }
       );
@@ -103,49 +109,86 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find coaches by emails, including is_active status
-    const { data: coaches, error: coachesError } = await supabaseAdmin!
-      .from("coaches")
-      .select("id, first_name, last_name, email, is_active")
-      .in("email", coachEmails);
+    let activeCoaches: any[] = [];
 
-    if (coachesError || !coaches || coaches.length === 0) {
-      return NextResponse.json(
-        { error: "No coaches found with the provided emails" },
-        { status: 404 }
-      );
+    // Handle single coach assignment if provided
+    if (coach_id) {
+      // Get the specific coach
+      const { data: coach, error: coachError } = await supabaseAdmin!
+        .from("coaches")
+        .select("id, first_name, last_name, email, is_active")
+        .eq("id", coach_id)
+        .single();
+
+      if (coachError || !coach) {
+        return NextResponse.json(
+          { error: "Coach not found with the provided ID" },
+          { status: 404 }
+        );
+      }
+
+      if (coach.is_active === false) {
+        return NextResponse.json(
+          { error: "The selected coach is inactive" },
+          { status: 400 }
+        );
+      }
+
+      activeCoaches = [coach];
+    } else {
+      // Find coaches by emails, including is_active status
+      const { data: coaches, error: coachesError } = await supabaseAdmin!
+        .from("coaches")
+        .select("id, first_name, last_name, email, is_active")
+        .in("email", coachEmails);
+
+      if (coachesError || !coaches || coaches.length === 0) {
+        return NextResponse.json(
+          { error: "No coaches found with the provided emails" },
+          { status: 404 }
+        );
+      }
+
+      // Filter out inactive coaches
+      activeCoaches = coaches.filter((coach) => coach.is_active !== false);
     }
-
-    // Filter out inactive coaches
-    const activeCoaches = coaches.filter((coach) => coach.is_active !== false);
 
     if (activeCoaches.length === 0) {
       return NextResponse.json(
-        { error: "No active coaches found with the provided emails" },
+        { error: "No active coaches found" },
         { status: 400 }
       );
     }
 
-    // Check if all provided coach emails were found
-    const foundEmails = coaches.map((coach) => coach.email);
-    const missingEmails = coachEmails.filter(
-      (email) => !foundEmails.includes(email)
-    );
-    if (missingEmails.length > 0) {
-      return NextResponse.json(
-        { error: `Coaches not found with emails: ${missingEmails.join(", ")}` },
-        { status: 404 }
+    // Check if all provided coach emails were found (only for coachEmails)
+    if (!coach_id && coachEmails) {
+      const foundEmails = activeCoaches.map((coach) => coach.email);
+      const missingEmails = coachEmails.filter(
+        (email) => !foundEmails.includes(email)
       );
-    }
+      if (missingEmails.length > 0) {
+        return NextResponse.json(
+          {
+            error: `Coaches not found with emails: ${missingEmails.join(", ")}`,
+          },
+          { status: 404 }
+        );
+      }
 
-    // Warn if some coaches were inactive
-    if (activeCoaches.length < coaches.length) {
-      const inactiveCoaches = coaches.filter(
-        (coach) => coach.is_active === false
-      );
-      devLog(
-        `Warning: ${inactiveCoaches.length} coaches were inactive and excluded from team assignment`
-      );
+      // Warn if some coaches were inactive
+      const allCoaches = await supabaseAdmin!
+        .from("coaches")
+        .select("id, is_active")
+        .in("email", coachEmails);
+
+      if (allCoaches.data && activeCoaches.length < allCoaches.data.length) {
+        const inactiveCoaches = allCoaches.data.filter(
+          (coach) => coach.is_active === false
+        );
+        devLog(
+          `Warning: ${inactiveCoaches.length} coaches were inactive and excluded from team assignment`
+        );
+      }
     }
 
     // Create team (include legacy coach_email for backward compatibility)

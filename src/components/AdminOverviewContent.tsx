@@ -1,6 +1,17 @@
 "use client";
 
+/**
+ * ⚠️ IMPORTANT: Active/Inactive Status Rules ⚠️
+ *
+ * Coach active/inactive status is ONLY based on the manual toggle in coach.is_active field.
+ * Do NOT derive this status from login activity (total_logins, last_login_at, etc.).
+ * This is a manual admin setting, not an automatic calculation.
+ *
+ * See lines 245-248 for the correct implementation.
+ */
+
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Player, Team, Coach } from "@/types/supabase";
 
 // Helper function to format player name as "FirstName L."
@@ -109,8 +120,8 @@ export default function AdminOverviewContent({
 
         if (coachesToFetch.length > 0) {
           setLoadingProgress({ current: 0, total: coachesToFetch.length });
-          // Process coaches in batches to avoid overwhelming the server
-          const batchSize = 5; // Process 5 coaches at a time
+          // Process coaches in smaller batches to avoid rate limiting
+          const batchSize = 3; // Reduced batch size
           for (let i = 0; i < coachesToFetch.length; i += batchSize) {
             const batch = coachesToFetch.slice(i, i + batchSize);
 
@@ -150,9 +161,9 @@ export default function AdminOverviewContent({
               total: coachesToFetch.length,
             });
 
-            // Small delay between batches to respect rate limits
+            // Longer delay between batches to respect rate limits
             if (i + batchSize < coachesToFetch.length) {
-              await new Promise((resolve) => setTimeout(resolve, 100));
+              await new Promise((resolve) => setTimeout(resolve, 500));
             }
           }
         }
@@ -242,21 +253,15 @@ export default function AdminOverviewContent({
         {expandedSections.coaches && (
           <div className="max-h-96 overflow-y-auto">
             {coaches.map((coach, index) => {
-              const isActive = (coach as any).is_active;
+              // ONLY use coach.is_active from database (manual admin setting)
+              // Do NOT base this on login activity
+              const isActive = (coach as any).is_active ?? true;
               const isInactive = isActive === false;
+
               const loginStats = coachLoginStats[coach.id];
               const lastLogin = loginStats?.last_login_at
                 ? new Date(loginStats.last_login_at)
                 : null;
-              const daysSinceLogin = lastLogin
-                ? Math.floor(
-                    (Date.now() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)
-                  )
-                : null;
-              const isInactiveByLogin = daysSinceLogin && daysSinceLogin > 30;
-              const isInactiveByStatus = loginStats?.is_active === false;
-              const isInactiveOverall =
-                isInactive || isInactiveByLogin || isInactiveByStatus;
 
               // Get teams assigned to this coach
               const assignedTeams = teams.filter((team: any) =>
@@ -366,12 +371,12 @@ export default function AdminOverviewContent({
                     <div className="text-center">
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
-                          isInactiveOverall
+                          isInactive
                             ? "!bg-red-600 !text-white"
                             : "!bg-green-900 !text-green-300"
                         }`}
                         style={
-                          isInactiveOverall
+                          isInactive
                             ? {
                                 backgroundColor: "#dc2626",
                                 color: "white",
@@ -382,7 +387,7 @@ export default function AdminOverviewContent({
                               }
                         }
                       >
-                        {isInactiveOverall ? "Inactive" : "Active"}
+                        {isInactive ? "Inactive" : "Active"}
                       </span>
                     </div>
                   </div>
@@ -424,6 +429,24 @@ export default function AdminOverviewContent({
                             ? assignedTeams.map((team) => team.name).join(", ")
                             : "No team"}
                         </div>
+                        {coach.bio && (
+                          <div>
+                            <span className="font-medium text-gray-300">
+                              Bio:
+                            </span>{" "}
+                            <span className="text-gray-400">{coach.bio}</span>
+                          </div>
+                        )}
+                        {coach.quote && (
+                          <div>
+                            <span className="font-medium text-gray-300">
+                              Quote:
+                            </span>{" "}
+                            <span className="text-gray-400 italic">
+                              "{coach.quote}"
+                            </span>
+                          </div>
+                        )}
                         {isLoadingStats && (
                           <div>
                             <span className="font-medium text-gray-300">
@@ -450,12 +473,12 @@ export default function AdminOverviewContent({
                     <div className="text-center">
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
-                          isInactiveOverall
+                          isInactive
                             ? "!bg-red-600 !text-white"
                             : "!bg-green-900 !text-green-300"
                         }`}
                         style={
-                          isInactiveOverall
+                          isInactive
                             ? {
                                 backgroundColor: "#dc2626",
                                 color: "white",
@@ -466,7 +489,7 @@ export default function AdminOverviewContent({
                               }
                         }
                       >
-                        {isInactiveOverall ? "Inactive" : "Active"}
+                        {isInactive ? "Inactive" : "Active"}
                       </span>
                     </div>
                   </div>
@@ -547,13 +570,23 @@ export default function AdminOverviewContent({
                     onClick={() => handleViewTeam(team)}
                   >
                     {/* Team Logo */}
-                    <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-2">
-                      <span className="text-white font-bold text-sm">
-                        {team.name
-                          .split(" ")
-                          .map((word) => word[0])
-                          .join("")}
-                      </span>
+                    <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-2 overflow-hidden">
+                      {team.logo_url ? (
+                        <Image
+                          src={team.logo_url}
+                          alt={`${team.name} logo`}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <span className="text-white font-bold text-sm">
+                          {team.name
+                            .split(" ")
+                            .map((word) => word[0])
+                            .join("")}
+                        </span>
+                      )}
                     </div>
 
                     {/* Team Name */}
@@ -611,13 +644,23 @@ export default function AdminOverviewContent({
                     onClick={() => handleViewTeam(team)}
                   >
                     {/* Team Logo */}
-                    <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-3">
-                      <span className="text-white font-bold text-sm">
-                        {team.name
-                          .split(" ")
-                          .map((word) => word[0])
-                          .join("")}
-                      </span>
+                    <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-3 overflow-hidden">
+                      {team.logo_url ? (
+                        <Image
+                          src={team.logo_url}
+                          alt={`${team.name} logo`}
+                          width={40}
+                          height={40}
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                      ) : (
+                        <span className="text-white font-bold text-sm">
+                          {team.name
+                            .split(" ")
+                            .map((word) => word[0])
+                            .join("")}
+                        </span>
+                      )}
                     </div>
 
                     {/* Team Info */}

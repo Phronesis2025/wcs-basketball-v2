@@ -8,6 +8,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { devError, devLog } from "@/lib/security";
 import { AuthPersistence } from "@/lib/authPersistence";
+import CoachProfile from "@/components/dashboard/CoachProfile";
 import {
   ErrorLog,
   LoginStatistic,
@@ -245,10 +246,30 @@ function ClubManagementContent() {
       await AuthPersistence.storeSession(session);
 
       // Set user data
-      setUserName(user.user_metadata?.full_name || "Coach");
       setUserEmail(user.email || "");
       setUserId(user.id);
       setIsAdmin(user.user_metadata?.role === "admin");
+
+      // Fetch coach name from database
+      try {
+        const { data: coachData, error: coachError } = await supabase
+          .from("coaches")
+          .select("first_name, last_name")
+          .eq("user_id", user.id)
+          .single();
+
+        if (coachError) {
+          devError("Error fetching coach name:", coachError);
+          setUserName("Coach");
+        } else if (coachData) {
+          setUserName(`${coachData.first_name} ${coachData.last_name}`);
+        } else {
+          setUserName("Coach");
+        }
+      } catch (error) {
+        devError("Error fetching coach data:", error);
+        setUserName("Coach");
+      }
       setLastLoginTime(
         user.last_sign_in_at ? new Date(user.last_sign_in_at) : null
       );
@@ -534,7 +555,10 @@ function ClubManagementContent() {
 
   const handleViewTeam = (team: Team) => {
     console.log("View team clicked, team data:", team);
-    setSelectedTeamForModal(team);
+    // Find the latest team data from the teams array to ensure fresh data
+    const latestTeamData = teams.find((t) => t.id === team.id) || team;
+    console.log("Using latest team data for modal:", latestTeamData);
+    setSelectedTeamForModal(latestTeamData);
     setShowTeamDetailModal(true);
   };
 
@@ -909,21 +933,23 @@ function ClubManagementContent() {
       if (editingCoach) {
         // Update existing coach using API route
         console.log("Updating coach with ID:", editingCoach.id);
+        const requestBody = {
+          firstName: coachData.first_name,
+          lastName: coachData.last_name,
+          email: coachData.email,
+          bio: coachData.bio,
+          imageUrl: coachData.image_url,
+          quote: coachData.quote,
+          is_active: coachData.is_active,
+        };
+        console.log("Sending coach update data:", requestBody);
         const response = await fetch(`/api/admin/coaches/${editingCoach.id}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
             "x-user-id": userId || "",
           },
-          body: JSON.stringify({
-            firstName: coachData.first_name,
-            lastName: coachData.last_name,
-            email: coachData.email,
-            bio: coachData.bio,
-            imageUrl: coachData.image_url,
-            quote: coachData.quote,
-            is_active: coachData.is_active,
-          }),
+          body: JSON.stringify(requestBody),
         });
 
         const result = await response.json();
@@ -1000,6 +1026,7 @@ function ClubManagementContent() {
             logoUrl: teamData.logo_url,
             teamImageUrl: teamData.team_image,
             is_active: teamData.is_active,
+            coach_ids: teamData.coach_ids,
           }),
         });
 
@@ -1033,6 +1060,7 @@ function ClubManagementContent() {
             logoUrl: teamData.logo_url,
             teamImageUrl: teamData.team_image,
             is_active: teamData.is_active,
+            coach_ids: teamData.coach_ids,
           }),
         });
 
@@ -1195,6 +1223,7 @@ function ClubManagementContent() {
               const allTabs = [
                 { id: "overview", label: "Manage", icon: "📋" },
                 { id: "coaches-dashboard", label: "Coach", icon: "🏀" },
+                { id: "profile", label: "Profile", icon: "👤" },
                 { id: "payments", label: "Payments", icon: "💳" },
                 { id: "analytics", label: "Monitor", icon: "📊" },
               ];
@@ -1205,7 +1234,9 @@ function ClubManagementContent() {
                   ? allTabs
                   : allTabs.filter(
                       (tab) =>
-                        tab.id === "overview" || tab.id === "coaches-dashboard"
+                        tab.id === "overview" ||
+                        tab.id === "coaches-dashboard" ||
+                        tab.id === "profile"
                     );
 
               return visibleTabs.map((tab) => (
@@ -1236,6 +1267,8 @@ function ClubManagementContent() {
                 : "View and manage your assigned teams and players.")}
             {activeTab === "coaches-dashboard" &&
               "Access the coach dashboard to manage schedules, drills, and team communications."}
+            {activeTab === "profile" &&
+              "View and manage your profile information, teams, and account settings."}
             {activeTab === "payments" &&
               userRole === "admin" &&
               "Handle registration fees, payments, and financial transactions for your club."}
@@ -1248,12 +1281,6 @@ function ClubManagementContent() {
         {/* Tab Content */}
         {activeTab === "overview" && (
           <div className="space-y-6">
-            {(() => {
-              console.log("Rendering overview tab for admin");
-              console.log("Coaches array:", coaches);
-              console.log("Coaches length:", coaches.length);
-              return null;
-            })()}
             {userRole === "admin" ? (
               <AdminOverviewContent
                 teams={teams}
@@ -1912,20 +1939,36 @@ function ClubManagementContent() {
                               </div>
                               <div className="flex space-x-2">
                                 <button
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setViewingItem(drill);
+                                    setModalType("Drill");
+                                    setShowViewModal(true);
+                                  }}
+                                  className="text-green-600 hover:text-green-800 text-sm"
+                                  title="View drill"
+                                >
+                                  👁️
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setEditingDrill(drill);
                                     setModalType("Drill");
                                     setShowScheduleModal(true);
                                   }}
                                   className="text-blue-600 hover:text-blue-800 text-sm"
+                                  title="Edit drill"
                                 >
                                   ✏️
                                 </button>
                                 <button
-                                  onClick={() =>
-                                    handleDeleteDrillItem(drill.id)
-                                  }
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteDrillItem(drill.id);
+                                  }}
                                   className="text-red-600 hover:text-red-800 text-sm"
+                                  title="Delete drill"
                                 >
                                   🗑️
                                 </button>
@@ -1963,6 +2006,16 @@ function ClubManagementContent() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Profile Tab */}
+        {activeTab === "profile" && (
+          <CoachProfile
+            userId={userId}
+            userEmail={userEmail}
+            userName={userName}
+            isAdmin={isAdmin}
+          />
         )}
 
         {/* Payments Tab */}
@@ -2200,6 +2253,7 @@ function ClubManagementContent() {
           editingTeam={editingTeam}
           loading={false}
           isManageTab={true}
+          coaches={coaches}
         />
 
         <AddPlayerModal

@@ -41,6 +41,8 @@ export async function PUT(
       teamImageUrl,
       is_active,
       coachEmails, // Array of coach emails
+      coach_id, // Single coach ID
+      coach_ids, // Array of coach IDs
     } = await request.json();
 
     if (!teamName || !ageGroup || !gender) {
@@ -53,6 +55,15 @@ export async function PUT(
     const { id: teamId } = await params;
 
     devLog("Updating team:", { teamId, teamName, ageGroup, gender });
+
+    // Debug team image update
+    console.log("🔍 Team Update API - Image Debug:", {
+      teamId,
+      teamName,
+      teamImageUrl,
+      logoUrl,
+      timestamp: new Date().toISOString(),
+    });
 
     // Prepare update data
     const updateData: any = {
@@ -135,8 +146,86 @@ export async function PUT(
       }
     }
 
+    // Handle multiple coach assignment by IDs if provided
+    if (coach_ids && Array.isArray(coach_ids) && coach_ids.length > 0) {
+      // Remove existing coach assignments
+      const { error: deleteError } = await supabaseAdmin!
+        .from("team_coaches")
+        .delete()
+        .eq("team_id", teamId);
+
+      if (deleteError) {
+        devError("Failed to remove existing coach assignments:", deleteError);
+        // Continue with team update even if coach assignment fails
+      }
+
+      // Get coaches by IDs to verify they exist and are active
+      const { data: coaches, error: coachesError } = await supabaseAdmin!
+        .from("coaches")
+        .select("id, first_name, last_name, email, is_active")
+        .in("id", coach_ids);
+
+      if (coachesError) {
+        devError("Failed to fetch coaches by IDs:", coachesError);
+      } else if (coaches && coaches.length > 0) {
+        // Filter out inactive coaches
+        const activeCoaches = coaches.filter(
+          (coach) => coach.is_active !== false
+        );
+
+        if (activeCoaches.length === 0) {
+          devLog("No active coaches found for team assignment");
+        } else {
+          // Create team_coaches relationships only for active coaches
+          const teamCoachInserts = activeCoaches.map((coach) => ({
+            team_id: teamId,
+            coach_id: coach.id,
+          }));
+
+          const { error: insertError } = await supabaseAdmin!
+            .from("team_coaches")
+            .insert(teamCoachInserts);
+
+          if (insertError) {
+            devError("Failed to create coach assignments:", insertError);
+          } else {
+            devLog(
+              `Coach assignments updated successfully for ${activeCoaches.length} active coaches`
+            );
+          }
+        }
+      }
+    }
+    // Handle single coach assignment if provided
+    else if (coach_id) {
+      // Remove existing coach assignments
+      const { error: deleteError } = await supabaseAdmin!
+        .from("team_coaches")
+        .delete()
+        .eq("team_id", teamId);
+
+      if (deleteError) {
+        devError("Failed to remove existing coach assignments:", deleteError);
+        // Continue with team update even if coach assignment fails
+      }
+
+      // Add new coach assignment
+      const { error: assignError } = await supabaseAdmin!
+        .from("team_coaches")
+        .insert({
+          team_id: teamId,
+          coach_id: coach_id,
+        });
+
+      if (assignError) {
+        devError("Failed to assign coach to team:", assignError);
+        // Continue with team update even if coach assignment fails
+      } else {
+        devLog("Coach assigned to team successfully");
+      }
+    }
     // Handle coach assignments if provided
-    if (coachEmails && Array.isArray(coachEmails)) {
+    else if (coachEmails && Array.isArray(coachEmails)) {
       // Remove existing coach assignments
       const { error: deleteError } = await supabaseAdmin!
         .from("team_coaches")
