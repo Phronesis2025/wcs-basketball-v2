@@ -52,6 +52,7 @@
 - **Status**: PRODUCTION READY ✅
 
 ### **Build Information**
+
 - **Build Time**: 20.3s (optimized)
 - **Build Status**: Clean Build ✅
 - **Warnings**: Only Prisma/Sentry dependency warnings (non-critical)
@@ -59,11 +60,13 @@
 - **Bundle Size**: Optimized with code splitting
 
 ### **UI/UX Improvements**
-- **Mobile View Optimization**: Cleaned up mobile view on club management page
-  - Removed bio and quote from mobile coach list view
-  - Kept essential information: image, name, last login, status badge
-  - Improved mobile user experience with focused, clean layout
-  - Full details still available in desktop view and coach detail modal
+
+- **Mobile View Optimization**: Enhanced mobile view on club management page
+  - **Coaches Section**: Moved last login date/time to separate line under label
+  - **Teams Section**: Each item on its own line (name, age group, gender, player count, coach count)
+  - **Players Section**: Player name, team assignment, and jersey number on separate lines
+  - **Layout**: Improved readability and organization on mobile devices
+  - **Avatars/Images**: All logos and images preserved as requested
 
 ## 🚀 Version 2.7.7 - Authentication System Fixes & Security Audit
 
