@@ -214,7 +214,7 @@ export default function TeamPage({ params }: TeamPageProps) {
       <div className="max-w-7xl mx-auto">
         {/* Team Identity (Logo and Name) - Side by Side, Centered */}
         <section
-          className="mb-8 flex flex-col sm:flex-row items-center justify-center gap-6"
+          className="pt-20 pb-8 sm:pt-24 mb-8 flex flex-col sm:flex-row items-center justify-center gap-6"
           aria-label="Team Identity"
         >
           <div className="flex-shrink-0">

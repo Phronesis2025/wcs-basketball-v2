@@ -10,6 +10,7 @@ import {
   sanitizeInput,
   generateCSRFToken,
 } from "@/lib/security";
+import { AuthPersistence } from "@/lib/authPersistence";
 // Server actions temporarily disabled due to Next.js issues
 
 export default function CoachesLogin() {
@@ -31,12 +32,24 @@ export default function CoachesLogin() {
   useEffect(() => {
     // Check if user is already authenticated
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        router.push("/admin/club-management");
-        return;
+      try {
+        // Check if we're in the process of signing out
+        const isSigningOut = localStorage.getItem("auth.signingOut");
+        if (isSigningOut) {
+          devLog("User is signing out, staying on login page");
+          localStorage.removeItem("auth.signingOut");
+          return;
+        }
+
+        // Check if user should be redirected to login (inverse logic)
+        const shouldRedirect = await AuthPersistence.shouldRedirectToLogin();
+        if (!shouldRedirect) {
+          devLog("User already authenticated, redirecting to club management");
+          router.push("/admin/club-management");
+          return;
+        }
+      } catch (error) {
+        devError("Error checking authentication:", error);
       }
     };
     checkAuth();
@@ -153,22 +166,29 @@ export default function CoachesLogin() {
       devLog("🔐 [LOGIN DEBUG] ✅ Login successful!");
       devLog("🔐 [LOGIN DEBUG] Auth data:", authData);
 
-      // Store session data in localStorage to bypass CORS issues
+      // Store session data and set it in Supabase client
       if (authData.session) {
-        devLog("🔐 [LOGIN DEBUG] Storing session in localStorage...");
-        localStorage.setItem(
-          "supabase.auth.token",
-          JSON.stringify(authData.session)
-        );
-        // Set a flag to indicate successful authentication
-        localStorage.setItem("auth.authenticated", "true");
+        devLog("🔐 [LOGIN DEBUG] Setting session in Supabase client...");
 
-        // Also store in sessionStorage as backup (survives page reloads)
-        sessionStorage.setItem(
-          "supabase.auth.token",
-          JSON.stringify(authData.session)
-        );
-        sessionStorage.setItem("auth.authenticated", "true");
+        // IMPORTANT: Set the session in Supabase's auth client
+        // This ensures Supabase knows about the authenticated state
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.setSession({
+            access_token: authData.session.access_token,
+            refresh_token: authData.session.refresh_token,
+          });
+
+        if (sessionError) {
+          devError("🔐 [LOGIN DEBUG] ⚠️ Error setting session:", sessionError);
+        } else {
+          devLog(
+            "🔐 [LOGIN DEBUG] ✅ Session set in Supabase client successfully"
+          );
+        }
+
+        // Also store in localStorage as backup
+        devLog("🔐 [LOGIN DEBUG] Storing session in localStorage...");
+        await AuthPersistence.storeSession(authData.session);
 
         devLog("🔐 [LOGIN DEBUG] Dispatching auth state change event...");
         // Dispatch custom event to notify navbar of auth state change
@@ -239,7 +259,7 @@ export default function CoachesLogin() {
 
   return (
     <div className="min-h-screen bg-black text-white p-4">
-      <div className="pt-20 sm:pt-24">
+      <div className="pt-20 pb-12 sm:pt-24">
         <div className="w-full max-w-md space-y-8 mx-auto">
           <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
             WCS Coaches

@@ -73,7 +73,11 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
 
   return (
     <div className="bg-navy min-h-screen text-white">
-      <section ref={ref} className="py-12" aria-label="Our Teams">
+      <section
+        ref={ref}
+        className="pt-20 pb-12 sm:pt-24"
+        aria-label="Our Teams"
+      >
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
             Our Teams
