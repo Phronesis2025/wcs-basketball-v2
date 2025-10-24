@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Player, Team, Coach } from "@/types/supabase";
 
 // Helper function to format player name as "FirstName L."
@@ -41,11 +41,13 @@ interface AdminOverviewContentProps {
   setCoachForm: (form: any) => void;
   setTeamForm: (form: any) => void;
   setPlayerForm: (form: any) => void;
-  getCoachLoginStats: (email: string) => any;
+  getCoachLoginStats: (coachId: string) => Promise<any>;
   handleEditCoach: (coach: Coach) => void;
   handleViewCoach: (coach: Coach) => void;
   handleEditTeam: (team: Team) => void;
   handleEditPlayer: (player: Player) => void;
+  handleViewTeam: (team: Team) => void;
+  handleViewPlayer: (player: Player) => void;
   handleDeleteCoach: (coach: Coach) => void;
   handleDeleteTeam: (team: Team) => void;
   handleDeletePlayer: (player: Player) => void;
@@ -79,10 +81,90 @@ export default function AdminOverviewContent({
   handleViewCoach,
   handleEditTeam,
   handleEditPlayer,
+  handleViewTeam,
+  handleViewPlayer,
   handleDeleteCoach,
   handleDeleteTeam,
   handleDeletePlayer,
 }: AdminOverviewContentProps) {
+  // State to store login stats for each coach
+  const [coachLoginStats, setCoachLoginStats] = useState<Record<string, any>>(
+    {}
+  );
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState({
+    current: 0,
+    total: 0,
+  });
+
+  // Fetch login stats for all coaches when coaches section is expanded
+  useEffect(() => {
+    if (coaches.length > 0 && expandedSections.coaches && !isLoadingStats) {
+      const fetchLoginStats = async () => {
+        setIsLoadingStats(true);
+        const stats: Record<string, any> = { ...coachLoginStats }; // Start with existing stats
+
+        // Filter coaches that need stats fetched
+        const coachesToFetch = coaches.filter((coach) => !stats[coach.id]);
+
+        if (coachesToFetch.length > 0) {
+          setLoadingProgress({ current: 0, total: coachesToFetch.length });
+          // Process coaches in batches to avoid overwhelming the server
+          const batchSize = 5; // Process 5 coaches at a time
+          for (let i = 0; i < coachesToFetch.length; i += batchSize) {
+            const batch = coachesToFetch.slice(i, i + batchSize);
+
+            // Fetch stats for this batch in parallel
+            const batchPromises = batch.map(async (coach) => {
+              try {
+                const loginStats = await getCoachLoginStats(coach.id);
+                return { coachId: coach.id, stats: loginStats };
+              } catch (error) {
+                console.error(
+                  `Error fetching login stats for coach ${coach.id}:`,
+                  error
+                );
+                return {
+                  coachId: coach.id,
+                  stats: {
+                    total_logins: 0,
+                    last_login_at: null,
+                    first_login_at: null,
+                    is_active: true,
+                  },
+                };
+              }
+            });
+
+            // Wait for this batch to complete
+            const batchResults = await Promise.all(batchPromises);
+
+            // Update stats with batch results
+            batchResults.forEach(({ coachId, stats: loginStats }) => {
+              stats[coachId] = loginStats;
+            });
+
+            // Update progress
+            setLoadingProgress({
+              current: Math.min(i + batchSize, coachesToFetch.length),
+              total: coachesToFetch.length,
+            });
+
+            // Small delay between batches to respect rate limits
+            if (i + batchSize < coachesToFetch.length) {
+              await new Promise((resolve) => setTimeout(resolve, 100));
+            }
+          }
+        }
+
+        setCoachLoginStats(stats);
+        setIsLoadingStats(false);
+      };
+
+      fetchLoginStats();
+    }
+  }, [coaches, expandedSections.coaches, getCoachLoginStats, isLoadingStats]);
+
   if (managementDataLoading) {
     return (
       <div className="text-center py-8">
@@ -162,7 +244,7 @@ export default function AdminOverviewContent({
             {coaches.map((coach, index) => {
               const isActive = (coach as any).is_active;
               const isInactive = isActive === false;
-              const loginStats = getCoachLoginStats(coach.email);
+              const loginStats = coachLoginStats[coach.id];
               const lastLogin = loginStats?.last_login_at
                 ? new Date(loginStats.last_login_at)
                 : null;
@@ -177,9 +259,9 @@ export default function AdminOverviewContent({
                 isInactive || isInactiveByLogin || isInactiveByStatus;
 
               // Get teams assigned to this coach
-              const assignedTeams = teams.filter((team: Team) =>
-                team.coaches?.some(
-                  (teamCoach) => teamCoach.email === coach.email
+              const assignedTeams = teams.filter((team: any) =>
+                team.team_coaches?.some(
+                  (teamCoach: any) => teamCoach.coaches?.email === coach.email
                 )
               );
 
@@ -194,7 +276,7 @@ export default function AdminOverviewContent({
                   <div
                     className="hidden md:grid items-center w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
                     style={{
-                      gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr auto",
+                      gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr",
                     }}
                     onClick={() => handleViewCoach(coach)}
                   >
@@ -242,28 +324,42 @@ export default function AdminOverviewContent({
 
                     {/* Team Names */}
                     <div className="text-gray-400 text-sm text-center">
-                      {assignedTeams.length > 0
-                        ? assignedTeams.map((team) => team.name).join(", ")
-                        : "No team"}
+                      <div className="font-medium text-gray-300 mb-1">
+                        Teams
+                      </div>
+                      <div>
+                        {assignedTeams.length > 0
+                          ? assignedTeams.map((team) => team.name).join(", ")
+                          : "No team"}
+                      </div>
                     </div>
 
-                    {/* Login Count */}
+                    {/* Loading Status */}
                     <div className="text-gray-500 text-sm text-center">
-                      {loginStats
-                        ? `${loginStats.total_logins} login${
-                            loginStats.total_logins !== 1 ? "s" : ""
-                          }`
-                        : "0 logins"}
+                      {isLoadingStats && (
+                        <div className="font-medium text-gray-300 mb-1">
+                          Status
+                        </div>
+                      )}
+                      <div>
+                        {isLoadingStats
+                          ? `Loading... (${loadingProgress.current}/${loadingProgress.total})`
+                          : ""}
+                      </div>
                     </div>
 
                     {/* Last Login */}
                     <div className="text-gray-500 text-sm text-center">
-                      Last:{" "}
-                      {lastLogin
-                        ? lastLogin.toLocaleDateString() +
-                          " " +
-                          lastLogin.toLocaleTimeString()
-                        : "Never"}
+                      <div className="font-medium text-gray-300 mb-1">
+                        Last Login
+                      </div>
+                      <div>
+                        {lastLogin
+                          ? lastLogin.toLocaleDateString() +
+                            " " +
+                            lastLogin.toLocaleTimeString()
+                          : "Never"}
+                      </div>
                     </div>
 
                     {/* Active/Inactive Badge */}
@@ -288,16 +384,6 @@ export default function AdminOverviewContent({
                       >
                         {isInactiveOverall ? "Inactive" : "Active"}
                       </span>
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className="text-center">
-                      <button
-                        onClick={() => handleEditCoach(coach)}
-                        className="text-blue-400 hover:text-blue-300 text-sm px-3 py-1 rounded hover:bg-blue-900/20"
-                      >
-                        Edit
-                      </button>
                     </div>
                   </div>
 
@@ -329,14 +415,34 @@ export default function AdminOverviewContent({
                       <div className="text-white font-medium">
                         {coach.first_name} {coach.last_name}
                       </div>
-                      <div className="text-gray-400 text-sm">
-                        {assignedTeams.length} team
-                        {assignedTeams.length !== 1 ? "s" : ""} •{" "}
-                        {loginStats
-                          ? `${loginStats.total_logins} login${
-                              loginStats.total_logins !== 1 ? "s" : ""
-                            }`
-                          : "0 logins"}
+                      <div className="text-gray-400 text-sm space-y-1">
+                        <div>
+                          <span className="font-medium text-gray-300">
+                            Teams:
+                          </span>{" "}
+                          {assignedTeams.length > 0
+                            ? assignedTeams.map((team) => team.name).join(", ")
+                            : "No team"}
+                        </div>
+                        {isLoadingStats && (
+                          <div>
+                            <span className="font-medium text-gray-300">
+                              Status:
+                            </span>{" "}
+                            Loading... ({loadingProgress.current}/
+                            {loadingProgress.total})
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-medium text-gray-300">
+                            Last Login:
+                          </span>{" "}
+                          {lastLogin
+                            ? lastLogin.toLocaleDateString() +
+                              " " +
+                              lastLogin.toLocaleTimeString()
+                            : "Never"}
+                        </div>
                       </div>
                     </div>
 
@@ -420,9 +526,10 @@ export default function AdminOverviewContent({
             {teams.map((team, index) => {
               const isActive = (team as any).is_active;
               const isInactive = isActive === false;
-              const playerCount = players.filter(
-                (player: Player) => player.team_id === team.id
-              ).length;
+              const playerCount =
+                team.players?.filter(
+                  (player: any) => player.is_active && !player.is_deleted
+                ).length || 0;
 
               return (
                 <div
@@ -433,10 +540,11 @@ export default function AdminOverviewContent({
                 >
                   {/* Desktop Layout */}
                   <div
-                    className="hidden md:grid items-center w-full"
+                    className="hidden md:grid items-center w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
                     style={{
-                      gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr auto",
+                      gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr",
                     }}
+                    onClick={() => handleViewTeam(team)}
                   >
                     {/* Team Logo */}
                     <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-2">
@@ -468,8 +576,8 @@ export default function AdminOverviewContent({
 
                     {/* Coaches */}
                     <div className="text-gray-400 text-sm text-center">
-                      {team.coaches?.length || 0} coach
-                      {(team.coaches?.length || 0) !== 1 ? "es" : ""}
+                      {team.team_coaches?.length || 0} coach
+                      {(team.team_coaches?.length || 0) !== 1 ? "es" : ""}
                     </div>
 
                     {/* Active/Inactive Badge */}
@@ -495,22 +603,12 @@ export default function AdminOverviewContent({
                         {isInactive ? "Inactive" : "Active"}
                       </span>
                     </div>
-
-                    {/* Edit Button */}
-                    <div className="text-center">
-                      <button
-                        onClick={() => handleEditTeam(team)}
-                        className="text-blue-400 hover:text-blue-300 text-sm px-3 py-1 rounded hover:bg-blue-900/20"
-                      >
-                        Edit
-                      </button>
-                    </div>
                   </div>
 
                   {/* Mobile Layout */}
                   <div
                     className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
-                    onClick={() => handleEditTeam(team)}
+                    onClick={() => handleViewTeam(team)}
                   >
                     {/* Team Logo */}
                     <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-3">
@@ -527,7 +625,9 @@ export default function AdminOverviewContent({
                       <div className="text-white font-medium">{team.name}</div>
                       <div className="text-gray-400 text-sm">
                         {team.age_group} • {team.gender} • {playerCount} player
-                        {playerCount !== 1 ? "s" : ""}
+                        {playerCount !== 1 ? "s" : ""} •{" "}
+                        {team.team_coaches?.length || 0} coach
+                        {(team.team_coaches?.length || 0) !== 1 ? "es" : ""}
                       </div>
                     </div>
 
@@ -675,11 +775,11 @@ export default function AdminOverviewContent({
                   >
                     {/* Desktop Layout */}
                     <div
-                      className="hidden md:grid items-center w-full"
+                      className="hidden md:grid items-center w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
                       style={{
-                        gridTemplateColumns:
-                          "auto 1fr 1fr 1fr 1fr 1fr 1fr 1fr auto",
+                        gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr 1fr",
                       }}
+                      onClick={() => handleViewPlayer(player)}
                     >
                       {/* Avatar */}
                       <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-2">
@@ -745,22 +845,12 @@ export default function AdminOverviewContent({
                           {isInactive ? "Inactive" : "Active"}
                         </span>
                       </div>
-
-                      {/* Edit Button */}
-                      <div className="text-center">
-                        <button
-                          onClick={() => handleEditPlayer(player)}
-                          className="text-blue-400 hover:text-blue-300 text-sm px-3 py-1 rounded hover:bg-blue-900/20"
-                        >
-                          Edit
-                        </button>
-                      </div>
                     </div>
 
                     {/* Mobile Layout */}
                     <div
                       className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
-                      onClick={() => handleEditPlayer(player)}
+                      onClick={() => handleViewPlayer(player)}
                     >
                       {/* Avatar */}
                       <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center mr-3">

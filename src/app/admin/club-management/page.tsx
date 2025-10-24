@@ -30,6 +30,8 @@ import AddCoachModal from "@/components/dashboard/AddCoachModal";
 import AddTeamModal from "@/components/dashboard/AddTeamModal";
 import AddPlayerModal from "@/components/dashboard/AddPlayerModal";
 import CoachDetailModal from "@/components/CoachDetailModal";
+import TeamDetailModal from "@/components/TeamDetailModal";
+import PlayerDetailModal from "@/components/PlayerDetailModal";
 import toast from "react-hot-toast";
 import {
   addSchedule,
@@ -92,6 +94,8 @@ function ClubManagementContent() {
   const [showEditTeamModal, setShowEditTeamModal] = useState(false);
   const [showEditPlayerModal, setShowEditPlayerModal] = useState(false);
   const [showCoachDetailModal, setShowCoachDetailModal] = useState(false);
+  const [showTeamDetailModal, setShowTeamDetailModal] = useState(false);
+  const [showPlayerDetailModal, setShowPlayerDetailModal] = useState(false);
 
   // View modal states
   const [viewingItem, setViewingItem] = useState<
@@ -108,6 +112,11 @@ function ClubManagementContent() {
 
   // Coach detail modal states
   const [selectedCoach, setSelectedCoach] = useState<Coach | null>(null);
+  const [selectedTeamForModal, setSelectedTeamForModal] = useState<Team | null>(
+    null
+  );
+  const [selectedPlayerForModal, setSelectedPlayerForModal] =
+    useState<Player | null>(null);
   const [coachLoginStats, setCoachLoginStats] = useState<any>(null);
   const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
   const [editingUpdate, setEditingUpdate] = useState<TeamUpdate | null>(null);
@@ -552,7 +561,7 @@ function ClubManagementContent() {
   const handleViewCoach = async (coach: any) => {
     console.log("View coach clicked, coach data:", coach);
     setSelectedCoach(coach);
-    
+
     // Fetch login statistics for this coach
     try {
       const stats = await getCoachLoginStats(coach.id);
@@ -566,7 +575,7 @@ function ClubManagementContent() {
         is_active: true,
       });
     }
-    
+
     setShowCoachDetailModal(true);
   };
 
@@ -576,10 +585,22 @@ function ClubManagementContent() {
     setShowEditTeamModal(true);
   };
 
+  const handleViewTeam = (team: Team) => {
+    console.log("View team clicked, team data:", team);
+    setSelectedTeamForModal(team);
+    setShowTeamDetailModal(true);
+  };
+
   const handleEditPlayer = (player: Player) => {
     console.log("Edit player clicked, player data:", player);
     setEditingPlayer(player);
     setShowEditPlayerModal(true);
+  };
+
+  const handleViewPlayer = (player: Player) => {
+    console.log("View player clicked, player data:", player);
+    setSelectedPlayerForModal(player);
+    setShowPlayerDetailModal(true);
   };
 
   const handleDeleteCoach = async (coach: Coach) => {
@@ -659,11 +680,14 @@ function ClubManagementContent() {
 
   const getCoachLoginStats = async (coachId: string) => {
     try {
-      const response = await fetch(`/api/admin/coaches/${coachId}/login-stats`, {
-        headers: {
-          "x-user-id": userId || "",
-        },
-      });
+      const response = await fetch(
+        `/api/admin/coaches/${coachId}/login-stats`,
+        {
+          headers: {
+            "x-user-id": userId || "",
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -1312,6 +1336,8 @@ function ClubManagementContent() {
                 handleViewCoach={handleViewCoach}
                 handleEditTeam={handleEditTeam}
                 handleEditPlayer={handleEditPlayer}
+                handleViewTeam={handleViewTeam}
+                handleViewPlayer={handleViewPlayer}
                 handleDeleteCoach={handleDeleteCoach}
                 handleDeleteTeam={handleDeleteTeam}
                 handleDeletePlayer={handleDeletePlayer}
@@ -2244,9 +2270,39 @@ function ClubManagementContent() {
         <CoachDetailModal
           isOpen={showCoachDetailModal}
           onClose={() => setShowCoachDetailModal(false)}
+          onEdit={() => {
+            setShowCoachDetailModal(false);
+            handleEditCoach(selectedCoach!);
+          }}
           coach={selectedCoach}
           teams={teams}
           loginStats={coachLoginStats}
+        />
+
+        {/* Team Detail Modal */}
+        <TeamDetailModal
+          isOpen={showTeamDetailModal}
+          onClose={() => setShowTeamDetailModal(false)}
+          onEdit={() => {
+            setShowTeamDetailModal(false);
+            handleEditTeam(selectedTeamForModal!);
+          }}
+          team={selectedTeamForModal}
+          coaches={coaches}
+          players={players}
+        />
+
+        {/* Player Detail Modal */}
+        <PlayerDetailModal
+          isOpen={showPlayerDetailModal}
+          onClose={() => setShowPlayerDetailModal(false)}
+          onEdit={() => {
+            setShowPlayerDetailModal(false);
+            handleEditPlayer(selectedPlayerForModal!);
+          }}
+          player={selectedPlayerForModal}
+          teams={teams}
+          coaches={coaches}
         />
       </div>
     </div>
