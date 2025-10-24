@@ -83,6 +83,11 @@ export default function AddCoachModal({
       // Clear current image for new coach
       setCurrentImage(null);
     }
+
+    // Reset file input and preview
+    setSelectedFile(null);
+    setImagePreview(null);
+    setErrors((prev) => ({ ...prev, image: "" }));
   }, [editingCoach]);
 
   // Cleanup preview URL on unmount
@@ -94,6 +99,15 @@ export default function AddCoachModal({
     };
   }, [imagePreview]);
 
+  // Cleanup file input when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedFile(null);
+      setImagePreview(null);
+      setErrors((prev) => ({ ...prev, image: "" }));
+    }
+  }, [isOpen]);
+
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
@@ -103,10 +117,18 @@ export default function AddCoachModal({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("File input changed:", e.target.files);
     const file = e.target.files?.[0];
     if (file) {
+      console.log("File selected:", {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+      });
+
       // Validate file type
       if (!file.type.startsWith("image/")) {
+        console.log("Invalid file type:", file.type);
         setErrors((prev) => ({
           ...prev,
           image: "Please select a valid image file",
@@ -116,6 +138,7 @@ export default function AddCoachModal({
 
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
+        console.log("File too large:", file.size);
         setErrors((prev) => ({
           ...prev,
           image: "File size must be less than 5MB",
@@ -123,6 +146,7 @@ export default function AddCoachModal({
         return;
       }
 
+      console.log("File validation passed, setting selected file");
       setSelectedFile(file);
 
       // Create preview URL
@@ -131,6 +155,8 @@ export default function AddCoachModal({
 
       // Clear any previous errors
       setErrors((prev) => ({ ...prev, image: "" }));
+    } else {
+      console.log("No file selected");
     }
   };
 
@@ -441,15 +467,59 @@ export default function AddCoachModal({
 
               {/* File Upload */}
               <div className="space-y-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-                <p className="text-sm text-gray-500">
-                  Upload a coach image (JPG, PNG, GIF - Max 5MB)
-                </p>
+                <div className="relative">
+                  {isOpen && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      id="coach-image-upload"
+                      key={`coach-upload-${
+                        editingCoach?.id || "new"
+                      }-${Date.now()}`}
+                    />
+                  )}
+                  <label
+                    htmlFor="coach-image-upload"
+                    className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                    onClick={(e) => {
+                      console.log("File upload label clicked");
+                      e.preventDefault();
+                      const fileInput = document.getElementById(
+                        "coach-image-upload"
+                      ) as HTMLInputElement;
+                      if (fileInput) {
+                        fileInput.click();
+                      }
+                    }}
+                  >
+                    <div className="text-center">
+                      <svg
+                        className="mx-auto h-8 w-8 text-gray-400"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <p className="mt-2 text-sm text-gray-600">
+                        <span className="font-medium text-blue-600 hover:text-blue-500">
+                          Click to upload
+                        </span>{" "}
+                        or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG, GIF up to 5MB
+                      </p>
+                    </div>
+                  </label>
+                </div>
                 {errors.image && (
                   <p className="text-[red] text-sm mt-1 font-medium">
                     {errors.image}

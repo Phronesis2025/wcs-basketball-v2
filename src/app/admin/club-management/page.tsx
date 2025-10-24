@@ -1,12 +1,13 @@
 // src/app/admin/club-management/page.tsx
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { devError, devLog } from "@/lib/security";
+import { AuthPersistence } from "@/lib/authPersistence";
 import {
   ErrorLog,
   LoginStatistic,
@@ -67,6 +68,9 @@ function ClubManagementContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [lastLoginTime, setLastLoginTime] = useState<Date | null>(null);
+  const [isLoadingUserData, setIsLoadingUserData] = useState(false);
+  const hasInitialized = useRef(false);
+  const isLoadingUserDataRef = useRef(false);
 
   // Data states
   const [teams, setTeams] = useState<Team[]>([]);
@@ -145,23 +149,52 @@ function ClubManagementContent() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      devLog("Auth state changed:", { event, hasSession: !!session });
+      devLog("Club Management: Auth state changed:", {
+        event,
+        hasSession: !!session,
+      });
 
-      if (event === "SIGNED_IN" && session) {
-        // User signed in, store session and reload data
-        localStorage.setItem("supabase.auth.token", JSON.stringify(session));
-        localStorage.setItem("auth.authenticated", "true");
-        loadUserData();
+      if (event === "INITIAL_SESSION" && session && !hasInitialized.current) {
+        // First load - initialize once
+        devLog("Club Management: INITIAL_SESSION detected, loading user data");
+        hasInitialized.current = true;
+        if (!isLoadingUserDataRef.current) {
+          loadUserData();
+        }
+      } else if (
+        event === "INITIAL_SESSION" &&
+        !session &&
+        !hasInitialized.current
+      ) {
+        // No session on initial load - redirect to login
+        devLog(
+          "Club Management: No session on INITIAL_SESSION, redirecting to login"
+        );
+        hasInitialized.current = true;
+        router.push("/coaches/login");
+      } else if (event === "SIGNED_IN" && session) {
+        // User just signed in - load user data
+        devLog("Club Management: SIGNED_IN detected, loading user data");
+        if (!isLoadingUserDataRef.current) {
+          loadUserData();
+        }
       } else if (event === "SIGNED_OUT") {
-        // User signed out, clear storage and redirect
-        localStorage.removeItem("supabase.auth.token");
-        localStorage.removeItem("auth.authenticated");
-        sessionStorage.removeItem("supabase.auth.token");
-        sessionStorage.removeItem("auth.authenticated");
+        devLog("Club Management: SIGNED_OUT detected, clearing state");
+        hasInitialized.current = false;
+        isLoadingUserDataRef.current = false;
+        setIsLoadingUserData(false);
+        setIsAuthorized(false);
+        setUserName(null);
+        setUserEmail(null);
+        setUserId(null);
+        setIsAdmin(false);
+        setUserRole(null);
+        // Clear auth data
+        AuthPersistence.clearAuthData();
         router.push("/coaches/login");
       } else if (event === "TOKEN_REFRESHED" && session) {
-        // Token refreshed, update stored session
-        localStorage.setItem("supabase.auth.token", JSON.stringify(session));
+        // Store refreshed session
+        AuthPersistence.storeSession(session);
         devLog("Token refreshed and stored");
       }
     });
@@ -173,140 +206,79 @@ function ClubManagementContent() {
 
   // Load user data
   const loadUserData = async () => {
+    if (isLoadingUserDataRef.current) {
+      devLog("Already loading user data, skipping...");
+      return;
+    }
+
     try {
+      isLoadingUserDataRef.current = true;
+      setIsLoadingUserData(true);
       devLog("Loading user data...");
 
-      // First, try to get the current session from Supabase
+      // Use Supabase's built-in session management
       const {
         data: { session },
         error: sessionError,
       } = await supabase.auth.getSession();
 
-      if (sessionError) {
-        devError("Error getting session:", sessionError);
+      if (sessionError || !session) {
+        devLog("No valid session found, redirecting to login");
         router.push("/coaches/login");
         return;
       }
 
-      if (!session) {
-        devLog("No active session found, checking stored session...");
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
-        // Check for stored session data
-        let sessionData = localStorage.getItem("supabase.auth.token");
-        if (!sessionData) {
-          sessionData = sessionStorage.getItem("supabase.auth.token");
-        }
-
-        if (!sessionData) {
-          devError("No session data found, redirecting to login...");
-          router.push("/coaches/login");
-          return;
-        }
-
-        // Try to parse stored session
-        try {
-          const storedSession = JSON.parse(sessionData);
-          if (storedSession.access_token) {
-            devLog("Using stored session data");
-            // Use stored session data
-            const response = await fetch("/api/auth/user", {
-              headers: {
-                Authorization: `Bearer ${storedSession.access_token}`,
-              },
-            });
-
-            if (response.ok) {
-              const userData = await response.json();
-              setUserName(userData.user?.user_metadata?.full_name || "Coach");
-              setUserEmail(userData.user?.email || null);
-              setIsAdmin(userData.user?.user_metadata?.role === "admin");
-              setUserId(userData.user?.id || null);
-              setLastLoginTime(
-                userData.user?.last_sign_in_at
-                  ? new Date(userData.user.last_sign_in_at)
-                  : null
-              );
-
-              // Fetch user role
-              try {
-                const roleResponse = await fetch("/api/auth/check-role", {
-                  headers: {
-                    "x-user-id": userData.user?.id,
-                  },
-                });
-
-                if (roleResponse.ok) {
-                  const roleData = await roleResponse.json();
-                  devLog("User role:", roleData.role);
-                  setUserRole(roleData.role);
-                }
-              } catch (roleError) {
-                devError("Failed to fetch user role:", roleError);
-              }
-            } else {
-              devError("Stored session is invalid, redirecting to login...");
-              router.push("/coaches/login");
-            }
-          } else {
-            devError(
-              "No access token in stored session, redirecting to login..."
-            );
-            router.push("/coaches/login");
-          }
-        } catch (parseError) {
-          devError("Error parsing stored session:", parseError);
-          router.push("/coaches/login");
-        }
+      if (userError || !user) {
+        devLog("No user found, redirecting to login");
+        router.push("/coaches/login");
         return;
       }
 
-      // We have a valid session, proceed with authentication
-      devLog("Valid session found, proceeding with authentication");
+      devLog("User authenticated successfully:", user.email);
 
-      // Store the session for future use
-      localStorage.setItem("supabase.auth.token", JSON.stringify(session));
-      localStorage.setItem("auth.authenticated", "true");
+      // Store session using AuthPersistence (without triggering events)
+      await AuthPersistence.storeSession(session);
 
-      // Get user data
-      const response = await fetch("/api/auth/user", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      // Set user data
+      setUserName(user.user_metadata?.full_name || "Coach");
+      setUserEmail(user.email || "");
+      setUserId(user.id);
+      setIsAdmin(user.user_metadata?.role === "admin");
+      setLastLoginTime(
+        user.last_sign_in_at ? new Date(user.last_sign_in_at) : null
+      );
 
-      if (response.ok) {
-        const userData = await response.json();
-        setUserName(userData.user?.user_metadata?.full_name || "Coach");
-        setUserEmail(userData.user?.email || null);
-        setIsAdmin(userData.user?.user_metadata?.role === "admin");
-        setUserId(userData.user?.id || null);
-        setLastLoginTime(
-          userData.user?.last_sign_in_at
-            ? new Date(userData.user.last_sign_in_at)
-            : null
-        );
-
-        // Fetch user role
-        try {
-          const roleResponse = await fetch("/api/auth/check-role", {
-            headers: {
-              "x-user-id": userData.user?.id,
-            },
-          });
-
-          if (roleResponse.ok) {
-            const roleData = await roleResponse.json();
-            devLog("User role:", roleData.role);
-            setUserRole(roleData.role);
-          }
-        } catch (roleError) {
-          devError("Failed to fetch user role:", roleError);
+      // Fetch user role (keep existing logic)
+      try {
+        const roleResponse = await fetch("/api/auth/check-role", {
+          headers: { "x-user-id": user.id },
+        });
+        if (roleResponse.ok) {
+          const roleData = await roleResponse.json();
+          devLog("User role:", roleData.role);
+          setUserRole(roleData.role);
+          // Set authorized flag AFTER we have all required data
+          setIsAuthorized(true);
+          devLog("User data loaded successfully - page authorized");
+        } else {
+          devError("Failed to fetch user role - response not ok");
+          router.push("/coaches/login");
         }
-      } else {
-        devError("Error loading user data: ", await response.text());
+      } catch (roleError) {
+        devError("Failed to fetch user role:", roleError);
         router.push("/coaches/login");
       }
     } catch (error) {
       devError("Error loading user data:", error);
       router.push("/coaches/login");
+    } finally {
+      isLoadingUserDataRef.current = false;
+      setIsLoadingUserData(false);
     }
   };
 
@@ -480,31 +452,6 @@ function ClubManagementContent() {
       setAnalyticsLoading(false);
     }
   };
-
-  // Initialize
-  useEffect(() => {
-    loadUserData();
-    setIsAuthorized(true);
-
-    // Listen for authentication state changes
-    const handleAuthStateChange = (event: CustomEvent) => {
-      if (event.detail.authenticated === false) {
-        router.push("/coaches/login");
-      }
-    };
-
-    window.addEventListener(
-      "authStateChanged",
-      handleAuthStateChange as EventListener
-    );
-
-    return () => {
-      window.removeEventListener(
-        "authStateChanged",
-        handleAuthStateChange as EventListener
-      );
-    };
-  }, [router]);
 
   // Load data when tab changes
   useEffect(() => {

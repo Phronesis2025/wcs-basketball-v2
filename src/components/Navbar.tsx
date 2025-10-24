@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import { AuthPersistence } from "@/lib/authPersistence";
+import { devLog } from "@/lib/security";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -38,6 +40,17 @@ export default function Navbar() {
     const checkAuthStatus = () => {
       // Don't check auth status if we're in the process of signing out
       if (isSigningOut) {
+        devLog("Navbar: Skipping auth check - signing out");
+        return;
+      }
+
+      // Check if we just signed out
+      const justSignedOut = sessionStorage.getItem("auth.justSignedOut");
+      if (justSignedOut) {
+        devLog("Navbar: Skipping auth check - just signed out");
+        setUser(null);
+        setUserFullName(null);
+        setIsAdmin(false);
         return;
       }
 
@@ -45,13 +58,14 @@ export default function Navbar() {
       let isAuthenticated = localStorage.getItem("auth.authenticated");
       let authToken = localStorage.getItem("supabase.auth.token");
 
-      // If localStorage is empty, try sessionStorage
+      // If localStorage is empty, try sessionStorage ONLY if not signing out
       if (!isAuthenticated || !authToken) {
         isAuthenticated = sessionStorage.getItem("auth.authenticated");
         authToken = sessionStorage.getItem("supabase.auth.token");
 
-        // If found in sessionStorage, restore to localStorage
-        if (isAuthenticated && authToken) {
+        // DO NOT restore to localStorage during sign-out
+        // Only restore if we have valid data and not signing out
+        if (isAuthenticated && authToken && !isSigningOut) {
           localStorage.setItem("auth.authenticated", isAuthenticated);
           localStorage.setItem("supabase.auth.token", authToken);
         }
@@ -125,13 +139,13 @@ export default function Navbar() {
           // Always check role immediately for Club Management page
           if (isAdminDashboard) {
             checkAdminRole(session?.user?.id).then((adminStatus) => {
-              console.log(
+              devLog(
                 "Navbar: Immediate admin check for Club Management:",
                 adminStatus
               );
             });
-          } else if (now - lastCheck > 60000) {
-            // Increased cache time to 60 seconds
+          } else if (now - lastCheck > 300000) {
+            // Increased cache time to 5 minutes (300000ms)
             // Check role and cache the result
             checkAdminRole(session?.user?.id).then((adminStatus) => {
               // Cache the admin status after successful check
@@ -139,18 +153,21 @@ export default function Navbar() {
                 "navbarAdminStatus",
                 adminStatus.toString()
               );
-              console.log("Navbar: Cached admin status:", adminStatus);
+              devLog("Navbar: Cached admin status:", adminStatus);
             });
             sessionStorage.setItem("navbarRoleChecked", now.toString());
           } else if (cachedAdminStatus !== null) {
             // Use cached admin status
             const cachedAdmin = cachedAdminStatus === "true";
             setIsAdmin(cachedAdmin);
-            console.log("Navbar: Using cached admin status:", cachedAdmin);
+            // Only log in development mode
+            if (process.env.NODE_ENV === "development") {
+              console.log("Navbar: Using cached admin status:", cachedAdmin);
+            }
           } else {
             // No cache available, check role
             checkAdminRole(session?.user?.id).then((adminStatus) => {
-              console.log("Navbar: Fresh admin check result:", adminStatus);
+              devLog("Navbar: Fresh admin check result:", adminStatus);
             });
           }
         } catch {
@@ -196,7 +213,7 @@ export default function Navbar() {
     );
 
     // Also check periodically in case of localStorage issues (reduced frequency)
-    const interval = setInterval(checkAuthStatus, 5000); // Reduced from 1000ms to 5000ms
+    const interval = setInterval(checkAuthStatus, 30000); // Reduced from 5000ms to 30000ms (30 seconds)
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -232,39 +249,33 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     try {
+      devLog("Navbar: Starting sign-out process");
+
       // Set signing out flag to prevent auth status checks
       setIsSigningOut(true);
 
-      // Clear ALL authentication-related data from both storages
-      localStorage.removeItem("auth.authenticated");
-      localStorage.removeItem("supabase.auth.token");
-      localStorage.removeItem("login_attempts");
-      localStorage.removeItem("login_timestamp");
-
-      sessionStorage.removeItem("auth.authenticated");
-      sessionStorage.removeItem("supabase.auth.token");
-      sessionStorage.removeItem("navbarRoleChecked");
-      sessionStorage.removeItem("navbarAdminStatus");
-
-      // Clear any other potential auth-related keys
-      const keysToRemove = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (
-          key &&
-          (key.includes("auth") ||
-            key.includes("supabase") ||
-            key.includes("session"))
-        ) {
-          keysToRemove.push(key);
-        }
-      }
-      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      // Set flags to prevent auto sign-in
+      localStorage.setItem("auth.signingOut", "true");
+      sessionStorage.setItem("auth.justSignedOut", "true");
 
       // Clear state immediately
       setUser(null);
       setUserFullName(null);
       setIsAdmin(false);
+
+      // Import supabase client for sign out
+      const { supabase } = await import("@/lib/supabaseClient");
+
+      // Sign out from Supabase - this will trigger SIGNED_OUT event
+      devLog("Navbar: Signing out from Supabase");
+      const { error } = await supabase.auth.signOut({ scope: "local" });
+      if (error) {
+        console.error("Supabase sign out error:", error);
+      }
+
+      // Clear ALL authentication-related data using AuthPersistence utility
+      devLog("Navbar: Clearing auth data");
+      AuthPersistence.clearAuthData();
 
       // Dispatch custom event to notify other components
       window.dispatchEvent(
@@ -273,16 +284,24 @@ export default function Navbar() {
         })
       );
 
-      // Reset signing out flag after a delay in case redirect doesn't happen
+      devLog("Navbar: Sign-out complete, redirecting to home");
+
+      // Use a longer delay to ensure everything is cleared
       setTimeout(() => {
+        localStorage.removeItem("auth.signingOut");
+        sessionStorage.removeItem("auth.justSignedOut");
         setIsSigningOut(false);
-      }, 2000);
+      }, 3000);
 
       // Perform hard redirect to home page to ensure complete sign out
       window.location.href = "/";
     } catch (error) {
       console.error("Error during sign out:", error);
-      // Even if there's an error, still redirect to home
+      // Even if there's an error, still clear everything and redirect
+      AuthPersistence.clearAuthData();
+      localStorage.removeItem("auth.signingOut");
+      sessionStorage.removeItem("auth.justSignedOut");
+      setIsSigningOut(false);
       window.location.href = "/";
     }
   };
@@ -293,7 +312,10 @@ export default function Navbar() {
     { name: "About", href: "/about" },
     { name: "Teams", href: "/teams" },
     { name: "Schedules", href: "/schedules" },
-    { name: "Coaches", href: "/coaches/login" },
+    {
+      name: "Coaches",
+      href: user ? "/admin/club-management" : "/coaches/login",
+    },
     { name: "Drills", href: "/drills" },
   ];
 
@@ -557,23 +579,7 @@ export default function Navbar() {
                     ))}
                     <li>
                       <button
-                        onClick={async () => {
-                          try {
-                            localStorage.removeItem("auth.authenticated");
-                            localStorage.removeItem("supabase.auth.token");
-                            sessionStorage.removeItem("auth.authenticated");
-                            sessionStorage.removeItem("supabase.auth.token");
-                            window.dispatchEvent(
-                              new CustomEvent("authStateChanged", {
-                                detail: { authenticated: false },
-                              })
-                            );
-                            setIsMobileMenuOpen(false);
-                            window.location.href = "/coaches/login";
-                          } catch (error) {
-                            console.error("Error during sign out:", error);
-                          }
-                        }}
+                        onClick={handleSignOut}
                         className="text-navy font-bebas text-lg tracking-wide hover:text-red transition-colors"
                       >
                         Sign Out
