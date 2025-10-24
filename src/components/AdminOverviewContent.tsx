@@ -421,32 +421,6 @@ export default function AdminOverviewContent({
                         {coach.first_name} {coach.last_name}
                       </div>
                       <div className="text-gray-400 text-sm space-y-1">
-                        <div>
-                          <span className="font-medium text-gray-300">
-                            Teams:
-                          </span>{" "}
-                          {assignedTeams.length > 0
-                            ? assignedTeams.map((team) => team.name).join(", ")
-                            : "No team"}
-                        </div>
-                        {coach.bio && (
-                          <div>
-                            <span className="font-medium text-gray-300">
-                              Bio:
-                            </span>{" "}
-                            <span className="text-gray-400">{coach.bio}</span>
-                          </div>
-                        )}
-                        {coach.quote && (
-                          <div>
-                            <span className="font-medium text-gray-300">
-                              Quote:
-                            </span>{" "}
-                            <span className="text-gray-400 italic">
-                              "{coach.quote}"
-                            </span>
-                          </div>
-                        )}
                         {isLoadingStats && (
                           <div>
                             <span className="font-medium text-gray-300">
