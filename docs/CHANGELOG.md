@@ -58,6 +58,13 @@
 - **Static Pages**: 54 pages generated successfully
 - **Bundle Size**: Optimized with code splitting
 
+### **UI/UX Improvements**
+- **Mobile View Optimization**: Cleaned up mobile view on club management page
+  - Removed bio and quote from mobile coach list view
+  - Kept essential information: image, name, last login, status badge
+  - Improved mobile user experience with focused, clean layout
+  - Full details still available in desktop view and coach detail modal
+
 ## 🚀 Version 2.7.7 - Authentication System Fixes & Security Audit
 
 **Release Date**: December 2024  
