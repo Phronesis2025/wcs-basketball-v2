@@ -124,22 +124,40 @@ export class AuthPersistence {
   }
 
   /**
-   * Clear all authentication data
+   * Clear all authentication data with enhanced cleanup
    */
   static clearAuthData(): void {
     try {
-      // Clear localStorage
+      devLog("Starting comprehensive auth data cleanup...");
+
+      // Set flags to prevent re-authentication during cleanup
+      localStorage.setItem("auth.signingOut", "true");
+      sessionStorage.setItem("auth.justSignedOut", "true");
+
+      // Clear primary auth keys
       localStorage.removeItem(this.STORAGE_KEYS.SESSION);
       localStorage.removeItem(this.STORAGE_KEYS.AUTHENTICATED);
       localStorage.removeItem(this.STORAGE_KEYS.LAST_REFRESH);
 
-      // Clear sessionStorage
       sessionStorage.removeItem(this.STORAGE_KEYS.SESSION);
       sessionStorage.removeItem(this.STORAGE_KEYS.AUTHENTICATED);
 
-      // Clear navbar cache
+      // Clear navbar and role cache
       sessionStorage.removeItem("navbarRoleChecked");
       sessionStorage.removeItem("navbarAdminStatus");
+
+      // Clear additional auth-related keys
+      const additionalKeys = [
+        "login_attempts",
+        "login_timestamp",
+        "auth.signingOut",
+        "auth.justSignedOut",
+      ];
+
+      additionalKeys.forEach((key) => {
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+      });
 
       // Clear any other potential auth-related keys from localStorage
       const keysToRemove = [];
@@ -149,12 +167,16 @@ export class AuthPersistence {
           key &&
           (key.includes("auth") ||
             key.includes("supabase") ||
-            key.includes("session"))
+            key.includes("session") ||
+            key.includes("login"))
         ) {
           keysToRemove.push(key);
         }
       }
-      keysToRemove.forEach((key) => localStorage.removeItem(key!));
+      keysToRemove.forEach((key) => {
+        devLog(`Removing localStorage key: ${key}`);
+        localStorage.removeItem(key!);
+      });
 
       // Clear any other potential auth-related keys from sessionStorage
       const sessionKeysToRemove = [];
@@ -165,12 +187,23 @@ export class AuthPersistence {
           (key.includes("auth") ||
             key.includes("supabase") ||
             key.includes("session") ||
-            key.includes("navbar"))
+            key.includes("navbar") ||
+            key.includes("login"))
         ) {
           sessionKeysToRemove.push(key);
         }
       }
-      sessionKeysToRemove.forEach((key) => sessionStorage.removeItem(key!));
+      sessionKeysToRemove.forEach((key) => {
+        devLog(`Removing sessionStorage key: ${key}`);
+        sessionStorage.removeItem(key!);
+      });
+
+      // Dispatch auth state change event to notify components
+      window.dispatchEvent(
+        new CustomEvent("authStateChanged", {
+          detail: { authenticated: false },
+        })
+      );
 
       devLog("Authentication data cleared from all storage");
     } catch (error) {

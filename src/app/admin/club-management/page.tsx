@@ -155,6 +155,16 @@ function ClubManagementContent() {
         hasSession: !!session,
       });
 
+      // Check if we're in the process of signing out
+      const isSigningOut =
+        localStorage.getItem("auth.signingOut") === "true" ||
+        sessionStorage.getItem("auth.justSignedOut") === "true";
+
+      if (isSigningOut) {
+        devLog("Club Management: Skipping auth state change - signing out");
+        return;
+      }
+
       if (event === "INITIAL_SESSION" && session && !hasInitialized.current) {
         // First load - initialize once
         devLog("Club Management: INITIAL_SESSION detected, loading user data");
@@ -399,7 +409,15 @@ function ClubManagementContent() {
 
   // Load coach dashboard data
   const fetchCoachData = async () => {
-    if (!selectedTeamId || !userId) return;
+    if (!selectedTeamId || !userId) {
+      devLog("fetchCoachData: Missing required data", {
+        selectedTeamId,
+        userId,
+      });
+      return;
+    }
+
+    devLog("fetchCoachData: Starting data fetch", { selectedTeamId, userId });
 
     setScheduleLoading(true);
     setUpdateLoading(true);
@@ -407,27 +425,50 @@ function ClubManagementContent() {
 
     try {
       // Fetch schedules
+      devLog("fetchCoachData: Fetching schedules");
       const schedulesData = await fetchSchedulesByTeamId(selectedTeamId);
+      devLog("fetchCoachData: Schedules fetched", {
+        count: schedulesData?.length || 0,
+        schedules: schedulesData,
+      });
       setSchedules(schedulesData || []);
 
       // Fetch team updates
+      devLog("fetchCoachData: Fetching team updates");
       const updatesData = await fetchTeamUpdates(selectedTeamId);
+      devLog("fetchCoachData: Team updates fetched", {
+        count: updatesData?.length || 0,
+      });
       setTeamUpdates(updatesData || []);
 
       // Fetch drills
       if (selectedTeamId !== "__GLOBAL__") {
+        devLog("fetchCoachData: Fetching drills for team");
         const drillsData = await getPracticeDrills(selectedTeamId);
+        devLog("fetchCoachData: Drills fetched", {
+          count: drillsData?.length || 0,
+        });
         setDrills(drillsData || []);
       } else {
         // For global view, get all drills
+        devLog("fetchCoachData: Fetching all drills (global view)");
         const { getAllPracticeDrills } = await import("@/lib/drillActions");
         const drillsData = await getAllPracticeDrills();
+        devLog("fetchCoachData: All drills fetched", {
+          count: drillsData?.length || 0,
+        });
         setDrills(drillsData || []);
       }
 
       // Fetch messages
+      devLog("fetchCoachData: Fetching messages");
       const messagesData = await getMessages();
+      devLog("fetchCoachData: Messages fetched", {
+        count: messagesData?.length || 0,
+      });
       setMessages(messagesData || []);
+
+      devLog("fetchCoachData: All data fetched successfully");
     } catch (error) {
       devError("Error fetching coach data:", error);
     } finally {
@@ -744,15 +785,47 @@ function ClubManagementContent() {
   // Schedule handlers
   const handleCreateSchedule = async (data: any) => {
     try {
+      devLog("handleCreateSchedule: Starting schedule creation", {
+        modalType,
+        selectedTeamId,
+        editingSchedule: !!editingSchedule,
+        data: {
+          gameDateTime: data.gameDateTime,
+          gameLocation: data.gameLocation,
+          gameOpponent: data.gameOpponent,
+          gameComments: data.gameComments,
+          gameType: data.gameType,
+        },
+      });
+
       if (!selectedTeamId) {
         toast.error("Please select a team first");
         return;
       }
 
+      // Validate required fields for games
+      if (modalType === "Game") {
+        if (!data.gameDateTime) {
+          toast.error("Game date and time is required");
+          return;
+        }
+        if (!data.gameLocation) {
+          toast.error("Game location is required");
+          return;
+        }
+        if (!data.gameOpponent) {
+          toast.error("Game opponent is required");
+          return;
+        }
+      }
+
       // Check if we're editing an existing schedule
       if (editingSchedule) {
-        console.log("[DEBUG] Editing schedule:", editingSchedule);
-        console.log("[DEBUG] Update data:", data);
+        devLog("handleCreateSchedule: Editing existing schedule", {
+          scheduleId: editingSchedule.id,
+          updateData: data,
+        });
+
         // Update existing schedule
         if (modalType === "Practice" && data.isRecurring) {
           // For recurring practices, we need to handle this differently
@@ -785,10 +858,16 @@ function ClubManagementContent() {
         toast.success("Schedule updated successfully");
       } else {
         // Create new schedule
+        devLog("handleCreateSchedule: Creating new schedule", {
+          modalType,
+          teamId: selectedTeamId,
+          userId,
+        });
+
         if (modalType === "Practice" && data.isRecurring) {
-          await addRecurringPractice({
+          const recurringData = {
             team_id: selectedTeamId,
-            event_type: "Practice",
+            event_type: "Practice" as const,
             date_time: data.practiceDateTime,
             title: data.practiceTitle || null,
             location: data.practiceLocation,
@@ -798,24 +877,34 @@ function ClubManagementContent() {
             recurringCount: data.recurringCount,
             recurringEndDate: data.recurringEndDate,
             selectedDays: data.selectedDays || [],
-          });
+          };
+          devLog(
+            "handleCreateSchedule: Creating recurring practice",
+            recurringData
+          );
+          await addRecurringPractice(recurringData);
         } else if (modalType === "Practice") {
-          await addSchedule({
+          const practiceData = {
             team_id: selectedTeamId,
-            event_type: "Practice",
+            event_type: "Practice" as const,
             date_time: data.practiceDateTime,
             title: data.practiceTitle || null,
             location: data.practiceLocation,
             description: data.practiceComments,
             is_global: false,
-          });
+          };
+          devLog(
+            "handleCreateSchedule: Creating single practice",
+            practiceData
+          );
+          await addSchedule(practiceData);
         } else {
           // Game/Tournament
           const eventType =
             data.gameType === "tournament" ? "Tournament" : "Game";
-          await addSchedule({
+          const gameData = {
             team_id: selectedTeamId,
-            event_type: eventType,
+            event_type: eventType as "Game" | "Tournament",
             date_time: data.gameDateTime,
             title: null,
             location: data.gameLocation,
@@ -823,16 +912,23 @@ function ClubManagementContent() {
             description: data.gameComments,
             is_global: false,
             created_by: userId || undefined,
-          });
+          };
+          devLog("handleCreateSchedule: Creating game/tournament", gameData);
+          const result = await addSchedule(gameData);
+          devLog("handleCreateSchedule: Game creation result", result);
         }
         toast.success("Schedule created successfully");
       }
 
       setShowScheduleModal(false);
+      devLog("handleCreateSchedule: Refreshing coach data");
       await fetchCoachData();
+      devLog("handleCreateSchedule: Schedule creation completed successfully");
     } catch (e) {
       devError("Failed to save schedule", e);
-      toast.error("Failed to save");
+      const errorMessage =
+        e instanceof Error ? e.message : "Unknown error occurred";
+      toast.error(`Failed to save: ${errorMessage}`);
     }
   };
 
@@ -1591,6 +1687,7 @@ function ClubManagementContent() {
                       </div>
                       <button
                         onClick={() => {
+                          setEditingSchedule(null); // Clear any previous editing state
                           setModalType("Game");
                           setShowScheduleModal(true);
                         }}
@@ -1709,6 +1806,7 @@ function ClubManagementContent() {
                       <div className="flex flex-col sm:flex-row gap-2">
                         <button
                           onClick={() => {
+                            setEditingSchedule(null); // Clear any previous editing state
                             setModalType("Practice");
                             setShowScheduleModal(true);
                           }}
@@ -1825,6 +1923,7 @@ function ClubManagementContent() {
                       </div>
                       <button
                         onClick={() => {
+                          setEditingUpdate(null); // Clear any previous editing state
                           setModalType("Update");
                           setShowScheduleModal(true);
                         }}
@@ -1904,6 +2003,7 @@ function ClubManagementContent() {
                       </div>
                       <button
                         onClick={() => {
+                          setEditingDrill(null); // Clear any previous editing state
                           setModalType("Drill");
                           setShowScheduleModal(true);
                         }}

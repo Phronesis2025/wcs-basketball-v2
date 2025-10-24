@@ -389,6 +389,10 @@ export default function ScheduleModal({
           location: gameLocation,
           description: gameComments,
           gameDateTime: finalGameDateTime, // Pass actual value for form submission
+          gameLocation: gameLocation, // Pass with gameLocation key for validation
+          gameOpponent: gameOpponent, // Pass with gameOpponent key for validation
+          gameComments: gameComments, // Pass with gameComments key for validation
+          gameType: gameType, // Pass game type for validation
         };
         break;
       case "Practice":
@@ -406,6 +410,12 @@ export default function ScheduleModal({
           recurringCount,
           recurringEndDate,
           selectedDays,
+          // Pass with expected key names for validation and parent handler
+          practiceDateTime: finalPracticeDateTime,
+          practiceTitle: practiceTitle,
+          practiceLocation: practiceLocation,
+          practiceComments: practiceComments,
+          practiceDuration: practiceDuration,
         };
         break;
       case "Update":
