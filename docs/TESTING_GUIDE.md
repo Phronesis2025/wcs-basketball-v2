@@ -2,20 +2,56 @@
 
 ## Overview
 
-This guide provides step-by-step instructions to test all forms and fields in both the Manage tab and Coach tab of the club management system. Updated for v2.7.8 with enhanced security features and improved user experience.
+This guide provides step-by-step instructions to test all functions and features in both the Manage tab and Coach tab of the club management system. Updated for v2.7.8 with enhanced security features, mobile optimization, and improved user experience.
 
 ## Prerequisites
 
-- Admin access with credentials: `jason.boyer@wcs.com` / `test123`
-- Coach access with credentials: `david.dupy@WCS.com` / `WCS2025sports`
-- Development server running on `http://localhost:3000`
-- **Security Features**: Rate limiting (100 requests/minute), XSS protection, CSRF tokens
+- **Admin access**: `jason.boyer@wcs.com` / `WCS2025sports!`
+- **Coach access**: `jack.frost@WCS.com` / `WCS2025sports!`
+- **Development server**: Running on `http://localhost:3000`
+- **Security Features**: Rate limiting (1000 requests/minute), XSS protection, CSRF tokens
 - **Build Status**: Clean production build with zero errors
-- **CSP Issues**: Resolved Trusted Types compatibility issues
+- **Mobile Testing**: Test on both desktop and mobile viewports
+- **Footer**: Removed from admin pages for cleaner interface
 
 ---
 
-## 🔧 **MANAGE TAB TESTING**
+## 👨‍💼 **ADMIN ROLE TESTING**
+
+### **Admin Access Verification**
+
+1. **Login as Admin**
+   - Navigate to `http://localhost:3000/coaches/login`
+   - Enter: `jason.boyer@wcs.com` / `WCS2025sports!`
+   - **Verify**: Redirected to admin dashboard
+   - **Verify**: "Club Management" option visible in navigation
+
+2. **Admin Dashboard Access**
+   - Click "Club Management" in navigation
+   - **Verify**: Access to all tabs (Overview, Manage, Profile, Payments)
+   - **Verify**: Footer is NOT visible (cleaner interface)
+   - **Verify**: Full admin privileges available
+
+---
+
+## 🏀 **COACH ROLE TESTING**
+
+### **Coach Access Verification**
+
+1. **Login as Coach**
+   - Navigate to `http://localhost:3000/coaches/login`
+   - Enter: `jack.frost@WCS.com` / `WCS2025sports!`
+   - **Verify**: Redirected to coach dashboard
+   - **Verify**: Limited access to coach-specific features
+
+2. **Coach Dashboard Access**
+   - **Verify**: Access to Overview and Profile tabs only
+   - **Verify**: NO access to "Club Management" or admin features
+   - **Verify**: Coach-specific functionality available
+
+---
+
+## 🔧 **MANAGE TAB TESTING (ADMIN ONLY)**
 
 ### **Section 1: Coaches Management**
 
@@ -133,7 +169,51 @@ This guide provides step-by-step instructions to test all forms and fields in bo
 
 ---
 
-## 🏀 **COACH TAB TESTING**
+## 📊 **OVERVIEW TAB TESTING (ADMIN ONLY)**
+
+### **Section 1: Overview Dashboard**
+
+#### **1.1 Dashboard Statistics**
+1. Navigate to Club Management → Overview tab
+2. **Verify**: Statistics cards display correctly
+   - Total Coaches count
+   - Total Teams count  
+   - Total Players count
+   - Active/Inactive breakdowns
+3. **Verify**: Data loads without errors
+4. **Verify**: Real-time updates when data changes
+
+#### **1.2 Coaches Section (Overview)**
+1. **Verify**: Coaches list displays with images
+2. **Verify**: Login statistics load correctly
+3. **Verify**: Active/Inactive status badges
+4. **Verify**: Last login dates show correctly
+5. **Test Mobile View**: 
+   - Switch to mobile viewport
+   - **Verify**: Clean layout with essential info only
+   - **Verify**: Last login date/time on separate line
+   - **Verify**: No bio/quote in mobile view
+
+#### **1.3 Teams Section (Overview)**
+1. **Verify**: Teams list with logos
+2. **Verify**: Player counts per team
+3. **Verify**: Coach assignments per team
+4. **Test Mobile View**:
+   - **Verify**: Each team info on separate lines
+   - **Verify**: Team name, age group, gender, player count, coach count
+   - **Verify**: Clean mobile layout
+
+#### **1.4 Players Section (Overview)**
+1. **Verify**: Players list with avatars
+2. **Verify**: Team assignments
+3. **Verify**: Jersey numbers
+4. **Test Mobile View**:
+   - **Verify**: Player name, team assignment, jersey number on separate lines
+   - **Verify**: Clean mobile layout
+
+---
+
+## 🏀 **COACH TAB TESTING (ADMIN & COACH)**
 
 ### **Section 4: Schedule Management**
 
@@ -226,6 +306,63 @@ This guide provides step-by-step instructions to test all forms and fields in bo
 
 ---
 
+## 👤 **PROFILE TAB TESTING (ADMIN & COACH)**
+
+### **Section 1: Profile Information**
+
+#### **1.1 Profile Display**
+1. Navigate to Profile tab
+2. **Verify**: User information displays correctly
+   - Name, email, role
+   - Profile image (if uploaded)
+   - Account creation date
+3. **Verify**: Last login information
+4. **Verify**: Login count statistics
+5. **Verify**: "Today", "Yesterday", "X days ago" formatting
+
+#### **1.2 Activity Metrics**
+1. **Verify**: Login activity tracking
+   - Total logins count
+   - Last login date/time
+   - Login history (if available)
+2. **Verify**: Data consistency with admin overview
+3. **Verify**: Real-time updates after login
+
+#### **1.3 Profile Image Upload**
+1. Click "Upload Image" button
+2. Select image file
+3. **Verify**: Image uploads successfully
+4. **Verify**: New image displays in profile
+5. **Verify**: Image appears in navigation/other areas
+
+#### **1.4 Password Change (Coach Only)**
+1. Click "Change Password" button
+2. Enter current password
+3. Enter new password
+4. Confirm new password
+5. **Verify**: Password changes successfully
+6. **Verify**: Can login with new password
+
+---
+
+## 💰 **PAYMENTS TAB TESTING (ADMIN ONLY)**
+
+### **Section 1: Payment Management**
+
+#### **1.1 Payment Overview**
+1. Navigate to Payments tab (Admin only)
+2. **Verify**: Payment statistics display
+3. **Verify**: Payment history (if any)
+4. **Verify**: Payment methods available
+
+#### **1.2 Payment Processing**
+1. **Test**: Payment form functionality
+2. **Test**: Payment validation
+3. **Test**: Payment confirmation
+4. **Verify**: Payment records update
+
+---
+
 ## 🔍 **CROSS-FUNCTIONAL TESTING**
 
 ### **Section 6: Data Consistency**
@@ -300,27 +437,52 @@ This guide provides step-by-step instructions to test all forms and fields in bo
 
 ## ✅ **VERIFICATION CHECKLIST**
 
-### **Manage Tab - Coaches**
+### **🔐 Authentication & Access Control**
+
+- [ ] Admin login works correctly
+- [ ] Coach login works correctly
+- [ ] Admin has access to all features
+- [ ] Coach has limited access (no admin features)
+- [ ] Footer removed from admin pages
+- [ ] Navigation works correctly for both roles
+
+### **📊 Overview Tab (Admin Only)**
+
+- [ ] Dashboard statistics display correctly
+- [ ] Coaches section loads with login stats
+- [ ] Teams section shows player/coach counts
+- [ ] Players section displays team assignments
+- [ ] Mobile view works correctly for all sections
+- [ ] Data consistency across all views
+
+### **🔧 Manage Tab - Coaches (Admin Only)**
 
 - [ ] Add coach functionality works
 - [ ] Edit coach functionality works
+- [ ] View coach details works
+- [ ] Delete coach functionality works
 - [ ] Form validation works
 - [ ] Image upload works
+- [ ] Bio and quote fields work
 - [ ] Data persists after refresh
 
-### **Manage Tab - Teams**
+### **🔧 Manage Tab - Teams (Admin Only)**
 
 - [ ] Add team functionality works
 - [ ] Edit team functionality works
+- [ ] View team details works
+- [ ] Delete team functionality works
 - [ ] Logo upload works
 - [ ] Team image upload works
 - [ ] Form validation works
 - [ ] Data persists after refresh
 
-### **Manage Tab - Players**
+### **🔧 Manage Tab - Players (Admin Only)**
 
 - [ ] Add player functionality works
 - [ ] Edit player functionality works
+- [ ] View player details works
+- [ ] Delete player functionality works
 - [ ] Age validation works
 - [ ] Gender validation works
 - [ ] Team assignment works
@@ -328,7 +490,7 @@ This guide provides step-by-step instructions to test all forms and fields in bo
 - [ ] Form validation works
 - [ ] Data persists after refresh
 
-### **Coach Tab - Games**
+### **🏀 Coach Tab - Games (Admin & Coach)**
 
 - [ ] Add game functionality works
 - [ ] Edit game functionality works
@@ -337,7 +499,7 @@ This guide provides step-by-step instructions to test all forms and fields in bo
 - [ ] Form validation works
 - [ ] Data persists after refresh
 
-### **Coach Tab - Practices**
+### **🏀 Coach Tab - Practices (Admin & Coach)**
 
 - [ ] Add practice functionality works
 - [ ] Edit practice functionality works
@@ -345,6 +507,90 @@ This guide provides step-by-step instructions to test all forms and fields in bo
 - [ ] Delete practice functionality works
 - [ ] Form validation works
 - [ ] Data persists after refresh
+
+### **👤 Profile Tab (Admin & Coach)**
+
+- [ ] Profile information displays correctly
+- [ ] Activity metrics work correctly
+- [ ] Login count tracking works
+- [ ] Date formatting works ("Today", "Yesterday", etc.)
+- [ ] Profile image upload works
+- [ ] Password change works (Coach only)
+
+### **💰 Payments Tab (Admin Only)**
+
+- [ ] Payment overview displays
+- [ ] Payment processing works
+- [ ] Payment validation works
+- [ ] Payment records update correctly
+
+---
+
+## 📱 **MOBILE TESTING**
+
+### **Mobile Viewport Testing**
+
+#### **1. Responsive Design**
+1. **Test on Mobile Devices**: Use browser dev tools mobile viewport
+2. **Verify**: All tabs accessible on mobile
+3. **Verify**: Forms work correctly on mobile
+4. **Verify**: Touch interactions work properly
+5. **Verify**: Text is readable without zooming
+
+#### **2. Mobile-Specific Layouts**
+1. **Overview Tab Mobile**:
+   - **Verify**: Clean coach list layout
+   - **Verify**: Last login date/time on separate line
+   - **Verify**: No bio/quote in mobile view
+2. **Manage Tab Mobile**:
+   - **Verify**: Teams show each item on separate line
+   - **Verify**: Players show name, team, jersey on separate lines
+   - **Verify**: Forms work correctly on mobile
+3. **Coach Tab Mobile**:
+   - **Verify**: Schedule management works on mobile
+   - **Verify**: Practice management works on mobile
+
+#### **3. Mobile Navigation**
+1. **Verify**: Navigation menu works on mobile
+2. **Verify**: Tab switching works smoothly
+3. **Verify**: Modal dialogs work on mobile
+4. **Verify**: Touch gestures work properly
+
+---
+
+## 🔐 **ROLE-BASED TESTING**
+
+### **Admin Role Testing**
+
+#### **1. Full Access Verification**
+1. **Login as Admin**: `jason.boyer@wcs.com`
+2. **Verify**: Access to Club Management
+3. **Verify**: Access to all tabs (Overview, Manage, Profile, Payments)
+4. **Verify**: Can manage coaches, teams, players
+5. **Verify**: Can view all data and statistics
+
+#### **2. Admin-Only Features**
+1. **Verify**: Can add/edit/delete coaches
+2. **Verify**: Can add/edit/delete teams
+3. **Verify**: Can add/edit/delete players
+4. **Verify**: Can view payment information
+5. **Verify**: Can access all administrative functions
+
+### **Coach Role Testing**
+
+#### **1. Limited Access Verification**
+1. **Login as Coach**: `jack.frost@WCS.com`
+2. **Verify**: NO access to Club Management
+3. **Verify**: Access to Overview and Profile tabs only
+4. **Verify**: Can manage own schedule and practices
+5. **Verify**: Cannot access admin functions
+
+#### **2. Coach-Only Features**
+1. **Verify**: Can manage team schedules
+2. **Verify**: Can manage practices
+3. **Verify**: Can view team information
+4. **Verify**: Can change password
+5. **Verify**: Cannot access admin functions
 
 ---
 
@@ -357,6 +603,9 @@ This guide provides step-by-step instructions to test all forms and fields in bo
 5. **Navigation**: Verify proper navigation between tabs
 6. **Responsive Design**: Test on different screen sizes
 7. **Browser Compatibility**: Test in different browsers
+8. **Role Permissions**: Verify correct access levels for admin vs coach
+9. **Mobile Layout**: Test mobile-specific layouts and interactions
+10. **Footer Display**: Verify footer removed from admin pages
 
 ---
 
@@ -372,17 +621,63 @@ This guide provides step-by-step instructions to test all forms and fields in bo
 
 ## 🎯 **SUCCESS CRITERIA**
 
-All forms should:
+### **Functional Requirements**
+- ✅ All forms accept valid input
+- ✅ All forms reject invalid input with clear errors
+- ✅ All CRUD operations work correctly
+- ✅ Data persists after submission and refresh
+- ✅ Role-based access control works properly
+- ✅ Mobile responsiveness works on all devices
 
-- ✅ Accept valid input
-- ✅ Reject invalid input with clear errors
-- ✅ Persist data after submission
-- ✅ Handle errors gracefully
-- ✅ Provide good user experience
-- ✅ Work consistently across all browsers
-- ✅ Maintain data integrity
+### **User Experience Requirements**
+- ✅ Intuitive navigation for both admin and coach roles
+- ✅ Clear error messages and validation feedback
+- ✅ Fast loading times and smooth interactions
+- ✅ Consistent design across all tabs and features
+- ✅ Mobile-optimized layouts and interactions
+
+### **Technical Requirements**
+- ✅ No console errors or warnings
+- ✅ Proper error handling and graceful failures
+- ✅ Data integrity maintained across all operations
+- ✅ Security features working (rate limiting, XSS protection)
+- ✅ Footer correctly hidden on admin pages
 
 ---
 
-_Last Updated: [Current Date]_
-_Version: 1.0_
+## 🔄 **TESTING WORKFLOW**
+
+### **Phase 1: Authentication Testing**
+1. Test admin login and access
+2. Test coach login and access
+3. Verify role-based permissions
+4. Test logout and session management
+
+### **Phase 2: Admin Functionality Testing**
+1. Test Overview tab functionality
+2. Test Manage tab (Coaches, Teams, Players)
+3. Test Profile tab features
+4. Test Payments tab (if applicable)
+
+### **Phase 3: Coach Functionality Testing**
+1. Test Overview tab (limited access)
+2. Test Coach tab (Games, Practices)
+3. Test Profile tab features
+4. Verify no admin access
+
+### **Phase 4: Mobile Testing**
+1. Test all features on mobile viewport
+2. Verify mobile-specific layouts
+3. Test touch interactions
+4. Verify responsive design
+
+### **Phase 5: Cross-Functional Testing**
+1. Test data consistency across tabs
+2. Test concurrent operations
+3. Test error handling
+4. Test performance with large datasets
+
+---
+
+_Last Updated: December 2024_
+_Version: 2.0 - Comprehensive Testing Guide_
