@@ -10,6 +10,7 @@ import DevAuthClear from "../components/DevAuthClear";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "react-hot-toast";
+import ConditionalFooter from "../components/ConditionalFooter";
 
 export const metadata: Metadata = {
   title: "WCS Basketball - Where Champions Start",
@@ -132,7 +133,7 @@ export default function RootLayout({
           <ScrollToTop />
           <Navbar />
           {children}
-          <Footer />
+          <ConditionalFooter />
           <DevAuthClear />
           {/* Vercel Analytics for user behavior tracking */}
           <Analytics />

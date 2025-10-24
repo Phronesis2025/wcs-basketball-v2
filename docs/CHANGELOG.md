@@ -67,6 +67,10 @@
   - **Players Section**: Player name, team assignment, and jersey number on separate lines
   - **Layout**: Improved readability and organization on mobile devices
   - **Avatars/Images**: All logos and images preserved as requested
+- **Footer Removal**: Removed footer from admin pages (club management)
+  - **Conditional Rendering**: Footer only shows on public pages, not admin pages
+  - **Clean Interface**: Admin pages now have cleaner, more focused interface
+  - **User Experience**: Improved admin workflow without unnecessary footer clutter
 
 ## 🚀 Version 2.7.7 - Authentication System Fixes & Security Audit
 

@@ -645,8 +645,13 @@ export default function AdminOverviewContent({
                       <div className="text-gray-400 text-sm space-y-1">
                         <div>{team.age_group}</div>
                         <div>{team.gender}</div>
-                        <div>{playerCount} player{playerCount !== 1 ? "s" : ""}</div>
-                        <div>{team.team_coaches?.length || 0} coach{(team.team_coaches?.length || 0) !== 1 ? "es" : ""}</div>
+                        <div>
+                          {playerCount} player{playerCount !== 1 ? "s" : ""}
+                        </div>
+                        <div>
+                          {team.team_coaches?.length || 0} coach
+                          {(team.team_coaches?.length || 0) !== 1 ? "es" : ""}
+                        </div>
                       </div>
                     </div>
 
