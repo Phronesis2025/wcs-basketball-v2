@@ -431,14 +431,16 @@ export default function AdminOverviewContent({
                           </div>
                         )}
                         <div>
-                          <span className="font-medium text-gray-300">
+                          <div className="font-medium text-gray-300">
                             Last Login:
-                          </span>{" "}
-                          {lastLogin
-                            ? lastLogin.toLocaleDateString() +
-                              " " +
-                              lastLogin.toLocaleTimeString()
-                            : "Never"}
+                          </div>
+                          <div className="text-gray-400">
+                            {lastLogin
+                              ? lastLogin.toLocaleDateString() +
+                                " " +
+                                lastLogin.toLocaleTimeString()
+                              : "Never"}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -640,11 +642,11 @@ export default function AdminOverviewContent({
                     {/* Team Info */}
                     <div className="flex-1">
                       <div className="text-white font-medium">{team.name}</div>
-                      <div className="text-gray-400 text-sm">
-                        {team.age_group} • {team.gender} • {playerCount} player
-                        {playerCount !== 1 ? "s" : ""} •{" "}
-                        {team.team_coaches?.length || 0} coach
-                        {(team.team_coaches?.length || 0) !== 1 ? "es" : ""}
+                      <div className="text-gray-400 text-sm space-y-1">
+                        <div>{team.age_group}</div>
+                        <div>{team.gender}</div>
+                        <div>{playerCount} player{playerCount !== 1 ? "s" : ""}</div>
+                        <div>{team.team_coaches?.length || 0} coach{(team.team_coaches?.length || 0) !== 1 ? "es" : ""}</div>
                       </div>
                     </div>
 
@@ -885,9 +887,9 @@ export default function AdminOverviewContent({
                         <div className="text-white font-medium">
                           {formatPlayerName(player.name)}
                         </div>
-                        <div className="text-gray-400 text-sm">
-                          {playerTeam?.name || "Unassigned"} • #
-                          {player.jersey_number || "N/A"}
+                        <div className="text-gray-400 text-sm space-y-1">
+                          <div>{playerTeam?.name || "Unassigned"}</div>
+                          <div>#{player.jersey_number || "N/A"}</div>
                         </div>
                       </div>
 
