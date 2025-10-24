@@ -78,6 +78,15 @@ export default function TeamPage({ params }: TeamPageProps) {
           coach_names: teamData.coach_names,
         });
 
+        // Additional debugging for team image
+        console.log("🔍 Team Detail Page - Team Image Debug:", {
+          teamId: teamData.id,
+          teamName: teamData.name,
+          teamImageUrl: teamData.team_image,
+          logoUrl: teamData.logo_url,
+          timestamp: new Date().toISOString(),
+        });
+
         const [coachesData, schedulesData, updatesData] = await Promise.all([
           fetchCoachesByTeamId(resolvedParams.id),
           fetchSchedulesByTeamId(resolvedParams.id),
@@ -251,7 +260,11 @@ export default function TeamPage({ params }: TeamPageProps) {
         <div className="lg:hidden mb-8">
           <section aria-label="Team Photo">
             <Image
-              src={team.team_image || "/logos/logo2.png"}
+              src={
+                team.team_image
+                  ? `${team.team_image}?t=${Date.now()}`
+                  : "/logos/logo2.png"
+              }
               alt={`${team.name} team photo`}
               width={0}
               height={0}
@@ -325,7 +338,11 @@ export default function TeamPage({ params }: TeamPageProps) {
           <div className="lg:flex hidden justify-center">
             <section aria-label="Team Photo" className="w-full">
               <Image
-                src={team.team_image || "/logos/logo2.png"}
+                src={
+                  team.team_image
+                    ? `${team.team_image}?t=${Date.now()}`
+                    : "/logos/logo2.png"
+                }
                 alt={`${team.name} team photo`}
                 width={0}
                 height={0}
@@ -411,17 +428,6 @@ export default function TeamPage({ params }: TeamPageProps) {
             aria-label="Back to all teams"
           >
             ← Back to Teams
-          </Link>
-        </div>
-
-        {/* Coaches Dashboard Button - Bottom of Page */}
-        <div className="text-center mt-8">
-          <Link
-            href="/coaches/login"
-            className="inline-block bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
-            aria-label="Access coaches dashboard"
-          >
-            Coaches Dashboard
           </Link>
         </div>
       </div>

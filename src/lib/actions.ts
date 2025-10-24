@@ -280,6 +280,15 @@ export async function fetchTeamById(id: string): Promise<Team | null> {
       return null;
     }
 
+    // Debug team image fetch
+    console.log("🔍 fetchTeamById - Image Debug:", {
+      teamId: id,
+      teamName: team.name,
+      teamImageUrl: team.team_image,
+      logoUrl: team.logo_url,
+      timestamp: new Date().toISOString(),
+    });
+
     // Then get coach names
     const { data: coachData } = await client
       .from("team_coaches")

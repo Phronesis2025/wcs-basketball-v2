@@ -12,7 +12,7 @@ export const securityHeaders = {
 
 // Rate limiting for development (in production, use Redis)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT = 100; // requests per minute
+const RATE_LIMIT = 1000; // requests per minute (increased for development)
 const WINDOW_MS = 60 * 1000; // 1 minute
 
 export function checkRateLimit(ip: string): {

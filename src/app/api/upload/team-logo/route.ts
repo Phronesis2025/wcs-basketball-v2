@@ -36,8 +36,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate filename following the pattern: logo-<team-name>.png
+    // Remove "WCS" prefix if present and sanitize the name
     const sanitizedTeamName = teamName
       .toLowerCase()
+      .replace(/^wcs\s+/, "") // Remove "WCS " prefix if present
       .replace(/[^a-z0-9\s-]/g, "") // Remove special characters except spaces and hyphens
       .replace(/\s+/g, "-") // Replace spaces with hyphens
       .replace(/-+/g, "-") // Replace multiple hyphens with single hyphen

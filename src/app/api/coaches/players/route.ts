@@ -15,7 +15,30 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // First, get the coach's assigned teams
+    // First, get the coach's ID from the coaches table using the user_id
+    const { data: coachData, error: coachError } = await supabaseAdmin!
+      .from("coaches")
+      .select("id")
+      .eq("user_id", userId)
+      .single();
+
+    if (coachError) {
+      devError("Failed to fetch coach data:", coachError);
+      return NextResponse.json(
+        { error: "Failed to fetch coach data" },
+        { status: 500 }
+      );
+    }
+
+    if (!coachData) {
+      devLog("Coach not found for user:", userId);
+      return NextResponse.json([]);
+    }
+
+    const coachId = coachData.id;
+    devLog("Found coach ID:", coachId, "for user:", userId);
+
+    // Now get the coach's assigned teams using the coach_id
     const { data: teamCoaches, error: teamCoachesError } = await supabaseAdmin!
       .from("team_coaches")
       .select(
@@ -27,7 +50,7 @@ export async function GET(request: NextRequest) {
         )
       `
       )
-      .eq("coach_id", userId);
+      .eq("coach_id", coachId);
 
     if (teamCoachesError) {
       devError("Failed to fetch coach teams:", teamCoachesError);

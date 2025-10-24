@@ -30,8 +30,11 @@ export async function PUT(
       );
     }
 
+    const requestData = await request.json();
+    devLog("Received coach update data:", requestData);
+
     const { firstName, lastName, email, bio, imageUrl, quote, is_active } =
-      await request.json();
+      requestData;
 
     if (!firstName || !lastName || !email) {
       return NextResponse.json(
