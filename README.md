@@ -2,7 +2,7 @@
 
 A modern, secure basketball team management system built with Next.js 15, TypeScript, and Supabase.
 
-**Current Version**: v2.7.6  
+**Current Version**: v2.0.1  
 **Last Updated**: January 2025  
 **Security Score**: 10/10 (Perfect) 🔒  
 **Build Status**: Clean Build ✅  
@@ -23,7 +23,8 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 
 - **Security**: Perfect 10/10 security score with comprehensive audit and zero vulnerabilities
 - **Authentication**: Role-based access control with admin and coach permissions
-- **Input Sanitization**: XSS protection and profanity filtering for all user content
+- **Input Sanitization**: XSS protection and comprehensive profanity filtering for all user content
+- **Delete Confirmation**: All destructive actions require user confirmation to prevent accidental data loss
 - **CSRF Protection**: Cryptographic token-based form protection
 - **Rate Limiting**: Protection against brute force attacks
 - **Image Optimization**: Fixed Next.js Image aspect ratio warnings for better performance

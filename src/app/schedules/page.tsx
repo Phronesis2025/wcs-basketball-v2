@@ -83,13 +83,21 @@ export default function SchedulesPage() {
             "postgres_changes",
             { event: "UPDATE", schema: "public", table: "schedules" },
             (payload) => {
-              setEvents((prev) =>
-                prev.map((event) =>
-                  event.id === payload.new.id
-                    ? (payload.new as Schedule)
-                    : event
-                )
-              );
+              const updatedSchedule = payload.new as Schedule;
+
+              // If the schedule was soft deleted (deleted_at is set), remove it from the list
+              if (updatedSchedule.deleted_at) {
+                setEvents((prev) =>
+                  prev.filter((event) => event.id !== updatedSchedule.id)
+                );
+              } else {
+                // Otherwise, update the event normally
+                setEvents((prev) =>
+                  prev.map((event) =>
+                    event.id === updatedSchedule.id ? updatedSchedule : event
+                  )
+                );
+              }
             }
           )
           .on(
@@ -130,30 +138,38 @@ export default function SchedulesPage() {
             { event: "UPDATE", schema: "public", table: "team_updates" },
             (payload) => {
               const update = payload.new as TeamUpdate;
-              const scheduleEvent = {
-                id: update.id,
-                event_type: "Update",
-                date_time: update.date_time,
-                title: update.title,
-                location: "N/A",
-                opponent: null,
-                description: update.content,
-                is_global: update.is_global || false,
-                created_by: update.created_by,
-                created_at: update.created_at,
-                deleted_at: update.deleted_at,
-              } as Schedule;
 
-              setEvents((prev) => {
-                // If date_time was removed, remove from events
-                if (!update.date_time) {
-                  return prev.filter((event) => event.id !== update.id);
-                }
-                // Otherwise, update the event
-                return prev.map((event) =>
-                  event.id === update.id ? scheduleEvent : event
+              // If the update was soft deleted (deleted_at is set), remove it from the list
+              if (update.deleted_at) {
+                setEvents((prev) =>
+                  prev.filter((event) => event.id !== update.id)
                 );
-              });
+              } else {
+                const scheduleEvent = {
+                  id: update.id,
+                  event_type: "Update",
+                  date_time: update.date_time,
+                  title: update.title,
+                  location: "N/A",
+                  opponent: null,
+                  description: update.content,
+                  is_global: update.is_global || false,
+                  created_by: update.created_by,
+                  created_at: update.created_at,
+                  deleted_at: update.deleted_at,
+                } as Schedule;
+
+                setEvents((prev) => {
+                  // If date_time was removed, remove from events
+                  if (!update.date_time) {
+                    return prev.filter((event) => event.id !== update.id);
+                  }
+                  // Otherwise, update the event
+                  return prev.map((event) =>
+                    event.id === update.id ? scheduleEvent : event
+                  );
+                });
+              }
             }
           )
           .on(
@@ -178,6 +194,12 @@ export default function SchedulesPage() {
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
+      // First, filter out any events that have been soft deleted
+      if (event.deleted_at) {
+        return false;
+      }
+
+      // Then apply the existing filters
       const typeMatch = typeFilter === "all" || event.event_type === typeFilter;
       const teamMatch = teamFilter === "all" || event.team_id === teamFilter;
       return typeMatch && teamMatch;
@@ -189,6 +211,11 @@ export default function SchedulesPage() {
       timeZone: "America/Chicago",
     });
     return filteredEvents.filter((event) => {
+      // Additional safety check - filter out any deleted events
+      if (event.deleted_at) {
+        return false;
+      }
+
       // Compare date-only strings in the same locale/timezone
       const eventDateOnly = new Date(event.date_time).toLocaleDateString(
         "en-US",
