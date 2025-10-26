@@ -101,6 +101,15 @@ function ClubManagementContent() {
   const [showCoachDetailModal, setShowCoachDetailModal] = useState(false);
   const [showTeamDetailModal, setShowTeamDetailModal] = useState(false);
   const [showPlayerDetailModal, setShowPlayerDetailModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    type: "drill" | "game" | "practice" | "update";
+    name?: string;
+  } | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [showProfanityModal, setShowProfanityModal] = useState(false);
+  const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
 
   // View modal states
   const [viewingItem, setViewingItem] = useState<
@@ -987,36 +996,81 @@ function ClubManagementContent() {
     }
   };
 
-  const handleDeleteScheduleItem = async (scheduleId: string) => {
-    try {
-      await deleteSchedule(scheduleId, userId || "", userRole === "admin");
-      toast.success("Deleted");
-      await fetchCoachData();
-    } catch (e) {
-      devError("Failed to delete schedule", e);
-      toast.error("Delete failed");
-    }
+  const handleDeleteScheduleItem = (
+    scheduleId: string,
+    eventType: "Game" | "Practice"
+  ) => {
+    setDeleteTarget({
+      id: scheduleId,
+      type: eventType.toLowerCase() as "game" | "practice",
+    });
+    setShowDeleteConfirm(true);
   };
 
-  const handleDeleteUpdateItem = async (updateId: string) => {
-    try {
-      await deleteUpdate(updateId, userId || "", userRole === "admin");
-      toast.success("Deleted");
-      await fetchCoachData();
-    } catch (e) {
-      devError("Failed to delete update", e);
-      toast.error("Delete failed");
-    }
+  const handleDeleteUpdateItem = (updateId: string) => {
+    setDeleteTarget({ id: updateId, type: "update" });
+    setShowDeleteConfirm(true);
   };
 
-  const handleDeleteDrillItem = async (drillId: string) => {
+  const handleDeleteDrillItem = (drillId: string) => {
+    setDeleteTarget({ id: drillId, type: "drill" });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
     try {
-      await deletePracticeDrill(drillId, userId || "", userRole === "admin");
-      toast.success("Deleted");
+      setSubmitting(true);
+      devLog("Attempting to delete:", { deleteTarget, userId });
+
+      if (deleteTarget.type === "drill") {
+        await deletePracticeDrill(
+          deleteTarget.id,
+          userId || "",
+          userRole === "admin"
+        );
+        toast.success("Drill deleted successfully", {
+          duration: 3000,
+          position: "top-right",
+        });
+      } else if (
+        deleteTarget.type === "game" ||
+        deleteTarget.type === "practice"
+      ) {
+        await deleteSchedule(
+          deleteTarget.id,
+          userId || "",
+          userRole === "admin"
+        );
+        toast.success(
+          `${
+            deleteTarget.type === "game" ? "Game" : "Practice"
+          } deleted successfully`,
+          {
+            duration: 3000,
+            position: "top-right",
+          }
+        );
+      } else if (deleteTarget.type === "update") {
+        await deleteUpdate(deleteTarget.id, userId || "", userRole === "admin");
+        toast.success("Update deleted successfully", {
+          duration: 3000,
+          position: "top-right",
+        });
+      }
+
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
       await fetchCoachData();
-    } catch (e) {
-      devError("Failed to delete drill", e);
-      toast.error("Delete failed");
+    } catch (error) {
+      devError("Error deleting item:", error);
+      toast.error("Failed to delete item. Please try again.", {
+        duration: 4000,
+        position: "top-right",
+      });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -1540,11 +1594,15 @@ function ClubManagementContent() {
                 {/* Statistics Cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                   {(() => {
+                    // Get start of today for comparison (midnight today)
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
                     const nextGame = schedules
                       .filter(
                         (s) =>
                           s.event_type === "Game" &&
-                          new Date(s.date_time) > new Date()
+                          new Date(s.date_time) >= today
                       )
                       .sort(
                         (a, b) =>
@@ -1697,98 +1755,115 @@ function ClubManagementContent() {
                       </button>
                     </div>
                     <div className="space-y-3">
-                      {schedules
-                        .filter(
-                          (s) =>
-                            s.event_type === "Game" &&
-                            new Date(s.date_time) > new Date()
-                        )
-                        .slice(0, 3)
-                        .map((schedule) => (
-                          <div
-                            key={schedule.id}
-                            className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <h4 className="text-gray-900 font-semibold text-lg mb-1">
-                                  {schedule.opponent
-                                    ? `vs. ${schedule.opponent}`
-                                    : "TBD"}
-                                </h4>
-                                <p className="text-gray-500 text-sm">
-                                  {new Date(
-                                    schedule.date_time
-                                  ).toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                  })}
-                                </p>
-                                {schedule.location && (
-                                  <p className="text-gray-500 text-sm mt-1">
-                                    📍 {schedule.location}
+                      {(() => {
+                        // Get start of today for comparison (midnight today)
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        return schedules
+                          .filter(
+                            (s) =>
+                              s.event_type === "Game" &&
+                              new Date(s.date_time) >= today
+                          )
+                          .slice(0, 3)
+                          .map((schedule) => (
+                            <div
+                              key={schedule.id}
+                              className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="text-gray-900 font-semibold text-lg mb-1">
+                                    {schedule.opponent
+                                      ? `vs. ${schedule.opponent}`
+                                      : "TBD"}
+                                  </h4>
+                                  <p className="text-gray-500 text-sm">
+                                    {new Date(
+                                      schedule.date_time
+                                    ).toLocaleDateString("en-US", {
+                                      weekday: "long",
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })}
                                   </p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                  Game
-                                </span>
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openViewModal(schedule, "game");
-                                    }}
-                                    className="text-gray-600 hover:text-gray-800 text-sm"
-                                    title="View details"
-                                  >
-                                    👁️
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      console.log(
-                                        "[DEBUG] Setting editing schedule:",
-                                        schedule
-                                      );
-                                      setEditingSchedule(schedule);
-                                      setModalType("Game");
-                                      setShowScheduleModal(true);
-                                    }}
-                                    className="text-blue-600 hover:text-blue-800 text-sm"
-                                    title="Edit"
-                                  >
-                                    ✏️
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteScheduleItem(schedule.id);
-                                    }}
-                                    className="text-red-600 hover:text-red-800 text-sm"
-                                  >
-                                    🗑️
-                                  </button>
+                                  {schedule.location && (
+                                    <p className="text-gray-500 text-sm mt-1">
+                                      📍 {schedule.location}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                    Game
+                                  </span>
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openViewModal(schedule, "game");
+                                      }}
+                                      className="text-gray-600 hover:text-gray-800 text-sm"
+                                      title="View details"
+                                    >
+                                      👁️
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        console.log(
+                                          "[DEBUG] Setting editing schedule:",
+                                          schedule
+                                        );
+                                        setEditingSchedule(schedule);
+                                        setModalType("Game");
+                                        setShowScheduleModal(true);
+                                      }}
+                                      className="text-blue-600 hover:text-blue-800 text-sm"
+                                      title="Edit"
+                                    >
+                                      ✏️
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteScheduleItem(
+                                          schedule.id,
+                                          "Game"
+                                        );
+                                      }}
+                                      className="text-red-600 hover:text-red-800 text-sm"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      {schedules.filter(
-                        (s) =>
-                          s.event_type === "Game" &&
-                          new Date(s.date_time) > new Date()
-                      ).length === 0 && (
-                        <p className="text-gray-500 text-center py-4">
-                          No upcoming games
-                        </p>
-                      )}
+                          ));
+                      })()}
+                      {(() => {
+                        // Get start of today for comparison (midnight today)
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        return (
+                          schedules.filter(
+                            (s) =>
+                              s.event_type === "Game" &&
+                              new Date(s.date_time) >= today
+                          ).length === 0 && (
+                            <p className="text-gray-500 text-center py-4">
+                              No upcoming games
+                            </p>
+                          )
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -1817,96 +1892,113 @@ function ClubManagementContent() {
                       </div>
                     </div>
                     <div className="space-y-3">
-                      {schedules
-                        .filter(
-                          (s) =>
-                            s.event_type === "Practice" &&
-                            new Date(s.date_time) > new Date()
-                        )
-                        .slice(0, 3)
-                        .map((schedule) => (
-                          <div
-                            key={schedule.id}
-                            className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
-                          >
-                            <div className="flex justify-between items-start">
-                              <div className="flex-1">
-                                <h4 className="text-gray-900 font-semibold text-lg mb-1">
-                                  {schedule.title || "Practice"}
-                                </h4>
-                                <p className="text-gray-500 text-sm">
-                                  {new Date(
-                                    schedule.date_time
-                                  ).toLocaleDateString("en-US", {
-                                    weekday: "short",
-                                    month: "short",
-                                    day: "numeric",
-                                    hour: "numeric",
-                                    minute: "2-digit",
-                                    hour12: true,
-                                  })}{" "}
-                                  • 2h
-                                </p>
-                                {schedule.location && (
-                                  <p className="text-gray-500 text-sm mt-1">
-                                    📍 {schedule.location}
+                      {(() => {
+                        // Get start of today for comparison (midnight today)
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        return schedules
+                          .filter(
+                            (s) =>
+                              s.event_type === "Practice" &&
+                              new Date(s.date_time) >= today
+                          )
+                          .slice(0, 3)
+                          .map((schedule) => (
+                            <div
+                              key={schedule.id}
+                              className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                            >
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1">
+                                  <h4 className="text-gray-900 font-semibold text-lg mb-1">
+                                    {schedule.title || "Practice"}
+                                  </h4>
+                                  <p className="text-gray-500 text-sm">
+                                    {new Date(
+                                      schedule.date_time
+                                    ).toLocaleDateString("en-US", {
+                                      weekday: "short",
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "numeric",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })}{" "}
+                                    • 2h
                                   </p>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                  Practice
-                                </span>
-                                <div className="flex space-x-2">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      openViewModal(schedule, "practice");
-                                    }}
-                                    className="text-gray-600 hover:text-gray-800 text-sm"
-                                    title="View details"
-                                  >
-                                    👁️
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      console.log(
-                                        "[DEBUG] Setting editing practice:",
-                                        schedule
-                                      );
-                                      setEditingSchedule(schedule);
-                                      setModalType("Practice");
-                                      setShowScheduleModal(true);
-                                    }}
-                                    className="text-blue-600 hover:text-blue-800 text-sm"
-                                    title="Edit"
-                                  >
-                                    ✏️
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteScheduleItem(schedule.id);
-                                    }}
-                                    className="text-red-600 hover:text-red-800 text-sm"
-                                  >
-                                    🗑️
-                                  </button>
+                                  {schedule.location && (
+                                    <p className="text-gray-500 text-sm mt-1">
+                                      📍 {schedule.location}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                                    Practice
+                                  </span>
+                                  <div className="flex space-x-2">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openViewModal(schedule, "practice");
+                                      }}
+                                      className="text-gray-600 hover:text-gray-800 text-sm"
+                                      title="View details"
+                                    >
+                                      👁️
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        console.log(
+                                          "[DEBUG] Setting editing practice:",
+                                          schedule
+                                        );
+                                        setEditingSchedule(schedule);
+                                        setModalType("Practice");
+                                        setShowScheduleModal(true);
+                                      }}
+                                      className="text-blue-600 hover:text-blue-800 text-sm"
+                                      title="Edit"
+                                    >
+                                      ✏️
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeleteScheduleItem(
+                                          schedule.id,
+                                          "Practice"
+                                        );
+                                      }}
+                                      className="text-red-600 hover:text-red-800 text-sm"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      {schedules.filter(
-                        (s) =>
-                          s.event_type === "Practice" &&
-                          new Date(s.date_time) > new Date()
-                      ).length === 0 && (
-                        <p className="text-gray-500 text-center py-4">
-                          No practices scheduled
-                        </p>
-                      )}
+                          ));
+                      })()}
+                      {(() => {
+                        // Get start of today for comparison (midnight today)
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+
+                        return (
+                          schedules.filter(
+                            (s) =>
+                              s.event_type === "Practice" &&
+                              new Date(s.date_time) >= today
+                          ).length === 0 && (
+                            <p className="text-gray-500 text-center py-4">
+                              No practices scheduled
+                            </p>
+                          )
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -2313,9 +2405,10 @@ function ClubManagementContent() {
               ? handleCreateUpdate
               : handleCreateDrill
           }
-          onProfanityError={(errors) =>
-            console.log("Profanity errors:", errors)
-          }
+          onProfanityError={(errors) => {
+            setProfanityErrors(errors);
+            setShowProfanityModal(true);
+          }}
           type={modalType}
           editingData={
             modalType === "Game" || modalType === "Practice"
@@ -2405,6 +2498,126 @@ function ClubManagementContent() {
           teams={teams}
           coaches={coaches}
         />
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Delete{" "}
+                  {deleteTarget?.type === "drill"
+                    ? "Drill"
+                    : deleteTarget?.type === "game"
+                    ? "Game"
+                    : deleteTarget?.type === "practice"
+                    ? "Practice"
+                    : deleteTarget?.type === "update"
+                    ? "Update"
+                    : "Item"}
+                </h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  This action cannot be undone. The {deleteTarget?.type} will be
+                  permanently removed.
+                </p>
+                <div className="flex space-x-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowDeleteConfirm(false);
+                      setDeleteTarget(null);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                    disabled={submitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!submitting) {
+                        confirmDelete();
+                      }
+                    }}
+                    disabled={submitting}
+                    className="px-6 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {submitting ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Profanity Validation Modal */}
+        {showProfanityModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex items-center mb-4">
+                <div className="flex-shrink-0 w-10 h-10 mx-auto bg-yellow-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-6 h-6 text-yellow-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  Inappropriate Language Detected
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Please review and correct the following issues:
+                </p>
+                <div className="text-left mb-6">
+                  <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                    {profanityErrors.map((error, index) => (
+                      <li key={index}>{error}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex space-x-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowProfanityModal(false);
+                      setProfanityErrors([]);
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  >
+                    I&apos;ll Fix This
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
