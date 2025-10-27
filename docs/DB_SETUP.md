@@ -1,80 +1,17 @@
-# WCSv2.0 Database Setup
+# WCSv2.0 Complete Database Schema
 
-## 📝 Schema Updates (v2.8.0)
+## 📝 Current Schema (v2.8.0)
 
-**Last Updated**: January 2025 - Updated to reflect current production database schema
-
-### Global Events System (v2.8.0):
-
-- **"All Teams" Functionality**: Complete implementation for program-wide events
-- **Team Updates**: Added `is_global` flag for admin program-wide communications
-- **Schedules**: Global games, practices, and tournaments with proper `is_global` handling
-- **Database Support**: Both `team_updates` and `schedules` tables support NULL team_id with `is_global=true`
-- **Security**: Row-level security properly configured for global event visibility
-
-### File Upload System (v2.8.0):
-
-- **API Route Migration**: Moved file uploads from server actions to dedicated API routes
-- **File Size Validation**: 5MB limit with proper user warnings
-- **GIF Support**: Fixed upload issues for animated GIF files
-- **Error Handling**: Enhanced logging and user feedback for upload failures
-
-## 📝 Schema Updates (v2.6.0)
-
-**Last Updated**: December 2024 - Updated to reflect current production database schema
-
-### Message Board System (v2.6.0):
-
-- **Coach Messages Table**: Added `coach_messages` table for real-time coach communication
-- **Message Replies Table**: Added `coach_message_replies` table for threaded conversations
-- **Real-time Support**: Enabled Supabase Realtime for live message updates
-- **Row Level Security**: Comprehensive RLS policies for role-based message access
-- **Input Sanitization**: Enhanced security with proper content validation
-
-### Recent Schema Fixes (v2.6.0):
-
-- **Column Validation**: Fixed references to non-existent columns (`updated_at`, `updated_by`) in `team_updates` table
-- **Type Safety**: Improved TypeScript type definitions for better database interaction
-- **Image Upload**: Enhanced image upload functionality with proper error handling
-- **Build Optimization**: Resolved all TypeScript compilation errors and warnings
-
-## 📝 Schema Updates (v2.5.0)
-
-**Last Updated**: October 2025 - Updated to reflect current production database schema
-
-### Key Changes:
-
-- **Audit Logging**: Added comprehensive `audit_logs` table for security monitoring
-- **Soft Deletes**: Added `deleted_at` columns to `schedules`, `team_updates`, and `news` tables
-- **Enhanced Event Types**: Schedules now support 'Tournament' and 'Meeting' event types
-- **Program‑Wide Schedules**: `schedules.is_global BOOLEAN DEFAULT false NOT NULL` for admin program‑wide events
-- **Program‑Wide Updates**: `team_updates.team_id` accepts NULL when `is_global=true`
-- **User References**: Updated foreign key references from `coaches(id)` to `users(id)` for better consistency
-- **News Team Association**: Added `team_id` to news table for team-specific news
-- **Password Reset Tracking**: Added `last_password_reset` timestamp to users table
-- **Array Types**: Updated practice drills to use generic `ARRAY` type instead of `TEXT[]`
-- **Security Enhancements**: Added audit triggers and comprehensive logging
-
-## 🗄️ Current Database Status
-
-### Supabase Configuration
-
-- **Platform**: Supabase (PostgreSQL)
-- **Status**: ✅ Active and Configured
-- **Region**: US East (N. Virginia)
-- **Plan**: Pro Plan
-- **Connection**: Secure HTTPS with SSL
+**Last Updated**: January 2025 - Complete schema synced from production Supabase database
 
 ### Database Statistics
+- **Tables**: 18 active tables
+- **Total Rows**: 1,000+ records
+- **Platform**: Supabase PostgreSQL
+- **Region**: US East (N. Virginia)
+- **RLS**: Enabled on all tables
 
-- **Tables**: 13 active tables (teams, coaches, schedules, team_updates, practice_drills, users, news, products, resources, team_coaches, audit_logs, coach_messages, coach_message_replies)
-- **Rows**: ~100+ records across all tables
-- **Storage**: <200MB (well within limits)
-- **Connections**: Stable connection pool
-- **Performance**: Optimized with proper indexing and RLS policies
-- **Real-time**: ✅ Enabled for message board tables (coach_messages, coach_message_replies)
-
-## 📊 Database Schema
+## 📊 Complete Database Schema
 
 ### 1. Teams Table
 
@@ -82,16 +19,32 @@
 CREATE TABLE public.teams (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL UNIQUE,
-  age_group text CHECK (age_group = ANY (ARRAY['U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
+  age_group text,
   gender text CHECK (gender = ANY (ARRAY['Boys'::text, 'Girls'::text])),
   coach_email text NOT NULL,
   grade_level text,
   season text,
   logo_url text,
   team_image text,
-  CONSTRAINT teams_pkey PRIMARY KEY (id)
+  is_active boolean DEFAULT true,
+  is_deleted boolean DEFAULT false,
+  CONSTRAINT teams_pkey PRIMARY KEY (id),
+  CONSTRAINT age_group_check CHECK (age_group = ANY (ARRAY['U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text]))
 );
 ```
+
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `name` (text, NOT NULL, UNIQUE) - Team name
+- `age_group` (text) - U10, U12, U14, U16, U18
+- `gender` (text) - Boys or Girls
+- `coach_email` (text, NOT NULL) - Primary coach email
+- `grade_level` (text) - School grade level
+- `season` (text) - Season identifier
+- `logo_url` (text) - Team logo URL
+- `team_image` (text) - Team photo URL
+- `is_active` (boolean, DEFAULT true) - Active status
+- `is_deleted` (boolean, DEFAULT false) - Soft delete flag
 
 ### 2. Users Table
 
@@ -103,9 +56,21 @@ CREATE TABLE public.users (
   created_at timestamp without time zone DEFAULT now(),
   password_reset boolean DEFAULT true,
   last_password_reset timestamp with time zone,
+  login_count integer DEFAULT 0,
+  last_login_at timestamp with time zone,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 ```
+
+**Columns:**
+- `id` (uuid, PK) - User UUID (links to auth.users)
+- `email` (text, NOT NULL, UNIQUE) - User email
+- `role` (text) - coach, parent, or admin
+- `created_at` (timestamp) - Account creation time
+- `password_reset` (boolean, DEFAULT true) - Password reset flag
+- `last_password_reset` (timestamptz) - Last reset timestamp
+- `login_count` (integer, DEFAULT 0) - Login count
+- `last_login_at` (timestamptz) - Last login timestamp
 
 ### 3. Coaches Table
 
@@ -120,10 +85,27 @@ CREATE TABLE public.coaches (
   image_url text,
   quote text,
   user_id uuid,
+  is_active boolean DEFAULT true,
+  is_deleted boolean DEFAULT false,
+  phone varchar,
   CONSTRAINT coaches_pkey PRIMARY KEY (id),
   CONSTRAINT coaches_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 ```
+
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `first_name` (text, NOT NULL) - First name
+- `last_name` (text, NOT NULL) - Last name
+- `email` (text, NOT NULL, UNIQUE) - Email address
+- `bio` (text) - Biography
+- `created_at` (timestamptz) - Creation timestamp
+- `image_url` (text) - Profile image URL
+- `quote` (text) - Motivational quote
+- `user_id` (uuid, FK to users) - User account link
+- `is_active` (boolean, DEFAULT true) - Active status
+- `is_deleted` (boolean, DEFAULT false) - Soft delete flag
+- `phone` (varchar) - Phone number
 
 ### 4. Team Coaches Junction Table
 
@@ -131,11 +113,13 @@ CREATE TABLE public.coaches (
 CREATE TABLE public.team_coaches (
   team_id uuid NOT NULL,
   coach_id uuid NOT NULL,
-  CONSTRAINT team_coaches_pkey PRIMARY KEY (coach_id, team_id),
+  CONSTRAINT team_coaches_pkey PRIMARY KEY (team_id, coach_id),
   CONSTRAINT team_coaches_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
   CONSTRAINT team_coaches_coach_id_fkey FOREIGN KEY (coach_id) REFERENCES public.coaches(id)
 );
 ```
+
+**Purpose:** Many-to-many relationship between teams and coaches
 
 ### 5. Schedules Table
 
@@ -143,7 +127,7 @@ CREATE TABLE public.team_coaches (
 CREATE TABLE public.schedules (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   team_id uuid,
-  event_type text CHECK (event_type = ANY (ARRAY['Game'::text, 'Practice'::text, 'Tournament'::text, 'Meeting'::text])),
+  event_type text CHECK (event_type = ANY (ARRAY['Game'::text, 'Practice'::text, 'Tournament'::text, 'Meeting'::text, 'Update'::text])),
   date_time timestamp without time zone NOT NULL,
   location text,
   opponent text,
@@ -152,11 +136,30 @@ CREATE TABLE public.schedules (
   deleted_at timestamp with time zone,
   description text,
   is_global boolean NOT NULL DEFAULT false,
+  title text,
+  recurring_group_id text,
+  end_date_time timestamp with time zone,
   CONSTRAINT schedules_pkey PRIMARY KEY (id),
   CONSTRAINT schedules_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
   CONSTRAINT schedules_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 ```
+
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `team_id` (uuid, FK, nullable) - Associated team (NULL for global events)
+- `event_type` (text) - Game, Practice, Tournament, Meeting, or Update
+- `date_time` (timestamp, NOT NULL) - Event start time
+- `end_date_time` (timestamptz) - Event end time (for tournaments)
+- `location` (text) - Event location
+- `opponent` (text) - Opponent name (for games)
+- `title` (text) - Event title
+- `description` (text) - Event description
+- `created_at` (timestamp) - Creation timestamp
+- `created_by` (uuid, FK to users) - Creator user ID
+- `deleted_at` (timestamptz) - Soft delete timestamp
+- `is_global` (boolean, NOT NULL, DEFAULT false) - Global event flag
+- `recurring_group_id` (text) - Recurring event group identifier
 
 ### 6. Team Updates Table
 
@@ -167,15 +170,28 @@ CREATE TABLE public.team_updates (
   title text NOT NULL,
   content text NOT NULL,
   image_url text,
-  is_global boolean DEFAULT false,
+  is_global boolean NOT NULL DEFAULT false,
   created_by uuid,
   created_at timestamp with time zone DEFAULT now(),
   deleted_at timestamp with time zone,
+  date_time timestamp without time zone,
   CONSTRAINT team_updates_pkey PRIMARY KEY (id),
   CONSTRAINT team_updates_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id),
   CONSTRAINT team_updates_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
 );
 ```
+
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `team_id` (uuid, FK, nullable) - Associated team (NULL for global updates)
+- `title` (text, NOT NULL) - Update title
+- `content` (text, NOT NULL) - Update content
+- `image_url` (text) - Update image URL
+- `is_global` (boolean, NOT NULL, DEFAULT false) - Global update flag
+- `created_by` (uuid, FK to users) - Creator user ID
+- `created_at` (timestamptz) - Creation timestamp
+- `deleted_at` (timestamptz) - Soft delete timestamp
+- `date_time` (timestamp) - Optional schedule date/time
 
 ### 7. Practice Drills Table
 
@@ -202,6 +218,23 @@ CREATE TABLE public.practice_drills (
 );
 ```
 
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `team_id` (uuid, FK) - Associated team
+- `title` (text, NOT NULL) - Drill title
+- `skills` (ARRAY, NOT NULL) - Skills developed
+- `equipment` (ARRAY, NOT NULL) - Required equipment
+- `time` (text, NOT NULL) - Duration
+- `instructions` (text, NOT NULL) - Instructions
+- `additional_info` (text) - Additional information
+- `benefits` (text, NOT NULL) - Drill benefits
+- `difficulty` (text, NOT NULL) - Difficulty level
+- `category` (text, NOT NULL) - Category
+- `week_number` (integer, NOT NULL) - Week number
+- `image_url` (text) - Drill image URL
+- `created_by` (uuid, FK to users) - Creator user ID
+- `created_at` (timestamptz) - Creation timestamp
+
 ### 8. News Table
 
 ```sql
@@ -220,6 +253,16 @@ CREATE TABLE public.news (
 );
 ```
 
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `title` (text, NOT NULL) - News title
+- `content` (text, NOT NULL) - News content
+- `image_url` (text) - News image URL
+- `team_id` (uuid, FK) - Associated team
+- `created_by` (uuid, FK to users) - Creator user ID
+- `created_at` (timestamptz) - Creation timestamp
+- `deleted_at` (timestamptz) - Soft delete timestamp
+
 ### 9. Products Table
 
 ```sql
@@ -233,6 +276,14 @@ CREATE TABLE public.products (
   CONSTRAINT products_pkey PRIMARY KEY (id)
 );
 ```
+
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `name` (text, NOT NULL) - Product name
+- `description` (text) - Product description
+- `price` (numeric, NOT NULL) - Product price
+- `printful_id` (text) - Printful integration ID
+- `image_url` (text) - Product image URL
 
 ### 10. Resources Table
 
@@ -248,7 +299,58 @@ CREATE TABLE public.resources (
 );
 ```
 
-### 11. Coach Messages Table
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `title` (text, NOT NULL) - Resource title
+- `description` (text) - Resource description
+- `file_url` (text) - Resource file URL
+- `coach_email` (text, NOT NULL) - Coach email
+- `created_at` (timestamp) - Creation timestamp
+
+### 11. Players Table
+
+```sql
+CREATE TABLE public.players (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  team_id uuid,
+  name text NOT NULL,
+  jersey_number integer,
+  grade text,
+  parent_name text,
+  parent_email text,
+  parent_phone text,
+  emergency_contact text,
+  emergency_phone text,
+  created_at timestamp with time zone DEFAULT now(),
+  is_active boolean DEFAULT true,
+  date_of_birth date,
+  age integer,
+  gender text,
+  is_deleted boolean DEFAULT false,
+  CONSTRAINT players_pkey PRIMARY KEY (id),
+  CONSTRAINT players_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id)
+);
+```
+
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `team_id` (uuid, FK) - Associated team
+- `name` (text, NOT NULL) - Player name
+- `jersey_number` (integer) - Jersey number
+- `grade` (text) - Grade level
+- `parent_name` (text) - Parent/guardian name
+- `parent_email` (text) - Parent/guardian email
+- `parent_phone` (text) - Parent/guardian phone
+- `emergency_contact` (text) - Emergency contact name
+- `emergency_phone` (text) - Emergency contact phone
+- `date_of_birth` (date) - Birth date
+- `age` (integer) - Calculated age
+- `gender` (text) - Gender
+- `is_active` (boolean, DEFAULT true) - Active status
+- `is_deleted` (boolean, DEFAULT false) - Soft delete flag
+- `created_at` (timestamptz) - Creation timestamp
+
+### 12. Coach Messages Table
 
 ```sql
 CREATE TABLE public.coach_messages (
@@ -261,12 +363,21 @@ CREATE TABLE public.coach_messages (
   deleted_at timestamp with time zone,
   is_pinned boolean DEFAULT false,
   CONSTRAINT coach_messages_pkey PRIMARY KEY (id),
-  CONSTRAINT coach_messages_author_id_fkey FOREIGN KEY (author_id)
-    REFERENCES public.users(id) ON DELETE CASCADE
+  CONSTRAINT coach_messages_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE CASCADE
 );
 ```
 
-### 12. Coach Message Replies Table
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `author_id` (uuid, FK to users, NOT NULL) - Message author
+- `author_name` (text, NOT NULL) - Author display name
+- `content` (text, NOT NULL) - Message content
+- `created_at` (timestamptz) - Creation timestamp
+- `updated_at` (timestamptz) - Last update timestamp
+- `deleted_at` (timestamptz) - Soft delete timestamp
+- `is_pinned` (boolean, DEFAULT false) - Pinned status
+
+### 13. Coach Message Replies Table
 
 ```sql
 CREATE TABLE public.coach_message_replies (
@@ -279,14 +390,22 @@ CREATE TABLE public.coach_message_replies (
   updated_at timestamp with time zone DEFAULT now(),
   deleted_at timestamp with time zone,
   CONSTRAINT coach_message_replies_pkey PRIMARY KEY (id),
-  CONSTRAINT coach_message_replies_message_id_fkey FOREIGN KEY (message_id)
-    REFERENCES public.coach_messages(id) ON DELETE CASCADE,
-  CONSTRAINT coach_message_replies_author_id_fkey FOREIGN KEY (author_id)
-    REFERENCES public.users(id) ON DELETE CASCADE
+  CONSTRAINT coach_message_replies_message_id_fkey FOREIGN KEY (message_id) REFERENCES public.coach_messages(id) ON DELETE CASCADE,
+  CONSTRAINT coach_message_replies_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.users(id) ON DELETE CASCADE
 );
 ```
 
-### 13. Audit Logs Table
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `message_id` (uuid, FK, NOT NULL) - Parent message
+- `author_id` (uuid, FK to users, NOT NULL) - Reply author
+- `author_name` (text, NOT NULL) - Author display name
+- `content` (text, NOT NULL) - Reply content
+- `created_at` (timestamptz) - Creation timestamp
+- `updated_at` (timestamptz) - Last update timestamp
+- `deleted_at` (timestamptz) - Soft delete timestamp
+
+### 14. Audit Logs Table
 
 ```sql
 CREATE TABLE public.audit_logs (
@@ -302,550 +421,159 @@ CREATE TABLE public.audit_logs (
 );
 ```
 
-## 🔍 Audit Logging System
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `table_name` (text, NOT NULL) - Audited table name
+- `operation` (text, NOT NULL) - Operation type
+- `user_id` (uuid, FK to users) - User who performed operation
+- `old_data` (jsonb) - Previous state (for updates/deletes)
+- `new_data` (jsonb) - New state (for inserts/updates)
+- `created_at` (timestamptz) - Operation timestamp
 
-### Overview
+### 15. Login Logs Table
 
-The audit logging system provides comprehensive security monitoring and change tracking across all critical database tables.
+```sql
+CREATE TABLE public.login_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL,
+  login_at timestamp with time zone DEFAULT now(),
+  ip_address inet,
+  user_agent text,
+  success boolean DEFAULT true,
+  failure_reason text,
+  session_duration integer,
+  CONSTRAINT login_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT login_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+```
 
-### Features
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `user_id` (uuid, FK to users, NOT NULL) - User who logged in
+- `login_at` (timestamptz) - Login timestamp
+- `ip_address` (inet) - Login IP address
+- `user_agent` (text) - Browser user agent
+- `success` (boolean, DEFAULT true) - Login success flag
+- `failure_reason` (text) - Failure reason (if failed)
+- `session_duration` (integer) - Session duration in minutes
 
-- **Automatic Logging**: All INSERT, UPDATE, and DELETE operations are automatically logged
-- **Change Tracking**: Captures both old and new data for each operation
-- **User Attribution**: Links each change to the authenticated user
-- **Security Monitoring**: Enables detection of unauthorized access or suspicious activity
+### 16. Error Logs Table
 
-### Audit Log Structure
+```sql
+CREATE TABLE public.error_logs (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  severity text NOT NULL,
+  message text NOT NULL,
+  stack_trace text,
+  user_id uuid,
+  page_url text,
+  user_agent text,
+  ip_address inet,
+  error_code text,
+  resolved boolean DEFAULT false,
+  resolved_at timestamp with time zone,
+  resolved_by uuid,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT error_logs_pkey PRIMARY KEY (id),
+  CONSTRAINT error_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
+  CONSTRAINT error_logs_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES public.users(id),
+  CONSTRAINT severity_check CHECK (severity = ANY (ARRAY['critical'::text, 'error'::text, 'warning'::text, 'info'::text]))
+);
+```
 
-- **table_name**: The table that was modified
-- **operation**: The type of operation (INSERT, UPDATE, DELETE)
-- **user_id**: The user who performed the operation
-- **old_data**: Previous state of the record (for UPDATE/DELETE)
-- **new_data**: New state of the record (for INSERT/UPDATE)
-- **created_at**: Timestamp of the operation
-
-### Security Benefits
-
-- **Compliance**: Meets audit requirements for data governance
-- **Forensics**: Enables investigation of security incidents
-- **Monitoring**: Provides real-time visibility into database changes
-- **Accountability**: Ensures all changes are attributable to specific users
+**Columns:**
+- `id` (uuid, PK) - Auto-generated UUID
+- `severity` (text, NOT NULL) - Error severity level (critical, error, warning, info)
+- `message` (text, NOT NULL) - Error message
+- `stack_trace` (text) - Stack trace
+- `user_id` (uuid, FK to users) - User who encountered error
+- `page_url` (text) - Page URL where error occurred
+- `user_agent` (text) - Browser user agent
+- `ip_address` (inet) - IP address
+- `error_code` (text) - Error code
+- `resolved` (boolean, DEFAULT false) - Resolution status
+- `resolved_at` (timestamptz) - Resolution timestamp
+- `resolved_by` (uuid, FK to users) - Admin who resolved error
+- `created_at` (timestamptz) - Creation timestamp
 
 ## 🔐 Row Level Security (RLS)
 
-### Teams Table Policies
+All tables have RLS enabled. Key policies include:
 
+### Teams Policy
 ```sql
 -- Public can view all teams
-CREATE POLICY "Public view teams" ON teams
-FOR SELECT TO public USING (true);
+CREATE POLICY "Public view teams" ON teams FOR SELECT TO public USING (true);
 
--- Coaches can edit teams they are assigned to
-CREATE POLICY "Coaches edit assigned teams" ON teams
-FOR ALL TO authenticated
+-- Coaches can edit assigned teams
+CREATE POLICY "Coaches edit assigned teams" ON teams FOR ALL TO authenticated
 USING (EXISTS (
   SELECT 1 FROM team_coaches tc
   JOIN coaches c ON tc.coach_id = c.id
-  WHERE tc.team_id = teams.id
-  AND c.user_id = auth.uid()
+  WHERE tc.team_id = teams.id AND c.user_id = auth.uid()
 ));
 
 -- Admins can edit all teams
-CREATE POLICY "Admins edit all teams" ON teams
-FOR ALL TO authenticated
+CREATE POLICY "Admins edit all teams" ON teams FOR ALL TO authenticated
 USING (EXISTS (
   SELECT 1 FROM users
-  WHERE users.id = auth.uid()
-  AND users.role = 'admin'
+  WHERE users.id = auth.uid() AND users.role = 'admin'
 ));
 ```
 
-### Coaches Table Policies
-
-```sql
--- Public can view all coaches
-CREATE POLICY "Public view coaches" ON coaches
-FOR SELECT TO public USING (true);
-
--- Coaches can edit their own records
-CREATE POLICY "Coaches edit own records" ON coaches
-FOR ALL TO authenticated
-USING (user_id = auth.uid())
-WITH CHECK (user_id = auth.uid());
-
--- Admins can edit all coaches
-CREATE POLICY "Admins edit all coaches" ON coaches
-FOR ALL TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM users
-  WHERE users.id = auth.uid()
-  AND users.role = 'admin'
-));
-```
-
-### Team Coaches Junction Table Policies
-
-```sql
--- Public can view team-coach relationships
-CREATE POLICY "Public view team coaches" ON team_coaches
-FOR SELECT TO public USING (true);
-
--- Coaches can manage their own team assignments
-CREATE POLICY "Coaches manage team assignments" ON team_coaches
-FOR ALL TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM coaches
-  WHERE coaches.id = team_coaches.coach_id
-  AND coaches.user_id = auth.uid()
-));
-```
-
-### Schedules Table Policies
-
+### Schedules Policy
 ```sql
 -- Public can view all schedules
-CREATE POLICY "Public view schedules" ON schedules
-FOR SELECT TO public USING (true);
+CREATE POLICY "Public view schedules" ON schedules FOR SELECT TO public USING (true);
 
--- Coaches can manage team schedules; admins can manage all and create global
-CREATE POLICY "Coaches and admins manage schedules" ON schedules
-FOR ALL TO authenticated
+-- Coaches and admins can manage schedules
+CREATE POLICY "Coaches and admins manage schedules" ON schedules FOR ALL TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM team_coaches tc
     JOIN coaches c ON tc.coach_id = c.id
-    WHERE tc.team_id = schedules.team_id
-    AND c.user_id = auth.uid()
+    WHERE tc.team_id = schedules.team_id AND c.user_id = auth.uid()
   )
-  OR EXISTS (
-    SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin'
-  )
+  OR EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
 );
 ```
 
-### Team Updates Table Policies
-
+### Team Updates Policy
 ```sql
 -- Public can view all team updates
-CREATE POLICY "Public view team updates" ON team_updates
-FOR SELECT TO public USING (true);
+CREATE POLICY "Public view team updates" ON team_updates FOR SELECT TO public USING (true);
 
--- Coaches manage team updates; admins can manage all; allow program‑wide
-CREATE POLICY "Coaches manage team updates" ON team_updates
-FOR ALL TO authenticated
+-- Coaches manage team updates; admins can manage all
+CREATE POLICY "Coaches manage team updates" ON team_updates FOR ALL TO authenticated
 USING (
   EXISTS (
     SELECT 1 FROM team_coaches tc
     JOIN coaches c ON tc.coach_id = c.id
-    WHERE tc.team_id = team_updates.team_id
-    AND c.user_id = auth.uid()
+    WHERE tc.team_id = team_updates.team_id AND c.user_id = auth.uid()
   )
-  OR EXISTS (
-    SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin'
-  )
+  OR EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
 );
 ```
 
-### Practice Drills Table Policies
+## 🎯 Key Relationships
 
-```sql
--- Public can view all practice drills
-CREATE POLICY "Public view practice drills" ON practice_drills
-FOR SELECT TO public USING (true);
+- **Teams ↔ Coaches**: Many-to-many via `team_coaches` table
+- **Teams → Players**: One-to-many via `players.team_id`
+- **Users → Schedules**: Many-to-one via `schedules.created_by`
+- **Users → Team Updates**: Many-to-one via `team_updates.created_by`
+- **Users → Coach Messages**: One-to-many via `coach_messages.author_id`
+- **Coach Messages → Replies**: One-to-many via `coach_message_replies.message_id`
 
--- Coaches can manage drills for their teams
-CREATE POLICY "Coaches manage practice drills" ON practice_drills
-FOR ALL TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM team_coaches tc
-  JOIN coaches c ON tc.coach_id = c.id
-  WHERE tc.team_id = practice_drills.team_id
-  AND c.user_id = auth.uid()
-) OR created_by = auth.uid());
-```
+## 📝 Global Events Support (v2.8.0)
 
-### Users Table Policies
+Both `schedules` and `team_updates` tables support global events:
 
-```sql
--- Users can view their own profile
-CREATE POLICY "Users view own profile" ON users
-FOR SELECT TO authenticated
-USING (auth.email() = email);
+- **Global Schedules**: Set `team_id = NULL` and `is_global = true`
+- **Global Updates**: Set `team_id = NULL` and `is_global = true`
+- Global events appear on all team schedules and calendars
 
--- Users can update their own profile
-CREATE POLICY "Users update own profile" ON users
-FOR UPDATE TO authenticated
-USING (auth.email() = email)
-WITH CHECK (auth.email() = email);
-```
+---
 
-### News Table Policies
-
-```sql
--- Public can view all news
-CREATE POLICY "Public view news" ON news
-FOR SELECT TO public USING (true);
-
--- Authenticated users can create news
-CREATE POLICY "Authenticated users create news" ON news
-FOR INSERT TO authenticated
-WITH CHECK (created_by = auth.uid());
-
--- Users can update their own news
-CREATE POLICY "Users update own news" ON news
-FOR UPDATE TO authenticated
-USING (created_by = auth.uid())
-WITH CHECK (created_by = auth.uid());
-
--- Admins can manage all news
-CREATE POLICY "Admins manage all news" ON news
-FOR ALL TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM users
-  WHERE users.id = auth.uid()
-  AND users.role = 'admin'
-));
-```
-
-### Products Table Policies
-
-```sql
--- Public can view all products
-CREATE POLICY "Public view products" ON products
-FOR SELECT TO public USING (true);
-
--- Admins can manage all products
-CREATE POLICY "Admins manage all products" ON products
-FOR ALL TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM users
-  WHERE users.id = auth.uid()
-  AND users.role = 'admin'
-));
-```
-
-### Resources Table Policies
-
-```sql
--- Public can view all resources
-CREATE POLICY "Public view resources" ON resources
-FOR SELECT TO public USING (true);
-
--- Coaches can create resources
-CREATE POLICY "Coaches create resources" ON resources
-FOR INSERT TO authenticated
-WITH CHECK (coach_email = auth.email());
-
--- Coaches can update their own resources
-CREATE POLICY "Coaches update own resources" ON resources
-FOR UPDATE TO authenticated
-USING (coach_email = auth.email())
-WITH CHECK (coach_email = auth.email());
-```
-
-### Audit Logs Table Policies
-
-```sql
--- Only admins can view audit logs
-CREATE POLICY "Admins view audit logs" ON audit_logs
-FOR SELECT TO authenticated
-USING (EXISTS (
-  SELECT 1 FROM users
-  WHERE users.id = auth.uid()
-  AND users.role = 'admin'
-));
-```
-
-### Audit Triggers and Functions
-
-```sql
--- Function to automatically log changes
-CREATE OR REPLACE FUNCTION audit_trigger_function()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO audit_logs (table_name, operation, user_id, old_data, new_data)
-  VALUES (
-    TG_TABLE_NAME,
-    TG_OP,
-    auth.uid(),
-    CASE WHEN TG_OP = 'DELETE' THEN row_to_json(OLD) ELSE NULL END,
-    CASE WHEN TG_OP != 'DELETE' THEN row_to_json(NEW) ELSE NULL END
-  );
-  RETURN COALESCE(NEW, OLD);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create triggers for audit logging on critical tables
-CREATE TRIGGER audit_users_trigger
-  AFTER INSERT OR UPDATE OR DELETE ON users
-  FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
-
-CREATE TRIGGER audit_teams_trigger
-  AFTER INSERT OR UPDATE OR DELETE ON teams
-  FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
-
-CREATE TRIGGER audit_coaches_trigger
-  AFTER INSERT OR UPDATE OR DELETE ON coaches
-  FOR EACH ROW EXECUTE FUNCTION audit_trigger_function();
-```
-
-### Helper Functions
-
-```sql
--- Function to check if user is admin
-CREATE OR REPLACE FUNCTION is_admin(user_id UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM users
-    WHERE id = user_id
-    AND role = 'admin'
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Function to check if user is coach
-CREATE OR REPLACE FUNCTION is_coach(user_id UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM users
-    WHERE id = user_id
-    AND role = 'coach'
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Function to check if user owns team
-CREATE OR REPLACE FUNCTION owns_team(user_id UUID, team_id UUID)
-RETURNS BOOLEAN AS $$
-BEGIN
-  RETURN EXISTS (
-    SELECT 1 FROM teams
-    WHERE id = team_id
-    AND created_by = user_id
-  );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-```
-
-## 📝 Sample Data
-
-### Teams Data
-
-```sql
-INSERT INTO teams (name, age_group, gender, coach_email, grade_level, season, logo_url)
-VALUES
-('WCS Warriors', 'U12', 'Boys', 'coach1@example.com', '6th', '2025-2026', '/logos/warriors.png'),
-('WCS Sharks', 'U14', 'Girls', 'coach2@example.com', '8th', '2025-2026', '/logos/sharks.png'),
-('WCS Blue', 'U10', 'Boys', 'coach3@example.com', '4th', '2025-2026', '/logos/blue.png'),
-('WCS Red', 'U16', 'Girls', 'coach4@example.com', '10th', '2025-2026', '/logos/red.png'),
-('WCS White', 'U18', 'Girls', 'coach5@example.com', '12th', '2025-2026', '/logos/white.png');
-```
-
-### Schedules Data
-
-```sql
-INSERT INTO schedules (team_id, event_type, date_time, location, opponent, created_by)
-VALUES
-((SELECT id FROM teams WHERE name = 'WCS Warriors'), 'Game', '2025-02-15 10:00:00', 'Main Gym', 'Riverside Hawks', (SELECT id FROM coaches WHERE email = 'coach1@example.com')),
-((SELECT id FROM teams WHERE name = 'WCS Warriors'), 'Practice', '2025-02-12 18:00:00', 'Practice Court', NULL, (SELECT id FROM coaches WHERE email = 'coach1@example.com')),
-((SELECT id FROM teams WHERE name = 'WCS Sharks'), 'Game', '2025-02-16 14:00:00', 'Main Gym', 'Valley Vipers', (SELECT id FROM coaches WHERE email = 'coach2@example.com')),
-((SELECT id FROM teams WHERE name = 'WCS Sharks'), 'Practice', '2025-02-13 19:00:00', 'Practice Court', NULL, (SELECT id FROM coaches WHERE email = 'coach2@example.com'));
-```
-
-## 🔧 Database Configuration
-
-### Connection Settings
-
-```typescript
-// src/lib/supabaseClient.ts
-import { createClient } from "@supabase/supabase-js";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
-  },
-});
-```
-
-### Environment Variables
-
-```bash
-# Required for database connection
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-
-# Required for admin operations and RLS bypass
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-```
-
-### Service Role Key Usage
-
-The `SUPABASE_SERVICE_ROLE_KEY` is essential for:
-
-- **Server Actions**: Bypassing RLS in server-side operations
-- **Admin Operations**: Managing users, teams, and system data
-- **Audit Logging**: Recording system-level changes
-- **Data Migration**: Bulk operations and maintenance tasks
-
-**Security Note**: Never expose the service role key to client-side code. It should only be used in server-side operations.
-
-## 📈 Performance Optimization
-
-### Indexes
-
-```sql
--- Performance indexes
-CREATE INDEX idx_teams_coach_email ON teams(coach_email);
-CREATE INDEX idx_schedules_team_id ON schedules(team_id);
-CREATE INDEX idx_schedules_date_time ON schedules(date_time);
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
-```
-
-### Query Optimization
-
-- **Connection Pooling**: Automatic with Supabase
-- **Query Caching**: Built-in caching for frequently accessed data
-- **Real-time Subscriptions**: Efficient real-time updates
-- **Batch Operations**: Optimized for bulk operations
-
-## 🔍 Monitoring & Analytics
-
-### Database Metrics
-
-- **Query Performance**: Average query time <50ms
-- **Connection Count**: Stable connection pool usage
-- **Storage Usage**: <100MB (well within limits)
-- **Error Rate**: <0.1% (excellent)
-- **Audit Logs**: Real-time change tracking and security monitoring
-
-### Monitoring Tools
-
-- **Supabase Dashboard**: Real-time database monitoring
-- **Query Performance**: Built-in query analysis
-- **Error Tracking**: Database error monitoring
-- **Usage Analytics**: Connection and query analytics
-- **Audit Logs**: Security event monitoring and change tracking
-- **RLS Policy Monitoring**: Row-level security policy effectiveness
-
-## 🛠️ Maintenance Procedures
-
-### Daily Tasks
-
-- **Health Check**: Verify database connectivity
-- **Performance Review**: Check query performance
-- **Error Monitoring**: Review any database errors
-- **Backup Verification**: Ensure backups are working
-- **Audit Log Review**: Check for suspicious activity or unauthorized access
-
-### Weekly Tasks
-
-- **Index Analysis**: Review and optimize indexes
-- **Query Optimization**: Analyze slow queries
-- **Storage Monitoring**: Check storage usage
-- **Security Review**: Review access logs and audit trail
-- **Audit Log Analysis**: Review audit logs for patterns and anomalies
-
-### Monthly Tasks
-
-- **Performance Audit**: Comprehensive performance review
-- **Security Audit**: Review RLS policies and access
-- **Data Cleanup**: Remove old or unused data
-- **Backup Testing**: Test backup restoration
-- **Audit Log Cleanup**: Archive old audit logs and maintain retention policy
-
-## 🚨 Backup & Recovery
-
-### Backup Strategy
-
-- **Automated Backups**: Daily automated backups
-- **Point-in-Time Recovery**: Available for last 7 days
-- **Geographic Redundancy**: Multi-region backup storage
-- **Retention Policy**: 30-day retention for automated backups
-- **Audit Log Retention**: 90-day retention for audit logs (configurable)
-
-### Recovery Procedures
-
-1. **Data Loss**: Restore from most recent backup
-2. **Corruption**: Use point-in-time recovery
-3. **Accidental Deletion**: Restore from backup
-4. **Security Breach**: Isolate and restore from clean backup
-5. **Audit Log Recovery**: Restore audit logs for forensic analysis
-
-## 💬 Message Board System
-
-### Overview
-
-The coaches message board provides a real-time communication platform for coaches and administrators to share insights, ask questions, and collaborate on coaching strategies.
-
-### Features
-
-- **Real-time Messaging**: Live updates using Supabase Realtime
-- **Message Threading**: Reply to messages with threaded conversations
-- **Role-based Permissions**: Coaches can edit/delete their own messages, admins can manage all
-- **Message Pinning**: Admins can pin important messages to the top
-- **Soft Deletes**: Messages are soft-deleted to maintain conversation history
-- **Character Limits**: 1000 characters for messages, 500 for replies
-- **Edit Tracking**: Visual indicators for edited messages and replies
-
-### Database Design
-
-#### Coach Messages Table
-
-- **Primary Key**: `id` (UUID)
-- **Author Tracking**: `author_id` and `author_name` for user attribution
-- **Content**: `content` field with validation
-- **Timestamps**: `created_at`, `updated_at`, `deleted_at` for full audit trail
-- **Pinning**: `is_pinned` boolean for admin-controlled message priority
-
-#### Coach Message Replies Table
-
-- **Foreign Key**: `message_id` links to parent message
-- **Author Tracking**: `author_id` and `author_name` for reply attribution
-- **Content**: `content` field with validation
-- **Timestamps**: `created_at`, `updated_at`, `deleted_at` for full audit trail
-
-### Security Features
-
-- **Row Level Security**: All tables protected with RLS policies
-- **Permission-based Access**: Users can only edit/delete their own content
-- **Admin Override**: Admins can manage all messages and replies
-- **Soft Deletes**: Maintains data integrity while allowing content removal
-- **Input Validation**: Character limits and content sanitization
-
-### Real-time Updates
-
-- **Supabase Channels**: Uses `coach-messages` channel for live updates
-- **Postgres Changes**: Listens to database changes for instant UI updates
-- **Optimistic UI**: Immediate feedback with server-side validation
-- **Connection Management**: Automatic reconnection and error handling
-
-### Performance Optimizations
-
-- **Indexed Queries**: Optimized indexes for message retrieval and sorting
-- **Pagination Ready**: Structure supports future pagination implementation
-- **Efficient Loading**: Loads messages and replies separately for better performance
-- **Caching Strategy**: Client-side state management for reduced API calls
-
-## 📞 Support & Resources
-
-### Supabase Support
-
-- **Documentation**: https://supabase.com/docs
-- **Community**: https://github.com/supabase/supabase/discussions
-- **Status Page**: https://status.supabase.com
-
-### Database Resources
-
-- **PostgreSQL Docs**: https://www.postgresql.org/docs/
-- **Supabase Guides**: https://supabase.com/docs/guides
-- **RLS Documentation**: https://supabase.com/docs/guides/auth/row-level-security
-- **Audit Logging**: https://supabase.com/docs/guides/database/audit-logs
-- **Security Best Practices**: https://supabase.com/docs/guides/database/security
+**Last Updated**: January 2025  
+**Schema Version**: 2.8.0  
+**Database**: Supabase PostgreSQL

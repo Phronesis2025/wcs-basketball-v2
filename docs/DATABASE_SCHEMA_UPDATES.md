@@ -1,8 +1,38 @@
-# Database Schema Updates - December 2024
+# Database Schema Updates
 
-## Overview
+## Current Status
 
-This document details the comprehensive database schema updates made to the WCS Basketball system in December 2024, including new fields, relationships, and API enhancements.
+**Last Updated**: January 2025 - Complete schema synced from production Supabase database  
+**Schema Version**: 2.8.0  
+**Total Tables**: 18 tables  
+**Total Rows**: 1,000+ records
+
+## 📋 Complete Table List
+
+1. **teams** - Team information and details
+2. **users** - User accounts and authentication
+3. **coaches** - Coach profiles and information
+4. **team_coaches** - Team-coach relationships (junction table)
+5. **schedules** - Games, practices, tournaments, and meetings
+6. **team_updates** - Team announcements and updates
+7. **practice_drills** - Practice drill information
+8. **news** - News articles and announcements
+9. **products** - Merchandise and products
+10. **resources** - Coaching resources and documents
+11. **players** - Player information and details
+12. **coach_messages** - Message board messages
+13. **coach_message_replies** - Message board replies
+14. **audit_logs** - System audit trail
+15. **login_logs** - Login tracking and analytics
+16. **error_logs** - Application error tracking
+
+See [DB_SETUP.md](./DB_SETUP.md) for complete schema definitions with all columns, constraints, and foreign keys.
+
+## December 2024 Updates
+
+### Overview
+
+This section details the comprehensive database schema updates made to the WCS Basketball system in December 2024, including new fields, relationships, and API enhancements.
 
 ## 📊 **Schema Changes Summary**
 

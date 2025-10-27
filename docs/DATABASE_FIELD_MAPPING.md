@@ -4,6 +4,32 @@
 
 This document maps each form field in the WCS Basketball club management system to its corresponding database table and column in Supabase.
 
+**Last Updated**: January 2025  
+**Schema Version**: 2.8.0  
+**Total Tables**: 18 tables
+
+## 📊 Complete Database Overview
+
+For complete CREATE TABLE statements and schema definitions, see [DB_SETUP.md](./DB_SETUP.md).
+
+### Table List
+- **teams** - Team information
+- **users** - User accounts and authentication
+- **coaches** - Coach profiles
+- **team_coaches** - Team-coach relationships
+- **schedules** - Games, practices, tournaments
+- **team_updates** - Team announcements
+- **practice_drills** - Practice drills
+- **news** - News articles
+- **products** - Merchandise
+- **resources** - Coaching resources
+- **players** - Player information
+- **coach_messages** - Message board
+- **coach_message_replies** - Message replies
+- **audit_logs** - Audit trail
+- **login_logs** - Login tracking
+- **error_logs** - Error tracking
+
 ---
 
 ## 🏀 **COACHES MANAGEMENT**
