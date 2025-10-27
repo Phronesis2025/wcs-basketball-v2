@@ -39,7 +39,7 @@ function RegistrationSuccessContent() {
             <p className="text-lg text-gray-800">
               Thank you for registering{" "}
               <span className="font-semibold">{playerName}</span> with World
-              ClassSports!
+              Class Sports!
             </p>
             <p className="text-gray-700">
               We've received your registration and our team is reviewing your

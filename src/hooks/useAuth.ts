@@ -49,7 +49,14 @@ export function useAuth() {
         }
 
         if (!session) {
-          devError("No active session found");
+          devLog("No active session found - user needs to log in");
+          setAuthState({
+            isAuthenticated: false,
+            user: null,
+            loading: false,
+            isAdmin: false,
+            userRole: null,
+          });
           return false;
         }
 
@@ -60,7 +67,14 @@ export function useAuth() {
       }
 
       if (!sessionData) {
-        devError("No session data found");
+        devLog("No session data found - user needs to log in");
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          loading: false,
+          isAdmin: false,
+          userRole: null,
+        });
         return false;
       }
 
