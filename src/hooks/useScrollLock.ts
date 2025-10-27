@@ -12,6 +12,12 @@ export function useScrollLock(isLocked: boolean) {
       // Store the current scroll position
       const scrollY = window.scrollY;
 
+      // Get current body styles to restore later
+      const originalPosition = document.body.style.position;
+      const originalTop = document.body.style.top;
+      const originalWidth = document.body.style.width;
+      const originalOverflow = document.body.style.overflow;
+
       // Lock the scroll by setting overflow hidden and preserving scroll position
       document.body.style.position = "fixed";
       document.body.style.top = `-${scrollY}px`;
@@ -19,12 +25,21 @@ export function useScrollLock(isLocked: boolean) {
       document.body.style.overflow = "hidden";
 
       return () => {
-        // Restore scroll position and unlock
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        document.body.style.overflow = "";
-        window.scrollTo(0, scrollY);
+        // Restore original styles
+        document.body.style.position = originalPosition;
+        document.body.style.top = originalTop;
+        document.body.style.width = originalWidth;
+        document.body.style.overflow = originalOverflow;
+
+        // Restore scroll position with multiple attempts to ensure it works
+        const restoreScroll = () => {
+          window.scrollTo(0, scrollY);
+        };
+
+        // Try multiple times to ensure scroll restoration works
+        requestAnimationFrame(restoreScroll);
+        setTimeout(restoreScroll, 0);
+        setTimeout(restoreScroll, 10);
       };
     }
   }, [isLocked]);

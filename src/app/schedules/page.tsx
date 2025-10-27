@@ -116,15 +116,31 @@ export default function SchedulesPage() {
             (payload) => {
               const update = payload.new as TeamUpdate;
               if (update.date_time) {
+                // Get team name for the title
+                let teamName = "All Teams";
+                // Show specific team name if team_id exists and it's not a global update
+                if (update.team_id && !(update.is_global === true)) {
+                  const foundTeam = teamsData.find(
+                    (t) => t.id === update.team_id
+                  );
+                  teamName = foundTeam?.name || "Team";
+
+                  // Remove "WCS" prefix if present
+                  teamName = teamName.replace(/^\s*WCS\s*/i, "").trim();
+                }
+
                 const scheduleEvent = {
                   id: update.id,
+                  team_id: update.team_id, // Preserve team_id for the modal
                   event_type: "Update",
                   date_time: update.date_time,
-                  title: update.title,
+                  end_date_time: null,
+                  title: `${teamName}: ${update.title}`,
                   location: "N/A",
                   opponent: null,
                   description: update.content,
                   is_global: update.is_global || false,
+                  recurring_group_id: null,
                   created_by: update.created_by,
                   created_at: update.created_at,
                   deleted_at: update.deleted_at,
@@ -145,15 +161,31 @@ export default function SchedulesPage() {
                   prev.filter((event) => event.id !== update.id)
                 );
               } else {
+                // Get team name for the title
+                let teamName = "All Teams";
+                // Show specific team name if team_id exists and it's not a global update
+                if (update.team_id && !(update.is_global === true)) {
+                  const foundTeam = teamsData.find(
+                    (t) => t.id === update.team_id
+                  );
+                  teamName = foundTeam?.name || "Team";
+
+                  // Remove "WCS" prefix if present
+                  teamName = teamName.replace(/^\s*WCS\s*/i, "").trim();
+                }
+
                 const scheduleEvent = {
                   id: update.id,
+                  team_id: update.team_id, // Preserve team_id for the modal
                   event_type: "Update",
                   date_time: update.date_time,
-                  title: update.title,
+                  end_date_time: null,
+                  title: `${teamName}: ${update.title}`,
                   location: "N/A",
                   opponent: null,
                   description: update.content,
                   is_global: update.is_global || false,
+                  recurring_group_id: null,
                   created_by: update.created_by,
                   created_at: update.created_at,
                   deleted_at: update.deleted_at,

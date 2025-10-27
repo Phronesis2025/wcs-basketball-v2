@@ -114,7 +114,9 @@ export default function ManageDeleteConfirmModal({
             <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
             <p className="text-sm text-gray-500 mb-4">{message}</p>
             <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <p className="text-sm font-medium text-gray-900">&quot;{itemName}&quot;</p>
+              <p className="text-sm font-medium text-gray-900">
+                &quot;{itemName}&quot;
+              </p>
             </div>
             <p className="text-sm text-black font-medium">
               ⚠️ This action cannot be undone and will permanently remove this{" "}
@@ -136,7 +138,7 @@ export default function ManageDeleteConfirmModal({
               type="button"
               onClick={onConfirm}
               disabled={loading}
-              className="flex-1 px-4 py-2 text-white bg-red rounded-md hover:bg-red-600 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-white bg-[red] rounded-md hover:bg-[#b80000] transition-colors disabled:opacity-50"
             >
               {loading ? "Deleting..." : "Yes, Delete"}
             </button>

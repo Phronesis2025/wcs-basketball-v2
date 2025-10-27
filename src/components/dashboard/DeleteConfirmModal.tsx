@@ -73,7 +73,7 @@ export default function DeleteConfirmModal({
               type="button"
               onClick={onConfirm}
               disabled={loading}
-              className="flex-1 px-4 py-2 text-white bg-red rounded-md hover:bg-red-600 transition-colors disabled:opacity-50"
+              className="flex-1 px-4 py-2 text-white bg-[red] rounded-md hover:bg-[#b80000] transition-colors disabled:opacity-50"
             >
               {loading ? "Deleting..." : "Delete"}
             </button>

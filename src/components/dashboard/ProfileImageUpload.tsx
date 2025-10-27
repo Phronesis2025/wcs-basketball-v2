@@ -73,7 +73,7 @@ export default function ProfileImageUpload({
               <button
                 onClick={() => setIsEditing(true)}
                 disabled={disabled}
-                className="px-4 py-2 bg-red text-white font-bebas uppercase rounded-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-4 py-2 bg-[red] text-white font-bebas uppercase rounded-md hover:bg-[#b80000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {imageUrl ? "Change Image" : "Add Image"}
               </button>
@@ -98,7 +98,7 @@ export default function ProfileImageUpload({
                 <button
                   onClick={handleSave}
                   disabled={loading || !imageUrl.trim()}
-                  className="px-4 py-2 bg-red text-white font-bebas uppercase rounded-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-[red] text-white font-bebas uppercase rounded-md hover:bg-[#b80000] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Save
                 </button>
@@ -113,7 +113,7 @@ export default function ProfileImageUpload({
                   <button
                     onClick={handleRemove}
                     disabled={loading}
-                    className="px-4 py-2 bg-red-600 text-white font-bebas uppercase rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 bg-[red] text-white font-bebas uppercase rounded-md hover:bg-[#b80000] disabled:opacity-50 transition-colors"
                   >
                     Remove
                   </button>

@@ -1,5 +1,24 @@
 # WCSv2.0 Database Setup
 
+## 📝 Schema Updates (v2.8.0)
+
+**Last Updated**: January 2025 - Updated to reflect current production database schema
+
+### Global Events System (v2.8.0):
+
+- **"All Teams" Functionality**: Complete implementation for program-wide events
+- **Team Updates**: Added `is_global` flag for admin program-wide communications
+- **Schedules**: Global games, practices, and tournaments with proper `is_global` handling
+- **Database Support**: Both `team_updates` and `schedules` tables support NULL team_id with `is_global=true`
+- **Security**: Row-level security properly configured for global event visibility
+
+### File Upload System (v2.8.0):
+
+- **API Route Migration**: Moved file uploads from server actions to dedicated API routes
+- **File Size Validation**: 5MB limit with proper user warnings
+- **GIF Support**: Fixed upload issues for animated GIF files
+- **Error Handling**: Enhanced logging and user feedback for upload failures
+
 ## 📝 Schema Updates (v2.6.0)
 
 **Last Updated**: December 2024 - Updated to reflect current production database schema

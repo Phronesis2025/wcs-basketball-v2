@@ -731,7 +731,7 @@ export default function AddPlayerModal({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full px-4 py-3 text-white bg-red rounded-md hover:bg-red-600 transition-colors"
+                  className="w-full px-4 py-3 text-white bg-[red] rounded-md hover:bg-[#b80000] transition-colors"
                 >
                   Delete Player
                 </button>
@@ -767,7 +767,7 @@ export default function AddPlayerModal({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="px-4 py-2 text-white bg-red rounded-md hover:bg-red-600 transition-colors"
+                  className="px-4 py-2 text-white bg-[red] rounded-md hover:bg-[#b80000] transition-colors"
                 >
                   Delete Player
                 </button>

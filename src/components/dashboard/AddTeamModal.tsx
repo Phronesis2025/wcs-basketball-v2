@@ -117,12 +117,32 @@ export default function AddTeamModal({
   const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setErrors((prev) => ({
+          ...prev,
+          logo: "Please select a valid image file",
+        }));
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          logo: "File size must be less than 5MB",
+        }));
+        return;
+      }
+
       setSelectedLogoFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         setLogoPreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+      // Clear any previous errors
+      setErrors((prev) => ({ ...prev, logo: "" }));
     }
   };
 
@@ -130,12 +150,32 @@ export default function AddTeamModal({
     const file = e.target.files?.[0];
     console.log("🖼️ Team Image File Selected:", file);
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setErrors((prev) => ({
+          ...prev,
+          image: "Please select a valid image file",
+        }));
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          image: "File size must be less than 5MB",
+        }));
+        return;
+      }
+
       setSelectedImageFile(file);
       const reader = new FileReader();
       reader.onload = (e) => {
         setImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+      // Clear any previous errors
+      setErrors((prev) => ({ ...prev, image: "" }));
     }
   };
 
@@ -500,35 +540,82 @@ export default function AddTeamModal({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Team Logo
               </label>
-              <div className="flex items-center space-x-4">
-                <div className="flex-1">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleLogoFileChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+
+              {/* Logo Preview */}
+              {logoPreview && (
+                <div className="mb-4">
+                  <img
+                    src={logoPreview}
+                    alt="New logo preview"
+                    className="w-32 h-32 object-contain rounded-lg border border-gray-300"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Upload a logo file (PNG, JPG, etc.) - will be renamed to
-                    logo-
-                    {formData.name
-                      .toLowerCase()
-                      .replace(/^wcs\s+/, "")
-                      .replace(/[^a-z0-9\s-]/g, "")
-                      .replace(/\s+/g, "-")}
-                    .png
+                  <p className="text-sm text-blue-600 mt-2">
+                    New logo selected
                   </p>
                 </div>
-                {logoPreview && (
-                  <div className="w-16 h-16 relative">
-                    <Image
-                      src={logoPreview}
-                      alt="Logo preview"
-                      fill
-                      className="object-contain rounded"
+              )}
+
+              {/* File Upload */}
+              <div className="space-y-2">
+                <div className="relative">
+                  {isOpen && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      id="logo-upload"
+                      key={`logo-upload-${Date.now()}`}
                     />
-                  </div>
-                )}
+                  )}
+                  <label
+                    htmlFor="logo-upload"
+                    className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const fileInput = document.getElementById(
+                        "logo-upload"
+                      ) as HTMLInputElement;
+                      if (fileInput) {
+                        fileInput.click();
+                      }
+                    }}
+                  >
+                    <div className="text-center">
+                      <svg
+                        className="mx-auto h-8 w-8 text-gray-400"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <p className="mt-2 text-sm text-gray-600">
+                        <span className="font-medium text-blue-600 hover:text-blue-500">
+                          Click to upload
+                        </span>{" "}
+                        or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG, GIF up to 5MB
+                      </p>
+                    </div>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Upload a logo file (PNG, JPG, etc.) - will be renamed to logo-
+                  {formData.name
+                    .toLowerCase()
+                    .replace(/^wcs\s+/, "")
+                    .replace(/[^a-z0-9\s-]/g, "")
+                    .replace(/\s+/g, "-")}
+                  .png
+                </p>
               </div>
               {errors.logo && (
                 <p className="text-[red] text-sm mt-1 font-medium">
@@ -542,35 +629,82 @@ export default function AddTeamModal({
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Team Image
               </label>
-              <div className="flex items-center space-x-4">
-                <div className="flex-1">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageFileChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+
+              {/* Team Image Preview */}
+              {imagePreview && (
+                <div className="mb-4">
+                  <img
+                    src={imagePreview}
+                    alt="New team image preview"
+                    className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Upload a team image file (PNG, JPG, etc.) - will be renamed
-                    to{" "}
-                    {formData.name
-                      .toLowerCase()
-                      .replace(/^wcs\s+/, "")
-                      .replace(/[^a-z0-9\s-]/g, "")
-                      .replace(/\s+/g, "-")}
-                    .png
+                  <p className="text-sm text-blue-600 mt-2">
+                    New team image selected
                   </p>
                 </div>
-                {imagePreview && (
-                  <div className="w-16 h-16 relative">
-                    <Image
-                      src={imagePreview}
-                      alt="Team image preview"
-                      fill
-                      className="object-cover rounded"
+              )}
+
+              {/* File Upload */}
+              <div className="space-y-2">
+                <div className="relative">
+                  {isOpen && (
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      id="team-image-upload"
+                      key={`team-image-upload-${Date.now()}`}
                     />
-                  </div>
-                )}
+                  )}
+                  <label
+                    htmlFor="team-image-upload"
+                    className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const fileInput = document.getElementById(
+                        "team-image-upload"
+                      ) as HTMLInputElement;
+                      if (fileInput) {
+                        fileInput.click();
+                      }
+                    }}
+                  >
+                    <div className="text-center">
+                      <svg
+                        className="mx-auto h-8 w-8 text-gray-400"
+                        stroke="currentColor"
+                        fill="none"
+                        viewBox="0 0 48 48"
+                      >
+                        <path
+                          d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <p className="mt-2 text-sm text-gray-600">
+                        <span className="font-medium text-blue-600 hover:text-blue-500">
+                          Click to upload
+                        </span>{" "}
+                        or drag and drop
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        PNG, JPG, GIF up to 5MB
+                      </p>
+                    </div>
+                  </label>
+                </div>
+                <p className="text-xs text-gray-500">
+                  Upload a team image file (PNG, JPG, etc.) - will be renamed to{" "}
+                  {formData.name
+                    .toLowerCase()
+                    .replace(/^wcs\s+/, "")
+                    .replace(/[^a-z0-9\s-]/g, "")
+                    .replace(/\s+/g, "-")}
+                  .png
+                </p>
               </div>
               {errors.image && (
                 <p className="text-[red] text-sm mt-1 font-medium">
@@ -589,7 +723,7 @@ export default function AddTeamModal({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full px-4 py-3 text-white bg-red rounded-md hover:bg-red-600 transition-colors"
+                  className="w-full px-4 py-3 text-white bg-[red] rounded-md hover:bg-[#b80000] transition-colors"
                 >
                   Delete Team
                 </button>
@@ -625,7 +759,7 @@ export default function AddTeamModal({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="px-4 py-2 text-white bg-red rounded-md hover:bg-red-600 transition-colors"
+                  className="px-4 py-2 text-white bg-[red] rounded-md hover:bg-[#b80000] transition-colors"
                 >
                   Delete Team
                 </button>

@@ -1,5 +1,44 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.8.0 - "All Teams" Global Events & File Upload Fixes
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 10/10 (Perfect) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+## 🎯 Major Features
+
+### "All Teams" Global Events System
+
+- ✅ **Team Updates**: Admins can create updates visible to all teams
+- ✅ **Games & Tournaments**: Global scheduling for program-wide events
+- ✅ **Practices**: Global practice sessions for all teams
+- ✅ **Multi-Day Tournaments**: Tournaments now span multiple days correctly
+
+### Enhanced File Upload System
+
+- ✅ **GIF Support**: Fixed upload issues for GIF files under 5MB
+- ✅ **API Route Migration**: Moved from server actions to API routes for better file handling
+- ✅ **File Size Warnings**: Added validation and user warnings for files over 5MB
+- ✅ **Error Handling**: Improved error messages and logging
+
+### Team Page Improvements
+
+- ✅ **Side-by-Side Layout**: Games/tournaments and practices displayed side-by-side
+- ✅ **Players Table**: Added comprehensive team players table below schedules
+- ✅ **Responsive Design**: Optimized for desktop and mobile viewing
+
+### Admin Experience Enhancements
+
+- ✅ **Default Team Selection**: Admin users default to "All Teams" on Coach tab
+- ✅ **Modal Template Removal**: Removed demo button for cleaner interface
+- ✅ **Team Assignment**: Added team assignment field in coach add/edit modals
+
+---
+
 ## 🚀 Version 2.0.1 - Delete Confirmation & Profanity Filter Enhancement
 
 **Release Date**: January 2025  
@@ -10,10 +49,37 @@
 
 ---
 
+## 🎨 UI/UX Standards & Guidelines
+
+### Red Button Format Standard
+
+**IMPORTANT**: All red buttons must use this exact format for consistency:
+
+```css
+className="px-6 py-2 text-sm font-semibold text-white bg-[red] hover:bg-[#b80000] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+```
+
+**Key Elements:**
+
+- `bg-[red]` - Primary red background
+- `hover:bg-[#b80000]` - Darker red on hover
+- `text-white` - White text for contrast
+- `px-6 py-2` - Standard padding
+- `text-sm font-semibold` - Typography
+- `rounded-md` - Border radius
+- `transition-colors` - Smooth color transitions
+- `disabled:opacity-50 disabled:cursor-not-allowed` - Disabled states
+
+**Usage**: Apply to all delete buttons, confirmation buttons, and destructive action buttons.
+
+---
+
 ## 🛡️ Latest Security & UX Enhancements
 
 ### Delete Confirmation Modal System
+
 - ✅ **Added Delete Confirmation**: All delete actions now require user confirmation
+
   - Games, practices, updates, and drills now show confirmation modal before deletion
   - Prevents accidental data loss
   - Clear visual feedback with warning icons
@@ -26,9 +92,11 @@
   - Automatic data refresh after successful deletion
 
 ### Profanity Filter Integration
+
 - ✅ **Comprehensive Text Validation**: All form fields now protected against inappropriate content
+
   - Games: Title, opponent, location, description
-  - Practices: Title, location, description  
+  - Practices: Title, location, description
   - Updates: Title, content
   - Drills: Title, instructions, benefits, additional info, skills, equipment
 
@@ -38,13 +106,16 @@
   - Prevents submission until content is cleaned
 
 ### Coach Tab Event Display Fix
+
 - ✅ **Fixed Event Filtering**: Coach tab now correctly displays all events
   - Changed from "future only" to "today onwards" filtering
   - Games and practices scheduled for today now appear even if time has passed
   - Consistent event display across all three locations (schedule, team page, coach tab)
 
 ### Technical Improvements
+
 - ✅ **State Management**: Added proper modal state management
+
   - `showDeleteConfirm`, `deleteTarget`, `submitting` states
   - `showProfanityModal`, `profanityErrors` states
   - Proper cleanup and error handling

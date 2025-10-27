@@ -46,6 +46,7 @@ import {
   fetchSchedulesByTeamId,
   fetchTeamUpdates,
   getUserRole,
+  uploadFileToStorage,
 } from "@/lib/actions";
 import {
   createPracticeDrill,
@@ -541,10 +542,18 @@ function ClubManagementContent() {
     if (!isAuthorized || activeTab !== "coaches-dashboard") return;
     if (selectedTeamId || teams.length === 0) return;
 
+    // If admin, default to "All Teams"
+    if (userRole === "admin") {
+      setSelectedTeamId("__GLOBAL__");
+      setSelectedTeam(null);
+      return;
+    }
+
+    // For coaches, select their first assigned team
     const coachTeams = teams.filter((team) =>
       team.coaches?.some((c: any) => c.email === userEmail)
     );
-    const defaultTeam = userRole === "admin" ? teams[0] : coachTeams[0];
+    const defaultTeam = coachTeams[0];
     if (defaultTeam) {
       setSelectedTeamId(defaultTeam.id);
       setSelectedTeam(defaultTeam);
@@ -856,13 +865,20 @@ function ClubManagementContent() {
           // Game/Tournament
           const eventType =
             data.gameType === "tournament" ? "Tournament" : "Game";
-          await updateSchedule(editingSchedule.id, {
+          const updateData: any = {
             event_type: eventType,
             date_time: data.gameDateTime,
             location: data.gameLocation,
             opponent: data.gameOpponent,
             description: data.gameComments,
-          });
+          };
+
+          // Add end date for tournaments
+          if (data.gameType === "tournament" && data.gameEndDateTime) {
+            updateData.end_date_time = data.gameEndDateTime;
+          }
+
+          await updateSchedule(editingSchedule.id, updateData);
         }
         toast.success("Schedule updated successfully");
       } else {
@@ -873,15 +889,19 @@ function ClubManagementContent() {
           userId,
         });
 
+        // Handle __GLOBAL__ conversion
+        const isGlobal = selectedTeamId === "__GLOBAL__";
+        const teamId = isGlobal ? null : selectedTeamId;
+
         if (modalType === "Practice" && data.isRecurring) {
           const recurringData = {
-            team_id: selectedTeamId,
+            team_id: teamId,
             event_type: "Practice" as const,
             date_time: data.practiceDateTime,
             title: data.practiceTitle || null,
             location: data.practiceLocation,
             description: data.practiceComments,
-            is_global: false,
+            is_global: isGlobal,
             recurringType: data.recurringType,
             recurringCount: data.recurringCount,
             recurringEndDate: data.recurringEndDate,
@@ -894,13 +914,13 @@ function ClubManagementContent() {
           await addRecurringPractice(recurringData);
         } else if (modalType === "Practice") {
           const practiceData = {
-            team_id: selectedTeamId,
+            team_id: teamId,
             event_type: "Practice" as const,
             date_time: data.practiceDateTime,
             title: data.practiceTitle || null,
             location: data.practiceLocation,
             description: data.practiceComments,
-            is_global: false,
+            is_global: isGlobal,
           };
           devLog(
             "handleCreateSchedule: Creating single practice",
@@ -911,17 +931,23 @@ function ClubManagementContent() {
           // Game/Tournament
           const eventType =
             data.gameType === "tournament" ? "Tournament" : "Game";
-          const gameData = {
-            team_id: selectedTeamId,
+          const gameData: any = {
+            team_id: teamId,
             event_type: eventType as "Game" | "Tournament",
             date_time: data.gameDateTime,
             title: null,
             location: data.gameLocation,
             opponent: data.gameOpponent,
             description: data.gameComments,
-            is_global: false,
+            is_global: isGlobal,
             created_by: userId || undefined,
           };
+
+          // Add end date for tournaments
+          if (data.gameType === "tournament" && data.gameEndDateTime) {
+            gameData.end_date_time = data.gameEndDateTime;
+          }
+
           devLog("handleCreateSchedule: Creating game/tournament", gameData);
           const result = await addSchedule(gameData);
           devLog("handleCreateSchedule: Game creation result", result);
@@ -947,13 +973,59 @@ function ClubManagementContent() {
         toast.error("Please select a team first");
         return;
       }
+
+      let imageUrl = data.image_url;
+
+      // Handle file upload if image is provided
+      if (data.image && data.image instanceof File) {
+        devLog("Uploading file for team update:", {
+          fileName: data.image.name,
+          fileType: data.image.type,
+          fileSize: data.image.size,
+          fileSizeMB: (data.image.size / (1024 * 1024)).toFixed(2),
+        });
+        try {
+          const formData = new FormData();
+          formData.append("file", data.image);
+          formData.append("folder", "team_updates");
+
+          const response = await fetch("/api/upload/team-update", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to upload image");
+          }
+
+          const result = await response.json();
+          imageUrl = result.url;
+          devLog("File uploaded successfully:", imageUrl);
+        } catch (uploadError) {
+          devError("File upload failed:", uploadError);
+          toast.error(
+            `Failed to upload image: ${
+              uploadError instanceof Error
+                ? uploadError.message
+                : "Unknown error"
+            }`
+          );
+          return;
+        }
+      }
+
+      // Handle __GLOBAL__ conversion
+      const isGlobal = selectedTeamId === "__GLOBAL__";
+      const teamId = isGlobal ? null : selectedTeamId;
+
       await addUpdate({
-        team_id: selectedTeamId,
+        team_id: teamId,
         title: data.title,
         content: data.content,
         date_time: data.date_time || null,
-        image_url: data.image_url,
-        is_global: data.is_global,
+        image_url: imageUrl,
+        is_global: isGlobal || data.is_global,
         created_by: userId || "",
       });
       toast.success("Saved successfully");
@@ -965,15 +1037,73 @@ function ClubManagementContent() {
     }
   };
 
+  const handleUpdateUpdate = async (data: any) => {
+    try {
+      if (!editingUpdate) {
+        toast.error("No update selected for editing");
+        return;
+      }
+
+      let imageUrl = data.image_url || editingUpdate.image_url;
+
+      // Handle file upload if new image is provided
+      if (data.image && data.image instanceof File) {
+        devLog("Uploading new file for team update:", data.image.name);
+        imageUrl = await uploadFileToStorage(
+          data.image,
+          "team-updates",
+          "team_updates"
+        );
+        devLog("File uploaded successfully:", imageUrl);
+      }
+
+      await updateUpdate(editingUpdate.id, {
+        title: data.title,
+        content: data.content,
+        date_time: data.date_time || null,
+        image_url: imageUrl,
+      });
+      toast.success("Update saved successfully");
+      setShowScheduleModal(false);
+      setEditingUpdate(null);
+      await fetchCoachData();
+    } catch (e) {
+      devError("Failed to update team update", e);
+      toast.error("Failed to save update");
+    }
+  };
+
   const handleCreateDrill = async (data: any) => {
     try {
       if (!selectedTeamId) {
         toast.error("Please select a team first");
         return;
       }
+
+      // Note: practice_drills table may not support is_global, so drills can only be team-specific
+      if (selectedTeamId === "__GLOBAL__") {
+        toast.error(
+          "Practice drills can only be created for specific teams, not all teams"
+        );
+        return;
+      }
+
+      let imageUrl = data.image_url;
+
+      // Handle file upload if image is provided
+      if (data.image && data.image instanceof File) {
+        devLog("Uploading file for practice drill:", data.image.name);
+        imageUrl = await uploadFileToStorage(
+          data.image,
+          "practice-drills",
+          "practice_drills"
+        );
+        devLog("File uploaded successfully:", imageUrl);
+      }
+
       await createPracticeDrill(
         {
-          team_id: selectedTeamId,
+          team_id: selectedTeamId, // Guaranteed to be a string (not __GLOBAL__) due to check above
           title: data.title,
           skills: data.skills || [],
           equipment: data.equipment || [],
@@ -983,7 +1113,7 @@ function ClubManagementContent() {
           benefits: data.benefits || "",
           difficulty: data.difficulty || "",
           category: data.category || "",
-          image_url: data.image,
+          image_url: imageUrl,
         },
         userId || ""
       );
@@ -1080,6 +1210,8 @@ function ClubManagementContent() {
       console.log("Saving coach data:", coachData);
       console.log("Editing coach ID:", editingCoach?.id);
 
+      let coachId: string;
+
       if (editingCoach) {
         // Update existing coach using API route
         console.log("Updating coach with ID:", editingCoach.id);
@@ -1110,10 +1242,8 @@ function ClubManagementContent() {
         }
 
         console.log("Coach updated successfully:", result);
+        coachId = editingCoach.id;
         toast.success("Coach updated successfully");
-        setShowEditCoachModal(false); // Close the modal
-        setEditingCoach(null); // Clear the editing coach
-        await fetchManagementData(); // Refresh the data
       } else {
         // Create new coach using API route
         console.log("Creating new coach via API");
@@ -1141,7 +1271,34 @@ function ClubManagementContent() {
         }
 
         console.log("Coach created successfully:", result);
+        coachId = result.id;
         toast.success("Coach added successfully");
+      }
+
+      // Handle team assignment
+      if (coachData.selectedTeamId) {
+        console.log("Assigning coach to team:", coachData.selectedTeamId);
+
+        // Remove any existing team assignment for this coach
+        await supabase.from("team_coaches").delete().eq("coach_id", coachId);
+
+        // Add new team assignment
+        const { error: assignError } = await supabase
+          .from("team_coaches")
+          .insert({
+            coach_id: coachId,
+            team_id: coachData.selectedTeamId,
+          });
+
+        if (assignError) {
+          console.error("Error assigning coach to team:", assignError);
+          toast.error("Coach saved but team assignment failed");
+        } else {
+          toast.success("Coach assigned to team successfully");
+        }
+      } else if (editingCoach && !coachData.selectedTeamId) {
+        // If editing and no team selected, remove team assignment
+        await supabase.from("team_coaches").delete().eq("coach_id", coachId);
       }
 
       setShowEditCoachModal(false);
@@ -1355,13 +1512,12 @@ function ClubManagementContent() {
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
+          <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-2 text-center uppercase">
             Club Management
           </h1>
-          <p className="text-white text-lg font-inter mb-8 text-center">
-            {userRole === "admin"
-              ? "Manage coaches, teams, and players. Create, edit, and organize your basketball club."
-              : "View and manage your assigned teams and players."}
+          <p className="text-blue-400 text-xl font-bebas mb-8 text-center italic">
+            "Success is built on the foundation of unity, discipline, and
+            relentless effort"
           </p>
         </div>
 
@@ -1395,7 +1551,7 @@ function ClubManagementContent() {
                   onClick={() => handleTabChange(tab.id)}
                   className={`flex-1 flex items-center justify-center gap-1 sm:gap-2 py-3 px-2 sm:px-4 rounded-md font-bebas transition-all text-xs sm:text-base ${
                     activeTab === tab.id
-                      ? "bg-red text-white shadow-lg"
+                      ? "bg-[red] text-white shadow-lg"
                       : "text-gray-300 hover:text-white hover:bg-gray-700"
                   }`}
                 >
@@ -1601,7 +1757,8 @@ function ClubManagementContent() {
                     const nextGame = schedules
                       .filter(
                         (s) =>
-                          s.event_type === "Game" &&
+                          (s.event_type === "Game" ||
+                            s.event_type === "Tournament") &&
                           new Date(s.date_time) >= today
                       )
                       .sort(
@@ -1763,7 +1920,8 @@ function ClubManagementContent() {
                         return schedules
                           .filter(
                             (s) =>
-                              s.event_type === "Game" &&
+                              (s.event_type === "Game" ||
+                                s.event_type === "Tournament") &&
                               new Date(s.date_time) >= today
                           )
                           .slice(0, 3)
@@ -1779,30 +1937,50 @@ function ClubManagementContent() {
                                       ? `vs. ${schedule.opponent}`
                                       : "TBD"}
                                   </h4>
-                                  <p className="text-gray-500 text-sm">
-                                    {new Date(
-                                      schedule.date_time
-                                    ).toLocaleDateString("en-US", {
-                                      weekday: "long",
-                                      year: "numeric",
-                                      month: "long",
-                                      day: "numeric",
-                                      hour: "numeric",
-                                      minute: "2-digit",
-                                      hour12: true,
-                                    })}
-                                  </p>
+                                  <div className="text-gray-500 text-sm">
+                                    <div className="sm:hidden">
+                                      <div>
+                                        {new Date(
+                                          schedule.date_time
+                                        ).toLocaleDateString("en-US", {
+                                          weekday: "short",
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                        })}
+                                      </div>
+                                      <div>
+                                        {new Date(
+                                          schedule.date_time
+                                        ).toLocaleTimeString("en-US", {
+                                          hour: "numeric",
+                                          minute: "2-digit",
+                                          hour12: true,
+                                        })}
+                                      </div>
+                                    </div>
+                                    <div className="hidden sm:block">
+                                      {new Date(
+                                        schedule.date_time
+                                      ).toLocaleDateString("en-US", {
+                                        weekday: "short",
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "numeric",
+                                        minute: "2-digit",
+                                        hour12: true,
+                                      })}
+                                    </div>
+                                  </div>
                                   {schedule.location && (
                                     <p className="text-gray-500 text-sm mt-1">
                                       📍 {schedule.location}
                                     </p>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                    Game
-                                  </span>
-                                  <div className="flex space-x-2">
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex space-x-2 justify-center sm:justify-start">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -1842,6 +2020,17 @@ function ClubManagementContent() {
                                       🗑️
                                     </button>
                                   </div>
+                                  <span
+                                    className={`px-2 py-1 rounded-full text-xs font-medium text-center ${
+                                      schedule.event_type === "Tournament"
+                                        ? "bg-purple-600 text-white"
+                                        : "bg-[red] text-white"
+                                    }`}
+                                  >
+                                    {schedule.event_type === "Tournament"
+                                      ? "Tournament"
+                                      : "Game"}
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -1855,7 +2044,8 @@ function ClubManagementContent() {
                         return (
                           schedules.filter(
                             (s) =>
-                              s.event_type === "Game" &&
+                              (s.event_type === "Game" ||
+                                s.event_type === "Tournament") &&
                               new Date(s.date_time) >= today
                           ).length === 0 && (
                             <p className="text-gray-500 text-center py-4">
@@ -1914,30 +2104,50 @@ function ClubManagementContent() {
                                   <h4 className="text-gray-900 font-semibold text-lg mb-1">
                                     {schedule.title || "Practice"}
                                   </h4>
-                                  <p className="text-gray-500 text-sm">
-                                    {new Date(
-                                      schedule.date_time
-                                    ).toLocaleDateString("en-US", {
-                                      weekday: "short",
-                                      month: "short",
-                                      day: "numeric",
-                                      hour: "numeric",
-                                      minute: "2-digit",
-                                      hour12: true,
-                                    })}{" "}
-                                    • 2h
-                                  </p>
+                                  <div className="text-gray-500 text-sm">
+                                    <div className="sm:hidden">
+                                      <div>
+                                        {new Date(
+                                          schedule.date_time
+                                        ).toLocaleDateString("en-US", {
+                                          weekday: "short",
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                        })}
+                                      </div>
+                                      <div>
+                                        {new Date(
+                                          schedule.date_time
+                                        ).toLocaleTimeString("en-US", {
+                                          hour: "numeric",
+                                          minute: "2-digit",
+                                          hour12: true,
+                                        })}
+                                      </div>
+                                    </div>
+                                    <div className="hidden sm:block">
+                                      {new Date(
+                                        schedule.date_time
+                                      ).toLocaleDateString("en-US", {
+                                        weekday: "short",
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "numeric",
+                                        minute: "2-digit",
+                                        hour12: true,
+                                      })}
+                                    </div>
+                                  </div>
                                   {schedule.location && (
                                     <p className="text-gray-500 text-sm mt-1">
                                       📍 {schedule.location}
                                     </p>
                                   )}
                                 </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-                                    Practice
-                                  </span>
-                                  <div className="flex space-x-2">
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex space-x-2 justify-center sm:justify-start">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -1977,6 +2187,9 @@ function ClubManagementContent() {
                                       🗑️
                                     </button>
                                   </div>
+                                  <span className="bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium text-center">
+                                    Practice
+                                  </span>
                                 </div>
                               </div>
                             </div>
@@ -2028,8 +2241,7 @@ function ClubManagementContent() {
                       {teamUpdates.slice(0, 3).map((update) => (
                         <div
                           key={update.id}
-                          className="bg-gray-50 p-4 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition-colors"
-                          onClick={() => openViewModal(update, "update")}
+                          className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
                         >
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
@@ -2050,26 +2262,65 @@ function ClubManagementContent() {
                                   }
                                 )}
                               </p>
+                              {/* Display image if available */}
+                              {update.image_url && (
+                                <div className="mt-3">
+                                  <Image
+                                    src={update.image_url}
+                                    alt={`${update.title} image`}
+                                    width={200}
+                                    height={150}
+                                    className="w-full max-w-xs h-32 object-cover rounded-lg border border-gray-300"
+                                    onError={(e) => {
+                                      devError(
+                                        "Failed to load team update image:",
+                                        update.image_url
+                                      );
+                                      // Hide the image element on error
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                </div>
+                              )}
                             </div>
-                            <div className="flex space-x-2">
-                              <button
-                                onClick={() => {
-                                  setEditingUpdate(update);
-                                  setModalType("Update");
-                                  setShowScheduleModal(true);
-                                }}
-                                className="text-blue-600 hover:text-blue-800 text-sm"
-                              >
-                                ✏️
-                              </button>
-                              <button
-                                onClick={() =>
-                                  handleDeleteUpdateItem(update.id)
-                                }
-                                className="text-red-600 hover:text-red-800 text-sm"
-                              >
-                                🗑️
-                              </button>
+                            <div className="flex flex-col gap-2">
+                              <div className="flex space-x-2 justify-center sm:justify-start">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openViewModal(update, "update");
+                                  }}
+                                  className="text-gray-600 hover:text-gray-800 text-sm"
+                                  title="View details"
+                                >
+                                  👁️
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingUpdate(update);
+                                    setModalType("Update");
+                                    setShowScheduleModal(true);
+                                  }}
+                                  className="text-blue-600 hover:text-blue-800 text-sm"
+                                  title="Edit update"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteUpdateItem(update.id);
+                                  }}
+                                  className="text-red-600 hover:text-red-800 text-sm"
+                                  title="Delete update"
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                              <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium text-center">
+                                Update
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -2402,7 +2653,9 @@ function ClubManagementContent() {
             modalType === "Game" || modalType === "Practice"
               ? handleCreateSchedule
               : modalType === "Update"
-              ? handleCreateUpdate
+              ? editingUpdate
+                ? handleUpdateUpdate
+                : handleCreateUpdate
               : handleCreateDrill
           }
           onProfanityError={(errors) => {
@@ -2436,6 +2689,7 @@ function ClubManagementContent() {
           editingCoach={editingCoach}
           loading={false}
           isManageTab={true}
+          teams={teams.map((t) => ({ id: t.id, name: t.name }))}
         />
 
         <AddTeamModal
@@ -2502,7 +2756,7 @@ function ClubManagementContent() {
         {/* Delete Confirmation Modal */}
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+            <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 shadow-xl">
               <div className="flex items-center mb-4">
                 <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
                   <svg
@@ -2537,14 +2791,14 @@ function ClubManagementContent() {
                   This action cannot be undone. The {deleteTarget?.type} will be
                   permanently removed.
                 </p>
-                <div className="flex space-x-3 justify-center">
+                <div className="flex space-x-4 justify-center">
                   <button
                     type="button"
                     onClick={() => {
                       setShowDeleteConfirm(false);
                       setDeleteTarget(null);
                     }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                    className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
                     disabled={submitting}
                   >
                     Cancel
@@ -2557,7 +2811,7 @@ function ClubManagementContent() {
                       }
                     }}
                     disabled={submitting}
-                    className="px-6 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2 text-sm font-semibold text-white bg-[red] hover:bg-[#b80000] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {submitting ? "Deleting..." : "Delete"}
                   </button>

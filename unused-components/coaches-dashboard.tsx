@@ -1256,7 +1256,7 @@ export default function CoachesDashboard() {
         document.body.style.position = "";
         document.body.style.top = "";
         document.body.style.width = "";
-        window.scrollTo(0, scrollY);
+        // DISABLED: window.scrollTo(0, scrollY);
       };
     }
   }, [showDeleteConfirm]);
@@ -1276,7 +1276,7 @@ export default function CoachesDashboard() {
         document.body.style.position = "";
         document.body.style.top = "";
         document.body.style.width = "";
-        window.scrollTo(0, scrollY);
+        // DISABLED: window.scrollTo(0, scrollY);
       };
     }
   }, [showProfanityModal]);
@@ -1537,9 +1537,9 @@ export default function CoachesDashboard() {
   //     URL.revokeObjectURL(imagePreview || ""); // Cleanup
   //   }
 
-  //   // Restore scroll position after state update
+  //   // DISABLED: Restore scroll position after state update
   //   setTimeout(() => {
-  //     window.scrollTo(0, scrollPositionRef.current);
+  //     // DISABLED: window.scrollTo(0, scrollPositionRef.current);
   //   }, 0);
   // };
 

@@ -68,6 +68,12 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["*"],
+      bodySizeLimit: "10mb", // Allow 10MB for file uploads
+    },
+  },
   // Apply security headers to all routes
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];

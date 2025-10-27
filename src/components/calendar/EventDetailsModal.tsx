@@ -35,10 +35,6 @@ export default function EventDetailsModal({
   useEffect(() => {
     if (!isOpen) return;
 
-    // Prevent body scrolling when modal is open
-    const originalStyle = window.getComputedStyle(document.body).overflow;
-    document.body.style.overflow = "hidden";
-
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
@@ -47,8 +43,6 @@ export default function EventDetailsModal({
     firstBtnRef.current?.focus();
 
     return () => {
-      // Restore body scrolling when modal closes
-      document.body.style.overflow = originalStyle;
       document.removeEventListener("keydown", onKey);
     };
   }, [isOpen, onClose]);

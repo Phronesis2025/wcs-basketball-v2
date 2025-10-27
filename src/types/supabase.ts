@@ -35,6 +35,7 @@ export type Schedule = {
   team_id: string | null; // Change from string to string | null to allow null
   event_type: "Game" | "Practice" | "Tournament" | "Meeting" | "Update";
   date_time: string;
+  end_date_time: string | null; // End date for tournaments and multi-day events
   title: string | null;
   location: string;
   opponent: string | null;

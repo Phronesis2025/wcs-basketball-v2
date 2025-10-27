@@ -57,6 +57,9 @@ export default function ScheduleModal({
   const [updateContent, setUpdateContent] = useState("");
   const [updateDateTime, setUpdateDateTime] = useState("");
   const [updateImage, setUpdateImage] = useState<File | null>(null);
+  const [updateImagePreview, setUpdateImagePreview] = useState<string | null>(
+    null
+  );
   const [isImportant, setIsImportant] = useState(false);
 
   // Drill form fields
@@ -74,8 +77,16 @@ export default function ScheduleModal({
     "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building"
   >("Drill");
   const [drillImage, setDrillImage] = useState<File | null>(null);
+  const [drillImagePreview, setDrillImagePreview] = useState<string | null>(
+    null
+  );
+  const [updateImageError, setUpdateImageError] = useState<string | null>(null);
+  const [drillImageError, setDrillImageError] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState("");
   const [newEquipment, setNewEquipment] = useState("");
+  const [dateValidationError, setDateValidationError] = useState<string | null>(
+    null
+  );
 
   // Predefined options (commented out for future use)
   // const skillOptions = [
@@ -98,11 +109,123 @@ export default function ScheduleModal({
     { letter: "S", name: "Saturday" },
   ];
 
+  const resetForms = React.useCallback(() => {
+    setGameType("game");
+    setGameDateTime("");
+    setGameEndDateTime("");
+    setGameOpponent("");
+    setGameLocation("");
+    setGameComments("");
+    setPracticeTitle("");
+    setPracticeDateTime("");
+    setIsRecurring(false);
+    setRecurringType("count");
+    setRecurringCount(4);
+    setRecurringEndDate("");
+    setSelectedDays([]);
+    setPracticeDuration("");
+    setPracticeLocation("");
+    setPracticeComments("");
+    setUpdateTitle("");
+    setUpdateContent("");
+    setUpdateDateTime("");
+    setUpdateImage(null);
+    setUpdateImagePreview(null);
+    setIsImportant(false);
+    setDrillTitle("");
+    setDrillSkills([]);
+    setDrillEquipment([]);
+    setNewSkill("");
+    setNewEquipment("");
+    setDrillTime("");
+    setDrillInstructions("");
+    setDrillAdditionalInfo("");
+    setDrillBenefits("");
+    setDrillDifficulty("Basic");
+    setDrillCategory("Drill");
+    setDrillImage(null);
+    setDrillImagePreview(null);
+    setUpdateImageError(null);
+    setDrillImageError(null);
+    setDateValidationError(null);
+  }, []);
+
   useEffect(() => {
     if (isOpen) {
       setActiveTab(type);
     }
   }, [isOpen, type]);
+
+  // Cleanup preview URLs on unmount
+  useEffect(() => {
+    return () => {
+      if (updateImagePreview) {
+        URL.revokeObjectURL(updateImagePreview);
+      }
+      if (drillImagePreview) {
+        URL.revokeObjectURL(drillImagePreview);
+      }
+    };
+  }, [updateImagePreview, drillImagePreview]);
+
+  // Cleanup file inputs when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setUpdateImage(null);
+      setUpdateImagePreview(null);
+      setDrillImage(null);
+      setDrillImagePreview(null);
+    }
+  }, [isOpen]);
+
+  // File change handlers
+  const handleUpdateImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setUpdateImageError("Please select a valid image file");
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setUpdateImageError("File size must be less than 5MB");
+        return;
+      }
+
+      setUpdateImage(file);
+      setUpdateImageError(null);
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setUpdateImagePreview(previewUrl);
+    }
+  };
+
+  const handleDrillImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setDrillImageError("Please select a valid image file");
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setDrillImageError("File size must be less than 5MB");
+        return;
+      }
+
+      setDrillImage(file);
+      setDrillImageError(null);
+
+      // Create preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setDrillImagePreview(previewUrl);
+    }
+  };
 
   useEffect(() => {
     if (editingData && isOpen) {
@@ -123,6 +246,19 @@ export default function ScheduleModal({
         setPracticeDateTime(formatForDateTimeLocal(editingData.date_time));
         setPracticeLocation(editingData.location || "");
         setPracticeComments(editingData.description || "");
+
+        // Set gameType based on event_type
+        if (editingData.event_type === "Tournament") {
+          setGameType("tournament");
+          // Set end date if available
+          if (editingData.end_date_time) {
+            setGameEndDateTime(
+              formatForDateTimeLocal(editingData.end_date_time)
+            );
+          }
+        } else {
+          setGameType("game");
+        }
 
         // Check if this is a recurring practice
         if (
@@ -173,6 +309,9 @@ export default function ScheduleModal({
           };
           setUpdateDateTime(formatForDateTimeLocal(editingData.date_time));
         }
+        // Handle existing image - we can't set a File object from URL, so we leave updateImage as null
+        // The user will need to re-select the file if they want to change it
+        setUpdateImage(null);
       } else if ("skills" in editingData) {
         // Practice drill data
         setDrillTitle(editingData.title || "");
@@ -202,63 +341,25 @@ export default function ScheduleModal({
       // Reset form when opening for new item
       resetForms();
     }
-  }, [editingData, isOpen, type]);
+  }, [editingData, isOpen, resetForms]);
 
-  // Prevent body scroll when modal is open
+  // Scroll locking is handled by useScrollLock hook above
+
+  // Real-time validation for tournament dates
   useEffect(() => {
-    if (isOpen) {
-      // Save current scroll position
-      const scrollY = window.scrollY;
-      // Prevent scrolling
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
+    if (gameType === "tournament" && gameDateTime && gameEndDateTime) {
+      const startDate = new Date(gameDateTime);
+      const endDate = new Date(gameEndDateTime);
 
-      return () => {
-        // Restore scrolling
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.width = "";
-        window.scrollTo(0, scrollY);
-      };
+      if (endDate <= startDate) {
+        setDateValidationError("End date must be after start date");
+      } else {
+        setDateValidationError(null);
+      }
+    } else {
+      setDateValidationError(null);
     }
-  }, [isOpen]);
-
-  const resetForms = () => {
-    setGameType("game");
-    setGameDateTime("");
-    setGameEndDateTime("");
-    setGameOpponent("");
-    setGameLocation("");
-    setGameComments("");
-    setPracticeTitle("");
-    setPracticeDateTime("");
-    setIsRecurring(false);
-    setRecurringType("count");
-    setRecurringCount(4);
-    setRecurringEndDate("");
-    setSelectedDays([]);
-    setPracticeDuration("");
-    setPracticeLocation("");
-    setPracticeComments("");
-    setUpdateTitle("");
-    setUpdateContent("");
-    setUpdateDateTime("");
-    setUpdateImage(null);
-    setIsImportant(false);
-    setDrillTitle("");
-    setDrillSkills([]);
-    setDrillEquipment([]);
-    setNewSkill("");
-    setNewEquipment("");
-    setDrillTime("");
-    setDrillInstructions("");
-    setDrillAdditionalInfo("");
-    setDrillBenefits("");
-    setDrillDifficulty("Basic");
-    setDrillCategory("Drill");
-    setDrillImage(null);
-  };
+  }, [gameType, gameDateTime, gameEndDateTime]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -272,6 +373,10 @@ export default function ScheduleModal({
 
     const actualGameDateTime = getDateTimeValue(
       gameDateTime,
+      'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
+    );
+    const actualGameEndDateTime = getDateTimeValue(
+      gameEndDateTime,
       'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
     );
     const actualPracticeDateTime = getDateTimeValue(
@@ -326,6 +431,23 @@ export default function ScheduleModal({
         validationErrors.push(...locationValidation.errors);
       if (!commentsValidation.isValid)
         validationErrors.push(...commentsValidation.errors);
+
+      // Validate tournament end date
+      if (gameType === "tournament") {
+        if (!gameEndDateTime) {
+          validationErrors.push("Tournament end date and time is required");
+        } else {
+          // Check if end date is before start date
+          const startDate = new Date(finalGameDateTime);
+          const endDate = new Date(actualGameEndDateTime || gameEndDateTime);
+
+          if (endDate <= startDate) {
+            validationErrors.push(
+              "Tournament end date must be after the start date"
+            );
+          }
+        }
+      }
     } else if (activeTab === "Practice") {
       const titleValidation = validateInput(practiceTitle, "practice title");
       const durationValidation = validateInput(practiceDuration, "duration");
@@ -389,6 +511,7 @@ export default function ScheduleModal({
           location: gameLocation,
           description: gameComments,
           gameDateTime: finalGameDateTime, // Pass actual value for form submission
+          gameEndDateTime: actualGameEndDateTime || gameEndDateTime, // Pass processed end date for tournaments
           gameLocation: gameLocation, // Pass with gameLocation key for validation
           gameOpponent: gameOpponent, // Pass with gameOpponent key for validation
           gameComments: gameComments, // Pass with gameComments key for validation
@@ -601,10 +724,19 @@ export default function ScheduleModal({
                       value={gameEndDateTime}
                       onChange={(e) => setGameEndDateTime(e.target.value)}
                       placeholder="mm/dd/yyyy --:-- --"
-                      className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
+                      className={`block w-full max-w-full p-3 border rounded-md focus:outline-none focus:ring-2 text-gray-900 appearance-none overflow-hidden ${
+                        dateValidationError
+                          ? "border-red-500 focus:ring-red-500"
+                          : "border-gray-300 focus:ring-blue-500"
+                      }`}
                       style={{ width: "100%", maxWidth: "100%" }}
                       required
                     />
+                    {dateValidationError && (
+                      <p className="text-red-500 text-sm mt-1 font-medium">
+                        {dateValidationError}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -884,12 +1016,74 @@ export default function ScheduleModal({
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Image (optional)
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setUpdateImage(e.target.files?.[0] || null)}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
+
+                {/* Image Preview */}
+                {updateImagePreview && (
+                  <div className="mb-4">
+                    <img
+                      src={updateImagePreview}
+                      alt="New update image"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                    />
+                    <p className="text-sm text-blue-600 mt-2">
+                      New image selected
+                    </p>
+                  </div>
+                )}
+
+                {/* File Upload */}
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleUpdateImageChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      id="update-image-upload"
+                    />
+                    <div
+                      className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                      onClick={() => {
+                        const fileInput = document.getElementById(
+                          "update-image-upload"
+                        ) as HTMLInputElement;
+                        if (fileInput) {
+                          fileInput.click();
+                        }
+                      }}
+                    >
+                      <div className="text-center">
+                        <svg
+                          className="mx-auto h-8 w-8 text-gray-400"
+                          stroke="currentColor"
+                          fill="none"
+                          viewBox="0 0 48 48"
+                        >
+                          <path
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <p className="mt-2 text-sm text-gray-600">
+                          <span className="font-medium text-blue-600 hover:text-blue-500">
+                            Click to upload
+                          </span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, GIF up to 5MB
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  {updateImageError && (
+                    <p className="text-[red] text-sm mt-1 font-medium">
+                      {updateImageError}
+                    </p>
+                  )}
+                </div>
               </div>
               <div className="flex items-center space-x-3">
                 <input
@@ -1135,17 +1329,81 @@ export default function ScheduleModal({
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Drill Image
                 </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setDrillImage(e.target.files?.[0] || null)}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
-                />
-                {drillImage && (
-                  <p className="mt-2 text-sm text-gray-600">
-                    Selected: {drillImage.name}
-                  </p>
+
+                {/* Image Preview */}
+                {drillImagePreview && (
+                  <div className="mb-4">
+                    <img
+                      src={drillImagePreview}
+                      alt="New drill image"
+                      className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                    />
+                    <p className="text-sm text-blue-600 mt-2">
+                      New image selected
+                    </p>
+                  </div>
                 )}
+
+                {/* File Upload */}
+                <div className="space-y-2">
+                  <div className="relative">
+                    {isOpen && (
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleDrillImageChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        id="drill-image-upload"
+                        key={`drill-upload-${
+                          editingData?.id || "new"
+                        }-${Date.now()}`}
+                      />
+                    )}
+                    <label
+                      htmlFor="drill-image-upload"
+                      className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const fileInput = document.getElementById(
+                          "drill-image-upload"
+                        ) as HTMLInputElement;
+                        if (fileInput) {
+                          fileInput.click();
+                        }
+                      }}
+                    >
+                      <div className="text-center">
+                        <svg
+                          className="mx-auto h-8 w-8 text-gray-400"
+                          stroke="currentColor"
+                          fill="none"
+                          viewBox="0 0 48 48"
+                        >
+                          <path
+                            d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                            strokeWidth={2}
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        <p className="mt-2 text-sm text-gray-600">
+                          <span className="font-medium text-blue-600 hover:text-blue-500">
+                            Click to upload
+                          </span>{" "}
+                          or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, GIF up to 5MB
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                  {drillImageError && (
+                    <p className="text-[red] text-sm mt-1 font-medium">
+                      {drillImageError}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}

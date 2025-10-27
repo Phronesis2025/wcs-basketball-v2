@@ -63,12 +63,42 @@ export default function MobileMonth({
 
   const eventsByDate = useMemo(() => {
     const map = new Map<string, Schedule[]>();
+
     for (const evt of events) {
-      const key = formatDateKeyChicago(new Date(evt.date_time));
-      const arr = map.get(key) || [];
-      arr.push(evt);
-      map.set(key, arr);
+      const startDate = new Date(evt.date_time);
+      const startKey = formatDateKeyChicago(startDate);
+
+      // Add event to start date
+      const startArr = map.get(startKey) || [];
+      startArr.push(evt);
+      map.set(startKey, startArr);
+
+      // For tournaments with end dates, add to all days in range
+      if (evt.event_type === "Tournament" && evt.end_date_time) {
+        const endDate = new Date(evt.end_date_time);
+        const currentDate = new Date(startDate);
+
+        // Normalize dates to midnight for proper day comparison
+        currentDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+
+        // Add event to each day between start and end (inclusive)
+        while (currentDate <= endDate) {
+          const dateKey = formatDateKeyChicago(currentDate);
+
+          // Only add to map if it's not the start date (already added above)
+          if (dateKey !== startKey) {
+            const dayArr = map.get(dateKey) || [];
+            dayArr.push(evt);
+            map.set(dateKey, dayArr);
+          }
+
+          // Move to next day
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+      }
     }
+
     // Stable order: by time then type
     for (const [k, arr] of map) {
       arr.sort(

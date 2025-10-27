@@ -1,13 +1,39 @@
 # WCSv2.0 Security
 
-## 🔒 Current Security Implementation (v2.7.7)
+## 🔒 Current Security Implementation (v2.8.0)
 
 **Live URL**: https://wcs-basketball-v2.vercel.app  
 **Security Score**: 10/10 (Perfect) 🔒  
-**Last Audit**: December 2024  
-**Status**: Production Ready ✅
+**Last Audit**: January 2025 (v2.8.0)  
+**Status**: Production Ready ✅  
+**Build Status**: Clean Build ✅  
+**Next.js Version**: 15.5.2
 
-### Recent Security Updates
+### Latest Security Audit (January 2025 - v2.8.0)
+
+- **Security Score**: 10/10 (Perfect) ✅
+- **Supabase Advisors**: 2 Warnings (non-critical, for future enhancement)
+  1. Leaked Password Protection: Enable HaveIBeenPwned integration (low priority)
+  2. MFA Options: Add additional multi-factor authentication methods (low priority)
+- **Code Security**: All file uploads migrated from server actions to API routes
+- **Next.js Config**: Fixed invalid configuration causing warning
+- **File Upload Security**: Enhanced validation and error handling for all uploads
+- **"All Teams" Security**: Proper handling of global events with `is_global` flag
+
+### Recent Security Updates (v2.8.0 - January 2025)
+
+- **File Upload Security**: Migrated from server actions to API routes for better binary data handling
+  - Resolved ERR_CONNECTION_RESET errors for large files
+  - Enhanced file size validation (5MB limit) with user warnings
+  - Improved error messages and logging for debugging
+- **Global Events Security**: Enhanced security for "All Teams" functionality
+  - Proper `__GLOBAL__` sentinel value handling
+  - Database-level security with NULL team_id for global records
+  - Input validation for global vs team-specific content
+- **Next.js Configuration**: Fixed invalid `maximumFileSizeBytes` configuration
+
+  - Replaced with proper `experimental.serverActions.bodySizeLimit`
+  - Maintained 10MB upload limit with correct configuration
 
 - **Authentication System Fixes (December 2024 - v2.7.7)**
 

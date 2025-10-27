@@ -8,7 +8,13 @@ import {
   fetchSchedulesByTeamId,
   fetchTeamUpdates,
 } from "../../../lib/actions";
-import { Team, Coach, Schedule, TeamUpdate } from "../../../types/supabase";
+import {
+  Team,
+  Coach,
+  Schedule,
+  TeamUpdate,
+  Player,
+} from "../../../types/supabase";
 import * as Sentry from "@sentry/nextjs";
 import { motion, Variants } from "framer-motion";
 import Image from "next/image";
@@ -32,28 +38,29 @@ export default function TeamPage({ params }: TeamPageProps) {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [updates, setUpdates] = useState<TeamUpdate[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [animationComplete, setAnimationComplete] = useState(false);
 
-  // Prevent scroll restoration and unwanted scrolling
+  // DISABLED: Prevent scroll restoration and unwanted scrolling
   useEffect(() => {
-    // Prevent browser from restoring scroll position
+    // DISABLED: Prevent browser from restoring scroll position
     if (typeof window !== "undefined") {
-      window.history.scrollRestoration = "manual";
+      // window.history.scrollRestoration = "manual";
 
-      // Store current scroll position
-      const scrollY = window.scrollY;
+      // DISABLED: Store current scroll position
+      // const scrollY = window.scrollY;
 
-      // Restore scroll position after a brief delay to ensure layout is stable
-      const timer = setTimeout(() => {
-        window.scrollTo(0, scrollY);
-      }, 100);
+      // DISABLED: Restore scroll position after a brief delay to ensure layout is stable
+      // const timer = setTimeout(() => {
+      //   window.scrollTo(0, scrollY);
+      // }, 100);
 
       return () => {
-        clearTimeout(timer);
-        // Restore default scroll restoration
-        window.history.scrollRestoration = "auto";
+        // clearTimeout(timer);
+        // DISABLED: Restore default scroll restoration
+        // window.history.scrollRestoration = "auto";
       };
     }
   }, []);
@@ -92,6 +99,18 @@ export default function TeamPage({ params }: TeamPageProps) {
           fetchSchedulesByTeamId(resolvedParams.id),
           fetchTeamUpdates(resolvedParams.id),
         ]);
+
+        // Fetch players for this team
+        const { data: playersData, error: playersError } = await supabase
+          .from("players")
+          .select("*")
+          .eq("team_id", resolvedParams.id)
+          .eq("is_deleted", false)
+          .order("name", { ascending: true });
+
+        if (!playersError && playersData) {
+          setPlayers(playersData);
+        }
 
         // Debug: Log coaches (development only)
         devLog(
@@ -200,10 +219,10 @@ export default function TeamPage({ params }: TeamPageProps) {
     );
   }
 
-  const games = schedules.filter((s) => s.event_type === "Game").slice(0, 3);
-  const practices = schedules
-    .filter((s) => s.event_type === "Practice")
-    .slice(0, 3);
+  const games = schedules.filter(
+    (s) => s.event_type === "Game" || s.event_type === "Tournament"
+  );
+  const practices = schedules.filter((s) => s.event_type === "Practice");
 
   return (
     <motion.div
@@ -368,21 +387,51 @@ export default function TeamPage({ params }: TeamPageProps) {
           <TeamUpdates team={team} updates={updates} />
         </div>
 
-        {/* Game Schedule - Full Width */}
-        <section className="mb-12" aria-label="Game Schedule">
+        {/* Games & Practices - Side by Side */}
+        <section className="mb-12" aria-label="Schedules">
           <h2 className="text-2xl font-bebas uppercase mb-6 text-center">
-            Game Schedule
+            Team Schedule
           </h2>
-          <div className="space-y-4">
-            {games.length > 0 ? (
-              games.map((game) => (
-                <TeamGameCard key={game.id} schedule={game} />
-              ))
-            ) : (
-              <div className="bg-white rounded-lg p-6 text-center shadow-sm border border-gray-100">
-                <p className="text-gray-500 font-inter">No games scheduled.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Left Column - Games & Tournaments */}
+            <div>
+              <h3 className="text-xl font-bebas uppercase mb-4 text-center">
+                Games & Tournaments
+              </h3>
+              <div className="space-y-4">
+                {games.length > 0 ? (
+                  games.map((game) => (
+                    <TeamGameCard key={game.id} schedule={game} />
+                  ))
+                ) : (
+                  <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
+                    <p className="text-gray-300 font-inter">
+                      No games or tournaments scheduled.
+                    </p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
+
+            {/* Right Column - Practices */}
+            <div>
+              <h3 className="text-xl font-bebas uppercase mb-4 text-center">
+                Practices
+              </h3>
+              <div className="space-y-4">
+                {practices.length > 0 ? (
+                  practices.map((practice) => (
+                    <TeamPracticeCard key={practice.id} schedule={practice} />
+                  ))
+                ) : (
+                  <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
+                    <p className="text-gray-300 font-inter">
+                      No practices scheduled.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
           <Link
             href="/schedules"
@@ -393,31 +442,70 @@ export default function TeamPage({ params }: TeamPageProps) {
           </Link>
         </section>
 
-        {/* Practice Schedule - Full Width */}
-        <section aria-label="Practice Schedule">
+        {/* Team Players - Full Width */}
+        <section className="mb-12" aria-label="Team Players">
           <h2 className="text-2xl font-bebas uppercase mb-6 text-center">
-            Practice Schedule
+            Team Players
           </h2>
-          <div className="space-y-4">
-            {practices.length > 0 ? (
-              practices.map((practice) => (
-                <TeamPracticeCard key={practice.id} schedule={practice} />
-              ))
-            ) : (
-              <div className="bg-white rounded-lg p-6 text-center shadow-sm border border-gray-100">
-                <p className="text-gray-500 font-inter">
-                  No practices scheduled.
-                </p>
-              </div>
-            )}
-          </div>
-          <Link
-            href="/schedules"
-            className="text-red hover:underline mt-4 inline-block text-center w-full"
-            aria-label="View all schedules"
-          >
-            View All Schedules
-          </Link>
+          {players.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full bg-gray-900/50 border border-red-500/50 rounded-lg">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left p-4 font-bebas uppercase">Name</th>
+                    <th className="text-left p-4 font-bebas uppercase">
+                      Jersey #
+                    </th>
+                    <th className="text-left p-4 font-bebas uppercase">
+                      Position
+                    </th>
+                    <th className="text-left p-4 font-bebas uppercase">
+                      Status
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {players.map((player, index) => (
+                    <tr
+                      key={player.id}
+                      className={`border-b border-gray-800 hover:bg-gray-800/50 ${
+                        index === players.length - 1 ? "border-b-0" : ""
+                      }`}
+                    >
+                      <td className="p-4 font-inter text-white">
+                        {player.name}
+                      </td>
+                      <td className="p-4 font-inter text-gray-300">
+                        {(player as any).jersey_number || "N/A"}
+                      </td>
+                      <td className="p-4 font-inter text-gray-300">
+                        {(player as any).position || "N/A"}
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            (player as any).is_active !== false
+                              ? "bg-green-900 text-green-300"
+                              : "bg-red-900 text-red-300"
+                          }`}
+                        >
+                          {(player as any).is_active !== false
+                            ? "Active"
+                            : "Inactive"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
+              <p className="text-gray-300 font-inter">
+                No players added to this team yet.
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Back Link - Bottom of Page */}

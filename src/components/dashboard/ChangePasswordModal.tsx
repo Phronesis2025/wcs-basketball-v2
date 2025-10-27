@@ -377,7 +377,7 @@ export default function ChangePasswordModal({
             <button
               type="submit"
               disabled={loading || passwordMismatch || !allRequirementsMet()}
-              className="flex-1 bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red-600 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 bg-[red] text-white font-bebas uppercase py-2 rounded-md hover:bg-[#b80000] disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? "Changing Password..." : "Change Password"}
             </button>

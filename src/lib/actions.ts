@@ -11,6 +11,82 @@ import {
 } from "../types/supabase";
 import { devLog, devError } from "../lib/security";
 
+// File upload utility function
+export async function uploadFileToStorage(
+  file: File,
+  bucket: string,
+  folder: string
+): Promise<string> {
+  try {
+    if (!supabaseAdmin) {
+      throw new Error("Admin client not available");
+    }
+
+    // Log file details for debugging
+    devLog("Uploading file:", {
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      fileSizeMB: (file.size / (1024 * 1024)).toFixed(2),
+      bucket,
+      folder,
+    });
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      throw new Error(
+        `File size (${(file.size / (1024 * 1024)).toFixed(
+          2
+        )}MB) exceeds the maximum allowed size of 5MB`
+      );
+    }
+
+    // Generate unique filename with timestamp
+    const timestamp = Date.now();
+    const fileExtension = file.name.split(".").pop();
+    const fileName = `${timestamp}-${file.name.replace(
+      /[^a-zA-Z0-9.-]/g,
+      "-"
+    )}`;
+    const filePath = `${folder}/${fileName}`;
+
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    // Upload to Supabase Storage
+    const { data, error } = await supabaseAdmin.storage
+      .from(bucket)
+      .upload(filePath, uint8Array, {
+        contentType: file.type,
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    if (error) {
+      devError("File upload error:", error);
+      throw new Error(`Failed to upload file: ${error.message}`);
+    }
+
+    // Get public URL
+    const { data: urlData } = supabaseAdmin.storage
+      .from(bucket)
+      .getPublicUrl(filePath);
+
+    devLog("File uploaded successfully:", {
+      filePath,
+      publicUrl: urlData.publicUrl,
+    });
+    return urlData.publicUrl;
+  } catch (err: unknown) {
+    devError("Upload file error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to upload file";
+    throw new Error(errorMessage);
+  }
+}
+
 // Type definitions for Supabase query results
 type TeamCoachRelation = {
   coaches: Coach[];
@@ -939,6 +1015,9 @@ export async function addUpdate(data: {
     // Handle "__GLOBAL__" case - convert to null and set is_global
     const insertData = { ...data };
     if (data.team_id === "__GLOBAL__" || data.is_global) {
+      devLog(
+        "Converting __GLOBAL__ to global update (team_id=null, is_global=true)"
+      );
       insertData.team_id = null; // Override to null for program-wide
       insertData.is_global = true;
     }

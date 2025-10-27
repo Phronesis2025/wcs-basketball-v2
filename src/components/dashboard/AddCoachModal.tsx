@@ -6,6 +6,7 @@ import { validateInput } from "@/lib/security";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import ManageDeleteConfirmModal from "./ManageDeleteConfirmModal";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { supabase } from "@/lib/supabaseClient";
 
 interface AddCoachModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ interface AddCoachModalProps {
   editingCoach?: Coach | null;
   loading?: boolean;
   isManageTab?: boolean; // New prop to distinguish Manage tab from Coach tab
+  teams?: Array<{ id: string; name: string }>; // Available teams
 }
 
 export default function AddCoachModal({
@@ -25,6 +27,7 @@ export default function AddCoachModal({
   editingCoach,
   loading = false,
   isManageTab = false,
+  teams = [],
 }: AddCoachModalProps) {
   const [formData, setFormData] = useState({
     firstName: "",
@@ -34,6 +37,12 @@ export default function AddCoachModal({
     quote: "",
     is_active: true,
   });
+
+  const [selectedTeamId, setSelectedTeamId] = useState<string>("");
+  const [assignedTeam, setAssignedTeam] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
@@ -50,6 +59,31 @@ export default function AddCoachModal({
   // Initialize form when editing
   useEffect(() => {
     console.log("AddCoachModal useEffect - editingCoach:", editingCoach);
+
+    const fetchAssignedTeam = async (coachId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("team_coaches")
+          .select("team_id, teams(id, name)")
+          .eq("coach_id", coachId)
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error fetching assigned team:", error);
+          return;
+        }
+
+        if (data && data.teams) {
+          const team = data.teams as { id: string; name: string };
+          setAssignedTeam(team);
+          setSelectedTeamId(team.id);
+          console.log("Assigned team found:", team);
+        }
+      } catch (err) {
+        console.error("Error fetching assigned team:", err);
+      }
+    };
+
     if (editingCoach) {
       console.log("Populating form with coach data:", {
         firstName: editingCoach.first_name,
@@ -70,6 +104,9 @@ export default function AddCoachModal({
 
       // Set current image for editing
       setCurrentImage(editingCoach.image_url || null);
+
+      // Fetch assigned team
+      fetchAssignedTeam(editingCoach.id);
     } else {
       setFormData({
         firstName: "",
@@ -82,6 +119,8 @@ export default function AddCoachModal({
 
       // Clear current image for new coach
       setCurrentImage(null);
+      setAssignedTeam(null);
+      setSelectedTeamId("");
     }
 
     // Reset file input and preview
@@ -271,6 +310,7 @@ export default function AddCoachModal({
         image_url: imageUrl,
         quote: formData.quote.trim(),
         is_active: formData.is_active,
+        selectedTeamId: selectedTeamId, // Include selected team
       };
 
       onSubmit(coachData);
@@ -436,6 +476,31 @@ export default function AddCoachModal({
               />
             </div>
 
+            {/* Team Selection */}
+            {isManageTab && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Assign to Team
+                </label>
+                <select
+                  value={selectedTeamId}
+                  onChange={(e) => setSelectedTeamId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                >
+                  <option value="">
+                    {assignedTeam
+                      ? `Currently: ${assignedTeam.name}`
+                      : "Select a team"}
+                  </option>
+                  {teams.map((team) => (
+                    <option key={team.id} value={team.id}>
+                      {team.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Coach Image */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -555,7 +620,7 @@ export default function AddCoachModal({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="w-full px-4 py-3 text-white bg-red rounded-md hover:bg-red-600 transition-colors"
+                  className="w-full px-4 py-3 text-white bg-[red] rounded-md hover:bg-[#b80000] transition-colors"
                 >
                   Delete Coach
                 </button>
@@ -593,7 +658,7 @@ export default function AddCoachModal({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="px-4 py-2 text-white bg-red rounded-md hover:bg-red-600 transition-colors"
+                  className="px-4 py-2 text-white bg-[red] rounded-md hover:bg-[#b80000] transition-colors"
                 >
                   Delete Coach
                 </button>

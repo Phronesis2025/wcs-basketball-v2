@@ -203,7 +203,7 @@ export default function CoachProfile({
   if (!profileData) {
     return (
       <div className="text-center py-12">
-        <p className="text-red font-inter">Failed to load profile data</p>
+        <p className="text-red-600 font-inter">Failed to load profile data</p>
       </div>
     );
   }
@@ -307,7 +307,7 @@ export default function CoachProfile({
                   onClick={() => setActiveSection(section.id)}
                   className={`w-full text-left px-3 py-2 rounded-md font-inter transition-colors ${
                     activeSection === section.id
-                      ? "bg-red text-white"
+                      ? "bg-[red] text-white"
                       : "text-gray-300 hover:text-white hover:bg-gray-700"
                   }`}
                 >
@@ -332,7 +332,7 @@ export default function CoachProfile({
                   {!isEditing && (
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="px-4 py-2 bg-red text-white font-bebas uppercase rounded-md hover:bg-red-600 transition-colors"
+                      className="px-4 py-2 bg-[red] text-white font-bebas uppercase rounded-md hover:bg-[#b80000] transition-colors"
                     >
                       Edit
                     </button>
@@ -425,7 +425,7 @@ export default function CoachProfile({
                       <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-6 py-2 bg-red text-white font-bebas uppercase rounded-md hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-6 py-2 bg-[red] text-white font-bebas uppercase rounded-md hover:bg-[#b80000] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {saving ? "Saving..." : "Save Changes"}
                       </button>
@@ -676,7 +676,7 @@ export default function CoachProfile({
                         <span className="text-white font-inter">Password</span>
                         <button
                           onClick={() => setShowPasswordModal(true)}
-                          className="px-4 py-2 bg-red text-white font-bebas uppercase rounded-md hover:bg-red-600 transition-colors"
+                          className="px-4 py-2 bg-[red] text-white font-bebas uppercase rounded-md hover:bg-[#b80000] transition-colors"
                         >
                           Change Password
                         </button>

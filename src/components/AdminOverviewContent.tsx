@@ -245,7 +245,7 @@ export default function AdminOverviewContent({
               });
               setShowEditCoachModal(true);
             }}
-            className="bg-red text-white font-bebas uppercase py-2 px-4 rounded hover:bg-red-600 transition-colors"
+            className="bg-[red] text-white font-bebas uppercase py-2 px-4 rounded hover:bg-[#b80000] transition-colors"
           >
             Add Coach
           </button>
@@ -515,7 +515,7 @@ export default function AdminOverviewContent({
               });
               setShowEditTeamModal(true);
             }}
-            className="bg-red text-white font-bebas uppercase py-2 px-4 rounded hover:bg-red-600 transition-colors"
+            className="bg-[red] text-white font-bebas uppercase py-2 px-4 rounded hover:bg-[#b80000] transition-colors"
           >
             Add Team
           </button>
@@ -525,10 +525,11 @@ export default function AdminOverviewContent({
             {teams.map((team, index) => {
               const isActive = (team as any).is_active;
               const isInactive = isActive === false;
-              const playerCount =
-                team.players?.filter(
-                  (player: any) => player.is_active && !player.is_deleted
-                ).length || 0;
+              // Count players for this specific team
+              const playerCount = players.filter(
+                (player: any) =>
+                  player.team_id === team.id && !player.is_deleted
+              ).length;
 
               return (
                 <div
@@ -585,8 +586,15 @@ export default function AdminOverviewContent({
 
                     {/* Coaches */}
                     <div className="text-gray-400 text-sm text-center">
-                      {team.team_coaches?.length || 0} coach
-                      {(team.team_coaches?.length || 0) !== 1 ? "es" : ""}
+                      {(team as any).team_coaches?.length ||
+                        team.coaches?.length ||
+                        0}{" "}
+                      coach
+                      {((team as any).team_coaches?.length ||
+                        team.coaches?.length ||
+                        0) !== 1
+                        ? "es"
+                        : ""}
                     </div>
 
                     {/* Active/Inactive Badge */}
@@ -649,8 +657,15 @@ export default function AdminOverviewContent({
                           {playerCount} player{playerCount !== 1 ? "s" : ""}
                         </div>
                         <div>
-                          {team.team_coaches?.length || 0} coach
-                          {(team.team_coaches?.length || 0) !== 1 ? "es" : ""}
+                          {(team as any).team_coaches?.length ||
+                            team.coaches?.length ||
+                            0}{" "}
+                          coach
+                          {((team as any).team_coaches?.length ||
+                            team.coaches?.length ||
+                            0) !== 1
+                            ? "es"
+                            : ""}
                         </div>
                       </div>
                     </div>
@@ -729,7 +744,7 @@ export default function AdminOverviewContent({
               });
               setShowEditPlayerModal(true);
             }}
-            className="bg-red text-white font-bebas uppercase py-2 px-4 rounded hover:bg-red-600 transition-colors"
+            className="bg-[red] text-white font-bebas uppercase py-2 px-4 rounded hover:bg-[#b80000] transition-colors"
           >
             Add Player
           </button>
