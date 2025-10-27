@@ -3,15 +3,22 @@
 ## 🔒 Current Security Implementation (v2.8.0)
 
 **Live URL**: https://wcs-basketball-v2.vercel.app  
-**Security Score**: 10/10 (Perfect) 🔒  
+**Security Score**: 9.5/10 (Excellent) 🔒  
 **Last Audit**: January 2025 (v2.8.0)  
 **Status**: Production Ready ✅  
 **Build Status**: Clean Build ✅  
 **Next.js Version**: 15.5.2
+**Critical Issue Found**: Exposed credentials in .cursor/mcp.json - FIXED ✅
 
 ### Latest Security Audit (January 2025 - v2.8.0)
 
-- **Security Score**: 10/10 (Perfect) ✅
+- **Security Score**: 9.5/10 (Excellent) ✅
+- **CRITICAL Issue Found & Fixed**: Exposed credentials in `.cursor/mcp.json`
+  - Added to `.gitignore` to prevent future tracking
+  - Removed from git history
+  - Created secure template file
+  - Recommendation: Rotate credentials in Supabase dashboard
+- **NPM Audit**: No vulnerabilities found
 - **Supabase Advisors**: 2 Warnings (non-critical, for future enhancement)
   1. Leaked Password Protection: Enable HaveIBeenPwned integration (low priority)
   2. MFA Options: Add additional multi-factor authentication methods (low priority)
@@ -19,6 +26,7 @@
 - **Next.js Config**: Fixed invalid configuration causing warning
 - **File Upload Security**: Enhanced validation and error handling for all uploads
 - **"All Teams" Security**: Proper handling of global events with `is_global` flag
+- **See Full Audit**: `docs/SECURITY_AUDIT_JAN_2025.md`
 
 ### Recent Security Updates (v2.8.0 - January 2025)
 

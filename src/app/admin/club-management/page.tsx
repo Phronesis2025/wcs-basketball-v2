@@ -1,7 +1,7 @@
 // src/app/admin/club-management/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -83,6 +83,20 @@ function ClubManagementContent() {
   const [drills, setDrills] = useState<PracticeDrill[]>([]);
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [managementDataLoading, setManagementDataLoading] = useState(false);
+
+  // Derived player states
+  const pendingPlayers = useMemo(
+    () => players.filter((p) => p.status === "pending"),
+    [players]
+  );
+  const awaitingPaymentPlayers = useMemo(
+    () => players.filter((p) => p.status === "approved"),
+    [players]
+  );
+  const activePlayers = useMemo(
+    () => players.filter((p) => p.status === "active"),
+    [players]
+  );
 
   // UI states
   const [expandedSections, setExpandedSections] = useState({
@@ -532,6 +546,10 @@ function ClubManagementContent() {
       fetchManagementData();
     } else if (activeTab === "coaches-dashboard") {
       if (teams.length === 0) fetchManagementData();
+    } else if (activeTab === "payments") {
+      if (teams.length === 0 || players.length === 0) {
+        fetchManagementData();
+      }
     } else if (activeTab === "analytics") {
       fetchAnalyticsData();
     }
@@ -2638,6 +2656,352 @@ function ClubManagementContent() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Payments Tab */}
+        {activeTab === "payments" && userRole === "admin" && (
+          <section className="space-y-6">
+            {/* Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+                <div className="text-sm text-gray-300">
+                  Pending Registrations
+                </div>
+                <div className="text-2xl font-bold text-white">
+                  {pendingPlayers.length}
+                </div>
+              </div>
+              <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+                <div className="text-sm text-gray-300">Awaiting Payment</div>
+                <div className="text-2xl font-bold text-white">
+                  {awaitingPaymentPlayers.length}
+                </div>
+              </div>
+              <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+                <div className="text-sm text-gray-300">Active (Paid)</div>
+                <div className="text-2xl font-bold text-green-400">
+                  {activePlayers.length}
+                </div>
+              </div>
+            </div>
+
+            {/* Clear All Button for Testing */}
+            <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bebas text-white mb-2">
+                    Testing Tools
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    Clear all players and payment history for testing
+                  </p>
+                </div>
+                <button
+                  onClick={async () => {
+                    if (
+                      !confirm(
+                        "Are you sure you want to delete ALL players and payment records? This cannot be undone."
+                      )
+                    ) {
+                      return;
+                    }
+                    try {
+                      const resp = await fetch(
+                        "/api/admin/clear-all-test-data",
+                        {
+                          method: "POST",
+                        }
+                      );
+                      if (resp.ok) {
+                        alert("All test data cleared successfully!");
+                        await fetchManagementData();
+                      } else {
+                        const j = await resp.json().catch(() => ({}));
+                        alert(j.error || "Failed to clear data");
+                      }
+                    } catch (error) {
+                      alert("Error clearing data");
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors"
+                >
+                  Clear All Data
+                </button>
+              </div>
+            </div>
+
+            {/* Projected Revenue */}
+            <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+              <div className="text-sm text-gray-300 mb-1">
+                Projected Revenue (Approved)
+              </div>
+              <div className="text-xl font-semibold text-green-400">
+                $
+                {awaitingPaymentPlayers
+                  .reduce((sum, p) => {
+                    // If you store intended plan on the player later, use that here.
+                    // For now we assume annual default:
+                    return sum + 360;
+                  }, 0)
+                  .toLocaleString()}
+              </div>
+            </div>
+
+            {/* Awaiting Payment */}
+            <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+              <h3 className="text-lg font-bebas text-white mb-4">
+                Awaiting Payment ({awaitingPaymentPlayers.length})
+              </h3>
+              {awaitingPaymentPlayers.length > 0 ? (
+                <div className="overflow-x-auto block">
+                  <div className="inline-block min-w-full align-middle">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="text-left border-b border-gray-600">
+                          <th className="py-2 pr-4 text-gray-300">Player</th>
+                          <th className="py-2 pr-4 text-gray-300">Team</th>
+                          <th className="py-2 text-gray-300">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {awaitingPaymentPlayers.map((p: any) => {
+                          const playerAge = p.date_of_birth
+                            ? Math.floor(
+                                (new Date().getTime() -
+                                  new Date(p.date_of_birth).getTime()) /
+                                  365.25 /
+                                  24 /
+                                  60 /
+                                  60 /
+                                  1000
+                              )
+                            : null;
+                          const assignedTeam = teams.find(
+                            (t: any) => t.id === p.team_id
+                          );
+
+                          return (
+                            <tr key={p.id} className="border-b border-gray-600">
+                              <td className="py-2 pr-4">
+                                <div className="text-white font-medium">
+                                  {p.name}
+                                </div>
+                                <div className="text-gray-300 text-xs">
+                                  {p.parent_email}
+                                </div>
+                                {playerAge && (
+                                  <div className="text-gray-400 text-xs mt-1">
+                                    Age: {playerAge} • {p.gender}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-2 pr-4">
+                                {assignedTeam ? (
+                                  <div className="text-white">
+                                    {assignedTeam.name}
+                                  </div>
+                                ) : (
+                                  <span className="text-gray-400">
+                                    Not assigned
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-2">
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-900 text-yellow-200 border border-yellow-700">
+                                  Pending Payment
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">
+                  No players awaiting payment
+                </p>
+              )}
+            </div>
+
+            {/* Pending Approvals */}
+            <div className="bg-gray-800 rounded-lg border border-gray-600 p-4 mt-6">
+              <h3 className="text-lg font-bebas text-white mb-4">
+                Pending Player Approvals ({pendingPlayers.length})
+              </h3>
+              <div className="overflow-x-auto block">
+                <div className="inline-block min-w-full align-middle">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b border-gray-600">
+                        <th className="py-2 pr-4 text-gray-300">Player</th>
+                        <th className="py-2 pr-4 text-gray-300">Assign Team</th>
+                        <th className="py-2 text-gray-300">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pendingPlayers.map((p: any) => {
+                        // Calculate player age
+                        const playerAge = p.date_of_birth
+                          ? Math.floor(
+                              (new Date().getTime() -
+                                new Date(p.date_of_birth).getTime()) /
+                                (365.25 * 24 * 60 * 60 * 1000)
+                            )
+                          : null;
+
+                        // Filter teams based on age compatibility
+                        const compatibleTeams = teams.filter((t: any) => {
+                          if (!playerAge || !p.gender) return true; // Show all if no age/gender
+
+                          // Age range compatibility
+                          const ageRanges: Record<
+                            string,
+                            { min: number; max: number }
+                          > = {
+                            U8: { min: 6, max: 8 },
+                            U10: { min: 8, max: 10 },
+                            U12: { min: 10, max: 12 },
+                            U14: { min: 12, max: 14 },
+                            U16: { min: 14, max: 16 },
+                            U18: { min: 16, max: 18 },
+                          };
+
+                          const ageRange = ageRanges[t.age_group];
+                          if (
+                            ageRange &&
+                            (playerAge < ageRange.min ||
+                              playerAge > ageRange.max)
+                          ) {
+                            return false;
+                          }
+
+                          // Gender compatibility
+                          const playerGender = p.gender.toLowerCase();
+                          const teamGender = t.gender.toLowerCase();
+
+                          // Boys teams only accept Male players
+                          if (teamGender === "boys") {
+                            if (playerGender !== "male") {
+                              return false;
+                            }
+                          }
+
+                          // Girls teams only accept Female players
+                          if (teamGender === "girls") {
+                            if (playerGender !== "female") {
+                              return false;
+                            }
+                          }
+
+                          return true;
+                        });
+
+                        return (
+                          <tr key={p.id} className="border-b border-gray-600">
+                            <td className="py-2 pr-4">
+                              <div className="text-white">{p.name}</div>
+                              <div className="text-gray-300 text-xs">
+                                {p.parent_email}
+                              </div>
+                              {playerAge && (
+                                <div className="text-gray-400 text-xs mt-1">
+                                  Age: {playerAge} • {p.gender}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2 pr-4">
+                              <select
+                                className="border border-gray-600 bg-gray-700 rounded px-2 py-1 text-white w-full"
+                                onChange={(e) =>
+                                  (p.__assignTeam = e.target.value)
+                                }
+                                defaultValue={p.team_id || ""}
+                              >
+                                <option
+                                  value=""
+                                  disabled
+                                  className="bg-gray-700"
+                                >
+                                  Select team
+                                </option>
+                                {compatibleTeams.map((t: any) => (
+                                  <option
+                                    key={t.id}
+                                    value={t.id}
+                                    className="bg-gray-700"
+                                  >
+                                    {t.name} ({t.age_group} {t.gender})
+                                  </option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="py-2">
+                              <button
+                                className="bg-red text-white rounded px-3 py-1 whitespace-nowrap hover:bg-red/90 transition"
+                                onClick={async () => {
+                                  const teamId = (p as any).__assignTeam;
+                                  if (!teamId) {
+                                    toast.error("Please select a team first.");
+                                    return;
+                                  }
+
+                                  // Show loading toast
+                                  const loadingToast = toast.loading(
+                                    "Approving player..."
+                                  );
+
+                                  try {
+                                    const resp = await fetch(
+                                      "/api/approve-player",
+                                      {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                          player_id: p.id,
+                                          team_id: teamId,
+                                        }),
+                                      }
+                                    );
+
+                                    if (resp.ok) {
+                                      toast.dismiss(loadingToast);
+                                      toast.success(
+                                        "Player approved! Payment email sent to parent."
+                                      );
+                                      await fetchManagementData();
+                                    } else {
+                                      const j = await resp
+                                        .json()
+                                        .catch(() => ({}));
+                                      toast.dismiss(loadingToast);
+                                      toast.error(
+                                        j.error || "Failed to approve player"
+                                      );
+                                    }
+                                  } catch (error) {
+                                    toast.dismiss(loadingToast);
+                                    toast.error(
+                                      "An error occurred while approving the player"
+                                    );
+                                  }
+                                }}
+                              >
+                                Approve
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
         )}
 
         {/* Modals */}

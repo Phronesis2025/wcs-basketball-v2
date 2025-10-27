@@ -26,16 +26,17 @@ export async function GET(request: NextRequest) {
       .eq("id", userId)
       .single();
 
-    if (error) {
-      devError("Failed to fetch user role:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch user role" },
-        { status: 500 }
-      );
-    }
-
-    if (!data) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    // If no data (e.g., parent users not in users table), return null role
+    if (error || !data) {
+      if (error) {
+        devLog("User not in users table (may be a parent user)", error.message);
+      }
+      // Return null role for users not in the users table (like parent users)
+      return NextResponse.json({
+        success: true,
+        role: null,
+        password_reset: null,
+      });
     }
 
     return NextResponse.json({

@@ -13,6 +13,7 @@ This document maps each form field in the WCS Basketball club management system 
 For complete CREATE TABLE statements and schema definitions, see [DB_SETUP.md](./DB_SETUP.md).
 
 ### Table List
+
 - **teams** - Team information
 - **users** - User accounts and authentication
 - **coaches** - Coach profiles

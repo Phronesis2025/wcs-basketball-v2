@@ -5,6 +5,7 @@
 **Last Updated**: January 2025 - Complete schema synced from production Supabase database
 
 ### Database Statistics
+
 - **Tables**: 18 active tables
 - **Total Rows**: 1,000+ records
 - **Platform**: Supabase PostgreSQL
@@ -34,6 +35,7 @@ CREATE TABLE public.teams (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `name` (text, NOT NULL, UNIQUE) - Team name
 - `age_group` (text) - U10, U12, U14, U16, U18
@@ -63,6 +65,7 @@ CREATE TABLE public.users (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - User UUID (links to auth.users)
 - `email` (text, NOT NULL, UNIQUE) - User email
 - `role` (text) - coach, parent, or admin
@@ -94,6 +97,7 @@ CREATE TABLE public.coaches (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `first_name` (text, NOT NULL) - First name
 - `last_name` (text, NOT NULL) - Last name
@@ -146,6 +150,7 @@ CREATE TABLE public.schedules (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `team_id` (uuid, FK, nullable) - Associated team (NULL for global events)
 - `event_type` (text) - Game, Practice, Tournament, Meeting, or Update
@@ -182,6 +187,7 @@ CREATE TABLE public.team_updates (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `team_id` (uuid, FK, nullable) - Associated team (NULL for global updates)
 - `title` (text, NOT NULL) - Update title
@@ -219,6 +225,7 @@ CREATE TABLE public.practice_drills (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `team_id` (uuid, FK) - Associated team
 - `title` (text, NOT NULL) - Drill title
@@ -254,6 +261,7 @@ CREATE TABLE public.news (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `title` (text, NOT NULL) - News title
 - `content` (text, NOT NULL) - News content
@@ -278,6 +286,7 @@ CREATE TABLE public.products (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `name` (text, NOT NULL) - Product name
 - `description` (text) - Product description
@@ -300,6 +309,7 @@ CREATE TABLE public.resources (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `title` (text, NOT NULL) - Resource title
 - `description` (text) - Resource description
@@ -333,6 +343,7 @@ CREATE TABLE public.players (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `team_id` (uuid, FK) - Associated team
 - `name` (text, NOT NULL) - Player name
@@ -368,6 +379,7 @@ CREATE TABLE public.coach_messages (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `author_id` (uuid, FK to users, NOT NULL) - Message author
 - `author_name` (text, NOT NULL) - Author display name
@@ -396,6 +408,7 @@ CREATE TABLE public.coach_message_replies (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `message_id` (uuid, FK, NOT NULL) - Parent message
 - `author_id` (uuid, FK to users, NOT NULL) - Reply author
@@ -422,6 +435,7 @@ CREATE TABLE public.audit_logs (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `table_name` (text, NOT NULL) - Audited table name
 - `operation` (text, NOT NULL) - Operation type
@@ -448,6 +462,7 @@ CREATE TABLE public.login_logs (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `user_id` (uuid, FK to users, NOT NULL) - User who logged in
 - `login_at` (timestamptz) - Login timestamp
@@ -482,6 +497,7 @@ CREATE TABLE public.error_logs (
 ```
 
 **Columns:**
+
 - `id` (uuid, PK) - Auto-generated UUID
 - `severity` (text, NOT NULL) - Error severity level (critical, error, warning, info)
 - `message` (text, NOT NULL) - Error message
@@ -501,6 +517,7 @@ CREATE TABLE public.error_logs (
 All tables have RLS enabled. Key policies include:
 
 ### Teams Policy
+
 ```sql
 -- Public can view all teams
 CREATE POLICY "Public view teams" ON teams FOR SELECT TO public USING (true);
@@ -522,6 +539,7 @@ USING (EXISTS (
 ```
 
 ### Schedules Policy
+
 ```sql
 -- Public can view all schedules
 CREATE POLICY "Public view schedules" ON schedules FOR SELECT TO public USING (true);
@@ -539,6 +557,7 @@ USING (
 ```
 
 ### Team Updates Policy
+
 ```sql
 -- Public can view all team updates
 CREATE POLICY "Public view team updates" ON team_updates FOR SELECT TO public USING (true);

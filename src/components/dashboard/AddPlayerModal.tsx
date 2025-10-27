@@ -179,19 +179,26 @@ export default function AddPlayerModal({
     }
 
     // Handle gender validation
-    if (field === "gender" && playerAge !== null) {
-      const compatible = getCompatibleTeams(playerAge, value as string, teams);
-      setCompatibleTeams(compatible);
-
-      // Check if currently selected team is compatible
-      if (formData.teamId) {
-        const selectedTeam = compatible.find(
-          (team) => team.id === formData.teamId
+    if (field === "gender") {
+      // If we have a date of birth, recalculate compatible teams
+      if (playerAge !== null) {
+        const compatible = getCompatibleTeams(
+          playerAge,
+          value as string,
+          teams
         );
-        if (selectedTeam && !selectedTeam.compatible) {
-          setAgeValidationWarning(selectedTeam.message);
-        } else {
-          setAgeValidationWarning("");
+        setCompatibleTeams(compatible);
+
+        // Check if currently selected team is compatible
+        if (formData.teamId) {
+          const selectedTeam = compatible.find(
+            (team) => team.id === formData.teamId
+          );
+          if (selectedTeam && !selectedTeam.compatible) {
+            setAgeValidationWarning(selectedTeam.message);
+          } else {
+            setAgeValidationWarning("");
+          }
         }
       }
     }

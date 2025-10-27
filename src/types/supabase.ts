@@ -207,4 +207,44 @@ export type Player = {
   emergency_phone: string | null;
   created_at: string;
   is_active: boolean;
+  // New payment-related fields
+  status?: "pending" | "approved" | "active";
+  waiver_signed?: boolean;
+  stripe_customer_id?: string | null;
+};
+
+// Payment Types
+export type Payment = {
+  id: string;
+  player_id: string;
+  stripe_payment_id: string | null;
+  amount: number;
+  payment_type: "annual" | "monthly" | "custom";
+  status: "pending" | "paid" | "failed";
+  created_at: string;
+  updated_at: string;
+  // Related player info (added when joining with players table)
+  player_name?: string;
+};
+
+// Parent Profile Types
+export type Parent = {
+  user_id: string;
+  email: string;
+  name?: string | null;
+  phone?: string | null;
+};
+
+export type ParentProfile = {
+  parent: {
+    email: string;
+    name: string;
+    phone: string | null;
+    emergency_contact: string | null;
+    emergency_phone: string | null;
+  };
+  children: Player[];
+  payments: Payment[];
+  total_paid: number;
+  pending_payments: number;
 };

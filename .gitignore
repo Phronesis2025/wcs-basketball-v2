@@ -48,3 +48,6 @@ public/fonts/*  # If you want to exclude font files from Git
 playwright-report/
 test-results/
 playwright/.cache/
+
+# Cursor MCP config with sensitive credentials
+.cursor/mcp.json

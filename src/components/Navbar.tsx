@@ -101,6 +101,10 @@ export default function Navbar() {
                 const isAdminUser = userData.role === "admin";
                 setIsAdmin(isAdminUser);
                 return isAdminUser;
+              } else if (response.status === 404) {
+                // User not in users table (likely a parent user)
+                setIsAdmin(false);
+                return false;
               }
 
               throw new Error(`Role check failed: ${response.status}`);
@@ -254,6 +258,9 @@ export default function Navbar() {
       // Set signing out flag to prevent auth status checks
       setIsSigningOut(true);
 
+      // Close mobile menu immediately
+      setIsMobileMenuOpen(false);
+
       // Clear state immediately to prevent UI flicker
       setUser(null);
       setUserFullName(null);
@@ -314,17 +321,35 @@ export default function Navbar() {
   };
 
   // Standard site navigation (no admin links injected on regular pages)
-  const navLinks = [
+  // Build base nav links
+  const baseNavLinks = [
     { name: "Home", href: "/" },
     { name: "About", href: "/about" },
     { name: "Teams", href: "/teams" },
     { name: "Schedules", href: "/schedules" },
-    {
-      name: "Coaches",
-      href: user ? "/admin/club-management" : "/coaches/login",
-    },
     { name: "Drills", href: "/drills" },
   ];
+
+  // Add "Coaches" or "Profile" link based on user status
+  let navLinks;
+  if (user) {
+    // If user is an admin, show "Coaches" link to dashboard
+    if (isAdmin) {
+      navLinks = [
+        ...baseNavLinks,
+        { name: "Coaches", href: "/admin/club-management" },
+      ];
+    } else {
+      // If user is a parent (non-admin), show "Profile" link
+      navLinks = [
+        ...baseNavLinks,
+        { name: "Profile", href: "/parent/profile" },
+      ];
+    }
+  } else {
+    // Non-authenticated users see "Coaches" link to login
+    navLinks = [...baseNavLinks, { name: "Coaches", href: "/coaches/login" }];
+  }
 
   // Admin/Coach menu entries for Club Management page menu
   const adminMenuLinks = [
@@ -514,7 +539,7 @@ export default function Navbar() {
                   </button>
                 ) : (
                   <Link
-                    href="/club-registration"
+                    href="/register"
                     className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
                   >
                     Register
@@ -609,7 +634,10 @@ export default function Navbar() {
                     ))}
                     <li>
                       <button
-                        onClick={handleSignOut}
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          handleSignOut();
+                        }}
                         className="text-navy font-bebas text-lg tracking-wide hover:text-red transition-colors"
                       >
                         Sign Out
@@ -634,8 +662,8 @@ export default function Navbar() {
                 {user ? (
                   <button
                     onClick={() => {
-                      handleSignOut();
                       setIsMobileMenuOpen(false);
+                      handleSignOut();
                     }}
                     className="w-full text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
                   >
@@ -643,7 +671,7 @@ export default function Navbar() {
                   </button>
                 ) : (
                   <Link
-                    href="/club-registration"
+                    href="/register"
                     className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
