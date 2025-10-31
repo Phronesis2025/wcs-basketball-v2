@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
     }
 
     // First, get the coach's ID from the coaches table using the user_id
-    const { data: coachData, error: coachError } = await supabaseAdmin!
+    const { data: coachRows, error: coachError } = await supabaseAdmin!
       .from("coaches")
       .select("id")
       .eq("user_id", userId)
-      .single();
+      .limit(1);
 
     if (coachError) {
       devError("Failed to fetch coach data:", coachError);
@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const coachData = Array.isArray(coachRows) ? coachRows[0] : coachRows;
     if (!coachData) {
       devLog("Coach not found for user:", userId);
       return NextResponse.json([]);

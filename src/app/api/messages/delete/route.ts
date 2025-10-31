@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseClient";
+import { supabase, supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
@@ -12,13 +12,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
     devLog("[API] Deleting message (admin):", {
       messageId,
       requesterId,
@@ -26,7 +19,10 @@ export async function POST(request: NextRequest) {
     });
 
     // Fetch message to check author
-    const { data: existing, error: fetchErr } = await supabaseAdmin
+    // Prefer admin client when available; we'll fall back to anon client if needed
+    const adminClient = supabaseAdmin;
+
+    const { data: existing, error: fetchErr } = await (adminClient ?? supabase)
       .from("coach_messages")
       .select("author_id, deleted_at")
       .eq("id", messageId)
@@ -47,14 +43,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { error } = await supabaseAdmin
+    // Attempt admin update first if admin client exists
+    if (adminClient) {
+      const { error: adminErr } = await adminClient
+        .from("coach_messages")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", messageId);
+
+      if (!adminErr) {
+        return NextResponse.json({ success: true });
+      }
+
+      devError(
+        "[API] Admin delete failed, will try RLS-safe fallback:",
+        adminErr
+      );
+      // Continue to fallback path below
+    }
+
+    // Fallback: RLS-safe author-owned update via anon client
+    const { error: rlsErr } = await supabase
       .from("coach_messages")
       .update({ deleted_at: new Date().toISOString() })
-      .eq("id", messageId);
+      .eq("id", messageId)
+      .eq("author_id", requesterId);
 
-    if (error) {
-      devError("[API] Delete message failed:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (rlsErr) {
+      devError("[API] Fallback delete message failed:", rlsErr);
+      return NextResponse.json({ error: rlsErr.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });

@@ -85,10 +85,22 @@ export async function GET(
         ? loginLogs[loginLogs.length - 1].login_at
         : null;
 
+    // Fetch last_active_at from users table (may be null)
+    let last_active_at: string | null = null;
+    const { data: ua, error: uaErr } = await supabaseAdmin!
+      .from("users")
+      .select("last_active_at")
+      .eq("id", coach.user_id)
+      .limit(1);
+    if (!uaErr && ua && Array.isArray(ua) && ua[0]) {
+      last_active_at = ua[0].last_active_at ?? null;
+    }
+
     const stats = {
       total_logins: totalLogins,
       last_login_at: lastLogin,
       first_login_at: firstLogin,
+      last_active_at,
       is_active: totalLogins > 0,
     };
 

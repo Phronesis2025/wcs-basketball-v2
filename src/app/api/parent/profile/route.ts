@@ -20,11 +20,48 @@ export async function GET(request: NextRequest) {
 
     devLog("Fetching parent profile for:", email);
 
-    // Get all children for this parent email
+    // Get parent from parents table
+    const { data: parent, error: parentError } = await supabaseAdmin
+      .from("parents")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
+
+    if (parentError) {
+      devError("Error fetching parent:", parentError);
+      return NextResponse.json(
+        { error: "Failed to fetch parent" },
+        { status: 500 }
+      );
+    }
+
+    // If no parent found, return empty profile
+    if (!parent) {
+      return NextResponse.json({
+        parent: {
+          email,
+          name: null,
+          phone: null,
+          emergency_contact: null,
+          emergency_phone: null,
+          address_line1: null,
+          address_line2: null,
+          city: null,
+          state: null,
+          zip: null,
+        },
+        children: [],
+        payments: [],
+        total_paid: 0,
+        pending_payments: 0,
+      });
+    }
+
+    // Get all children for this parent
     const { data: children, error: childrenError } = await supabaseAdmin
       .from("players")
       .select("*")
-      .eq("parent_email", email)
+      .eq("parent_id", parent.id)
       .eq("is_deleted", false);
 
     if (childrenError) {
@@ -35,36 +72,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    if (!children || children.length === 0) {
-      return NextResponse.json({
-        parent: {
-          email,
-          phone: null,
-          emergency_contact: null,
-          emergency_phone: null,
-        },
-        children: [],
-        payments: [],
-        total_paid: 0,
-        pending_payments: 0,
-      });
-    }
-
-    // Get parent contact info from the first child (they should all be the same)
-    const firstChild = children[0];
-    const parentName =
-      firstChild.parent_first_name || firstChild.parent_name
-        ? `${firstChild.parent_first_name || ""} ${
-            firstChild.parent_last_name || ""
-          }`.trim() || firstChild.parent_name
-        : email;
-
     const parentInfo = {
-      email,
-      name: parentName,
-      phone: firstChild.parent_phone,
-      emergency_contact: firstChild.emergency_contact,
-      emergency_phone: firstChild.emergency_phone,
+      email: parent.email,
+      name: `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || email,
+      phone: parent.phone || null,
+      emergency_contact: parent.emergency_contact || null,
+      emergency_phone: parent.emergency_phone || null,
+      address_line1: parent.address_line1 || null,
+      address_line2: parent.address_line2 || null,
+      city: parent.city || null,
+      state: parent.state || null,
+      zip: parent.zip || null,
+      checkout_completed: parent.checkout_completed || false,
     };
 
     // Get all player IDs

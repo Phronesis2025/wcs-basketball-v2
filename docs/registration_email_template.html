@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      background-color: #f3f4f6;
+      padding: 20px;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .header {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%);
+    }
+    .logo-container {
+      margin-bottom: 20px;
+    }
+    .logo {
+      max-width: 70px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin: 15px 0 8px 0;
+      letter-spacing: -0.5px;
+    }
+    .header-subtitle {
+      font-size: 16px;
+      color: #cbd5e1;
+      font-weight: 500;
+      margin: 0;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .greeting {
+      font-size: 20px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 20px;
+    }
+    .intro-text {
+      font-size: 16px;
+      color: #475569;
+      margin-bottom: 25px;
+    }
+    .success-banner {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-left: 4px solid #10b981;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 25px 0;
+    }
+    .success-banner-title {
+      color: #065f46;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .success-banner-text {
+      color: #047857;
+      font-size: 14px;
+      margin: 0;
+    }
+    .player-card {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border: 1px solid #e2e8f0;
+      padding: 25px;
+      border-radius: 12px;
+      margin: 30px 0;
+    }
+    .player-card-title {
+      color: #0f172a;
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 15px 0;
+    }
+    .info-row {
+      display: flex;
+      padding: 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      font-weight: 600;
+      color: #475569;
+      min-width: 100px;
+    }
+    .info-value {
+      color: #1f2937;
+    }
+    .status-badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .section-title {
+      color: #0f172a;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 35px 0 20px 0;
+    }
+    .steps-container {
+      margin: 25px 0;
+    }
+    .step {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: start;
+    }
+    .step-number {
+      background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .step-content {
+      flex: 1;
+      padding-top: 2px;
+    }
+    .step-title {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+    .step-description {
+      color: #64748b;
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .timeline-box {
+      background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
+      border: 2px solid #fb923c;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 30px 0;
+      text-align: center;
+    }
+    .timeline-box strong {
+      color: #9a3412;
+      font-size: 16px;
+    }
+    .closing-text {
+      color: #475569;
+      font-size: 15px;
+      margin: 25px 0;
+    }
+    .signature {
+      margin-top: 35px;
+      padding-top: 25px;
+      border-top: 2px solid #e2e8f0;
+    }
+    .signature-title {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .signature-team {
+      color: #64748b;
+      font-size: 15px;
+    }
+    .footer {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e2e8f0;
+    }
+    .footer-title {
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 15px;
+      font-size: 16px;
+    }
+    .social-links {
+      margin: 20px 0;
+    }
+    .social-link {
+      color: #0f172a;
+      text-decoration: none;
+      margin: 0 10px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .social-link:hover {
+      color: #f59e0b;
+    }
+    .divider {
+      color: #cbd5e1;
+      margin: 0 8px;
+    }
+    .contact-text {
+      color: #64748b;
+      font-size: 14px;
+      margin: 10px 0;
+    }
+    .contact-link {
+      color: #0f172a;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .disclaimer {
+      color: #94a3b8;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+    @media only screen and (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .content {
+        padding: 25px 20px;
+      }
+      .header {
+        padding: 30px 20px;
+      }
+      .header h1 {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <div class="logo-container">
+        <img src="${process.env.NEXT_PUBLIC_BASE_URL || "https://wcs-basketball-v2.vercel.app"}/apple-touch-icon.png" alt="WCS Basketball Logo" class="logo">
+      </div>
+      <h1>WCS Basketball</h1>
+      <p class="header-subtitle">Registration Confirmation</p>
+    </div>
+
+    <div class="content">
+      <div class="greeting">${parentGreeting}</div>
+
+      <p class="intro-text">Thank you for registering your child with <strong>WCS Basketball</strong>! We're excited to have them join our championship development program.</p>
+
+      <div class="success-banner">
+        <div class="success-banner-title">
+          <span>✅</span>
+          <span>Registration Received Successfully</span>
+        </div>
+        <p class="success-banner-text">We've received your registration and it's currently being reviewed by our team.</p>
+      </div>
+
+      <div class="player-card">
+        <h2 class="player-card-title">Player Information</h2>
+        <div class="info-row">
+          <span class="info-label">Name:</span>
+          <span class="info-value">${playerFirstName} ${playerLastName}</span>
+        </div>
+        ${grade ? `<div class="info-row">
+          <span class="info-label">Grade:</span>
+          <span class="info-value">${grade}</span>
+        </div>` : ""}
+        ${gender ? `<div class="info-row">
+          <span class="info-label">Gender:</span>
+          <span class="info-value">${gender}</span>
+        </div>` : ""}
+        <div class="info-row">
+          <span class="info-label">Status:</span>
+          <span class="status-badge">Pending Team Assignment</span>
+        </div>
+      </div>
+
+      <h2 class="section-title">What Happens Next?</h2>
+      
+      <div class="steps-container">
+        <div class="step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">Team Assignment</div>
+            <p class="step-description">Our coaches will review the registration and assign ${playerFirstName} to an appropriate team based on age and skill level.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">Email Notification</div>
+            <p class="step-description">You'll receive an email with team details and a link to complete payment.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">Complete Payment</div>
+            <p class="step-description">After payment is received, ${playerFirstName} will be officially enrolled and ready to start!</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline-box">
+        <strong>⏱️ Timeline:</strong> Team assignments are typically completed within <strong>1-2 business days</strong>.
+      </div>
+
+      <p class="closing-text">If you have any questions or concerns in the meantime, please don't hesitate to reach out to us.</p>
+
+      <div class="signature">
+        <div class="signature-title">Where Champions Start!</div>
+        <div class="signature-team">The WCS Basketball Team</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-title">WCS Basketball - Where Champions Start</div>
+      
+      <div class="social-links">
+        <a href="https://facebook.com/wcsbasketball" class="social-link">Facebook</a>
+        <span class="divider">|</span>
+        <a href="https://instagram.com/wcsbasketball" class="social-link">Instagram</a>
+        <span class="divider">|</span>
+        <a href="https://twitter.com/wcsbasketball" class="social-link">Twitter</a>
+        <span class="divider">|</span>
+        <a href="https://youtube.com/wcsbasketball" class="social-link">YouTube</a>
+      </div>
+      
+      <p class="contact-text">Questions? Contact us at <a href="mailto:info@wcsbasketball.com" class="contact-link">info@wcsbasketball.com</a></p>
+      <p class="disclaimer">This is an automated message from WCS Basketball registration system.</p>
+    </div>
+  </div>
+</body>
+</html>

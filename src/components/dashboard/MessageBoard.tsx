@@ -13,6 +13,8 @@ import {
   deleteMessage,
   deleteReply,
   pinMessage,
+  getUnreadMentionsForUser,
+  markMentionAsRead,
 } from "../../lib/messageActions";
 import { devLog, devError, validateInput } from "../../lib/security";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -38,9 +40,6 @@ export default function MessageBoard({
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editingReply, setEditingReply] = useState<string | null>(null);
-
-  // Lock scroll when any modal is open
-  useScrollLock(showNewMessageModal || !!editingMessage || !!editingReply);
   const [editText, setEditText] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -52,6 +51,17 @@ export default function MessageBoard({
   } | null>(null);
   const [showProfanityModal, setShowProfanityModal] = useState(false);
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
+  const [unreadMentions, setUnreadMentions] = useState<any[]>([]);
+  const [loadingMentions, setLoadingMentions] = useState(false);
+
+  // Lock scroll when any modal is open - unified scroll management
+  useScrollLock(
+    showNewMessageModal ||
+      !!editingMessage ||
+      !!editingReply ||
+      showDeleteConfirm ||
+      showProfanityModal
+  );
 
   // Load messages and replies
   const loadMessages = useCallback(async () => {
@@ -80,42 +90,68 @@ export default function MessageBoard({
     }
   }, []);
 
-  useEffect(() => {
-    loadMessages();
-  }, [loadMessages]);
+  // Load unread mentions
+  const loadUnreadMentions = useCallback(async () => {
+    if (!userId) return;
 
-  // Prevent body scroll when modals are open
-  useEffect(() => {
-    if (showNewMessageModal || showDeleteConfirm || showProfanityModal) {
-      // Save current scroll position
-      const scrollY = window.scrollY;
+    try {
+      setLoadingMentions(true);
+      devLog("Loading unread mentions...");
 
-      // Get current body styles to restore later
-      const originalPosition = document.body.style.position;
-      const originalTop = document.body.style.top;
-      const originalWidth = document.body.style.width;
-      const originalOverflow = document.body.style.overflow;
+      const mentions = await getUnreadMentionsForUser(userId);
+      setUnreadMentions(mentions);
 
-      // Prevent scrolling
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
-      document.body.style.overflow = "hidden";
-
-      return () => {
-        // Restore original styles
-        document.body.style.position = originalPosition;
-        document.body.style.top = originalTop;
-        document.body.style.width = originalWidth;
-        document.body.style.overflow = originalOverflow;
-
-        // Restore scroll position without causing jumps
-        requestAnimationFrame(() => {
-          window.scrollTo(0, scrollY);
-        });
-      };
+      devLog("Unread mentions loaded:", mentions.length);
+    } catch (error) {
+      devError("Error loading unread mentions:", error);
+      setUnreadMentions([]);
+    } finally {
+      setLoadingMentions(false);
     }
-  }, [showNewMessageModal, showDeleteConfirm, showProfanityModal]);
+  }, [userId]);
+
+  // Handle marking mention as read
+  const handleMarkMentionRead = async (notificationId: string) => {
+    try {
+      devLog("Marking mention as read:", notificationId);
+
+      const success = await markMentionAsRead(notificationId);
+
+      if (success) {
+        // Remove from unread list
+        setUnreadMentions((prev) =>
+          prev.filter((m) => m.id !== notificationId)
+        );
+
+        // Show success message
+        toast.success("Mention marked as read", {
+          duration: 2000,
+          position: "top-right",
+        });
+
+        // Reload messages to update parent component count
+        loadMessages();
+      } else {
+        toast.error("Failed to mark mention as read", {
+          duration: 3000,
+          position: "top-right",
+        });
+      }
+    } catch (error) {
+      devError("Error marking mention as read:", error);
+      toast.error("An error occurred", {
+        duration: 3000,
+        position: "top-right",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      loadMessages();
+      loadUnreadMentions();
+    }
+  }, [userId, loadMessages, loadUnreadMentions]);
 
   // Debug logging for message data
   useEffect(() => {
@@ -195,6 +231,43 @@ export default function MessageBoard({
           loadMessages();
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "message_notifications",
+          filter: `mentioned_user_id=eq.${userId}`,
+        },
+        (payload) => {
+          devLog("New mention notification:", payload);
+          // Reload unread mentions
+          loadUnreadMentions();
+          // Trigger refresh of messages to update parent component
+          loadMessages();
+          // Show toast notification
+          toast.success("You were mentioned in a message!", {
+            duration: 5000,
+            position: "top-right",
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "message_notifications",
+          filter: `mentioned_user_id=eq.${userId}`,
+        },
+        (payload) => {
+          devLog("Mention notification updated:", payload);
+          // Reload unread mentions to reflect changes
+          loadUnreadMentions();
+          // Update parent component count
+          loadMessages();
+        }
+      )
       .subscribe((status, err) => {
         devLog("Real-time subscription status:", status);
 
@@ -260,21 +333,27 @@ export default function MessageBoard({
       // Fetch current coach name from database
       let currentCoachName = userName;
       try {
-        const { data: coachData, error: coachError } = await supabase
+        const { data: coachRows, error: coachError } = await supabase
           .from("coaches")
           .select("first_name, last_name")
           .eq("user_id", userId)
-          .single();
+          .limit(1);
 
-        if (!coachError && coachData) {
-          currentCoachName = `${coachData.first_name} ${coachData.last_name}`;
+        if (!coachError && coachRows && Array.isArray(coachRows) && coachRows[0]) {
+          currentCoachName = `${coachRows[0].first_name} ${coachRows[0].last_name}`;
         }
       } catch (error) {
         devError("Error fetching coach name for message:", error);
         // Continue with existing userName as fallback
       }
 
-      await createMessage(validation.sanitizedValue, userId, currentCoachName);
+      const created = await createMessage(
+        validation.sanitizedValue,
+        userId,
+        currentCoachName
+      );
+      // Optimistically prepend the new message so it appears immediately
+      setMessages((prev) => [created, ...prev]);
       setNewMessageText("");
       setShowNewMessageModal(false);
       toast.success("Message posted successfully", {
@@ -305,7 +384,17 @@ export default function MessageBoard({
 
     try {
       setSubmitting(true);
-      await createReply(messageId, validation.sanitizedValue, userId, userName);
+      const created = await createReply(
+        messageId,
+        validation.sanitizedValue,
+        userId,
+        userName
+      );
+      // Optimistically append the new reply to the thread
+      setReplies((prev) => ({
+        ...prev,
+        [messageId]: [...(prev[messageId] || []), created],
+      }));
       setReplyText("");
       toast.success("Reply posted successfully", {
         duration: 3000,
@@ -502,6 +591,23 @@ export default function MessageBoard({
       const diffInDays = Math.floor(diffInHours / 24);
       return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
     }
+  };
+
+  const renderMessageContent = (content: string) => {
+    const parts = content.split(/(@[a-zA-Z0-9._-]+)/g);
+    return parts.map((part, index) => {
+      if (part.match(/^@[a-zA-Z0-9._-]+$/)) {
+        return (
+          <span
+            key={index}
+            className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-sm font-medium"
+          >
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   const canEdit = (authorId: string) => {
@@ -710,341 +816,411 @@ export default function MessageBoard({
             </p>
           </div>
         ) : (
-          messages.map((message) => {
-            const messageReplies = replies[message.id] || [];
-            const isExpanded = expandedMessage === message.id;
-            const isEditing = editingMessage === message.id;
-
-            return (
-              <div
-                key={message.id}
-                className={`border-b border-gray-100 pb-4 last:border-b-0 ${
-                  message.is_pinned
-                    ? "bg-yellow-50 border-l-4 border-l-yellow-400 pl-4"
-                    : ""
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-inter font-semibold text-gray-900 text-sm sm:text-base">
-                          {message.author_name}
-                        </span>
-                        {message.is_pinned && (
-                          <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                            PINNED
-                          </span>
-                        )}
-                        {message.updated_at !== message.created_at && (
-                          <span className="text-xs text-gray-400">
-                            (edited)
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs sm:text-sm text-gray-500">
-                        • {formatTimestamp(message.created_at)}
-                      </span>
-                    </div>
-
-                    {isEditing ? (
-                      <div className="space-y-3">
-                        <textarea
-                          value={editText}
-                          onChange={(e) => setEditText(e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-md text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                          rows={3}
-                          maxLength={1000}
-                        />
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            type="button"
-                            onClick={cancelEdit}
-                            className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
-                            disabled={submitting}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleEditMessage(message.id)}
-                            disabled={!editText.trim() || submitting}
-                            className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {submitting ? "Saving..." : "Save"}
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-gray-700 font-inter mb-3 text-sm sm:text-base">
-                        {message.content}
-                      </p>
-                    )}
-
-                    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                      <button
-                        type="button"
-                        onClick={() => toggleExpanded(message.id)}
-                        className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-inter self-start"
-                        disabled={submitting}
-                      >
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                          />
-                        </svg>
-                        <span>Reply</span>
-                      </button>
-                      <span className="text-xs sm:text-sm text-gray-500">
-                        {isExpanded
-                          ? `Hide ${messageReplies.length} comments`
-                          : `View ${messageReplies.length} comments`}
-                      </span>
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex items-center space-x-1 mt-2">
-                      {canEdit(message.author_id) && !isEditing && (
-                        <button
-                          type="button"
-                          onClick={() => startEdit(message, "message")}
-                          className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
-                          aria-label="Edit message"
-                          disabled={submitting}
-                        >
-                          <svg
-                            className="w-5 h-5 sm:w-4 sm:h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                      {canDelete(message.author_id) && !isEditing && (
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteMessage(message.id)}
-                          className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
-                          aria-label="Delete message"
-                          disabled={submitting}
-                        >
-                          <svg
-                            className="w-5 h-5 sm:w-4 sm:h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                      {isAdmin && !isEditing && (
-                        <button
-                          type="button"
-                          onClick={() => handlePinMessage(message.id)}
-                          className="text-gray-400 hover:text-yellow-600 p-2 sm:p-1 rounded-md hover:bg-yellow-50 transition-colors"
-                          aria-label={
-                            message.is_pinned ? "Unpin message" : "Pin message"
-                          }
-                          disabled={submitting}
-                        >
-                          <svg
-                            className="w-5 h-5 sm:w-4 sm:h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                            />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                  </div>
+          <>
+            {/* Unread Mentions Section */}
+            {unreadMentions.length > 0 && (
+              <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-lg font-bebas text-black dark:text-black">
+                    Unread Mentions ({unreadMentions.length})
+                  </h4>
+                  <button
+                    onClick={() => {
+                      unreadMentions.forEach((m) =>
+                        handleMarkMentionRead(m.id)
+                      );
+                    }}
+                    className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-inter underline"
+                  >
+                    Mark all as read
+                  </button>
                 </div>
 
-                {isExpanded && (
-                  <div className="mt-4 pl-4 border-l-2 border-gray-200">
-                    <div className="space-y-3 mb-4">
-                      {messageReplies.map((reply) => {
-                        const isEditingReply = editingReply === reply.id;
-                        return (
-                          <div
-                            key={reply.id}
-                            className="flex items-start space-x-2"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-2 mb-1">
-                                <span className="font-inter font-semibold text-gray-900 text-sm">
-                                  {reply.author_name}
-                                </span>
-                                <span className="text-xs text-gray-500">
-                                  • {formatTimestamp(reply.created_at)}
-                                </span>
-                                {reply.updated_at !== reply.created_at && (
-                                  <span className="text-xs text-gray-400">
-                                    (edited)
-                                  </span>
-                                )}
-                              </div>
+                <div className="space-y-3">
+                  {unreadMentions.map((mention) => {
+                    const messageData =
+                      mention.coach_messages || mention.coach_message_replies;
+                    const isReply = !!mention.reply_id;
 
-                              {isEditingReply ? (
-                                <div className="space-y-2">
-                                  <textarea
-                                    value={editText}
-                                    onChange={(e) =>
-                                      setEditText(e.target.value)
-                                    }
-                                    className="w-full p-2 border border-gray-300 rounded-md text-xs font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                                    rows={2}
-                                    maxLength={500}
-                                  />
-                                  <div className="flex items-center justify-end space-x-2">
-                                    <button
-                                      type="button"
-                                      onClick={cancelEdit}
-                                      className="px-2 py-1 text-xs font-inter text-gray-600 hover:text-gray-800 transition-colors"
-                                      disabled={submitting}
-                                    >
-                                      Cancel
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleEditReply(reply.id)}
-                                      disabled={!editText.trim() || submitting}
-                                      className="px-2 py-1 bg-blue-600 text-white text-xs font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                      {submitting ? "Saving..." : "Save"}
-                                    </button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  <p className="text-gray-700 font-inter text-sm">
-                                    {reply.content}
-                                  </p>
-                                  <div className="flex items-center space-x-1 mt-1">
-                                    {canEdit(reply.author_id) && (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          startEdit(reply, "reply")
-                                        }
-                                        className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
-                                        aria-label="Edit reply"
-                                        disabled={submitting}
-                                      >
-                                        <svg
-                                          className="w-5 h-5 sm:w-4 sm:h-4"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                          />
-                                        </svg>
-                                      </button>
-                                    )}
-                                    {canDelete(reply.author_id) && (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleDeleteReply(reply.id)
-                                        }
-                                        className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
-                                        aria-label="Delete reply"
-                                        disabled={submitting}
-                                      >
-                                        <svg
-                                          className="w-5 h-5 sm:w-4 sm:h-4"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          viewBox="0 0 24 24"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                          />
-                                        </svg>
-                                      </button>
-                                    )}
-                                  </div>
-                                </>
-                              )}
+                    return (
+                      <div
+                        key={mention.id}
+                        className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700"
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            onChange={() => handleMarkMentionRead(mention.id)}
+                            className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                                {messageData?.author_name}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {isReply ? "replied" : "posted"}
+                              </span>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {new Date(
+                                  mention.mentioned_at
+                                ).toLocaleDateString()}
+                              </span>
                             </div>
+                            <p className="text-sm text-gray-700 dark:text-gray-300">
+                              {renderMessageContent(messageData?.content || "")}
+                            </p>
                           </div>
-                        );
-                      })}
-                    </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
-                    <div className="space-y-3">
-                      <textarea
-                        value={replyText}
-                        onChange={(e) => setReplyText(e.target.value)}
-                        placeholder="Write a reply..."
-                        className="w-full p-3 border border-gray-300 rounded-md text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                        rows={3}
-                        maxLength={500}
-                      />
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
-                          {replyText.length}/500 characters
-                        </span>
+            {messages.map((message) => {
+              const messageReplies = replies[message.id] || [];
+              const isExpanded = expandedMessage === message.id;
+              const isEditing = editingMessage === message.id;
+
+              return (
+                <div
+                  key={message.id}
+                  className={`border-b border-gray-100 pb-4 last:border-b-0 ${
+                    message.is_pinned
+                      ? "bg-yellow-50 border-l-4 border-l-yellow-400 pl-4"
+                      : ""
+                  }`}
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
                         <div className="flex items-center space-x-2">
+                          <span className="font-inter font-semibold text-gray-900 text-sm sm:text-base">
+                            {message.author_name}
+                          </span>
+                          {message.is_pinned && (
+                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+                              PINNED
+                            </span>
+                          )}
+                          {message.updated_at !== message.created_at && (
+                            <span className="text-xs text-gray-400">
+                              (edited)
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs sm:text-sm text-gray-500">
+                          • {formatTimestamp(message.created_at)}
+                        </span>
+                      </div>
+
+                      {isEditing ? (
+                        <div className="space-y-3">
+                          <textarea
+                            value={editText}
+                            onChange={(e) => setEditText(e.target.value)}
+                            className="w-full p-3 border border-gray-300 rounded-md text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            rows={3}
+                            maxLength={1000}
+                          />
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              type="button"
+                              onClick={cancelEdit}
+                              className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
+                              disabled={submitting}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleEditMessage(message.id)}
+                              disabled={!editText.trim() || submitting}
+                              className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {submitting ? "Saving..." : "Save"}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-gray-700 font-inter mb-3 text-sm sm:text-base">
+                          {renderMessageContent(message.content)}
+                        </p>
+                      )}
+
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(message.id)}
+                          className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-inter self-start"
+                          disabled={submitting}
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                            />
+                          </svg>
+                          <span>Reply</span>
+                        </button>
+                        <span className="text-xs sm:text-sm text-gray-500">
+                          {isExpanded
+                            ? `Hide ${messageReplies.length} comments`
+                            : `View ${messageReplies.length} comments`}
+                        </span>
+                      </div>
+
+                      {/* Action buttons */}
+                      <div className="flex items-center space-x-1 mt-2">
+                        {canEdit(message.author_id) && !isEditing && (
                           <button
                             type="button"
-                            onClick={() => setReplyText("")}
-                            className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
+                            onClick={() => startEdit(message, "message")}
+                            className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
+                            aria-label="Edit message"
                             disabled={submitting}
                           >
-                            Cancel
+                            <svg
+                              className="w-5 h-5 sm:w-4 sm:h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
                           </button>
+                        )}
+                        {canDelete(message.author_id) && !isEditing && (
                           <button
                             type="button"
-                            onClick={() => handleReply(message.id)}
-                            disabled={!replyText.trim() || submitting}
-                            className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            onClick={() => handleDeleteMessage(message.id)}
+                            className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
+                            aria-label="Delete message"
+                            disabled={submitting}
                           >
-                            {submitting ? "Posting..." : "Post Reply"}
+                            <svg
+                              className="w-5 h-5 sm:w-4 sm:h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
                           </button>
-                        </div>
+                        )}
+                        {isAdmin && !isEditing && (
+                          <button
+                            type="button"
+                            onClick={() => handlePinMessage(message.id)}
+                            className="text-gray-400 hover:text-yellow-600 p-2 sm:p-1 rounded-md hover:bg-yellow-50 transition-colors"
+                            aria-label={
+                              message.is_pinned
+                                ? "Unpin message"
+                                : "Pin message"
+                            }
+                            disabled={submitting}
+                          >
+                            <svg
+                              className="w-5 h-5 sm:w-4 sm:h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                              />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })
+
+                  {isExpanded && (
+                    <div className="mt-4 pl-4 border-l-2 border-gray-200">
+                      <div className="space-y-3 mb-4">
+                        {messageReplies.map((reply) => {
+                          const isEditingReply = editingReply === reply.id;
+                          return (
+                            <div
+                              key={reply.id}
+                              className="flex items-start space-x-2"
+                            >
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <span className="font-inter font-semibold text-gray-900 text-sm">
+                                    {reply.author_name}
+                                  </span>
+                                  <span className="text-xs text-gray-500">
+                                    • {formatTimestamp(reply.created_at)}
+                                  </span>
+                                  {reply.updated_at !== reply.created_at && (
+                                    <span className="text-xs text-gray-400">
+                                      (edited)
+                                    </span>
+                                  )}
+                                </div>
+
+                                {isEditingReply ? (
+                                  <div className="space-y-2">
+                                    <textarea
+                                      value={editText}
+                                      onChange={(e) =>
+                                        setEditText(e.target.value)
+                                      }
+                                      className="w-full p-2 border border-gray-300 rounded-md text-xs font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                      rows={2}
+                                      maxLength={500}
+                                    />
+                                    <div className="flex items-center justify-end space-x-2">
+                                      <button
+                                        type="button"
+                                        onClick={cancelEdit}
+                                        className="px-2 py-1 text-xs font-inter text-gray-600 hover:text-gray-800 transition-colors"
+                                        disabled={submitting}
+                                      >
+                                        Cancel
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          handleEditReply(reply.id)
+                                        }
+                                        disabled={
+                                          !editText.trim() || submitting
+                                        }
+                                        className="px-2 py-1 bg-blue-600 text-white text-xs font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                      >
+                                        {submitting ? "Saving..." : "Save"}
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="text-gray-700 font-inter text-sm">
+                                      {renderMessageContent(reply.content)}
+                                    </p>
+                                    <div className="flex items-center space-x-1 mt-1">
+                                      {canEdit(reply.author_id) && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            startEdit(reply, "reply")
+                                          }
+                                          className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
+                                          aria-label="Edit reply"
+                                          disabled={submitting}
+                                        >
+                                          <svg
+                                            className="w-5 h-5 sm:w-4 sm:h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                            />
+                                          </svg>
+                                        </button>
+                                      )}
+                                      {canDelete(reply.author_id) && (
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            handleDeleteReply(reply.id)
+                                          }
+                                          className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
+                                          aria-label="Delete reply"
+                                          disabled={submitting}
+                                        >
+                                          <svg
+                                            className="w-5 h-5 sm:w-4 sm:h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                            />
+                                          </svg>
+                                        </button>
+                                      )}
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="space-y-3">
+                        <textarea
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Write a reply..."
+                          className="w-full p-3 border border-gray-300 rounded-md text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                          rows={3}
+                          maxLength={500}
+                        />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-500">
+                            {replyText.length}/500 characters
+                          </span>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              type="button"
+                              onClick={() => setReplyText("")}
+                              className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
+                              disabled={submitting}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleReply(message.id)}
+                              disabled={!replyText.trim() || submitting}
+                              className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                              {submitting ? "Posting..." : "Post Reply"}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
         )}
       </div>
 

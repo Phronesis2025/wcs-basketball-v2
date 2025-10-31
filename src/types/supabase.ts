@@ -47,6 +47,18 @@ export type Schedule = {
   deleted_at: string | null;
 };
 
+export type ChangelogEntry = {
+  id: string;
+  version: string;
+  release_date: string; // ISO date string (YYYY-MM-DD)
+  category: 'added' | 'changed' | 'fixed' | 'removed' | 'security' | 'deprecated';
+  description: string;
+  created_by: string | null;
+  is_published: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
 export type PracticeDrill = {
   id: string;
   team_id: string;
@@ -123,6 +135,17 @@ export type CoachMessageReply = {
   deleted_at: string | null;
 };
 
+export type MessageNotification = {
+  id: string;
+  message_id: string;
+  reply_id: string | null;
+  mentioned_user_id: string;
+  mentioned_by_user_id: string;
+  mentioned_at: string;
+  is_read: boolean;
+  read_at: string | null;
+};
+
 // Analytics Dashboard Types
 export type ErrorLog = {
   id: string;
@@ -193,21 +216,29 @@ export type AnalyticsStats = {
 // Player Management Types
 export type Player = {
   id: string;
-  team_id: string;
+  team_id: string | null;
+  parent_id: string | null; // Foreign key to parents table
   name: string;
   jersey_number: number | null;
   grade: string | null;
   date_of_birth: string | null;
   age: number | null;
   gender: string | null;
-  parent_name: string | null;
-  parent_email: string | null;
-  parent_phone: string | null;
-  emergency_contact: string | null;
-  emergency_phone: string | null;
+  // Player detail fields
+  shirt_size?: string | null;
+  position_preference?: string | null;
+  previous_experience?: string | null;
+  school_name?: string | null;
+  // Legacy parent fields (deprecated - use parent_id relation instead)
+  parent_name?: string | null;
+  parent_email?: string | null;
+  parent_phone?: string | null;
+  emergency_contact?: string | null;
+  emergency_phone?: string | null;
   created_at: string;
   is_active: boolean;
-  // New payment-related fields
+  is_deleted?: boolean;
+  // Payment-related fields
   status?: "pending" | "approved" | "active";
   waiver_signed?: boolean;
   stripe_customer_id?: string | null;
@@ -229,10 +260,34 @@ export type Payment = {
 
 // Parent Profile Types
 export type Parent = {
-  user_id: string;
+  id: string;
+  user_id: string | null;
+  first_name: string;
+  last_name: string;
   email: string;
-  name?: string | null;
   phone?: string | null;
+  // Detailed fields (Phase 2)
+  address_line1?: string | null;
+  address_line2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  emergency_contact?: string | null;
+  emergency_phone?: string | null;
+  guardian_relationship?: string | null;
+  // Medical fields
+  medical_allergies?: string | null;
+  medical_conditions?: string | null;
+  medical_medications?: string | null;
+  doctor_name?: string | null;
+  doctor_phone?: string | null;
+  // Consent checkboxes
+  consent_photo_release?: boolean;
+  consent_medical_treatment?: boolean;
+  consent_participation?: boolean;
+  checkout_completed?: boolean;
+  created_at?: string;
+  updated_at?: string;
 };
 
 export type ParentProfile = {
@@ -242,6 +297,12 @@ export type ParentProfile = {
     phone: string | null;
     emergency_contact: string | null;
     emergency_phone: string | null;
+    address_line1?: string | null;
+    address_line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    checkout_completed?: boolean;
   };
   children: Player[];
   payments: Payment[];

@@ -24,7 +24,7 @@ export default function SchedulesPage() {
     const fetchData = async () => {
       try {
         // Use server-side API to bypass VPN CORS issues
-        const response = await fetch("/api/schedules");
+        const response = await fetch("/api/schedules", { cache: "no-store" });
 
         if (!response.ok) {
           const errorData = await response.json();

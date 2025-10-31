@@ -1,6 +1,10 @@
 // src/lib/messageActions.ts
 import { supabase } from "./supabaseClient";
-import { CoachMessage, CoachMessageReply } from "../types/supabase";
+import {
+  CoachMessage,
+  CoachMessageReply,
+  MessageNotification,
+} from "../types/supabase";
 import { devLog, devError, sanitizeInput } from "./security";
 
 // Get all messages with reply counts
@@ -416,20 +420,22 @@ export async function deleteReply(
 
     const existingReply = existingReplies[0];
 
+    devLog("Existing reply data:", { existingReply, authorId, isAdmin });
+
     if (!isAdmin && existingReply.author_id !== authorId) {
       throw new Error("You can only delete your own replies");
     }
 
-    const { error } = await supabase
-      .from("coach_message_replies")
-      .update({
-        deleted_at: new Date().toISOString(),
-      })
-      .eq("id", id);
-
-    if (error) {
-      devError("Error deleting reply:", error);
-      throw new Error(error.message);
+    // Call server API using admin client to bypass RLS
+    const resp = await fetch("/api/message-replies/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ replyId: id, requesterId: authorId, isAdmin }),
+    });
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      devError("API delete reply failed:", body);
+      throw new Error(body.error || "Failed to delete reply");
     }
 
     devLog("Successfully deleted reply:", id);
@@ -474,5 +480,234 @@ export async function pinMessage(
     const errorMessage =
       err instanceof Error ? err.message : "Failed to pin/unpin message";
     throw new Error(errorMessage);
+  }
+}
+
+// Extract @mentions from message content
+export function extractMentions(content: string): string[] {
+  const mentionRegex = /@([a-zA-Z0-9._-]+)/g;
+  const mentions: string[] = [];
+  let match;
+
+  while ((match = mentionRegex.exec(content)) !== null) {
+    mentions.push(match[1].toLowerCase());
+  }
+
+  return [...new Set(mentions)]; // Remove duplicates
+}
+
+// Get users by mention patterns
+export async function getUsersByMentions(
+  mentions: string[]
+): Promise<Array<{ id: string; email: string }>> {
+  try {
+    if (mentions.length === 0) return [];
+
+    const { data: users, error } = await supabase
+      .from("users")
+      .select("id, email")
+      .in("role", ["coach", "admin"]);
+
+    if (error) {
+      devError("Error fetching users for mentions:", error);
+      return [];
+    }
+
+    const matchingUsers: Array<{ id: string; email: string }> = [];
+
+    for (const mention of mentions) {
+      const user = users?.find((u) => {
+        const emailPrefix = u.email.split("@")[0].toLowerCase();
+        return (
+          emailPrefix === mention || u.email.toLowerCase().includes(mention)
+        );
+      });
+
+      if (user) {
+        matchingUsers.push(user);
+      }
+    }
+
+    return matchingUsers;
+  } catch (err) {
+    devError("Error in getUsersByMentions:", err);
+    return [];
+  }
+}
+
+// Create notifications for mentioned users
+export async function createMentionNotifications(
+  messageId: string,
+  replyId: string | null,
+  content: string,
+  authorId: string
+): Promise<void> {
+  try {
+    const mentions = extractMentions(content);
+    if (mentions.length === 0) return;
+
+    const users = await getUsersByMentions(mentions);
+    if (users.length === 0) return;
+
+    // Create notification for each mentioned user (excluding the author)
+    const notifications = users
+      .filter((user) => user.id !== authorId)
+      .map((user) => ({
+        message_id: messageId,
+        reply_id: replyId,
+        mentioned_user_id: user.id,
+        mentioned_by_user_id: authorId,
+      }));
+
+    if (notifications.length > 0) {
+      const { error } = await supabase
+        .from("message_notifications")
+        .insert(notifications);
+
+      if (error) {
+        devError("Error creating mention notifications:", error);
+      } else {
+        devLog(`Created ${notifications.length} mention notifications`);
+      }
+    }
+  } catch (err) {
+    devError("Error in createMentionNotifications:", err);
+  }
+}
+
+// Get unread mention count for current user
+export async function getUnreadMentionCount(userId: string): Promise<number> {
+  try {
+    devLog("Fetching unread mention count for user:", userId);
+
+    // Count distinct messages/replies that have unread mentions
+    const { data, error } = await supabase
+      .from("message_notifications")
+      .select("message_id, reply_id")
+      .eq("mentioned_user_id", userId)
+      .is("acknowledged_at", null);
+
+    if (error) {
+      devError("Error fetching unread mention count:", error);
+      return 0;
+    }
+
+    // Count unique messages/replies (not total mentions)
+    const uniqueItems = new Set();
+    data?.forEach((notification) => {
+      const key = notification.reply_id || notification.message_id;
+      uniqueItems.add(key);
+    });
+
+    const count = uniqueItems.size;
+    devLog("Unread mentions:", count);
+    return count;
+  } catch (error) {
+    devError("Error in getUnreadMentionCount:", error);
+    return 0;
+  }
+}
+
+// Get full unread mention details for user
+export async function getUnreadMentionsForUser(userId: string) {
+  try {
+    devLog("Fetching unread mentions for user:", userId);
+
+    const { data, error } = await supabase
+      .from("message_notifications")
+      .select(
+        `
+        id,
+        message_id,
+        reply_id,
+        mentioned_at,
+        coach_messages!message_id (
+          id,
+          content,
+          author_id,
+          author_name,
+          created_at
+        ),
+        coach_message_replies!reply_id (
+          id,
+          content,
+          author_id,
+          author_name,
+          created_at,
+          message_id
+        )
+      `
+      )
+      .eq("mentioned_user_id", userId)
+      .is("acknowledged_at", null)
+      .order("mentioned_at", { ascending: false });
+
+    if (error) {
+      devError("Error fetching unread mentions:", error);
+      return [];
+    }
+
+    devLog("Unread mentions fetched:", data?.length || 0);
+    return data || [];
+  } catch (error) {
+    devError("Error in getUnreadMentionsForUser:", error);
+    return [];
+  }
+}
+
+// Mark individual mention as read
+export async function markMentionAsRead(
+  notificationId: string
+): Promise<boolean> {
+  try {
+    devLog("Marking mention as read:", notificationId);
+
+    const { error } = await supabase
+      .from("message_notifications")
+      .update({
+        is_read: true,
+        read_at: new Date().toISOString(),
+        acknowledged_at: new Date().toISOString(),
+      })
+      .eq("id", notificationId);
+
+    if (error) {
+      devError("Error marking mention as read:", error);
+      return false;
+    }
+
+    devLog("Mention marked as read successfully");
+    return true;
+  } catch (error) {
+    devError("Error in markMentionAsRead:", error);
+    return false;
+  }
+}
+
+// Mark mentions as read
+export async function markMentionsAsRead(
+  userId: string,
+  messageIds: string[]
+): Promise<void> {
+  try {
+    if (messageIds.length === 0) return;
+
+    const { error } = await supabase
+      .from("message_notifications")
+      .update({
+        is_read: true,
+        read_at: new Date().toISOString(),
+      })
+      .eq("mentioned_user_id", userId)
+      .in("message_id", messageIds)
+      .eq("is_read", false);
+
+    if (error) {
+      devError("Error marking mentions as read:", error);
+    } else {
+      devLog(`Marked mentions as read for ${messageIds.length} messages`);
+    }
+  } catch (err) {
+    devError("Error in markMentionsAsRead:", err);
   }
 }

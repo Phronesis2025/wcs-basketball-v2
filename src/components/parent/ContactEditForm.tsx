@@ -212,7 +212,7 @@ export default function ContactEditForm({
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               disabled={!isEditing}
-              className="w-full border rounded px-3 py-2 disabled:bg-gray-50"
+            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
               placeholder="First name"
               required
             />
@@ -227,7 +227,7 @@ export default function ContactEditForm({
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               disabled={!isEditing}
-              className="w-full border rounded px-3 py-2 disabled:bg-gray-50"
+            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
               placeholder="Last name"
               required
             />
@@ -242,7 +242,7 @@ export default function ContactEditForm({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               disabled={!isEditing}
-              className="w-full border rounded px-3 py-2 disabled:bg-gray-50"
+            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
               placeholder="(555) 123-4567"
             />
           </div>
@@ -256,7 +256,7 @@ export default function ContactEditForm({
               value={emergencyContact}
               onChange={(e) => setEmergencyContact(e.target.value)}
               disabled={!isEditing}
-              className="w-full border rounded px-3 py-2 disabled:bg-gray-50"
+            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
               placeholder="Emergency contact name"
             />
           </div>
@@ -270,7 +270,7 @@ export default function ContactEditForm({
               value={emergencyPhone}
               onChange={(e) => setEmergencyPhone(e.target.value)}
               disabled={!isEditing}
-              className="w-full border rounded px-3 py-2 disabled:bg-gray-50"
+            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
               placeholder="(555) 123-4567"
             />
           </div>

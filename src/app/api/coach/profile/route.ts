@@ -16,12 +16,12 @@ export async function GET(request: NextRequest) {
 
     devLog("Fetching profile data for user:", userId);
 
-    // Fetch coach data
-    const { data: coachData, error: coachError } = await supabaseAdmin!
+    // Fetch coach data (handle cases where multiple rows exist for the same user)
+    const { data: coachRows, error: coachError } = await supabaseAdmin!
       .from("coaches")
       .select("*")
       .eq("user_id", userId)
-      .single();
+      .limit(1);
 
     if (coachError) {
       devError("Error fetching coach data:", coachError);
@@ -31,28 +31,40 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch user data
-    const { data: userData, error: userError } = await supabaseAdmin!
-      .from("users")
-      .select("login_count, last_login_at, last_password_reset, created_at")
-      .eq("id", userId)
-      .single();
-
-    if (userError) {
-      devError("Error fetching user data:", userError);
+    const coachData = Array.isArray(coachRows) ? coachRows[0] : coachRows;
+    if (!coachData) {
       return NextResponse.json(
-        { error: "Failed to fetch user data" },
-        { status: 500 }
+        { error: "Coach not found for this user" },
+        { status: 404 }
       );
     }
 
-    // Debug login data
-    devLog("🔍 Profile API - User login data:", {
-      userId,
-      login_count: userData?.login_count,
-      last_login_at: userData?.last_login_at,
-      created_at: userData?.created_at,
-    });
+    // Fetch login stats from login_logs (authoritative source)
+    const { data: loginLogs, error: loginError } = await supabaseAdmin!
+      .from("login_logs")
+      .select("login_at, success")
+      .eq("user_id", userId)
+      .eq("success", true)
+      .order("login_at", { ascending: false });
+
+    if (loginError) {
+      devError("Error fetching login logs:", loginError);
+    }
+
+    const login_count = loginLogs?.length || 0;
+    const last_login_at = loginLogs && loginLogs.length > 0 ? loginLogs[0].login_at : null;
+
+    // Fetch last_active_at from users table (may be null if not yet recorded)
+    let last_active_at: string | null = null;
+    const { data: ua, error: uaErr } = await supabaseAdmin!
+      .from("users")
+      .select("last_active_at")
+      .eq("id", userId)
+      .limit(1);
+    if (!uaErr && ua && Array.isArray(ua) && ua[0]) {
+      last_active_at = ua[0].last_active_at ?? null;
+    }
+    // Note: created_at kept null here; can be added from auth if needed
 
     // Fetch associated teams
     const { data: teamsData, error: teamsError } = await supabaseAdmin!
@@ -117,7 +129,9 @@ export async function GET(request: NextRequest) {
 
     const profileData = {
       ...coachData,
-      ...userData,
+      login_count,
+      last_login_at,
+      last_active_at,
       teams,
       schedules_created: schedulesResult.count || 0,
       updates_created: updatesResult.count || 0,

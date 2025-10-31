@@ -34,6 +34,8 @@ import AddPlayerModal from "@/components/dashboard/AddPlayerModal";
 import CoachDetailModal from "@/components/CoachDetailModal";
 import TeamDetailModal from "@/components/TeamDetailModal";
 import PlayerDetailModal from "@/components/PlayerDetailModal";
+import ChangelogTable from "@/components/ChangelogTable";
+import ChangelogModal from "@/components/ChangelogModal";
 import toast from "react-hot-toast";
 import {
   addSchedule,
@@ -55,12 +57,13 @@ import {
   getPracticeDrills,
 } from "@/lib/drillActions";
 import { getMessages } from "@/lib/messageActions";
+import { getUnreadMentionCount } from "@/lib/messageActions";
 
 // Main component
 function ClubManagementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") || "overview";
+  const activeTab = searchParams.get("tab") || "profile";
 
   // State management
   const [isAuthorized, setIsAuthorized] = useState(false);
@@ -69,6 +72,18 @@ function ClubManagementContent() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [unreadMentions, setUnreadMentions] = useState(0);
+  // Stripe/Payments metrics
+  const [membershipFees, setMembershipFees] = useState<number>(0);
+  const [pendingDues, setPendingDues] = useState<number>(0);
+  const [tournamentFees, setTournamentFees] = useState<number>(0);
+  const [merchFees, setMerchFees] = useState<number>(0);
+  const [paidPlayersCount, setPaidPlayersCount] = useState<number>(0);
+  const [pendingPlayersCount, setPendingPlayersCount] = useState<number>(0);
+  const totalRevenue = useMemo(
+    () => (membershipFees || 0) + (tournamentFees || 0) + (merchFees || 0),
+    [membershipFees, tournamentFees, merchFees]
+  );
   const [lastLoginTime, setLastLoginTime] = useState<Date | null>(null);
   const [isLoadingUserData, setIsLoadingUserData] = useState(false);
   const hasInitialized = useRef(false);
@@ -83,6 +98,8 @@ function ClubManagementContent() {
   const [drills, setDrills] = useState<PracticeDrill[]>([]);
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [managementDataLoading, setManagementDataLoading] = useState(false);
+  const [changelogModalOpen, setChangelogModalOpen] = useState(false);
+  const [editingChangelog, setEditingChangelog] = useState<any>(null);
 
   // Derived player states
   const pendingPlayers = useMemo(
@@ -224,9 +241,28 @@ function ClubManagementContent() {
         setUserId(null);
         setIsAdmin(false);
         setUserRole(null);
-        // Clear auth data
+        
+        // Clear auth data comprehensively
         AuthPersistence.clearAuthData();
-        router.push("/coaches/login");
+        
+        // Clear any remaining Supabase storage
+        try {
+          Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith("sb-") || key.includes("supabase") || key.includes("auth")) {
+              localStorage.removeItem(key);
+            }
+          });
+          Object.keys(sessionStorage).forEach((key) => {
+            if (key.startsWith("sb-") || key.includes("supabase") || key.includes("auth")) {
+              sessionStorage.removeItem(key);
+            }
+          });
+        } catch (cleanupErr) {
+          devError("Club Management: Storage cleanup error", cleanupErr);
+        }
+        
+        // Use replace to prevent back navigation to protected page
+        window.location.replace("/coaches/login");
       } else if (event === "TOKEN_REFRESHED" && session) {
         // Store refreshed session
         AuthPersistence.storeSession(session);
@@ -234,8 +270,26 @@ function ClubManagementContent() {
       }
     });
 
+    // Also listen for custom auth state change events (from Navbar sign out)
+    const handleAuthStateChange = (event: CustomEvent) => {
+      if (!event.detail.authenticated) {
+        devLog("Club Management: Auth state change event detected - signed out");
+        // Don't redirect here, let the SIGNED_OUT event handler do it
+        // Just clear state
+        setIsAuthorized(false);
+        setUserName(null);
+        setUserEmail(null);
+        setUserId(null);
+        setIsAdmin(false);
+        setUserRole(null);
+      }
+    };
+
+    window.addEventListener("authStateChanged", handleAuthStateChange as EventListener);
+
     return () => {
       subscription.unsubscribe();
+      window.removeEventListener("authStateChanged", handleAuthStateChange as EventListener);
     };
   }, [router]);
 
@@ -286,17 +340,17 @@ function ClubManagementContent() {
 
       // Fetch coach name from database
       try {
-        const { data: coachData, error: coachError } = await supabase
+        const { data: coachRows, error: coachError } = await supabase
           .from("coaches")
           .select("first_name, last_name")
           .eq("user_id", user.id)
-          .single();
+          .limit(1);
 
         if (coachError) {
           devError("Error fetching coach name:", coachError);
           setUserName("Coach");
-        } else if (coachData) {
-          setUserName(`${coachData.first_name} ${coachData.last_name}`);
+        } else if (coachRows && Array.isArray(coachRows) && coachRows[0]) {
+          setUserName(`${coachRows[0].first_name} ${coachRows[0].last_name}`);
         } else {
           setUserName("Coach");
         }
@@ -542,18 +596,56 @@ function ClubManagementContent() {
   // Load data when tab changes
   useEffect(() => {
     if (!isAuthorized || !userId || !userRole) return;
+
     if (activeTab === "overview") {
       fetchManagementData();
     } else if (activeTab === "coaches-dashboard") {
       if (teams.length === 0) fetchManagementData();
     } else if (activeTab === "payments") {
+      // Always ensure teams and players are loaded for Payment tab
       if (teams.length === 0 || players.length === 0) {
         fetchManagementData();
       }
+      // Fetch Stripe-backed metrics
+      (async () => {
+        try {
+          const resp = await fetch("/api/admin/payments/metrics");
+          if (resp.ok) {
+            const j = await resp.json();
+            setMembershipFees(j.membershipFees || 0);
+            setPendingDues(j.pendingDues || 0);
+            setTournamentFees(j.tournamentFees || 0);
+            setMerchFees(j.merch || 0);
+            setPaidPlayersCount(j.paidPlayersCount || 0);
+            setPendingPlayersCount(j.pendingPlayersCount || 0);
+          }
+        } catch (e) {
+          // Non-fatal; keep defaults
+        }
+      })();
     } else if (activeTab === "analytics") {
       fetchAnalyticsData();
     }
-  }, [activeTab, isAuthorized, userId, userRole]);
+  }, [activeTab, isAuthorized, userId, userRole, teams.length, players.length]);
+
+  // Activity heartbeat for admins/coaches using this page
+  useEffect(() => {
+    if (!userId) return;
+    const ping = async () => {
+      try {
+        await fetch("/api/activity/heartbeat", {
+          method: "POST",
+          headers: { "x-user-id": userId },
+        });
+      } catch {}
+    };
+    ping();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") ping();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [userId]);
 
   // Auto-select a team when teams load on Coach tab
   useEffect(() => {
@@ -584,6 +676,22 @@ function ClubManagementContent() {
       fetchCoachData();
     }
   }, [selectedTeamId, activeTab]);
+
+  // Fetch unread mention count
+  useEffect(() => {
+    const fetchUnreadMentions = async () => {
+      if (!userId) return;
+      try {
+        const count = await getUnreadMentionCount(userId);
+        setUnreadMentions(count);
+      } catch (error) {
+        devError("Error fetching unread mentions:", error);
+        setUnreadMentions(0);
+      }
+    };
+
+    fetchUnreadMentions();
+  }, [userId, messages]); // Refresh when messages change
 
   // Handlers
   const toggleSection = (section: string) => {
@@ -1544,24 +1652,24 @@ function ClubManagementContent() {
           <div className="flex flex-row space-x-1 bg-gray-800 p-1 rounded-lg">
             {(() => {
               // Define tabs based on user role
-              const allTabs = [
-                { id: "overview", label: "Manage", icon: "📋" },
-                { id: "coaches-dashboard", label: "Coach", icon: "🏀" },
+              // Admin view: Profile, Payments, Manage, Coach, Monitor
+              // Coach view: Profile, Coach, Manage
+              const adminTabs = [
                 { id: "profile", label: "Profile", icon: "👤" },
                 { id: "payments", label: "Payments", icon: "💳" },
+                { id: "overview", label: "Manage", icon: "📋" },
+                { id: "coaches-dashboard", label: "Coach", icon: "🏀" },
                 { id: "analytics", label: "Monitor", icon: "📊" },
               ];
 
+              const coachTabs = [
+                { id: "profile", label: "Profile", icon: "👤" },
+                { id: "coaches-dashboard", label: "Coach", icon: "🏀" },
+                { id: "overview", label: "Manage", icon: "📋" },
+              ];
+
               // Show different tabs based on role
-              const visibleTabs =
-                userRole === "admin"
-                  ? allTabs
-                  : allTabs.filter(
-                      (tab) =>
-                        tab.id === "overview" ||
-                        tab.id === "coaches-dashboard" ||
-                        tab.id === "profile"
-                    );
+              const visibleTabs = userRole === "admin" ? adminTabs : coachTabs;
 
               return visibleTabs.map((tab) => (
                 <button
@@ -1766,7 +1874,7 @@ function ClubManagementContent() {
             {selectedTeamId ? (
               <>
                 {/* Statistics Cards */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
                   {(() => {
                     // Get start of today for comparison (midnight today)
                     const today = new Date();
@@ -1840,26 +1948,6 @@ function ClubManagementContent() {
                           strokeLinejoin="round"
                           strokeWidth={2}
                           d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-                        />
-                      </svg>
-                    }
-                  />
-                  <StatCard
-                    title="New Messages"
-                    value={messages.length}
-                    subtitle={getLastMessageTime()}
-                    icon={
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
                         />
                       </svg>
                     }
@@ -2449,15 +2537,6 @@ function ClubManagementContent() {
                     </div>
                   </div>
                 </div>
-
-                {/* Message Board - Visible on all screen sizes */}
-                <div className="mb-8">
-                  <MessageBoard
-                    userId={userId || ""}
-                    userName={userName || ""}
-                    isAdmin={userRole === "admin"}
-                  />
-                </div>
               </>
             ) : (
               <div className="text-center py-12">
@@ -2477,120 +2556,6 @@ function ClubManagementContent() {
             userName={userName}
             isAdmin={isAdmin}
           />
-        )}
-
-        {/* Payments Tab */}
-        {activeTab === "payments" && userRole === "admin" && (
-          <div className="space-y-8">
-            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bebas text-white">
-                  Payment Management
-                </h2>
-                <button
-                  onClick={async () => {
-                    if (
-                      !confirm(
-                        "Are you sure you want to delete ALL players and payment records? This cannot be undone."
-                      )
-                    ) {
-                      return;
-                    }
-                    try {
-                      const resp = await fetch(
-                        "/api/admin/clear-all-test-data",
-                        {
-                          method: "POST",
-                        }
-                      );
-                      if (resp.ok) {
-                        toast.success("All test data cleared successfully!");
-                        await fetchManagementData();
-                      } else {
-                        const j = await resp.json().catch(() => ({}));
-                        toast.error(j.error || "Failed to clear data");
-                      }
-                    } catch (error) {
-                      toast.error("Error clearing data");
-                    }
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors text-sm font-semibold"
-                >
-                  Clear All Data
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
-                  <h3 className="text-lg font-bebas text-white mb-4">
-                    Registration Fees
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Manage player registration fees and payment status.
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Total Players:</span>
-                      <span className="text-white">{players.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Paid:</span>
-                      <span className="text-green-400">0</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Pending:</span>
-                      <span className="text-yellow-400">0</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
-                  <h3 className="text-lg font-bebas text-white mb-4">
-                    Team Dues
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Track team dues and equipment fees.
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Total Teams:</span>
-                      <span className="text-white">{teams.length}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Dues Collected:</span>
-                      <span className="text-green-400">$0</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Outstanding:</span>
-                      <span className="text-red-400">$0</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
-                  <h3 className="text-lg font-bebas text-white mb-4">
-                    Financial Summary
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    Overall financial status and reports.
-                  </p>
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Total Revenue:</span>
-                      <span className="text-green-400">$0</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Expenses:</span>
-                      <span className="text-red-400">$0</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-300">Net Profit:</span>
-                      <span className="text-white">$0</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         )}
 
         {/* Analytics Tab */}
@@ -2688,17 +2653,143 @@ function ClubManagementContent() {
                 </div>
               )}
             </div>
+
+            {/* Changelog Section */}
+            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bebas text-white">Changelog</h2>
+                <button
+                  onClick={() => {
+                    setEditingChangelog(null);
+                    setChangelogModalOpen(true);
+                  }}
+                  className="px-6 py-2 text-sm font-semibold text-white bg-[red] hover:bg-[#b80000] rounded-md"
+                >
+                  Add Entry
+                </button>
+              </div>
+              <ChangelogTable userId={userId || undefined} isAdmin={isAdmin} />
+            </div>
+            {changelogModalOpen && (
+              <ChangelogModal
+                isOpen={changelogModalOpen}
+                onClose={() => setChangelogModalOpen(false)}
+                userId={userId || ""}
+                editing={editingChangelog}
+                onSaved={() => {
+                  // rely on ChangelogTable to refetch when user re-enters tab, or reload page
+                }}
+              />
+            )}
           </div>
         )}
 
         {/* Payments Tab */}
         {activeTab === "payments" && userRole === "admin" && (
           <div className="space-y-8">
-            {/* Registrations Section */}
+            {/* Payment Management Summary Cards */}
             <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
               <h2 className="text-2xl font-bebas text-white mb-6">
+                Payment Management
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                  <h3 className="text-lg font-bebas text-white mb-4">
+                    Registration Fees
+                  </h3>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Manage player registration fees and payment status.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Total Players:</span>
+                      <span className="text-white">{players.length}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Paid:</span>
+                      <span className="text-green-400">{paidPlayersCount}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Pending:</span>
+                      <span className="text-yellow-400">{pendingPlayersCount}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                  <h3 className="text-lg font-bebas text-white mb-4">Revenue by Category (Stripe)</h3>
+                  <p className="text-gray-400 text-sm mb-4">Realized totals from Stripe (webhook-synced).</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Membership Fees:</span>
+                      <span className="text-green-400">{membershipFees.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Tournament Fees:</span>
+                      <span className="text-white">$0.00</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Merch:</span>
+                      <span className="text-white">$0.00</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                  <h3 className="text-lg font-bebas text-white mb-4">Financial Summary</h3>
+                  <p className="text-gray-400 text-sm mb-4">Live totals from Stripe + pending dues.</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Total Revenue:</span>
+                      <span className="text-green-400">{totalRevenue.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Pending Dues:</span>
+                      <span className="text-yellow-400">{pendingDues.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Registrations Section */}
+            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bebas text-white">
                 Registrations
               </h2>
+                <button
+                  onClick={async () => {
+                    if (
+                      !confirm(
+                        "Are you sure you want to delete ALL players and payment records? This cannot be undone."
+                      )
+                    ) {
+                      return;
+                    }
+                    try {
+                      const resp = await fetch(
+                        "/api/admin/clear-all-test-data",
+                        {
+                          method: "POST",
+                        }
+                      );
+                      if (resp.ok) {
+                        toast.success("All test data cleared successfully!");
+                        await fetchManagementData();
+                      } else {
+                        const j = await resp.json().catch(() => ({}));
+                        toast.error(j.error || "Failed to clear data");
+                      }
+                    } catch (error) {
+                      toast.error("Error clearing data");
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition-colors text-sm font-semibold"
+                >
+                  Clear All Data
+                </button>
+              </div>
 
               {/* Side-by-side tables */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -2827,7 +2918,7 @@ function ClubManagementContent() {
                                 U12: { min: 10, max: 12 },
                                 U14: { min: 12, max: 14 },
                                 U16: { min: 14, max: 16 },
-                                U18: { min: 16, max: 18 },
+                                U18: { min: 15, max: 18 }, // Allow 15-year-olds in U18 teams
                               };
 
                               const ageRange = ageRanges[t.age_group];
@@ -2843,16 +2934,22 @@ function ClubManagementContent() {
                               const playerGender = p.gender.toLowerCase();
                               const teamGender = t.gender.toLowerCase();
 
-                              // Boys teams only accept Male players
+                              // Boys teams only accept Boys/Male players
                               if (teamGender === "boys") {
-                                if (playerGender !== "male") {
+                                if (
+                                  playerGender !== "boys" &&
+                                  playerGender !== "male"
+                                ) {
                                   return false;
                                 }
                               }
 
-                              // Girls teams only accept Female players
+                              // Girls teams only accept Girls/Female players
                               if (teamGender === "girls") {
-                                if (playerGender !== "female") {
+                                if (
+                                  playerGender !== "girls" &&
+                                  playerGender !== "female"
+                                ) {
                                   return false;
                                 }
                               }

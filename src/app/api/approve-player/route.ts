@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { sendEmail } from "@/lib/email";
+import { getPlayerApprovalEmail } from "@/lib/emailTemplates";
 
 export async function POST(req: Request) {
   try {
@@ -14,12 +15,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Approve + assign without referencing non-existent columns
+    // Approve + assign - get player and team info
     const { data: updated, error } = await supabaseAdmin!
       .from("players")
       .update({ team_id, status: "approved" })
       .eq("id", player_id)
-      .select("id, parent_email") // <- only what we need
+      .select("id, name, parent_email, team_id")
       .single();
 
     if (error || !updated) {
@@ -39,15 +40,28 @@ export async function POST(req: Request) {
         player_id: updated.id,
       });
     } else {
+      // Get team name for email
+      const { data: team } = await supabaseAdmin!
+        .from("teams")
+        .select("name")
+        .eq("id", updated.team_id)
+        .single();
+
       devLog("approve-player: sending approval email", {
         to: updated.parent_email,
       });
+
+      // Use professional email template
+      const approvalEmailData = getPlayerApprovalEmail({
+        playerName: updated.name,
+        teamName: team?.name,
+        paymentLink: payLink,
+      });
+
       await sendEmail(
         updated.parent_email,
-        "WCS Approval: Complete your payment",
-        `<p>Your player has been assigned to a team!</p>
-         <p>Please complete payment here:</p>
-         <p><a href="${payLink}">${payLink}</a></p>`
+        approvalEmailData.subject,
+        approvalEmailData.html
       );
     }
 

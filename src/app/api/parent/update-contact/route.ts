@@ -27,34 +27,35 @@ export async function PUT(request: NextRequest) {
 
     devLog("Updating contact info for parent:", email);
 
-    // Build update object with only provided fields
+    // Build update object with only basic contact fields (not detailed checkout fields)
     const updateData: any = {
-      parent_phone: parent_phone || null,
-      emergency_contact: emergency_contact || null,
-      emergency_phone: emergency_phone || null,
+      phone: parent_phone || null,
+      updated_at: new Date().toISOString(),
     };
 
     // Add parent name fields if provided
     if (parent_first_name !== undefined) {
-      updateData.parent_first_name = parent_first_name || null;
+      updateData.first_name = parent_first_name || null;
     }
     if (parent_last_name !== undefined) {
-      updateData.parent_last_name = parent_last_name || null;
+      updateData.last_name = parent_last_name || null;
     }
 
-    // Update parent_name field with full name
-    if (parent_first_name && parent_last_name) {
-      updateData.parent_name =
-        `${parent_first_name} ${parent_last_name}`.trim();
+    // Only update basic emergency contact if provided (detailed fields come from checkout)
+    if (emergency_contact !== undefined) {
+      updateData.emergency_contact = emergency_contact || null;
+    }
+    if (emergency_phone !== undefined) {
+      updateData.emergency_phone = emergency_phone || null;
     }
 
-    // Update all player records with this parent_email
-    const { data, error } = await supabaseAdmin
-      .from("players")
+    // Update parent record in parents table
+    const { data: updatedParent, error } = await supabaseAdmin
+      .from("parents")
       .update(updateData)
-      .eq("parent_email", email)
-      .eq("is_deleted", false)
-      .select();
+      .eq("email", email)
+      .select()
+      .single();
 
     if (error) {
       devError("Error updating contact info:", error);
@@ -64,11 +65,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    devLog("Contact info updated for", data?.length || 0, "player(s)");
+    devLog("Contact info updated for parent:", email);
 
     return NextResponse.json({
       success: true,
-      updated_count: data?.length || 0,
+      parent: updatedParent,
     });
   } catch (error) {
     devError("Update contact API error:", error);

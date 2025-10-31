@@ -318,6 +318,22 @@ export default function AddTeamModal({
         console.log("🖼️ No team image file selected, using existing image");
       }
 
+      // Add cache-busting param to avoid stale cached images after overwrite
+      const addCacheBuster = (url: string) => {
+        try {
+          const u = new URL(url);
+          u.searchParams.set("v", Date.now().toString());
+          return u.toString();
+        } catch {
+          // Fallback for non-absolute URLs
+          const sep = url.includes("?") ? "&" : "?";
+          return `${url}${sep}v=${Date.now()}`;
+        }
+      };
+
+      if (logoUrl) logoUrl = addCacheBuster(logoUrl);
+      if (imageUrl) imageUrl = addCacheBuster(imageUrl);
+
       const teamData = {
         name: formData.name.trim(),
         age_group: formData.ageGroup.trim(),

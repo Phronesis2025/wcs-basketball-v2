@@ -34,7 +34,7 @@ ensurePriceId("STRIPE_PRICE_MONTHLY", PRICE_MONTHLY!);
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { player_id, payment_type, custom_amount } = body || {};
+    const { player_id, payment_type, custom_amount, from } = body || {};
 
     if (!player_id || !payment_type) {
       return NextResponse.json(
@@ -75,7 +75,7 @@ export async function POST(req: Request) {
     }
 
     // Redirect URLs
-    const successUrl = `${BASE_URL}/payment/success?player=${player_id}`;
+    const successUrl = `${BASE_URL}/payment/success?player=${player_id}${from ? `&from=${encodeURIComponent(from)}` : ""}`;
     const cancelUrl = `${BASE_URL}/payment/${player_id}?canceled=1`;
 
     // Build session based on payment_type

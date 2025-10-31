@@ -185,8 +185,12 @@ export default function AdminOverviewContent({
     );
   }
 
-  // Filter players based on selected team filter and search term
+  // Filter players based on status, selected team filter and search term
   const filteredPlayers = players.filter((player) => {
+    // Only show approved or active players
+    const s = (player.status || "").toLowerCase();
+    const statusMatch = s === "approved" || s === "active";
+
     // Team filter
     let teamMatch = true;
     if (selectedTeamFilter === "all") teamMatch = true;
@@ -198,7 +202,7 @@ export default function AdminOverviewContent({
       playerSearchTerm === "" ||
       player.name.toLowerCase().includes(playerSearchTerm.toLowerCase());
 
-    return teamMatch && nameMatch;
+    return statusMatch && teamMatch && nameMatch;
   });
 
   return (
@@ -259,8 +263,8 @@ export default function AdminOverviewContent({
               const isInactive = isActive === false;
 
               const loginStats = coachLoginStats[coach.id];
-              const lastLogin = loginStats?.last_login_at
-                ? new Date(loginStats.last_login_at)
+              const lastActive = (loginStats?.last_active_at || loginStats?.last_login_at)
+                ? new Date(loginStats.last_active_at || loginStats.last_login_at)
                 : null;
 
               // Get teams assigned to this coach
@@ -353,16 +357,16 @@ export default function AdminOverviewContent({
                       </div>
                     </div>
 
-                    {/* Last Login */}
+                    {/* Last Active */}
                     <div className="text-gray-500 text-sm text-center">
                       <div className="font-medium text-gray-300 mb-1">
-                        Last Login
+                        Last Active
                       </div>
                       <div>
-                        {lastLogin
-                          ? lastLogin.toLocaleDateString() +
+                        {lastActive
+                          ? lastActive.toLocaleDateString() +
                             " " +
-                            lastLogin.toLocaleTimeString()
+                            lastActive.toLocaleTimeString()
                           : "Never"}
                       </div>
                     </div>
@@ -432,13 +436,13 @@ export default function AdminOverviewContent({
                         )}
                         <div>
                           <div className="font-medium text-gray-300">
-                            Last Login:
+                            Last Active:
                           </div>
                           <div className="text-gray-400">
-                            {lastLogin
-                              ? lastLogin.toLocaleDateString() +
+                            {lastActive
+                              ? lastActive.toLocaleDateString() +
                                 " " +
-                                lastLogin.toLocaleTimeString()
+                                lastActive.toLocaleTimeString()
                               : "Never"}
                           </div>
                         </div>

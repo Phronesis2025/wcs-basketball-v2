@@ -91,7 +91,19 @@ export async function GET() {
 
     devLog("Successfully fetched schedules and updates:", allEvents.length);
 
-    return NextResponse.json({ events: allEvents });
+    return new NextResponse(
+      JSON.stringify({ events: allEvents }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+          SurrogateControl: "no-store",
+        },
+      }
+    );
   } catch (error) {
     devError("Server-side schedules error:", error);
     return NextResponse.json(

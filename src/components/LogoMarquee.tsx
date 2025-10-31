@@ -11,7 +11,6 @@ interface Team {
 }
 
 export default function LogoMarquee() {
-  const [isPaused, setIsPaused] = useState(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -114,12 +113,7 @@ export default function LogoMarquee() {
       className="bg-navy/80 py-8 overflow-hidden"
       aria-label="Team Logos"
     >
-      <div
-        className="flex items-center marquee"
-        onMouseEnter={() => setIsPaused(true)}
-        onMouseLeave={() => setIsPaused(false)}
-        style={{ animationPlayState: isPaused ? "paused" : "running" }}
-      >
+      <div className="marquee-track flex items-center">
         {displayLogos.map((logo, index) => (
           <div
             key={`${logo.id}-${index}`}

@@ -13,17 +13,21 @@ html {
     transform: translateX(0%);
   }
   100% {
-    transform: translateX(-100%);
+    /* Move by half the track width when content is duplicated for seamless loop */
+    transform: translateX(-50%);
   }
 }
 
-.marquee {
+.marquee-track {
   animation: marquee 45s linear infinite;
   will-change: transform; /* Optimize for animations */
 }
 
-.marquee:hover {
-  animation-play-state: paused;
+/* Speed up marquee on small screens (mobile) */
+@media (max-width: 640px) {
+  .marquee-track {
+    animation-duration: 8s;
+  }
 }
 
 /* Hero content animation - CSS-only for better performance */

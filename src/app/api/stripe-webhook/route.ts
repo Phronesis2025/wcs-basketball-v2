@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { sendEmail } from "@/lib/email";
+import { getPaymentConfirmationEmail } from "@/lib/emailTemplates";
+import { fetchTeamDataForEmail } from "@/lib/emailHelpers";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +19,24 @@ const ADMIN_NOTIFICATIONS_TO = (process.env.ADMIN_NOTIFICATIONS_TO || "")
 const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: "2025-08-27.basil",
 });
+
+function splitFullName(fullName?: string | null) {
+  if (!fullName) {
+    return { firstName: "", lastName: "" };
+  }
+
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 0) {
+    return { firstName: "", lastName: "" };
+  }
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: "" };
+  }
+
+  const firstName = parts.shift()!;
+  const lastName = parts.join(" ");
+  return { firstName, lastName };
+}
 
 // Helper to notify admins (safe no-op if list empty)
 async function notifyAdmins(subject: string, html: string) {
@@ -57,6 +77,12 @@ export async function POST(req: Request) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
+        devLog("webhook: checkout.session.completed received", {
+          sessionId: session.id,
+          amount: session.amount_total,
+          customer: session.customer,
+        });
+
         // Find our pending row by Checkout Session id
         const { data: paymentRow, error: payFetchErr } = await supabaseAdmin!
           .from("payments")
@@ -65,55 +91,143 @@ export async function POST(req: Request) {
           .single();
 
         if (payFetchErr) {
-          devError("webhook: fetch pending payment failed", payFetchErr);
+          devError("webhook: fetch pending payment failed", {
+            error: payFetchErr,
+            sessionId: session.id,
+            code: payFetchErr.code,
+            message: payFetchErr.message,
+          });
+          // Continue anyway - might be edge case where payment row doesn't exist yet
         }
 
-        if (paymentRow) {
-          // Mark paid + activate player
-          const amount = (session.amount_total ?? 0) / 100;
-
-          const { error: payUpdErr } = await supabaseAdmin!
-            .from("payments")
-            .update({ status: "paid" })
-            .eq("id", paymentRow.id);
-          if (payUpdErr)
-            devError("webhook: update payment paid failed", payUpdErr);
-
-          const { error: playerUpdErr } = await supabaseAdmin!
-            .from("players")
-            .update({ status: "active" })
-            .eq("id", paymentRow.player_id);
-          if (playerUpdErr)
-            devError("webhook: update player active failed", playerUpdErr);
-
-          // Optional: notify admins
-          try {
-            const { data: player } = await supabaseAdmin!
-              .from("players")
-              .select("first_name, last_name, parent_email")
-              .eq("id", paymentRow.player_id)
-              .single();
-
-            const subject = `WCS Payment received - $${amount.toFixed(2)}`;
-            const html = `
-              <p><strong>Payment received</strong></p>
-              <p>Player: ${player?.first_name || ""} ${
-              player?.last_name || ""
-            }</p>
-              <p>Parent: ${player?.parent_email || ""}</p>
-              <p>Amount: $${amount.toFixed(2)}</p>
-              <p>Type: ${paymentRow.payment_type}</p>
-              <p>Session: ${session.id}</p>
-            `;
-            await notifyAdmins(subject, html);
-          } catch (e) {
-            devError("webhook: admin notify error", e);
-          }
-        } else {
-          // If no pending payment row found (edge case), try to link by customer for subscriptions/custom flows
-          devLog("webhook: no matching pending payment row", {
-            session: session.id,
+        if (!paymentRow) {
+          devLog("webhook: no matching pending payment row found", {
+            sessionId: session.id,
+            searchedFor: session.id,
           });
+          break; // Exit early if no payment row
+        }
+
+        devLog("webhook: payment row found", {
+          paymentId: paymentRow.id,
+          playerId: paymentRow.player_id,
+          paymentType: paymentRow.payment_type,
+        });
+
+        // Mark paid + activate player
+        const amount = (session.amount_total ?? 0) / 100;
+
+        const { error: payUpdErr } = await supabaseAdmin!
+          .from("payments")
+          .update({ status: "paid" })
+          .eq("id", paymentRow.id);
+        if (payUpdErr)
+          devError("webhook: update payment paid failed", payUpdErr);
+
+        const { error: playerUpdErr } = await supabaseAdmin!
+          .from("players")
+          .update({ status: "active" })
+          .eq("id", paymentRow.player_id);
+        if (playerUpdErr)
+          devError("webhook: update player active failed", playerUpdErr);
+
+        // Notify both parent and admins
+        try {
+          const { data: player, error: playerErr } = await supabaseAdmin!
+            .from("players")
+            .select(
+              "id, name, parent_email, parent_first_name, parent_last_name, team_id, teams(name)"
+            )
+            .eq("id", paymentRow.player_id)
+            .single();
+
+          if (playerErr) {
+            devError("webhook: failed to fetch player", {
+              error: playerErr,
+              playerId: paymentRow.player_id,
+              code: playerErr.code,
+              message: playerErr.message,
+            });
+            break;
+          }
+
+          if (!player) {
+            devError("webhook: player not found in database", {
+              playerId: paymentRow.player_id,
+            });
+            break;
+          }
+
+          devLog("webhook: player data fetched", {
+            playerId: paymentRow.player_id,
+            playerName: player.name || "",
+            hasEmail: !!player.parent_email,
+            hasTeam: !!player.team_id,
+          });
+
+          const { firstName: playerFirstName, lastName: playerLastName } =
+            splitFullName(player.name);
+
+          if (player.parent_email) {
+            // Optionally fetch team info for the next 2 weeks
+            let teamInfo = null as any;
+            try {
+              if (player.team_id) {
+                teamInfo = await fetchTeamDataForEmail(player.team_id);
+              }
+            } catch (e) {
+              devError("webhook: fetchTeamDataForEmail error", e);
+            }
+
+            const parentEmailData = getPaymentConfirmationEmail({
+              playerFirstName,
+              playerLastName,
+              parentFirstName: player.parent_first_name || undefined,
+              parentLastName: player.parent_last_name || undefined,
+              teamName: player.teams?.name || undefined,
+              amount: amount,
+              paymentType: paymentRow.payment_type,
+              paymentDate: new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              teamInfo: teamInfo || undefined,
+            });
+
+            try {
+              await sendEmail(
+                player.parent_email,
+                parentEmailData.subject,
+                parentEmailData.html
+              );
+
+              devLog("webhook: parent confirmation email sent", {
+                to: player.parent_email,
+              });
+            } catch (emailErr) {
+              devError("webhook: failed to send parent email", emailErr);
+            }
+          }
+
+          const adminSubject = `WCS Payment received - $${amount.toFixed(2)}`;
+          const adminHtml = `
+            <p><strong>Payment received</strong></p>
+            <p>Player: ${player.name || ""}</p>
+            <p>Parent: ${player.parent_email || ""}</p>
+            <p>Team: ${player.teams?.name || "Not assigned"}</p>
+            <p>Amount: $${amount.toFixed(2)}</p>
+            <p>Type: ${paymentRow.payment_type}</p>
+            <p>Session: ${session.id}</p>
+          `;
+          try {
+            await notifyAdmins(adminSubject, adminHtml);
+            devLog("webhook: admin notification sent");
+          } catch (adminEmailErr) {
+            devError("webhook: failed to send admin notification", adminEmailErr);
+          }
+        } catch (e) {
+          devError("webhook: notification error", e);
         }
 
         break;
@@ -129,10 +243,19 @@ export async function POST(req: Request) {
 
         if (!customerId) break;
 
+        if (invoice.billing_reason === "subscription_create") {
+          devLog("webhook: skipping invoice.payment_succeeded for subscription create", {
+            invoiceId: invoice.id,
+          });
+          break;
+        }
+
         // Find the player by stored stripe_customer_id
         const { data: player, error: findPlayerErr } = await supabaseAdmin!
           .from("players")
-          .select("id, first_name, last_name, parent_email")
+          .select(
+            "id, name, parent_email, parent_first_name, parent_last_name, team_id"
+          )
           .eq("stripe_customer_id", customerId)
           .single();
 
@@ -164,16 +287,86 @@ export async function POST(req: Request) {
         if (updErr)
           devError("webhook: set player active on renewal failed", updErr);
 
+        // Get team info for parent email
+        const { data: playerWithTeam, error: playerTeamErr } =
+          await supabaseAdmin!
+            .from("players")
+            .select("team_id, teams(name), parent_first_name, parent_last_name")
+            .eq("id", player.id)
+            .single();
+
+        if (playerTeamErr) {
+          devError("webhook: player team lookup failed", {
+            error: playerTeamErr,
+            playerId: player.id,
+          });
+        }
+
+        const { firstName: renewalFirstName, lastName: renewalLastName } =
+          splitFullName(player.name);
+
+        // Send confirmation email to parent
+        if (player.parent_email) {
+          // Optionally fetch team info
+          let teamInfo = null as any;
+          try {
+            if (playerWithTeam?.team_id) {
+              teamInfo = await fetchTeamDataForEmail(playerWithTeam.team_id);
+            }
+          } catch (e) {
+            devError("webhook: fetchTeamDataForEmail (renewal) error", e);
+          }
+
+          try {
+            const parentEmailData = getPaymentConfirmationEmail({
+              playerFirstName: renewalFirstName,
+              playerLastName: renewalLastName,
+              parentFirstName:
+                playerWithTeam?.parent_first_name ||
+                player.parent_first_name ||
+                undefined,
+              parentLastName:
+                playerWithTeam?.parent_last_name ||
+                player.parent_last_name ||
+                undefined,
+              teamName: playerWithTeam?.teams?.name || undefined,
+              amount: amount,
+              paymentType: "monthly",
+              paymentDate: new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              teamInfo: teamInfo || undefined,
+            });
+
+            await sendEmail(
+              player.parent_email,
+              parentEmailData.subject,
+              parentEmailData.html
+            );
+
+            devLog("webhook: parent subscription renewal email sent", {
+              to: player.parent_email,
+            });
+          } catch (emailErr) {
+            devError("webhook: parent renewal email error", emailErr);
+          }
+        }
+
         // Notify admins on renewal
-        const subject = `WCS Subscription renewal - $${amount.toFixed(2)}`;
-        const html = `
+        const adminSubject = `WCS Subscription renewal - $${amount.toFixed(
+          2
+        )}`;
+        const adminHtml = `
           <p><strong>Subscription renewal paid</strong></p>
-          <p>Player: ${player.first_name} ${player.last_name}</p>
+          <p>Player: ${player.name || ""}</p>
           <p>Parent: ${player.parent_email}</p>
+          <p>Team: ${playerWithTeam?.teams?.name || "Not assigned"}</p>
           <p>Amount: $${amount.toFixed(2)}</p>
           <p>Invoice: ${invoice.id}</p>
         `;
-        await notifyAdmins(subject, html);
+        await notifyAdmins(adminSubject, adminHtml);
 
         break;
       }

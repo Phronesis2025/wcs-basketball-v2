@@ -6,6 +6,9 @@ import { devLog, devError } from "@/lib/security";
 import Image from "next/image";
 import ProfileImageUpload from "./ProfileImageUpload";
 import ChangePasswordModal from "./ChangePasswordModal";
+import MessageBoard from "./MessageBoard";
+import { getMessages, getUnreadMentionCount } from "@/lib/messageActions";
+import { CoachMessage } from "@/types/supabase";
 
 interface CoachProfileData {
   id: string;
@@ -21,6 +24,7 @@ interface CoachProfileData {
   login_count: number;
   last_login_at?: string;
   last_password_reset?: string;
+  last_active_at?: string | null;
   teams: Array<{
     id: string;
     name: string;
@@ -56,6 +60,10 @@ export default function CoachProfile({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  // Message board state
+  const [messages, setMessages] = useState<CoachMessage[]>([]);
+  const [unreadMentions, setUnreadMentions] = useState(0);
+
   // Edit form state
   const [editForm, setEditForm] = useState({
     first_name: "",
@@ -70,6 +78,67 @@ export default function CoachProfile({
       fetchProfileData();
     }
   }, [userId]);
+
+  // Heartbeat: record activity on mount and when tab becomes visible
+  useEffect(() => {
+    if (!userId) return;
+    const ping = async () => {
+      try {
+        await fetch("/api/activity/heartbeat", {
+          method: "POST",
+          headers: { "x-user-id": userId },
+        });
+      } catch {}
+    };
+
+    ping();
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") ping();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
+  }, [userId]);
+
+  // Fetch messages for message board
+  useEffect(() => {
+    const fetchMessages = async () => {
+      if (!userId) return;
+      try {
+        devLog("Fetching messages for profile...");
+        const messagesData = await getMessages();
+        setMessages(messagesData);
+        devLog("Messages loaded:", messagesData.length);
+      } catch (error) {
+        devError("Error fetching messages:", error);
+        setMessages([]);
+      }
+    };
+
+    fetchMessages();
+  }, [userId]);
+
+  // Fetch unread mention count
+  useEffect(() => {
+    const fetchUnreadMentions = async () => {
+      if (!userId) return;
+      try {
+        const count = await getUnreadMentionCount(userId);
+        setUnreadMentions(count);
+        devLog("Unread mentions:", count);
+      } catch (error) {
+        devError("Error fetching unread mentions:", error);
+        setUnreadMentions(0);
+      }
+    };
+
+    fetchUnreadMentions();
+
+    // Set up interval to refresh count periodically when on messages section
+    if (activeSection === "messages") {
+      const interval = setInterval(fetchUnreadMentions, 5000); // Refresh every 5 seconds
+      return () => clearInterval(interval);
+    }
+  }, [userId, messages, activeSection]); // Refresh when messages change or section changes
 
   const fetchProfileData = async () => {
     try {
@@ -169,8 +238,9 @@ export default function CoachProfile({
   };
 
   const getDaysSinceLogin = () => {
-    if (!profileData?.last_login_at) return null;
-    const lastLogin = new Date(profileData.last_login_at);
+    const ref = profileData?.last_active_at || profileData?.last_login_at;
+    if (!ref) return null;
+    const lastLogin = new Date(ref);
     const now = new Date();
 
     // Set both dates to start of day for accurate day comparison
@@ -278,10 +348,17 @@ export default function CoachProfile({
         </div>
         <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 text-center">
           <div className="text-2xl font-bebas text-white">
-            {(profileData.messages_posts || 0) +
-              (profileData.messages_replies || 0)}
+            {messages.length}
           </div>
-          <div className="text-sm font-inter text-gray-400">Messages</div>
+          <div className="text-sm font-inter text-gray-400">
+            {unreadMentions > 0 ? (
+              <span className="text-blue-400">
+                {unreadMentions} mention{unreadMentions !== 1 ? "s" : ""}
+              </span>
+            ) : (
+              "Messages"
+            )}
+          </div>
         </div>
       </div>
 
@@ -559,7 +636,7 @@ export default function CoachProfile({
                 <div className="space-y-6">
                   <div className="bg-gray-800 border border-gray-600 rounded-lg p-4">
                     <h4 className="text-lg font-bebas text-white mb-3">
-                      Login Statistics
+                      Activity Statistics
                     </h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
@@ -572,10 +649,10 @@ export default function CoachProfile({
                       </div>
                       <div>
                         <label className="block text-sm font-inter text-gray-400 mb-1">
-                          Last Login
+                          Last Activity
                         </label>
                         <p className="text-white font-inter">
-                          {formatDate(profileData.last_login_at)}
+                          {formatDate(profileData.last_active_at || profileData.last_login_at)}
                           {daysSinceLogin !== null && (
                             <span className="text-gray-400 text-sm ml-2">
                               (
@@ -639,18 +716,18 @@ export default function CoachProfile({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="text-center">
                         <div className="text-2xl font-bebas text-white">
-                          {profileData.messages_posts}
+                          {messages.length}
                         </div>
                         <div className="text-sm font-inter text-gray-400">
-                          Posts
+                          Total Messages
                         </div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bebas text-white">
-                          {profileData.messages_replies}
+                          {unreadMentions}
                         </div>
                         <div className="text-sm font-inter text-gray-400">
-                          Replies
+                          Unread Mentions
                         </div>
                       </div>
                     </div>
@@ -747,18 +824,27 @@ export default function CoachProfile({
             {/* Messages Section */}
             {activeSection === "messages" && (
               <div>
-                <h3 className="text-2xl font-bebas text-white mb-6 uppercase">
-                  Communication Hub
-                </h3>
-                <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
-                  <div className="text-4xl mb-4">💬</div>
-                  <h4 className="text-lg font-bebas text-white mb-2">
-                    Feature in Development
-                  </h4>
-                  <p className="text-gray-400 font-inter">
-                    Message board and communication features are coming soon.
-                  </p>
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-2xl font-bebas text-white uppercase">
+                    Coach Message Board
+                  </h3>
+                  {unreadMentions > 0 && (
+                    <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-inter">
+                      {unreadMentions} unread mention
+                      {unreadMentions !== 1 ? "s" : ""}
+                    </div>
+                  )}
                 </div>
+
+                <MessageBoard
+                  userId={userId || ""}
+                  userName={
+                    (profileData && `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim()) ||
+                    userName ||
+                    "Coach"
+                  }
+                  isAdmin={isAdmin}
+                />
               </div>
             )}
 
