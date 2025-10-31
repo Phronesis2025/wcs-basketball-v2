@@ -316,13 +316,8 @@
       <div class="page-section">
         <h3>Shop Page <span class="code">(/shop)</span></h3>
         <ul class="feature-list">
-          <li>
-            <strong>Placeholder Page</strong>: Ready for merchandise integration
-          </li>
-          <li>
-            <strong>Future Stripe Integration</strong>: Payment processing
-            planned
-          </li>
+          <li><strong>Preview</strong>: Ready for merchandise integration</li>
+          <li><strong>Stripe</strong>: Separate player payments implemented</li>
         </ul>
       </div>
 
@@ -339,23 +334,42 @@
         </ul>
       </div>
 
-      <h2><span class="emoji">🔐</span> Authentication & Legal</h2>
+      <h2><span class="emoji">🔐</span> Registration, Authentication & Parent Portal</h2>
 
       <div class="page-section">
         <h3>User Registration <span class="code">(/register)</span></h3>
         <ul class="feature-list">
-          <li>
-            <strong>Account Creation</strong>: Email and password registration
-          </li>
-          <li>
-            <strong>Input Validation</strong>: Email format, password strength,
-            length limits
-          </li>
-          <li>
-            <strong>Rate Limiting</strong>: Protection against brute force
-            attacks
-          </li>
+          <li><strong>Quick Register</strong>: Combined parent + player form</li>
+          <li><strong>Supabase Confirmation</strong>: New parents confirm via email</li>
+          <li><strong>Auto-sign in</strong>: New accounts get session post-submit</li>
           <li><strong>CSRF Protection</strong>: Secure form submission</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Add Another Child <span class="code">(/add-child)</span></h3>
+        <ul class="feature-list">
+          <li><strong>Existing Parent</strong>: Add a new player under same account</li>
+          <li><strong>Confirmation Email</strong>: In-app registration email sent</li>
+          <li><strong>Redirect</strong>: Back to Parent Profile</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Parent Profile <span class="code">(/parent/profile)</span></h3>
+        <ul class="feature-list">
+          <li><strong>Players Tab</strong>: Child cards with key details</li>
+          <li><strong>Billing Tab</strong>: Payment history and totals</li>
+          <li><strong>Contact</strong>: Edit parent contact information</li>
+        </ul>
+      </div>
+
+      <div class="page-section">
+        <h3>Payment Flow <span class="code">(/payment/[playerId])</span></h3>
+        <ul class="feature-list">
+          <li><strong>Stripe Checkout</strong>: Annual, Monthly, or Custom</li>
+          <li><strong>Success Redirect</strong>: <span class="code">/payment/success</span></li>
+          <li><strong>Checkout Form</strong>: <span class="code">/checkout/[playerId]</span> for details</li>
         </ul>
       </div>
 

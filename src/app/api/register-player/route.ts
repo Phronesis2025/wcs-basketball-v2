@@ -49,6 +49,9 @@ export async function POST(req: Request) {
       .eq("email", parent_email)
       .maybeSingle();
 
+    // Track whether this is an existing parent; used later to decide email behavior
+    const isExistingParent = !!existingParent;
+
     if (existingParent) {
       // Parent exists, update basic info if needed
       parentRecord = existingParent;
@@ -139,23 +142,29 @@ export async function POST(req: Request) {
       );
     }
 
-    // Parent email is now handled by Supabase confirmation email
-    // (which we've customized to match our Welcome email template)
-    // Commenting out the parent email send - keep code for reference
-    // const parentEmailData = getPlayerRegistrationEmail({
-    //   playerFirstName: first_name,
-    //   playerLastName: last_name,
-    //   parentFirstName: body.parent_first_name,
-    //   parentLastName: body.parent_last_name,
-    //   grade,
-    //   gender,
-    // });
+    // Email behavior:
+    // - New parent signups receive Supabase's confirm email (handled by auth flow).
+    // - Existing parents adding another child should still receive a registration confirmation from us.
+    if (isExistingParent) {
+      const parentEmailData = getPlayerRegistrationEmail({
+        playerFirstName: first_name,
+        playerLastName: last_name,
+        parentFirstName: body.parent_first_name,
+        parentLastName: body.parent_last_name,
+        grade,
+        gender,
+      });
 
-    // await sendEmail(
-    //   parent_email,
-    //   parentEmailData.subject,
-    //   parentEmailData.html
-    // );
+      await sendEmail(
+        parent_email,
+        parentEmailData.subject,
+        parentEmailData.html
+      );
+
+      devLog("register-player: parent confirmation sent for existing parent", {
+        to: parent_email,
+      });
+    }
 
     // Notify admin(s) about new registration
     const adminEmail = process.env.ADMIN_NOTIFICATIONS_TO;

@@ -1,5 +1,4 @@
 ﻿import React from "react";
-import "../lib/testEnv";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Navbar from "../components/Navbar";

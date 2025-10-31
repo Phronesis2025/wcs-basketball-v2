@@ -4,7 +4,7 @@
 
 This is a **Next.js 15.5.2** application for World Class Sports Basketball, built with TypeScript, Tailwind CSS, and Supabase integration.
 
-**Latest Updates (v2.4.3):**
+**Latest Updates (v2.8.0):**
 
 - **CRITICAL SECURITY FIX**: Eliminated XSS vulnerability in Team Updates
 - **Perfect Security Score**: Achieved 10/10 security rating
@@ -18,10 +18,12 @@ This is a **Next.js 15.5.2** application for World Class Sports Basketball, buil
 - React unescaped entities fixes for proper HTML rendering
 - Build system optimization with zero errors and clean compilation
 - Enhanced responsive design with improved mobile and desktop layouts
-- **NEW**: Coaches dashboard with team management, schedule creation, and drill management
-- **NEW**: Practice drills system with filtering and categorization
-- **NEW**: Enhanced UI component library with dialog, input, and select components
-- **NEW**: Coaches login system with authentication and role-based access
+- Registration flows: combined parent+player quick register and add-another-child
+- Parent Profile with Billing tab and payment history
+- Stripe checkout pages and webhook, approval email with deep link
+- Admin Club Management approval workflow and analytics/error dashboards
+- Upload APIs for images/documents (coach, team, updates)
+- Coaches dashboard, drills, and unified modal remain available
 - **ENHANCED**: FanZone data validation with defensive programming and error recovery
 - **ENHANCED**: Comprehensive security audit with zero vulnerabilities found
 - **ENHANCED**: Data validation and error handling across all data operations
@@ -43,15 +45,23 @@ wcsv2.0-new/
 
 ### 🛣️ App Router (`src/app/`)
 
-Next.js 13+ App Router structure for pages and API routes:
+Next.js App Router structure for pages and API routes (selected entries):
 
 ```
 src/app/
 ├── 📁 about/                   # About page
 │   └── page.tsx
 ├── 📁 api/                     # API routes
-│   ├── csrf/route.ts          # CSRF protection
-│   └── test-supabase/route.ts # Supabase testing
+│   ├── approve-player/route.ts             # Admin approves player -> email
+│   ├── register-player/route.ts            # Create parent (if needed) + player
+│   ├── create-checkout-session/route.ts    # Stripe checkout
+│   ├── stripe-webhook/route.ts             # Stripe webhook handler
+│   ├── parent/profile/route.ts             # Parent profile + payments
+│   ├── upload/coach-image/route.ts         # Image upload (coach)
+│   ├── upload/team-image/route.ts          # Image upload (team)
+│   ├── upload/team-logo/route.ts           # Image upload (team logo)
+│   ├── upload/team-update-image/route.ts   # Image upload (updates)
+│   └── upload/document/route.ts            # Document upload
 ├── 📁 coaches/                 # Coaches section
 │   ├── dashboard/              # Coaches dashboard
 │   │   └── page.tsx           # Team management, schedules, drills
@@ -60,6 +70,17 @@ src/app/
 │   ├── login/                 # Coaches login
 │   │   └── page.tsx           # Authentication for coaches
 │   └── page.tsx               # Public coaches page
+├── 📁 parent/
+│   ├── login/page.tsx         # Parent login
+│   ├── reset-password/page.tsx# Password reset
+│   └── profile/page.tsx       # Parent profile + Billing
+├── 📁 add-child/
+│   └── page.tsx               # Existing parent adds a player
+├── 📁 checkout/
+│   └── [playerId]/page.tsx    # Detailed form before payment (new parent)
+├── 📁 payment/
+│   ├── [playerId]/page.tsx    # Payment and session creation
+│   └── success/page.tsx       # Stripe success landing
 ├── 📁 news/                    # News page
 │   └── page.tsx
 ├── 📁 register/                # User registration
@@ -93,18 +114,18 @@ src/components/
 │   ├── input.tsx              # Form input component
 │   └── select.tsx             # Select dropdown component
 ├── 📄 ClientTeams.tsx         # Client-side teams component
-├── 📄 Coaches.tsx             # Coaches display
+├── 📄 Coaches.tsx             # (Legacy; not used on site)
 ├── 📄 FanZone.tsx             # Fan zone section
 ├── 📄 Footer.tsx              # Site footer
 ├── 📄 Hero.tsx                # Hero section (main banner)
-├── 📄 HomeSections.tsx        # Home page sections
+├── 📄 HomeSections.tsx        # (Legacy; not used on site)
 ├── 📄 LogoMarquee.tsx         # Logo carousel
 ├── 📄 Navbar.tsx              # Navigation bar
 ├── 📄 NewsCarousel.tsx        # News slider
 ├── 📄 ScrollToTop.tsx         # Scroll to top button
 ├── 📄 Shop.tsx                # Shop component
 ├── 📄 TeamCard.tsx            # Individual team card
-├── 📄 Teams.tsx               # Teams display
+├── 📄 Teams.tsx               # (Legacy; not used on site)
 └── 📄 ValuesSection.tsx       # Core values section
 ```
 
@@ -114,11 +135,22 @@ Core functionality and configurations:
 
 ```
 src/lib/
-├── 📄 actions.ts              # Server actions with enhanced data validation
-├── 📄 security.ts             # Security utilities and defensive programming
-├── 📄 supabaseClient.ts       # Supabase configuration
-├── 📄 testEnv.ts              # Environment testing utilities
-└── 📄 utils.ts                # General utilities
+├── 📄 actions.ts               # Server actions
+├── 📄 analytics.ts             # Basic analytics helpers
+├── 📄 authPersistence.ts       # Client session storage helpers
+├── 📄 changelogActions.ts      # Admin changelog helpers
+├── 📄 drillActions.ts          # Drill CRUD helpers
+├── 📄 email.ts                 # Email transport (Resend)
+├── 📄 emailHelpers.ts          # Team data formatting for emails
+├── 📄 emailTemplates.ts        # All email templates
+├── 📄 errorActions.ts          # Admin error helpers
+├── 📄 errorLogger.ts           # Error logging util
+├── 📄 messageActions.ts        # Message board helpers
+├── 📄 networkUtils.ts          # Fetch wrappers and helpers
+├── 📄 security.ts              # Security utilities and defensive programming
+├── 📄 securityMiddleware.ts    # Security middleware helpers
+├── 📄 supabaseClient.ts        # Supabase configuration
+└── 📄 ageValidation.ts         # Age and DOB helpers
 ```
 
 ### 🪝 Hooks (`src/hooks/`)
@@ -127,7 +159,12 @@ Custom React hooks:
 
 ```
 src/hooks/
-└── 📄 useCSRF.ts              # CSRF protection hook
+├── 📄 useAuth.ts              # Auth state handling
+├── 📄 useCSRF.ts              # CSRF protection hook
+├── 📄 useDrills.ts            # Drills data
+├── 📄 useSchedules.ts         # Schedules data
+├── 📄 useScrollLock.ts        # UI scroll lock
+└── 📄 useTeams.ts             # Teams data
 ```
 
 ### 📋 Types (`src/types/`)
@@ -300,5 +337,5 @@ Comprehensive project documentation:
 
 _This structure follows Next.js best practices with a clear separation of concerns, making it easy to maintain and scale your basketball team website! 🏀_
 
-**Last Updated**: January 2025
-**Version**: 2.4.2
+**Last Updated**: October 2025
+**Version**: 2.8.0

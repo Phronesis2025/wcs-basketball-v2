@@ -4,8 +4,8 @@
 
 **WCSv2.0** is a comprehensive youth basketball league website built for World Class Sports Basketball in Kansas. The project empowers kids (ages 8-18), builds character, and generates revenue through merchandise sales. Built with modern web technologies, it features a responsive design, comprehensive security measures, and interactive components for coaches, parents, and players.
 
-**Current Version**: v2.7.8  
-**Last Updated**: January 2025  
+**Current Version**: v2.8.0  
+**Last Updated**: October 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 10/10 (Perfect) 🔒  
 **Build Status**: Clean Build ✅  
@@ -56,16 +56,16 @@
 - Code: `src/lib/security.ts`, `next.config.ts`
 - Docs: [SECURITY.md](SECURITY.md)
 
-### **Latest Updates (v2.7.7)**
+### **Latest Updates (v2.8.0)**
 
-- **Comprehensive Testing**: Complete user journey testing for all features and roles
-- **Feature Validation**: All CRUD operations tested and working correctly
-- **Authentication Testing**: Login, logout, and session management verified
-- **Real-time Features**: Message board and live updates tested successfully
-- **Mobile Responsiveness**: Cross-device compatibility confirmed
-- **Security Validation**: Perfect 10/10 security score maintained
-- **Documentation Updates**: All docs updated to reflect current state
-- **Minor Issues Identified**: Non-critical cosmetic issues documented
+- Parent/Child Registration flows finalized (new parent vs. existing parent add-child)
+- Admin approval triggers professional approval email with deep link to payment
+- Stripe checkout (annual/monthly/custom) with success redirect and receipt handling
+- Parent Profile enhanced with Billing tab and payment history table
+- Dedicated Checkout form page for new parent/player details prior to payment
+- Upload APIs for images/documents (coach, team, updates)
+- Admin dashboards for managing players, teams, coaches, analytics and errors
+- Security middleware refinements and error logging improvements
 
 ---
 
@@ -154,20 +154,24 @@ Unified mobile-first calendar system with color-coded event pills and comprehens
 - Code: `src/app/schedules/page.tsx`, `src/components/calendar/MobileMonth.tsx`, `src/components/calendar/EventDetailsModal.tsx`
 - Docs: [CHANGELOG.md](CHANGELOG.md) v2.7.5, [UI.md](UI.md)
 
-### **5. User Authentication**
+### **5. Registration, Authentication, and Payments**
 
 Secure user registration and login system for members and coaches.
 
 **Features:**
 
-- **User Registration**: Member signup with validation
-- **Coaches Login**: Role-based authentication for coaches
-- **Session Management**: Secure session handling
-- **Password Security**: Strong password requirements
+- **User Registration**: Combined parent + player quick register
+- **Add Another Child**: Existing parents can add additional players
+- **Email Notifications**: Supabase confirmation (new parent) and in-app emails (existing parent, approval)
+- **Admin Approval**: Club Management approves and assigns team
+- **Payments**: Stripe checkout for annual, monthly, or custom amounts
+- **Parent Profile Billing**: Payment history, totals, and invoice info
+- **Authentication**: Secure login/reset, session persistence
 
 **Reference Files:**
 
-- Code: `src/app/register/page.tsx`, `src/app/coaches/login/page.tsx`
+- Code: `src/app/register/page.tsx`, `src/app/add-child/page.tsx`, `src/app/checkout/[playerId]/page.tsx`, `src/app/payment/[playerId]/page.tsx`, `src/app/payment/success/page.tsx`, `src/app/parent/profile/page.tsx`, `src/app/coaches/login/page.tsx`
+- APIs: `src/app/api/register-player/route.ts`, `src/app/api/approve-player/route.ts`, `src/app/api/create-checkout-session/route.ts`, `src/app/api/stripe-webhook/route.ts`, `src/app/api/parent/profile/route.ts`
 - Docs: [SECURITY.md](SECURITY.md), [ENVIRONMENT_SETUP.md](ENVIRONMENT_SETUP.md)
 
 ---
