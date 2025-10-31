@@ -15,11 +15,11 @@
 
 ## Next Steps
 
-**IMMEDIATE ACTION REQUIRED**: Rotate these credentials in Supabase dashboard:
+**IMMEDIATE ACTION REQUIRED**: Rotate any credentials that were previously exposed in git history:
 
-- Supabase access token: `sbp_92b4f92b5d51c282d582cf8e85c3fb1e59144a9f`
-- Database password: `T33g@nT@tum!*`
-- Service role key: `eyJhbG...` (full key in audit report)
+- Supabase access token: `<ROTATED IN SUPABASE>`
+- Database password: `<ROTATED IN SUPABASE>`
+- Service role key: `<ROTATED IN SUPABASE>`
 
 ## Current Security Status
 
