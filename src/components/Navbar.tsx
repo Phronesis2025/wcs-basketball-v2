@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { AuthPersistence } from "@/lib/authPersistence";
-import { devLog } from "@/lib/security";
+import { devLog, devError } from "@/lib/security";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -111,7 +111,7 @@ export default function Navbar() {
             } catch (error) {
               // Only log non-abort errors to reduce console noise
               if (error instanceof Error && error.name !== "AbortError") {
-                console.error(
+                devError(
                   `Navbar admin role check attempt ${attempt} failed:`,
                   error
                 );
@@ -127,7 +127,7 @@ export default function Navbar() {
 
               // If all attempts failed, set admin to false but don't log abort errors
               if (error instanceof Error && error.name !== "AbortError") {
-                console.warn("Admin role check failed after all attempts");
+                devError("Admin role check failed after all attempts");
               }
               setIsAdmin(false);
               return false;
@@ -271,52 +271,81 @@ export default function Navbar() {
 
       // Sign out from Supabase with global scope to invalidate all sessions
       devLog("Navbar: Signing out from Supabase with global scope");
-      const { error } = await supabase.auth.signOut({ scope: "global" });
-      if (error) {
-        devError("Supabase sign out error:", error);
-        // Continue with cleanup even if Supabase signout fails
+      try {
+        const { error } = await supabase.auth.signOut({ scope: "global" });
+        if (error) {
+          devError("Supabase sign out error:", error);
+        } else {
+          devLog("Navbar: Supabase sign out successful");
+        }
+      } catch (signOutErr) {
+        devError("Supabase sign out exception:", signOutErr);
       }
 
       // Clear ALL authentication-related data using enhanced AuthPersistence utility
       devLog("Navbar: Clearing all auth data");
       AuthPersistence.clearAuthData();
 
-      // Additional cleanup for any remaining auth state
+      // Dispatch auth state change event immediately
+      window.dispatchEvent(
+        new CustomEvent("authStateChanged", {
+          detail: { authenticated: false },
+        })
+      );
+
+      // Force clear any remaining Supabase session from storage
       try {
-        // Clear any remaining Supabase session data
-        await supabase.auth.getSession().then(({ data: { session } }) => {
-          if (session) {
-            devLog("Navbar: Additional session cleanup needed");
+        // Clear Supabase's own storage keys
+        localStorage.removeItem("sb-htgkddahhgugesktujds-auth-token");
+        sessionStorage.removeItem("sb-htgkddahhgugesktujds-auth-token");
+        
+        // Clear any other Supabase storage patterns
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith("sb-") || key.includes("supabase")) {
+            localStorage.removeItem(key);
           }
         });
-      } catch (cleanupError) {
-        devError("Additional cleanup error:", cleanupError);
+        Object.keys(sessionStorage).forEach((key) => {
+          if (key.startsWith("sb-") || key.includes("supabase")) {
+            sessionStorage.removeItem(key);
+          }
+        });
+      } catch (storageErr) {
+        devError("Storage cleanup error:", storageErr);
       }
 
       devLog("Navbar: Sign-out complete, redirecting to home");
 
-      // Use a longer delay to ensure everything is cleared and prevent re-auth
+      // Use replace instead of href to prevent back button navigation to protected pages
       setTimeout(() => {
         // Final cleanup of any remaining flags
         localStorage.removeItem("auth.signingOut");
         sessionStorage.removeItem("auth.justSignedOut");
         setIsSigningOut(false);
 
-        // Force reload to ensure clean state
-        window.location.href = "/";
-      }, 2000);
+        // Use replace to prevent back button navigation to authenticated state
+        window.location.replace("/");
+      }, 500); // Reduced delay since we're doing thorough cleanup
     } catch (error) {
       devError("Error during sign out:", error);
       // Even if there's an error, still clear everything and redirect
       AuthPersistence.clearAuthData();
+      
+      // Dispatch event even on error
+      window.dispatchEvent(
+        new CustomEvent("authStateChanged", {
+          detail: { authenticated: false },
+        })
+      );
+      
       localStorage.removeItem("auth.signingOut");
       sessionStorage.removeItem("auth.justSignedOut");
       setIsSigningOut(false);
 
       // Force redirect even on error
       setTimeout(() => {
-        window.location.href = "/";
-      }, 1000);
+        window.location.replace("/");
+      }, 500);
     }
   };
 

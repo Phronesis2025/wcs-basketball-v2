@@ -74,6 +74,18 @@
 - **Image Upload Security**: Enhanced image upload validation and error handling
 - **Message Board Security**: Enhanced input sanitization and secure logging for coach message board
 - **Console Security**: Replaced all console statements with secure development-only logging utilities
+### Deployment Hardening (October 2025)
+
+- **CSR Bailout Fix**: Wrapped pages using `useSearchParams()` with `React.Suspense` to satisfy Next.js 15 build requirements and avoid CSR bailouts.
+  - Affected pages: `/register`, `/add-child`, `/parent/profile`, `/payment/success`.
+- **Console Security (App)**: Replaced remaining `console.log/console.error` in user‑facing pages with `devLog/devError` which are no‑ops in production.
+- **CSP Considerations for Invoice PDF**:
+  - If using html2pdf CDN, ensure `script-src` allows:
+    - `https://cdn.jsdelivr.net`
+    - `https://unpkg.com`
+  - Alternative: rely on print‑only fallback (`window.print()`) to avoid updating CSP.
+- **Secrets Handling**: Verified all secrets are read from environment variables. `.env*` files are ignored by git; never commit secrets.
+
 - **Latest Security Audit (January 2025) - v2.7.6**
   - **Perfect Security Score**: Achieved 10/10 security rating in comprehensive audit
   - **Console Security Fix**: Replaced remaining console.error with devError in admin analytics

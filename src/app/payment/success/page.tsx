@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { supabase } from "@/lib/supabaseClient";
 
-export default function PaymentSuccess() {
-  const router = useRouter();
+function PaymentSuccessInner() {
+  const search = useSearchParams();
   const [showConfetti, setShowConfetti] = useState(false);
   const [confettiParticles, setConfettiParticles] = useState<
     Array<{
@@ -14,47 +15,67 @@ export default function PaymentSuccess() {
       color: string;
       rotation: number;
       duration: string;
+      size: number;
     }>
   >([]);
+  const [playerName, setPlayerName] = useState<string>("");
+  const from = (search?.get("from") || "").toLowerCase();
 
   useEffect(() => {
     // Generate confetti particles only on client side
-    const particles = Array.from({ length: 50 }, () => ({
+    const particles = Array.from({ length: 80 }, () => ({
       left: `${Math.random() * 100}%`,
-      delay: `${Math.random() * 2}s`,
+      delay: `${Math.random() * 1.5}s`,
       color: ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6"][
         Math.floor(Math.random() * 5)
       ],
       rotation: Math.random() * 360,
-      duration: `${2 + Math.random() * 2}s`,
+      duration: `${2.5 + Math.random() * 2.5}s`,
+      size: 6 + Math.floor(Math.random() * 8),
     }));
 
     setConfettiParticles(particles);
-    setShowConfetti(true);
+    if (from !== "billing") setShowConfetti(true);
 
     // Hide confetti after animation completes
     const timer = setTimeout(() => {
       setShowConfetti(false);
-    }, 4000);
+    }, 4500);
 
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    // Load player name if present in query (?player=<id>)
+    const playerId = search?.get("player");
+    if (!playerId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("players")
+        .select("name")
+        .eq("id", playerId)
+        .single();
+      if (data?.name) setPlayerName(data.name);
+    })();
+  }, [search]);
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 relative overflow-hidden">
+    <div className="bg-navy min-h-screen text-white pt-20 pb-16 px-4 relative overflow-hidden">
       {/* Confetti Effect */}
       {showConfetti && (
         <div className="fixed inset-0 pointer-events-none z-50">
           {confettiParticles.map((particle, i) => (
             <div
               key={i}
-              className="absolute w-3 h-3 animate-confetti"
+              className="absolute animate-confetti rounded-sm"
               style={{
                 left: particle.left,
                 animationDelay: particle.delay,
                 backgroundColor: particle.color,
                 transform: `rotate(${particle.rotation}deg)`,
                 animationDuration: particle.duration,
+                width: particle.size,
+                height: particle.size,
               }}
             >
               <div className="w-full h-full" />
@@ -63,12 +84,12 @@ export default function PaymentSuccess() {
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center space-y-6">
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-8 text-center space-y-6">
           {/* Success Icon */}
-          <div className="inline-flex items-center justify-center w-24 h-24 bg-green-100 rounded-full mb-4">
+          <div className="inline-flex items-center justify-center w-24 h-24 bg-green-900/30 border border-green-500/40 rounded-full mb-2">
             <svg
-              className="w-16 h-16 text-green-600"
+              className="w-16 h-16 text-green-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -83,43 +104,59 @@ export default function PaymentSuccess() {
           </div>
 
           {/* Title */}
-          <h1 className="text-[clamp(2rem,5vw,3rem)] font-bebas font-bold text-navy uppercase">
-            Payment Successful!
+          <h1 className="text-[clamp(2rem,5vw,3rem)] font-bebas font-bold uppercase">
+            {from === "billing" ? "Payment Received" : "Payment Successful!"}
           </h1>
+          {playerName && (
+            <p className="text-blue-300 text-lg italic -mt-2">{playerName}</p>
+          )}
 
           {/* Celebration Message */}
           <div className="space-y-4">
-            <p className="text-xl text-gray-800 font-medium">
-              Your child is officially registered and ready to start their
-              journey!
-            </p>
-            <p className="text-lg text-gray-700">
-              They're about to embark on an incredible adventure to become a
-              champion.
-            </p>
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 text-left">
-              <p className="text-gray-800 font-medium">What happens next?</p>
-              <ul className="mt-2 text-gray-700 space-y-2 text-sm">
+            {from === "billing" ? (
+              <>
+                <p className="text-xl text-white font-medium">
+                  Thanks! Your payment has been applied to your account.
+                </p>
+                <p className="text-lg text-gray-200">
+                  You can view your updated balance and receipts in your profile.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-xl text-white font-medium">
+                  Your child is officially registered and ready to start their
+                  journey!
+                </p>
+                <p className="text-lg text-gray-200">
+                  They're about to embark on an incredible adventure to become a
+                  champion.
+                </p>
+              </>
+            )}
+            <div className="bg-gray-900/60 border border-blue-500/40 rounded-lg p-4 text-left">
+              <p className="text-white font-medium">What happens next?</p>
+              <ul className="mt-2 text-gray-200 space-y-2 text-sm">
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">✓</span>
-                  Practice schedules and team information will be shared
+                  <span className="text-blue-400 mr-2">✓</span>
+                  {from === "billing" ? "Your balance and due dates have been updated" : "Practice schedules and team information will be shared"}
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">✓</span>
-                  You'll receive updates about games and tournaments
+                  <span className="text-blue-400 mr-2">✓</span>
+                  {from === "billing" ? "A receipt has been emailed to you" : "You'll receive updates about games and tournaments"}
                 </li>
                 <li className="flex items-start">
-                  <span className="text-blue-600 mr-2">✓</span>
-                  Your coach will reach out with welcome information
+                  <span className="text-blue-400 mr-2">✓</span>
+                  {from === "billing" ? "You can continue managing payments in your profile" : "Your coach will reach out with welcome information"}
                 </li>
               </ul>
             </div>
           </div>
 
           {/* Next Steps */}
-          <div className="bg-gradient-to-r from-red to-navy rounded-lg p-6 text-white">
+          <div className="bg-gradient-to-r from-red to-navy rounded-lg p-6">
             <p className="text-lg font-semibold mb-2">Let's Get Started! 🏀</p>
-            <p className="text-sm opacity-90">
+            <p className="text-sm text-white/90">
               Your child's journey to becoming a champion begins now. Check your
               email for the payment receipt from Stripe and welcome information.
             </p>
@@ -133,15 +170,24 @@ export default function PaymentSuccess() {
             >
               View My Profile
             </Link>
-            <Link
-              href="/teams"
-              className="flex-1 bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded text-center hover:bg-gray-300 transition"
-            >
-              Explore Teams
-            </Link>
+            {from === "billing" ? (
+              <Link
+                href="/parent/profile?tab=billing"
+                className="flex-1 bg-gray-700 text-white font-semibold py-3 px-6 rounded text-center hover:bg-gray-600 transition"
+              >
+                Back to Billing
+              </Link>
+            ) : (
+              <Link
+                href="/teams"
+                className="flex-1 bg-gray-700 text-white font-semibold py-3 px-6 rounded text-center hover:bg-gray-600 transition"
+              >
+                Explore Teams
+              </Link>
+            )}
           </div>
 
-          <div className="pt-4 text-sm text-gray-600">
+          <div className="pt-4 text-sm text-gray-300">
             <p>A payment receipt has been sent to your email from Stripe.</p>
           </div>
         </div>
@@ -164,5 +210,13 @@ export default function PaymentSuccess() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function PaymentSuccess() {
+  return (
+    <Suspense fallback={<div className="bg-navy min-h-screen text-white pt-20 px-4">Loading...</div>}>
+      <PaymentSuccessInner />
+    </Suspense>
   );
 }

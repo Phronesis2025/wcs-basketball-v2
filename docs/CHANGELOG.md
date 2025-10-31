@@ -1,5 +1,50 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.9.0 - Registration Flow, Security Hardening, Production Build Fixes
+
+**Release Date**: October 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 10/10 (Perfect) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Highlights
+
+- Registration flow finalized for production:
+  - Supabase confirmation email template integrated (Welcome + Confirm in one).
+  - `emailRedirectTo` now dynamic via `NEXT_PUBLIC_BASE_URL`.
+  - Parent email send moved fully to Supabase (app-side email disabled to prevent dupes).
+  - Two-phase flow supported (quick signup → admin approval → checkout details → payment).
+- Billing/Invoice UX:
+  - “Download Invoice” button hidden until first successful payment.
+  - Payment totals and remaining balance fixes; server route used to avoid RLS issues.
+- Player Cards:
+  - Payment UI hidden until both approved and paid.
+  - Mobile/tablet responsive table improvements.
+
+### 🔐 Security & Build
+
+- Wrapped pages using `useSearchParams()` with `React.Suspense` (Next.js 15 requirement):
+  - `/register`, `/add-child`, `/parent/profile`, `/payment/success`.
+- Replaced console statements with `devLog/devError` on user‑facing pages.
+- NPM audit resolved (0 vulnerabilities).
+- Profanity filter added to registration and checkout forms.
+
+### ⚙️ Deployment Notes
+
+- Vercel env vars required:
+  - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_BASE_URL`.
+  - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `ADMIN_NOTIFICATIONS_TO`, `NEXT_PUBLIC_ANNUAL_FEE_USD`.
+  - Optional: `RESEND_API_KEY`, `SENTRY_DSN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`.
+- Supabase Auth:
+  - Enable Email confirmations. Redirects:
+    - `/registration-success`, `/auth/callback`.
+  - Use the customized "Confirm signup" template.
+- CSP (if using html2pdf CDN): allow `https://cdn.jsdelivr.net` and `https://unpkg.com`, or rely on print fallback.
+
+---
+
 ## 🚀 Version 2.8.0 - "All Teams" Global Events & File Upload Fixes
 
 **Release Date**: January 2025  

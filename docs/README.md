@@ -94,13 +94,26 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 
 1. Clone repo: `git clone https://github.com/Phronesis2025/wcs-basketball-v2.git`
 2. Install deps: `npm install`
-3. Add environment variables to `.env.local`:
+3. Environment variables
+   - Local: add to `.env.local`
+   - Vercel: add in Project Settings → Environment Variables
    ```
-   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-   UPSTASH_REDIS_REST_URL=your-redis-url
-   UPSTASH_REDIS_REST_TOKEN=your-redis-token
-   SENTRY_DSN=your-sentry-dsn
+   # Required
+   NEXT_PUBLIC_SUPABASE_URL=...               # Supabase project URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=...          # Supabase anon key (public)
+   SUPABASE_SERVICE_ROLE_KEY=...              # Supabase service role key (secret)
+   NEXT_PUBLIC_BASE_URL=https://wcs-basketball-v2.vercel.app
+
+   STRIPE_SECRET_KEY=...
+   STRIPE_WEBHOOK_SECRET=...
+   ADMIN_NOTIFICATIONS_TO=admin@example.com
+   NEXT_PUBLIC_ANNUAL_FEE_USD=360
+
+   # Optional integrations
+   RESEND_API_KEY=...
+   SENTRY_DSN=...
+   UPSTASH_REDIS_REST_URL=...
+   UPSTASH_REDIS_REST_TOKEN=...
    ```
 4. Run locally: `npm run dev`
 5. Build: `npm run build`
@@ -120,6 +133,26 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **Message Board Security**: Enhanced input sanitization and XSS protection for coach communications
 - **Console Security**: All console statements replaced with secure development-only logging utilities
 - **Perfect Security Score**: 10/10 security rating with zero vulnerabilities
+
+## Deployment Notes
+
+- Supabase Authentication
+  - Enable "Email confirmations" for signups.
+  - Redirect URLs:
+    - `https://wcs-basketball-v2.vercel.app/registration-success`
+    - `https://wcs-basketball-v2.vercel.app/auth/callback`
+  - Use the customized "Confirm signup" email template (confirm link routes to our app).
+
+- Stripe
+  - Configure webhook to `https://wcs-basketball-v2.vercel.app/api/stripe-webhook` and set `STRIPE_WEBHOOK_SECRET`.
+
+- CSP for Invoice PDF (if using html2pdf)
+  - Add to `script-src` in production CSP: `https://cdn.jsdelivr.net https://unpkg.com`
+  - Or use print‑only fallback to avoid CSP changes.
+
+- Suspense Wrappers for Next.js 15
+  - Pages using `useSearchParams()` are wrapped in `React.Suspense` to satisfy build requirements:
+    - `/register`, `/add-child`, `/parent/profile`, `/payment/success`.
 
 ## Live Site
 

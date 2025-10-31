@@ -1,24 +1,28 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { ParentProfile, Player } from "@/types/supabase";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import ProfileHeader from "@/components/parent/ProfileHeader";
-import ChildSelector from "@/components/parent/ChildSelector";
+// Removed dropdown selector in favor of child cards
 import ChildDetailsCard from "@/components/parent/ChildDetailsCard";
 import ContactEditForm from "@/components/parent/ContactEditForm";
 import PaymentHistoryTable from "@/components/parent/PaymentHistoryTable";
+import { devError } from "@/lib/security";
 
-export default function ParentProfilePage() {
+function ParentProfilePageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isAuthenticated, user, loading } = useAuth();
   const [profile, setProfile] = useState<ParentProfile | null>(null);
-  const [activeChild, setActiveChild] = useState<Player | null>(null);
+  // No active child; show all children as cards
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasShownSuccessToast = useRef(false);
+  const [activeTab, setActiveTab] = useState<"players" | "contact" | "billing">("players");
 
   // Authentication check
   useEffect(() => {
@@ -26,13 +30,6 @@ export default function ParentProfilePage() {
       router.push("/");
     }
   }, [loading, isAuthenticated, router]);
-
-  // Fetch profile data
-  useEffect(() => {
-    if (user && user.email) {
-      fetchProfile(user.email);
-    }
-  }, [user]);
 
   const fetchProfile = async (email: string) => {
     setIsLoading(true);
@@ -45,17 +42,38 @@ export default function ParentProfilePage() {
       const data = await response.json();
       setProfile(data);
 
-      // Set first child as active
-      if (data.children && data.children.length > 0) {
-        setActiveChild(data.children[0]);
-      }
+      // No active child state needed
     } catch (err) {
       setError("Failed to load profile data");
-      console.error(err);
+      devError("Error loading profile:", err);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Check for success message
+  useEffect(() => {
+    const success = searchParams.get("success");
+    const playerName = searchParams.get("player");
+    
+    if (!hasShownSuccessToast.current && success === "child_added" && playerName) {
+      hasShownSuccessToast.current = true;
+      toast.success(`Successfully registered ${decodeURIComponent(playerName)}!`);
+      // Remove query params from URL
+      router.replace("/parent/profile", { scroll: false });
+      // Refresh profile data
+      if (user?.email) {
+        fetchProfile(user.email);
+      }
+    }
+  }, [searchParams, router, user]);
+
+  // Fetch profile data
+  useEffect(() => {
+    if (user && user.email) {
+      fetchProfile(user.email);
+    }
+  }, [user]);
 
   const handleUpdateContact = async (
     firstName: string,
@@ -164,7 +182,7 @@ export default function ParentProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="bg-navy min-h-screen text-white pt-20 px-4 pb-12">
       <div className="max-w-6xl mx-auto">
         <ProfileHeader
           name={profile?.parent.name || user?.email?.split("@")[0] || "Parent"}
@@ -174,62 +192,114 @@ export default function ParentProfilePage() {
 
         {profile && (
           <>
-            {/* Children Switcher */}
-            {profile.children.length > 0 && (
-              <div className="mb-6">
-                <ChildSelector
-                  children={profile.children}
-                  activeChild={activeChild}
-                  onSelectChild={setActiveChild}
-                />
+            {/* Tabs */}
+            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-2 mb-6">
+              <div className="flex gap-2">
+                <button
+                  className={`flex-1 py-3 rounded-md text-sm sm:text-base text-center font-bebas uppercase tracking-wide flex items-center justify-center gap-2 ${
+                    activeTab === "players"
+                      ? "bg-red text-white"
+                      : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("players")}
+                >
+                  <span aria-hidden>👥</span>
+                  <span>Players</span>
+                </button>
+                <button
+                  className={`flex-1 py-3 rounded-md text-sm sm:text-base text-center font-bebas uppercase tracking-wide flex items-center justify-center gap-2 ${
+                    activeTab === "contact"
+                      ? "bg-red text-white"
+                      : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("contact")}
+                >
+                  <span aria-hidden>📇</span>
+                  <span>Contact Info</span>
+                </button>
+                <button
+                  className={`flex-1 py-3 rounded-md text-sm sm:text-base text-center font-bebas uppercase tracking-wide flex items-center justify-center gap-2 ${
+                    activeTab === "billing"
+                      ? "bg-red text-white"
+                      : "bg-gray-800 text-gray-200 hover:bg-gray-700"
+                  }`}
+                  onClick={() => setActiveTab("billing")}
+                >
+                  <span aria-hidden>💳</span>
+                  <span>Billing</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Players Tab */}
+            {activeTab === "players" && (
+              <>
+                {profile.children.length > 0 ? (
+                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mb-6">
+                    {profile.children.map((child) => (
+                      <ChildDetailsCard key={child.id} child={child} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-12 text-center mb-6">
+                    <h3 className="text-xl font-bebas text-white mb-2 uppercase">No registered children yet</h3>
+                    <p className="text-gray-300 mb-4">Register a child to get started</p>
+                    <Link href="/register" className="inline-block px-6 py-3 bg-red text-white rounded hover:bg-red/90 transition">
+                      Register a Child
+                    </Link>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 flex flex-col sm:flex-row gap-4">
+                  <Link
+                    href="/checkout/new"
+                    className="flex-1 px-6 py-3 bg-red text-white text-center rounded hover:bg-red/90 transition"
+                  >
+                    Add Another Child
+                  </Link>
+                  <Link
+                    href="/teams"
+                    className="flex-1 px-6 py-3 bg-gray-800 text-gray-200 text-center rounded hover:bg-gray-700 transition"
+                  >
+                    View Teams
+                  </Link>
+                </div>
+              </>
+            )}
+
+            {/* Contact Info Tab */}
+            {activeTab === "contact" && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
+                  <ContactEditForm
+                    email={profile.parent.email}
+                    initialFirstName={
+                      profile.parent.name?.split(" ")[0] ||
+                      (user?.email ? user.email.split("@")[0] : null)
+                    }
+                    initialLastName={
+                      profile.parent.name?.split(" ").slice(1).join(" ") || null
+                    }
+                    initialPhone={profile.parent.phone}
+                    initialEmergencyContact={profile.parent.emergency_contact}
+                    initialEmergencyPhone={profile.parent.emergency_phone}
+                    onSave={handleUpdateContact}
+                    onPasswordReset={handlePasswordReset}
+                  />
+                </div>
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              {/* Active Child Details */}
-              {activeChild && (
-                <div>
-                  <ChildDetailsCard child={activeChild} />
-                </div>
-              )}
-
-              {/* Contact Information */}
-              <div>
-                <ContactEditForm
-                  email={profile.parent.email}
-                  initialFirstName={profile.parent.name?.split(" ")[0] || null}
-                  initialLastName={
-                    profile.parent.name?.split(" ").slice(1).join(" ") || null
-                  }
-                  initialPhone={profile.parent.phone}
-                  initialEmergencyContact={profile.parent.emergency_contact}
-                  initialEmergencyPhone={profile.parent.emergency_phone}
-                  onSave={handleUpdateContact}
-                  onPasswordReset={handlePasswordReset}
+            {/* Billing Tab */}
+            {activeTab === "billing" && (
+              <div className="mb-6 bg-gray-900/50 border border-gray-700 rounded-lg p-6">
+                <PaymentHistoryTable
+                  payments={profile.payments}
+                  children={profile.children}
                 />
               </div>
-            </div>
-
-            {/* Payment History */}
-            <div className="mb-6">
-              <PaymentHistoryTable payments={profile.payments} />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="bg-white rounded-lg shadow-md p-6 flex flex-col sm:flex-row gap-4">
-              <Link
-                href="/register"
-                className="flex-1 px-6 py-3 bg-red text-white text-center rounded hover:bg-red/90 transition"
-              >
-                Add Another Child
-              </Link>
-              <Link
-                href="/teams"
-                className="flex-1 px-6 py-3 bg-gray-200 text-gray-800 text-center rounded hover:bg-gray-300 transition"
-              >
-                View Teams
-              </Link>
-            </div>
+            )}
           </>
         )}
 
@@ -265,5 +335,13 @@ export default function ParentProfilePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ParentProfilePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-navy text-white pt-20 px-4">Loading...</div>}>
+      <ParentProfilePageInner />
+    </Suspense>
   );
 }
