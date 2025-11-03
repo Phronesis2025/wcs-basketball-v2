@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { usePathname } from "next/navigation";
 // import { supabase } from "@/lib/supabaseClient"; // No longer needed with custom auth
 import Link from "next/link";
@@ -390,7 +390,9 @@ export default function Navbar() {
 
   return (
     <>
-      <HandleAuthRedirect />
+      <Suspense fallback={null}>
+        <HandleAuthRedirect />
+      </Suspense>
       {isAdminDashboard ? (
         // Coaches Dashboard Style Navbar for Admin Dashboard
         <div className="bg-white/95 backdrop-blur-md shadow-lg">
