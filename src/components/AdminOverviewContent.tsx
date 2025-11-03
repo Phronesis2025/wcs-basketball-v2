@@ -13,6 +13,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Player, Team, Coach } from "@/types/supabase";
+import BasketballLoader from "./BasketballLoader";
 
 // Helper function to format player name as "FirstName L."
 const formatPlayerName = (fullName: string): string => {
@@ -179,8 +180,7 @@ export default function AdminOverviewContent({
   if (managementDataLoading) {
     return (
       <div className="text-center py-8">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red"></div>
-        <p className="mt-2 text-gray-300">Loading data...</p>
+        <BasketballLoader size={60} />
       </div>
     );
   }

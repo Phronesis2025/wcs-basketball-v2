@@ -36,6 +36,8 @@ import TeamDetailModal from "@/components/TeamDetailModal";
 import PlayerDetailModal from "@/components/PlayerDetailModal";
 import ChangelogTable from "@/components/ChangelogTable";
 import ChangelogModal from "@/components/ChangelogModal";
+import OnHoldModal from "@/components/dashboard/OnHoldModal";
+import PlayerPaymentModal from "@/components/dashboard/PlayerPaymentModal";
 import toast from "react-hot-toast";
 import {
   addSchedule,
@@ -58,6 +60,7 @@ import {
 } from "@/lib/drillActions";
 import { getMessages } from "@/lib/messageActions";
 import { getUnreadMentionCount } from "@/lib/messageActions";
+import BasketballLoader from "@/components/BasketballLoader";
 
 // Main component
 function ClubManagementContent() {
@@ -114,6 +117,14 @@ function ClubManagementContent() {
     () => players.filter((p) => p.status === "active"),
     [players]
   );
+  const onHoldPlayers = useMemo(
+    () => players.filter((p) => p.status === "on_hold"),
+    [players]
+  );
+  const rejectedPlayers = useMemo(
+    () => players.filter((p) => p.status === "rejected"),
+    [players]
+  );
 
   // UI states
   const [expandedSections, setExpandedSections] = useState({
@@ -142,6 +153,12 @@ function ClubManagementContent() {
   const [submitting, setSubmitting] = useState(false);
   const [showProfanityModal, setShowProfanityModal] = useState(false);
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
+  const [showOnHoldModal, setShowOnHoldModal] = useState(false);
+  const [selectedPlayerForHold, setSelectedPlayerForHold] = useState<{ id: string; name: string } | null>(null);
+  const [placingOnHold, setPlacingOnHold] = useState(false);
+  const [showPlayerPaymentModal, setShowPlayerPaymentModal] = useState(false);
+  const [selectedPlayerForPaymentModal, setSelectedPlayerForPaymentModal] = useState<Player | null>(null);
+  const [selectedPlayerPaymentStatus, setSelectedPlayerPaymentStatus] = useState<"approved" | "pending" | "on_hold" | "rejected">("pending");
 
   // View modal states
   const [viewingItem, setViewingItem] = useState<
@@ -371,6 +388,9 @@ function ClubManagementContent() {
           const roleData = await roleResponse.json();
           devLog("User role:", roleData.role);
           setUserRole(roleData.role);
+          // Update isAdmin based on the actual database role
+          setIsAdmin(roleData.role === "admin");
+          devLog("isAdmin set to:", roleData.role === "admin");
           // Set authorized flag AFTER we have all required data
           setIsAuthorized(true);
           devLog("User data loaded successfully - page authorized");
@@ -1625,8 +1645,7 @@ function ClubManagementContent() {
       <div className="bg-navy min-h-screen text-white pt-20">
         <div className="container mx-auto px-4 py-8">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red"></div>
-            <p className="mt-2 text-gray-300">Loading...</p>
+            <BasketballLoader size={60} />
           </div>
         </div>
       </div>
@@ -2568,8 +2587,7 @@ function ClubManagementContent() {
 
               {analyticsLoading ? (
                 <div className="text-center py-8">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red"></div>
-                  <p className="mt-2 text-gray-300">Loading analytics...</p>
+                  <BasketballLoader size={60} />
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -2831,13 +2849,18 @@ function ClubManagementContent() {
                               return (
                                 <tr
                                   key={p.id}
-                                  className="border-b border-gray-600"
+                                  className="border-b border-gray-600 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                                  onClick={() => {
+                                    setSelectedPlayerForPaymentModal(p);
+                                    setSelectedPlayerPaymentStatus("approved");
+                                    setShowPlayerPaymentModal(true);
+                                  }}
                                 >
                                   <td className="py-2 pr-4">
                                     <div className="text-white font-medium">
                                       {p.name}
                                     </div>
-                                    <div className="text-gray-300 text-xs">
+                                    <div className="hidden md:block text-gray-300 text-xs">
                                       {p.parent_email}
                                     </div>
                                     {playerAge && (
@@ -2887,15 +2910,12 @@ function ClubManagementContent() {
                         <thead>
                           <tr className="text-left border-b border-gray-600">
                             <th className="py-2 pr-4 text-gray-300">Player</th>
-                            <th className="py-2 pr-4 text-gray-300">
-                              Assign Team
-                            </th>
-                            <th className="py-2 text-gray-300">Action</th>
+                            <th className="py-2 pr-4 text-gray-300">Team</th>
+                            <th className="py-2 text-gray-300">Status</th>
                           </tr>
                         </thead>
                         <tbody>
                           {pendingPlayers.map((p: any) => {
-                            // Calculate player age
                             const playerAge = p.date_of_birth
                               ? Math.floor(
                                   (new Date().getTime() -
@@ -2903,68 +2923,23 @@ function ClubManagementContent() {
                                     (365.25 * 24 * 60 * 60 * 1000)
                                 )
                               : null;
-
-                            // Filter teams based on age compatibility
-                            const compatibleTeams = teams.filter((t: any) => {
-                              if (!playerAge || !p.gender) return true; // Show all if no age/gender
-
-                              // Age range compatibility
-                              const ageRanges: Record<
-                                string,
-                                { min: number; max: number }
-                              > = {
-                                U8: { min: 6, max: 8 },
-                                U10: { min: 8, max: 10 },
-                                U12: { min: 10, max: 12 },
-                                U14: { min: 12, max: 14 },
-                                U16: { min: 14, max: 16 },
-                                U18: { min: 15, max: 18 }, // Allow 15-year-olds in U18 teams
-                              };
-
-                              const ageRange = ageRanges[t.age_group];
-                              if (
-                                ageRange &&
-                                (playerAge < ageRange.min ||
-                                  playerAge > ageRange.max)
-                              ) {
-                                return false;
-                              }
-
-                              // Gender compatibility
-                              const playerGender = p.gender.toLowerCase();
-                              const teamGender = t.gender.toLowerCase();
-
-                              // Boys teams only accept Boys/Male players
-                              if (teamGender === "boys") {
-                                if (
-                                  playerGender !== "boys" &&
-                                  playerGender !== "male"
-                                ) {
-                                  return false;
-                                }
-                              }
-
-                              // Girls teams only accept Girls/Female players
-                              if (teamGender === "girls") {
-                                if (
-                                  playerGender !== "girls" &&
-                                  playerGender !== "female"
-                                ) {
-                                  return false;
-                                }
-                              }
-
-                              return true;
-                            });
+                            const assignedTeam = teams.find(
+                              (t: any) => t.id === p.team_id
+                            );
 
                             return (
                               <tr
                                 key={p.id}
-                                className="border-b border-gray-600"
+                                className="border-b border-gray-600 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                                onClick={() => {
+                                  setSelectedPlayerForPaymentModal(p);
+                                  setSelectedPlayerPaymentStatus("pending");
+                                  setShowPlayerPaymentModal(true);
+                                }}
                               >
                                 <td className="py-2 pr-4">
                                   <div className="text-white">{p.name}</div>
-                                  <div className="text-gray-300 text-xs">
+                                  <div className="hidden md:block text-gray-300 text-xs">
                                     {p.parent_email}
                                   </div>
                                   {playerAge && (
@@ -2974,90 +2949,20 @@ function ClubManagementContent() {
                                   )}
                                 </td>
                                 <td className="py-2 pr-4">
-                                  <select
-                                    className="border border-gray-600 bg-gray-700 rounded px-2 py-1 text-white w-full"
-                                    onChange={(e) =>
-                                      (p.__assignTeam = e.target.value)
-                                    }
-                                    defaultValue={p.team_id || ""}
-                                  >
-                                    <option
-                                      value=""
-                                      disabled
-                                      className="bg-gray-700"
-                                    >
-                                      Select team
-                                    </option>
-                                    {compatibleTeams.map((t: any) => (
-                                      <option
-                                        key={t.id}
-                                        value={t.id}
-                                        className="bg-gray-700"
-                                      >
-                                        {t.name} ({t.age_group} {t.gender})
-                                      </option>
-                                    ))}
-                                  </select>
+                                  {assignedTeam ? (
+                                    <div className="text-white">
+                                      {assignedTeam.name}
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-400">
+                                      Not assigned
+                                    </span>
+                                  )}
                                 </td>
                                 <td className="py-2">
-                                  <button
-                                    className="bg-red text-white rounded px-3 py-1 whitespace-nowrap hover:bg-red/90 transition"
-                                    onClick={async () => {
-                                      const teamId = (p as any).__assignTeam;
-                                      if (!teamId) {
-                                        toast.error(
-                                          "Please select a team first."
-                                        );
-                                        return;
-                                      }
-
-                                      // Show loading toast
-                                      const loadingToast = toast.loading(
-                                        "Approving player..."
-                                      );
-
-                                      try {
-                                        const resp = await fetch(
-                                          "/api/approve-player",
-                                          {
-                                            method: "POST",
-                                            headers: {
-                                              "Content-Type":
-                                                "application/json",
-                                            },
-                                            body: JSON.stringify({
-                                              player_id: p.id,
-                                              team_id: teamId,
-                                            }),
-                                          }
-                                        );
-
-                                        if (resp.ok) {
-                                          toast.dismiss(loadingToast);
-                                          toast.success(
-                                            "Player approved! Payment email sent to parent."
-                                          );
-                                          await fetchManagementData();
-                                        } else {
-                                          const j = await resp
-                                            .json()
-                                            .catch(() => ({}));
-                                          toast.dismiss(loadingToast);
-                                          toast.error(
-                                            j.error ||
-                                              "Failed to approve player"
-                                          );
-                                        }
-                                      } catch (error) {
-                                        toast.dismiss(loadingToast);
-                                        toast.error(
-                                          "An error occurred while approving the player"
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    Approve
-                                  </button>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-200 border border-gray-600">
+                                    Pending
+                                  </span>
                                 </td>
                               </tr>
                             );
@@ -3066,6 +2971,145 @@ function ClubManagementContent() {
                       </table>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* On Hold and Rejected Players Section */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                {/* On Hold Players */}
+                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+                  <h3 className="text-lg font-bebas text-white mb-4">
+                    On Hold ({onHoldPlayers.length})
+                  </h3>
+                  {onHoldPlayers.length > 0 ? (
+                    <div className="space-y-3">
+                      {onHoldPlayers.map((p: any) => {
+                        const playerAge = p.date_of_birth
+                          ? Math.floor(
+                              (new Date().getTime() -
+                                new Date(p.date_of_birth).getTime()) /
+                                (365.25 * 24 * 60 * 60 * 1000)
+                            )
+                          : null;
+                        const assignedTeam = teams.find(
+                          (t: any) => t.id === p.team_id
+                        );
+
+                        return (
+                          <div
+                            key={p.id}
+                            className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 hover:bg-gray-900 transition-colors cursor-pointer"
+                            onClick={() => {
+                              setSelectedPlayerForPaymentModal(p);
+                              setSelectedPlayerPaymentStatus("on_hold");
+                              setShowPlayerPaymentModal(true);
+                            }}
+                          >
+                            <div className="flex flex-col gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-white font-medium mb-1">
+                                  {p.name}
+                                </div>
+                                <div className="hidden md:block text-gray-300 text-xs mb-2">
+                                  {p.parent_email}
+                                </div>
+                                {playerAge && (
+                                  <div className="text-gray-400 text-xs mb-2">
+                                    Age: {playerAge} • {p.gender}
+                                  </div>
+                                )}
+                                {assignedTeam && (
+                                  <div className="text-gray-300 text-xs mb-2">
+                                    Team: {assignedTeam.name}
+                                  </div>
+                                )}
+                                {p.on_hold_reason && (
+                                  <div className="mt-2 p-2 bg-orange-900/20 border border-orange-500/30 rounded text-xs text-orange-300">
+                                    <strong>Reason:</strong> {p.on_hold_reason}
+                                  </div>
+                                )}
+                              </div>
+                              <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-900 text-orange-200 border border-orange-700 w-fit">
+                                On Hold
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 text-sm">
+                      No players on hold
+                    </p>
+                  )}
+                </div>
+
+                {/* Rejected Players */}
+                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
+                  <h3 className="text-lg font-bebas text-white mb-4">
+                    Rejected ({rejectedPlayers.length})
+                  </h3>
+                  {rejectedPlayers.length > 0 ? (
+                    <div className="space-y-3">
+                      {rejectedPlayers.map((p: any) => {
+                        const playerAge = p.date_of_birth
+                          ? Math.floor(
+                              (new Date().getTime() -
+                                new Date(p.date_of_birth).getTime()) /
+                                (365.25 * 24 * 60 * 60 * 1000)
+                            )
+                          : null;
+                        const assignedTeam = teams.find(
+                          (t: any) => t.id === p.team_id
+                        );
+
+                        return (
+                          <div
+                            key={p.id}
+                            className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 hover:bg-gray-900 transition-colors cursor-pointer"
+                            onClick={() => {
+                              setSelectedPlayerForPaymentModal(p);
+                              setSelectedPlayerPaymentStatus("rejected");
+                              setShowPlayerPaymentModal(true);
+                            }}
+                          >
+                            <div className="flex flex-col gap-3">
+                              <div className="flex-1 min-w-0">
+                                <div className="text-white font-medium mb-1">
+                                  {p.name}
+                                </div>
+                                <div className="hidden md:block text-gray-300 text-xs mb-2">
+                                  {p.parent_email}
+                                </div>
+                                {playerAge && (
+                                  <div className="text-gray-400 text-xs mb-2">
+                                    Age: {playerAge} • {p.gender}
+                                  </div>
+                                )}
+                                {assignedTeam && (
+                                  <div className="text-gray-300 text-xs mb-2">
+                                    Team: {assignedTeam.name}
+                                  </div>
+                                )}
+                                {p.rejection_reason && (
+                                  <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded text-xs text-red-300">
+                                    <strong>Reason:</strong> {p.rejection_reason}
+                                  </div>
+                                )}
+                              </div>
+                              <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900 text-red-200 border border-red-700 w-fit">
+                                Rejected
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-gray-400 text-sm">
+                      No rejected players
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -3253,6 +3297,187 @@ function ClubManagementContent() {
           </div>
         )}
 
+        {/* Player Payment Modal */}
+        {selectedPlayerForPaymentModal && (
+          <PlayerPaymentModal
+            isOpen={showPlayerPaymentModal}
+            onClose={() => {
+              setShowPlayerPaymentModal(false);
+              setSelectedPlayerForPaymentModal(null);
+            }}
+            player={selectedPlayerForPaymentModal}
+            teams={teams}
+            playerStatus={selectedPlayerPaymentStatus}
+            onApprove={async (playerId: string, teamId: string) => {
+              const loadingToast = toast.loading("Approving player...");
+              try {
+                const resp = await fetch("/api/approve-player", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    player_id: playerId,
+                    team_id: teamId,
+                    status: "approved",
+                  }),
+                });
+                if (resp.ok) {
+                  toast.dismiss(loadingToast);
+                  toast.success("Player approved! Payment email sent to parent.");
+                } else {
+                  const j = await resp.json().catch(() => ({}));
+                  toast.dismiss(loadingToast);
+                  toast.error(j.error || "Failed to approve player");
+                  throw new Error(j.error || "Failed to approve player");
+                }
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("An error occurred while approving the player");
+                throw error;
+              }
+            }}
+            onOnHold={async (playerId: string, reason: string) => {
+              const loadingToast = toast.loading("Placing player on hold...");
+              try {
+                const resp = await fetch("/api/approve-player", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    player_id: playerId,
+                    status: "on_hold",
+                    on_hold_reason: reason,
+                  }),
+                });
+                if (resp.ok) {
+                  toast.dismiss(loadingToast);
+                  toast.success("Player placed on hold. Email sent to parent.");
+                } else {
+                  const j = await resp.json().catch(() => ({}));
+                  toast.dismiss(loadingToast);
+                  toast.error(j.error || "Failed to update player status");
+                  throw new Error(j.error || "Failed to update player status");
+                }
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("An error occurred while updating player status");
+                throw error;
+              }
+            }}
+            onReject={async (playerId: string, reason: string) => {
+              const loadingToast = toast.loading("Rejecting player...");
+              try {
+                const resp = await fetch("/api/approve-player", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    player_id: playerId,
+                    status: "rejected",
+                    rejection_reason: reason,
+                  }),
+                });
+                if (resp.ok) {
+                  toast.dismiss(loadingToast);
+                  toast.success("Player rejected. Email sent to parent.");
+                } else {
+                  const j = await resp.json().catch(() => ({}));
+                  toast.dismiss(loadingToast);
+                  toast.error(j.error || "Failed to reject player");
+                  throw new Error(j.error || "Failed to reject player");
+                }
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("An error occurred while rejecting the player");
+                throw error;
+              }
+            }}
+            onMoveToPending={async (playerId: string) => {
+              const loadingToast = toast.loading("Moving player back to pending...");
+              try {
+                const resp = await fetch("/api/approve-player", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    player_id: playerId,
+                    status: "pending",
+                  }),
+                });
+                if (resp.ok) {
+                  toast.dismiss(loadingToast);
+                  toast.success("Player moved back to pending approval.");
+                } else {
+                  const j = await resp.json().catch(() => ({}));
+                  toast.dismiss(loadingToast);
+                  toast.error(j.error || "Failed to update player status");
+                  throw new Error(j.error || "Failed to update player status");
+                }
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("An error occurred while updating player status");
+                throw error;
+              }
+            }}
+            fetchManagementData={fetchManagementData}
+          />
+        )}
+
+        {/* On Hold Modal */}
+        {selectedPlayerForHold && (
+          <OnHoldModal
+            isOpen={showOnHoldModal}
+            onClose={() => {
+              setShowOnHoldModal(false);
+              setSelectedPlayerForHold(null);
+            }}
+            onConfirm={async (reason: string) => {
+              if (!selectedPlayerForHold) return;
+
+              setPlacingOnHold(true);
+              const loadingToast = toast.loading("Placing player on hold...");
+
+              try {
+                const resp = await fetch("/api/approve-player", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                    player_id: selectedPlayerForHold.id,
+                    status: "on_hold",
+                    on_hold_reason: reason,
+                  }),
+                });
+
+                if (resp.ok) {
+                  toast.dismiss(loadingToast);
+                  toast.success("Player placed on hold. Email sent to parent.");
+                  await fetchManagementData();
+                  setShowOnHoldModal(false);
+                  setSelectedPlayerForHold(null);
+                  setPlacingOnHold(false);
+                } else {
+                  const j = await resp.json().catch(() => ({}));
+                  toast.dismiss(loadingToast);
+                  toast.error(j.error || "Failed to update player status");
+                  setPlacingOnHold(false);
+                }
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error("An error occurred while updating player status");
+                setPlacingOnHold(false);
+              }
+            }}
+            playerName={selectedPlayerForHold.name}
+            loading={placingOnHold}
+          />
+        )}
+
         {/* Profanity Validation Modal */}
         {showProfanityModal && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -3317,8 +3542,7 @@ export default function ClubManagement() {
         <div className="bg-navy min-h-screen text-white pt-20">
           <div className="container mx-auto px-4 py-8">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red"></div>
-              <p className="mt-2 text-gray-300">Loading...</p>
+              <BasketballLoader size={60} />
             </div>
           </div>
         </div>

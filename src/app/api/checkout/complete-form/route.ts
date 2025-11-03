@@ -2,6 +2,16 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 
+function validatePassword(password: string): string[] {
+  const errors: string[] = [];
+  if (password.length < 8) errors.push("At least 8 characters");
+  if (!/[A-Z]/.test(password)) errors.push("At least one uppercase letter");
+  if (!/[a-z]/.test(password)) errors.push("At least one lowercase letter");
+  if (!/[0-9]/.test(password)) errors.push("At least one number");
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) errors.push("At least one special character");
+  return errors;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -30,6 +40,7 @@ export async function POST(req: Request) {
       consent_photo_release,
       consent_medical_treatment,
       consent_participation,
+      password, // New password field
     } = body || {};
 
     if (!supabaseAdmin) {
@@ -204,6 +215,48 @@ export async function POST(req: Request) {
       }
 
       devLog("checkout complete-form: player updated", { player_id });
+    }
+
+    // Step 4: Set password for user account (if provided)
+    if (password) {
+      // Validate password
+      const passwordValidationErrors = validatePassword(password);
+      if (passwordValidationErrors.length > 0) {
+        return NextResponse.json(
+          { 
+            error: "Password does not meet requirements", 
+            details: passwordValidationErrors 
+          },
+          { status: 400 }
+        );
+      }
+
+      // Find user by email
+      const { data: authUser, error: userError } = await supabaseAdmin.auth.admin.listUsers();
+      
+      if (userError) {
+        devError("checkout complete-form: Failed to list users", userError);
+      } else {
+        const targetUser = authUser?.users.find(u => u.email === parentRecord.email);
+        
+        if (targetUser) {
+          // Update user password
+          const { error: passwordError } = await supabaseAdmin.auth.admin.updateUserById(
+            targetUser.id,
+            { password: password }
+          );
+
+          if (passwordError) {
+            devError("checkout complete-form: Failed to set password", passwordError);
+            // Don't fail the entire request if password setting fails
+            // The form data is already saved
+          } else {
+            devLog("checkout complete-form: Password set successfully", { user_id: targetUser.id });
+          }
+        } else {
+          devError("checkout complete-form: User not found for password update", { email: parentRecord.email });
+        }
+      }
     }
 
     return NextResponse.json({

@@ -4,6 +4,8 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
+import { motion } from "framer-motion";
+import { devLog, devError } from "@/lib/security";
 
 function PaymentSuccessInner() {
   const search = useSearchParams();
@@ -19,6 +21,8 @@ function PaymentSuccessInner() {
     }>
   >([]);
   const [playerName, setPlayerName] = useState<string>("");
+  const [playerId, setPlayerId] = useState<string | null>(null);
+  const [downloadLoading, setDownloadLoading] = useState(false);
   const from = (search?.get("from") || "").toLowerCase();
 
   useEffect(() => {
@@ -47,17 +51,70 @@ function PaymentSuccessInner() {
 
   useEffect(() => {
     // Load player name if present in query (?player=<id>)
-    const playerId = search?.get("player");
-    if (!playerId) return;
+    const pid = search?.get("player");
+    const sessionId = search?.get("session_id");
+    
+    if (!pid) return;
+    setPlayerId(pid);
+    
     (async () => {
+      // Load player name
       const { data } = await supabase
         .from("players")
         .select("name")
-        .eq("id", playerId)
+        .eq("id", pid)
         .single();
       if (data?.name) setPlayerName(data.name);
+
+      // Verify payment session and update status (for localhost testing where webhooks don't work)
+      try {
+        const verifyUrl = sessionId
+          ? `/api/payment/verify-session?session_id=${encodeURIComponent(sessionId)}&player_id=${encodeURIComponent(pid)}`
+          : `/api/payment/verify-session?player_id=${encodeURIComponent(pid)}`;
+        
+        const verifyResponse = await fetch(verifyUrl);
+        const verifyResult = await verifyResponse.json();
+        
+        if (verifyResult.success && verifyResult.updated) {
+          devLog("Payment verified and updated successfully", verifyResult);
+        } else if (verifyResult.success && verifyResult.already_updated) {
+          devLog("Payment already updated", verifyResult);
+        } else {
+          devLog("Payment verification result", verifyResult);
+        }
+      } catch (error) {
+        devError("Error verifying payment session", error);
+        // Don't show error to user - webhook will handle it in production
+      }
     })();
   }, [search]);
+
+  const handleDownloadWelcomeKit = async () => {
+    if (!playerId || downloadLoading) return;
+
+    setDownloadLoading(true);
+    try {
+      const response = await fetch(`/api/generate-welcome-kit?player_id=${playerId}`);
+      if (!response.ok) {
+        throw new Error("Failed to generate welcome kit");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `WCS-Basketball-Welcome-Kit-${playerId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading welcome kit:", error);
+      alert("Failed to download welcome kit. Please try again later.");
+    } finally {
+      setDownloadLoading(false);
+    }
+  };
 
   return (
     <div className="bg-navy min-h-screen text-white pt-20 pb-16 px-4 relative overflow-hidden">
@@ -162,25 +219,42 @@ function PaymentSuccessInner() {
             </p>
           </div>
 
+          {/* Welcome Kit Download (only show if not from billing) */}
+          {from !== "billing" && playerId && (
+            <div className="bg-gradient-to-r from-red to-navy rounded-lg p-6 mb-6">
+              <h3 className="text-lg font-semibold mb-2">📦 Download Your Welcome Kit</h3>
+              <p className="text-sm text-white/90 mb-4">
+                Get your complete welcome package with all the information you need to get started!
+              </p>
+              <button
+                onClick={handleDownloadWelcomeKit}
+                disabled={downloadLoading}
+                className="w-full md:w-auto bg-white text-red font-bold py-3 px-6 rounded hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
+              >
+                {downloadLoading ? "Generating PDF..." : "📥 Download Welcome Kit PDF"}
+              </button>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <Link
               href="/parent/profile"
-              className="flex-1 bg-red text-white font-bold py-3 px-6 rounded text-center hover:bg-red/90 transition"
+              className="flex-1 bg-red text-white font-bold py-3 px-6 rounded text-center hover:bg-red/90 transition min-h-[48px] flex items-center justify-center"
             >
               View My Profile
             </Link>
             {from === "billing" ? (
               <Link
                 href="/parent/profile?tab=billing"
-                className="flex-1 bg-gray-700 text-white font-semibold py-3 px-6 rounded text-center hover:bg-gray-600 transition"
+                className="flex-1 bg-gray-700 text-white font-semibold py-3 px-6 rounded text-center hover:bg-gray-600 transition min-h-[48px] flex items-center justify-center"
               >
                 Back to Billing
               </Link>
             ) : (
               <Link
                 href="/teams"
-                className="flex-1 bg-gray-700 text-white font-semibold py-3 px-6 rounded text-center hover:bg-gray-600 transition"
+                className="flex-1 bg-gray-700 text-white font-semibold py-3 px-6 rounded text-center hover:bg-gray-600 transition min-h-[48px] flex items-center justify-center"
               >
                 Explore Teams
               </Link>

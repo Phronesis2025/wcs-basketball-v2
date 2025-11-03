@@ -18,6 +18,7 @@ import {
 import * as Sentry from "@sentry/nextjs";
 import { motion, Variants } from "framer-motion";
 import Image from "next/image";
+import BasketballLoader from "@/components/BasketballLoader";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
@@ -194,8 +195,7 @@ export default function TeamPage({ params }: TeamPageProps) {
     return (
       <div className="min-h-screen bg-navy text-white py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red mx-auto mb-4"></div>
-          <p className="text-lg font-inter">Loading team data...</p>
+          <BasketballLoader size={80} />
         </div>
       </div>
     );

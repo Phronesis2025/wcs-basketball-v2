@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
+import BasketballLoader from "@/components/BasketballLoader";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -234,8 +235,7 @@ export default function ResetPasswordPage() {
       fallback={
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-navy mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
+            <BasketballLoader size={80} />
           </div>
         </div>
       }

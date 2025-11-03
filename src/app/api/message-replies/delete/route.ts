@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
       replyId,
       requesterId,
       isAdmin,
+      hasAdminClient: !!supabaseAdmin,
     });
 
     // Fetch reply to check author
@@ -52,25 +53,31 @@ export async function POST(request: NextRequest) {
       error = adminError;
     }
 
-    // If admin client failed or not available, try with regular client (RLS will apply)
-    if (error || !supabaseAdmin) {
-      devLog(
-        "[API] Admin delete failed or not available, falling back to RLS-safe update."
-      );
+    // Fallback: RLS-safe author-owned update via anon client (only for authors)
+    if (isAuthor && !isAdmin) {
       const { error: rlsError } = await supabase
         .from("coach_message_replies")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", replyId)
         .eq("author_id", requesterId); // Ensure RLS is respected for non-admin
-      error = rlsError;
+      
+      if (!rlsError) {
+        return NextResponse.json({ success: true });
+      }
+
+      devError("[API] Fallback delete reply failed:", rlsError);
+      return NextResponse.json({ error: rlsError.message }, { status: 500 });
     }
 
-    if (error) {
-      devError("[API] Delete reply failed:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    // If we reach here and isAdmin is true but admin client failed, return error
+    if (isAdmin) {
+      return NextResponse.json(
+        { error: "Admin delete failed - admin client may not be configured" },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   } catch (err) {
     devError("[API] Unexpected error deleting reply:", err);
     return NextResponse.json(

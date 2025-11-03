@@ -8,6 +8,8 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { AuthPersistence } from "@/lib/authPersistence";
 import { devLog, devError } from "@/lib/security";
+import HandleAuthRedirect from "@/components/auth/HandleAuthRedirect";
+import StartNowButton from "@/components/cta/StartNowButton";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -359,22 +361,14 @@ export default function Navbar() {
     { name: "Drills", href: "/drills" },
   ];
 
-  // Add "Coaches" or "Profile" link based on user status
+  // Add "Profile" link for authenticated users, "Coaches" link for non-authenticated users
   let navLinks;
   if (user) {
-    // If user is an admin, show "Coaches" link to dashboard
-    if (isAdmin) {
-      navLinks = [
-        ...baseNavLinks,
-        { name: "Coaches", href: "/admin/club-management" },
-      ];
-    } else {
-      // If user is a parent (non-admin), show "Profile" link
-      navLinks = [
-        ...baseNavLinks,
-        { name: "Profile", href: "/parent/profile" },
-      ];
-    }
+    // All authenticated users (admin or parent) see "Profile" link
+    navLinks = [
+      ...baseNavLinks,
+      { name: "Profile", href: "/parent/profile" },
+    ];
   } else {
     // Non-authenticated users see "Coaches" link to login
     navLinks = [...baseNavLinks, { name: "Coaches", href: "/coaches/login" }];
@@ -396,6 +390,7 @@ export default function Navbar() {
 
   return (
     <>
+      <HandleAuthRedirect />
       {isAdminDashboard ? (
         // Coaches Dashboard Style Navbar for Admin Dashboard
         <div className="bg-white/95 backdrop-blur-md shadow-lg">
@@ -567,12 +562,9 @@ export default function Navbar() {
                     Sign Out
                   </button>
                 ) : (
-                  <Link
-                    href="/register"
-                    className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
-                  >
-                    Register
-                  </Link>
+                  <div className="flex items-center">
+                    <StartNowButton variant="navbar" />
+                  </div>
                 )}
               </div>
               <button
@@ -699,13 +691,12 @@ export default function Navbar() {
                     Sign Out
                   </button>
                 ) : (
-                  <Link
-                    href="/register"
+                  <div 
                     className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    Register
-                  </Link>
+                    <StartNowButton variant="navbar" />
+                  </div>
                 )}
               </>
             )}

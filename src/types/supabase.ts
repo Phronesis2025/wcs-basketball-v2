@@ -239,7 +239,9 @@ export type Player = {
   is_active: boolean;
   is_deleted?: boolean;
   // Payment-related fields
-  status?: "pending" | "approved" | "active";
+  status?: "pending" | "approved" | "active" | "on_hold" | "rejected";
+  rejection_reason?: string | null;
+  rejected_at?: string | null;
   waiver_signed?: boolean;
   stripe_customer_id?: string | null;
 };

@@ -24,6 +24,11 @@ export async function POST(request: NextRequest) {
       .select("last_active_at")
       .eq("id", userId)
       .limit(1);
+    // If column is missing, avoid throwing 500; return non-fatal success
+    if (readErr && (readErr as any)?.code === "PGRST204") {
+      devError("heartbeat: last_active_at column missing on users", readErr);
+      return NextResponse.json({ success: true, updated: false, reason: "column_missing" });
+    }
     if (!readErr && ua && Array.isArray(ua) && ua[0]) {
       lastActive = ua[0].last_active_at ?? null;
     }
@@ -45,6 +50,11 @@ export async function POST(request: NextRequest) {
         .eq("id", userId);
 
       if (error) {
+        // Handle missing column gracefully
+        if ((error as any)?.code === "PGRST204") {
+          devError("heartbeat: last_active_at column missing on users (update)", error);
+          return NextResponse.json({ success: true, updated: false, reason: "column_missing" });
+        }
         devError("heartbeat: failed to update last_active_at", error);
         return NextResponse.json({ error: "Failed to record activity" }, { status: 500 });
       }

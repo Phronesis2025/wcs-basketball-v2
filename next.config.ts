@@ -69,6 +69,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Disable static optimization for pages using useSearchParams
+  output: process.env.NODE_ENV === 'production' ? undefined : undefined,
   experimental: {
     serverActions: {
       allowedOrigins: ["*"],

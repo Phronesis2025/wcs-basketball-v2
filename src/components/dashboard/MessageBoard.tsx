@@ -18,6 +18,7 @@ import {
 } from "../../lib/messageActions";
 import { devLog, devError, validateInput } from "../../lib/security";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import BasketballLoader from "../BasketballLoader";
 
 interface MessageBoardProps {
   userId: string;
@@ -30,6 +31,13 @@ export default function MessageBoard({
   userName,
   isAdmin,
 }: MessageBoardProps) {
+  // Debug: Log isAdmin value
+  useEffect(() => {
+    devLog("MessageBoard - userId:", userId);
+    devLog("MessageBoard - isAdmin:", isAdmin);
+    devLog("MessageBoard - isAdmin type:", typeof isAdmin);
+  }, [userId, isAdmin]);
+
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [replies, setReplies] = useState<Record<string, CoachMessageReply[]>>(
     {}
@@ -610,31 +618,51 @@ export default function MessageBoard({
     });
   };
 
+  /**
+   * Check if the current user can edit a message/reply
+   * - Admins can edit any message
+   * - Coaches can only edit their own messages
+   */
   const canEdit = (authorId: string) => {
-    return authorId === userId || isAdmin;
-  };
-
-  const canDelete = (authorId: string) => {
-    const canDeleteResult = authorId === userId || isAdmin;
-    devLog("canDelete check:", {
+    devLog("canEdit check:", {
+      isAdmin,
       authorId,
       userId,
-      isAdmin,
-      canDeleteResult,
-      authorIdType: typeof authorId,
-      userIdType: typeof userId,
-      isAdminType: typeof isAdmin,
-      strictEqual: authorId === userId,
-      adminCheck: isAdmin,
+      result: isAdmin || authorId === userId,
     });
-    return canDeleteResult;
+    // Admins can edit any message
+    if (isAdmin) {
+      return true;
+    }
+    // Coaches can only edit their own messages
+    return authorId === userId;
+  };
+
+  /**
+   * Check if the current user can delete a message/reply
+   * - Admins can delete any message
+   * - Coaches can only delete their own messages
+   */
+  const canDelete = (authorId: string) => {
+    devLog("canDelete check:", {
+      isAdmin,
+      authorId,
+      userId,
+      result: isAdmin || authorId === userId,
+    });
+    // Admins can delete any message
+    if (isAdmin) {
+      return true;
+    }
+    // Coaches can only delete their own messages
+    return authorId === userId;
   };
 
   if (loading) {
     return (
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <BasketballLoader size={80} />
         </div>
       </div>
     );
@@ -818,15 +846,21 @@ export default function MessageBoard({
         ) : (
           <>
             {/* Unread Mentions Section */}
-            {unreadMentions.length > 0 && (
+            {(() => {
+              // Filter mentions to only show those for the current user (additional safety check)
+              const userMentions = unreadMentions.filter(
+                (mention) => mention.mentioned_user_id === userId
+              );
+              
+              return userMentions.length > 0 && (
               <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-lg font-bebas text-black dark:text-black">
-                    Unread Mentions ({unreadMentions.length})
+                    UNREAD MENTIONS ({userMentions.length})
                   </h4>
                   <button
                     onClick={() => {
-                      unreadMentions.forEach((m) =>
+                      userMentions.forEach((m) =>
                         handleMarkMentionRead(m.id)
                       );
                     }}
@@ -837,7 +871,7 @@ export default function MessageBoard({
                 </div>
 
                 <div className="space-y-3">
-                  {unreadMentions.map((mention) => {
+                  {userMentions.map((mention) => {
                     const messageData =
                       mention.coach_messages || mention.coach_message_replies;
                     const isReply = !!mention.reply_id;
@@ -877,7 +911,8 @@ export default function MessageBoard({
                   })}
                 </div>
               </div>
-            )}
+              );
+            })()}
 
             {messages.map((message) => {
               const messageReplies = replies[message.id] || [];

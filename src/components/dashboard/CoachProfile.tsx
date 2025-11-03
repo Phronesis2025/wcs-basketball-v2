@@ -9,6 +9,7 @@ import ChangePasswordModal from "./ChangePasswordModal";
 import MessageBoard from "./MessageBoard";
 import { getMessages, getUnreadMentionCount } from "@/lib/messageActions";
 import { CoachMessage } from "@/types/supabase";
+import BasketballLoader from "../BasketballLoader";
 
 interface CoachProfileData {
   id: string;
@@ -53,6 +54,12 @@ export default function CoachProfile({
   userName,
   isAdmin,
 }: CoachProfileProps) {
+  // Debug: Log isAdmin prop received
+  useEffect(() => {
+    devLog("CoachProfile - isAdmin prop received:", isAdmin);
+    devLog("CoachProfile - isAdmin type:", typeof isAdmin);
+  }, [isAdmin]);
+
   const [profileData, setProfileData] = useState<CoachProfileData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [activeSection, setActiveSection] = useState("personal");
@@ -264,8 +271,7 @@ export default function CoachProfile({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red"></div>
-        <span className="ml-3 text-white font-inter">Loading profile...</span>
+        <BasketballLoader size={60} />
       </div>
     );
   }

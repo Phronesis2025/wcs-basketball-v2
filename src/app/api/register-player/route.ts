@@ -5,7 +5,9 @@ import { sendEmail } from "@/lib/email";
 import {
   getPlayerRegistrationEmail,
   getAdminPlayerRegistrationEmail,
+  getWelcomePendingEmail,
 } from "@/lib/emailTemplates";
+import twilio from "twilio";
 
 export async function POST(req: Request) {
   try {
@@ -143,28 +145,48 @@ export async function POST(req: Request) {
     }
 
     // Email behavior:
-    // - New parent signups receive Supabase's confirm email (handled by auth flow).
-    // - Existing parents adding another child should still receive a registration confirmation from us.
-    if (isExistingParent) {
-      const parentEmailData = getPlayerRegistrationEmail({
-        playerFirstName: first_name,
-        playerLastName: last_name,
-        parentFirstName: body.parent_first_name,
-        parentLastName: body.parent_last_name,
-        grade,
-        gender,
-      });
+    // - New parent signups receive Supabase's confirmation email (handled by auth flow) - this is now our welcome email
+    // - Existing parents adding another child: parent email commented out per plan to use Supabase confirmation email
+    // - All welcome pending emails commented out - Supabase confirmation email serves as welcome email
+    
+    // Comment out parent email for existing parents - now handled by Supabase confirmation email
+    // if (isExistingParent) {
+    //   const parentEmailData = getPlayerRegistrationEmail({
+    //     playerFirstName: first_name,
+    //     playerLastName: last_name,
+    //     parentFirstName: body.parent_first_name,
+    //     parentLastName: body.parent_last_name,
+    //     grade,
+    //     gender,
+    //   });
 
-      await sendEmail(
-        parent_email,
-        parentEmailData.subject,
-        parentEmailData.html
-      );
+    //   await sendEmail(
+    //     parent_email,
+    //     parentEmailData.subject,
+    //     parentEmailData.html
+    //   );
 
-      devLog("register-player: parent confirmation sent for existing parent", {
-        to: parent_email,
-      });
-    }
+    //   devLog("register-player: parent confirmation sent for existing parent", {
+    //     to: parent_email,
+    //   });
+    // }
+
+    // Comment out welcome pending email - now handled by Supabase confirmation email
+    // const welcomePendingEmailData = getWelcomePendingEmail({
+    //   playerFirstName: first_name,
+    //   playerLastName: last_name,
+    //   parentFirstName: parentRecord.first_name || body.parent_first_name,
+    // });
+
+    // await sendEmail(
+    //   parent_email,
+    //   welcomePendingEmailData.subject,
+    //   welcomePendingEmailData.html
+    // );
+
+    // devLog("register-player: welcome pending email sent", {
+    //   to: parent_email,
+    // });
 
     // Notify admin(s) about new registration
     const adminEmail = process.env.ADMIN_NOTIFICATIONS_TO;
@@ -183,6 +205,46 @@ export async function POST(req: Request) {
       await sendEmail(adminEmail, adminEmailData.subject, adminEmailData.html);
 
       devLog("register-player: admin notification sent", { to: adminEmail });
+    }
+
+    // Calculate player age for SMS notification
+    let calculatedAge: number | null = null;
+    if (birthdate) {
+      const birthDate = new Date(birthdate);
+      const today = new Date();
+      calculatedAge = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        calculatedAge--;
+      }
+    }
+
+    // Send SMS notification to admin
+    if (
+      process.env.TWILIO_SID &&
+      process.env.TWILIO_AUTH_TOKEN &&
+      process.env.TWILIO_PHONE &&
+      process.env.ADMIN_PHONE
+    ) {
+      try {
+        const twilioClient = twilio(
+          process.env.TWILIO_SID,
+          process.env.TWILIO_AUTH_TOKEN
+        );
+
+        await twilioClient.messages.create({
+          body: `New player pending: ${first_name} ${last_name}${calculatedAge ? ` (Age: ${calculatedAge})` : ""} - Assign team.`,
+          from: process.env.TWILIO_PHONE,
+          to: process.env.ADMIN_PHONE,
+        });
+
+        devLog("register-player: SMS notification sent", {
+          to: process.env.ADMIN_PHONE,
+        });
+      } catch (smsError) {
+        // Log SMS failure but don't block the registration
+        devError("register-player: SMS notification failed", smsError);
+      }
     }
 
     devLog("register-player OK", { player_id: player.id });

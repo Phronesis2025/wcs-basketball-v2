@@ -126,7 +126,70 @@ export function useAuth() {
 
         return true;
       } else {
-        devError("Error loading user data: ", await response.text());
+        // Token might be expired - try to refresh
+        const errorText = await response.text();
+        devError("Error loading user data: ", errorText);
+        
+        // Try to refresh the session
+        try {
+          const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession(session);
+          
+          if (!refreshError && newSession) {
+            // Update stored session with refreshed token
+            localStorage.setItem("supabase.auth.token", JSON.stringify(newSession));
+            localStorage.setItem("auth.authenticated", "true");
+            
+            // Retry the request with new token
+            const retryResponse = await fetch("/api/auth/user", {
+              headers: { Authorization: `Bearer ${newSession.access_token}` },
+            });
+            
+            if (retryResponse.ok) {
+              const userData = await retryResponse.json();
+              
+              // Fetch user role
+              let userRole = null;
+              try {
+                const roleResponse = await fetch("/api/auth/check-role", {
+                  headers: {
+                    "x-user-id": userData.user?.id,
+                  },
+                });
+                
+                if (roleResponse.ok) {
+                  const roleData = await roleResponse.json();
+                  userRole = roleData.role;
+                }
+              } catch (roleError) {
+                devError("Failed to fetch user role:", roleError);
+              }
+              
+              setAuthState({
+                isAuthenticated: true,
+                user: userData.user,
+                loading: false,
+                isAdmin: userData.user?.user_metadata?.role === "admin",
+                userRole,
+              });
+              
+              devLog("Session refreshed successfully");
+              return true;
+            }
+          }
+        } catch (refreshErr) {
+          devError("Failed to refresh session:", refreshErr);
+        }
+        
+        // If refresh failed, clear auth state
+        localStorage.removeItem("supabase.auth.token");
+        localStorage.removeItem("auth.authenticated");
+        setAuthState({
+          isAuthenticated: false,
+          user: null,
+          loading: false,
+          isAdmin: false,
+          userRole: null,
+        });
         return false;
       }
     } catch (error) {

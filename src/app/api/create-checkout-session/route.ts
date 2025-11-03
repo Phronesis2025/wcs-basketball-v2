@@ -7,7 +7,28 @@ import { devLog, devError } from "@/lib/security";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const PRICE_ANNUAL = process.env.STRIPE_PRICE_ANNUAL; // price_... (one-time $360)
 const PRICE_MONTHLY = process.env.STRIPE_PRICE_MONTHLY; // price_... (recurring $30/mo)
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "";
+
+// Determine base URL for Vercel vs localhost
+function getBaseUrl(): string {
+  if (process.env.VERCEL) {
+    // Production on Vercel: prioritize NEXT_PUBLIC_BASE_URL, then VERCEL_URL
+    if (process.env.NEXT_PUBLIC_BASE_URL) {
+      const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
+      if (url.startsWith("http://") || url.startsWith("https://")) {
+        return url.replace(/\/+$/, "");
+      }
+      return `https://${url.replace(/\/+$/, "")}`;
+    }
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}`;
+    }
+    return "https://wcs-basketball-v2.vercel.app";
+  }
+  // Development (local)
+  return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+}
+
+const BASE_URL = getBaseUrl();
 
 if (!STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is not set");

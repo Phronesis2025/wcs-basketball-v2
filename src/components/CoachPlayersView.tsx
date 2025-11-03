@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Player, Team } from "@/types/supabase";
+import BasketballLoader from "./BasketballLoader";
 
 interface CoachPlayersViewProps {
   teams: Team[];
@@ -54,8 +55,7 @@ export default function CoachPlayersView({
   if (managementDataLoading) {
     return (
       <div className="text-center py-8">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red"></div>
-        <p className="mt-2 text-gray-300">Loading your players...</p>
+        <BasketballLoader size={60} />
       </div>
     );
   }

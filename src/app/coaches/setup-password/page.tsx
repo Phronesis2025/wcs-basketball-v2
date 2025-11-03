@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import BasketballLoader from "@/components/BasketballLoader";
 
 export default function SetupPassword() {
   const [newPassword, setNewPassword] = useState("");
@@ -206,8 +207,7 @@ export default function SetupPassword() {
         <div className="pt-20 pb-12 sm:pt-24">
           <div className="w-full max-w-md space-y-8 mx-auto">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red mx-auto"></div>
-              <p className="mt-2 text-sm font-inter text-white">Loading...</p>
+              <BasketballLoader size={60} />
             </div>
           </div>
         </div>

@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { devError } from "@/lib/security";
+import BasketballLoader from "@/components/BasketballLoader";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -54,6 +55,12 @@ export default function CheckoutPage() {
   const [consentMedicalTreatment, setConsentMedicalTreatment] = useState(false);
   const [consentParticipation, setConsentParticipation] = useState(false);
 
+  // Password fields
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMismatch, setPasswordMismatch] = useState(false);
+  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -95,6 +102,36 @@ export default function CheckoutPage() {
   };
   
   const daysInMonth = getDaysInMonth(birthMonth, birthYear);
+
+  // Password validation
+  const validatePassword = (pwd: string): string[] => {
+    const errors: string[] = [];
+    if (pwd.length < 8) errors.push("At least 8 characters");
+    if (!/[A-Z]/.test(pwd)) errors.push("At least one uppercase letter");
+    if (!/[a-z]/.test(pwd)) errors.push("At least one lowercase letter");
+    if (!/[0-9]/.test(pwd)) errors.push("At least one number");
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) errors.push("At least one special character");
+    return errors;
+  };
+
+  // Check password match
+  useEffect(() => {
+    if (confirmPassword && password !== confirmPassword) {
+      setPasswordMismatch(true);
+    } else {
+      setPasswordMismatch(false);
+    }
+  }, [password, confirmPassword]);
+
+  // Validate password requirements
+  useEffect(() => {
+    if (password) {
+      const errors = validatePassword(password);
+      setPasswordErrors(errors);
+    } else {
+      setPasswordErrors([]);
+    }
+  }, [password]);
 
   // Simple profanity filter (client-side)
   const PROFANITY_LIST = [
@@ -220,6 +257,24 @@ export default function CheckoutPage() {
       return;
     }
 
+    // Password validation
+    if (!password) {
+      setMessage("Please set a password for your account");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setMessage("Passwords do not match");
+      setPasswordMismatch(true);
+      return;
+    }
+
+    const passwordValidationErrors = validatePassword(password);
+    if (passwordValidationErrors.length > 0) {
+      setMessage(`Password must meet the following requirements: ${passwordValidationErrors.join(", ")}`);
+      return;
+    }
+
     // Profanity validation across relevant text inputs
     const fieldsToCheck = [
       { label: "Player first name", value: firstName, when: isNewPlayer },
@@ -290,6 +345,8 @@ export default function CheckoutPage() {
           consent_photo_release: consentPhotoRelease,
           consent_medical_treatment: consentMedicalTreatment,
           consent_participation: consentParticipation,
+          // Password for account setup
+          password: password,
         }),
       });
 
@@ -314,8 +371,7 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen bg-navy flex items-center justify-center">
         <div className="text-center text-white">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red mb-4"></div>
-          <p>Loading...</p>
+          <BasketballLoader size={80} />
         </div>
       </div>
     );
@@ -674,6 +730,72 @@ export default function CheckoutPage() {
                         placeholder="(555) 123-4567"
                       />
                     </div>
+                  </div>
+                </div>
+
+                <hr className="my-6 border-gray-700" />
+
+                {/* Account Password Section */}
+                <div className="space-y-4">
+                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
+                    Set Your Account Password
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    Create a secure password to access your account. This password will be required for future logins.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-gray-300 mb-1">Password *</label>
+                      <input
+                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        placeholder="Enter your password"
+                      />
+                      {passwordErrors.length > 0 && (
+                        <ul className="mt-1 text-xs text-yellow-400 list-disc list-inside">
+                          {passwordErrors.map((error, idx) => (
+                            <li key={idx}>{error}</li>
+                          ))}
+                        </ul>
+                      )}
+                      {password && passwordErrors.length === 0 && (
+                        <p className="mt-1 text-xs text-green-400">✓ Password meets all requirements</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-300 mb-1">Confirm Password *</label>
+                      <input
+                        className={`w-full rounded px-3 py-2 bg-gray-800 border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          passwordMismatch && confirmPassword
+                            ? "border-red-500"
+                            : "border-gray-700"
+                        }`}
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        placeholder="Confirm your password"
+                      />
+                      {passwordMismatch && confirmPassword && (
+                        <p className="mt-1 text-xs text-red-400">Passwords do not match</p>
+                      )}
+                      {confirmPassword && !passwordMismatch && (
+                        <p className="mt-1 text-xs text-green-400">✓ Passwords match</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="bg-gray-800/50 border border-gray-700 rounded p-3 text-xs text-gray-400">
+                    <strong className="text-gray-300">Password Requirements:</strong>
+                    <ul className="mt-1 ml-4 list-disc">
+                      <li>At least 8 characters</li>
+                      <li>At least one uppercase letter</li>
+                      <li>At least one lowercase letter</li>
+                      <li>At least one number</li>
+                      <li>At least one special character (!@#$%^&*(),.?":{}|&lt;&gt;)</li>
+                    </ul>
                   </div>
                 </div>
 

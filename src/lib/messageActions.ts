@@ -230,25 +230,27 @@ export async function updateMessage(
       throw new Error("You can only update your own messages");
     }
 
-    const { data, error } = await supabase
-      .from("coach_messages")
-      .update({
-        content: sanitizedContent,
-      })
-      .eq("id", id)
-      .select();
-
-    if (error) {
-      devError("Error updating message:", error);
-      throw new Error(error.message);
+    // Call server API using admin client to bypass RLS for admins
+    const resp = await fetch("/api/messages/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        messageId: id, 
+        content: sanitizedContent, 
+        requesterId: authorId, 
+        isAdmin 
+      }),
+    });
+    
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      devError("API update message failed:", body);
+      throw new Error(body.error || "Failed to update message");
     }
 
-    if (!data || data.length === 0) {
-      throw new Error("Message not found or update failed");
-    }
-
-    devLog("Successfully updated message:", data[0].id);
-    return data[0];
+    const result = await resp.json();
+    devLog("Successfully updated message:", result.data?.id || id);
+    return result.data;
   } catch (err: unknown) {
     devError("Error in updateMessage:", err);
     const errorMessage =
@@ -305,25 +307,27 @@ export async function updateReply(
       throw new Error("You can only update your own replies");
     }
 
-    const { data, error } = await supabase
-      .from("coach_message_replies")
-      .update({
-        content: sanitizedContent,
-      })
-      .eq("id", id)
-      .select();
-
-    if (error) {
-      devError("Error updating reply:", error);
-      throw new Error(error.message);
+    // Call server API using admin client to bypass RLS for admins
+    const resp = await fetch("/api/message-replies/update", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        replyId: id, 
+        content: sanitizedContent, 
+        requesterId: authorId, 
+        isAdmin 
+      }),
+    });
+    
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      devError("API update reply failed:", body);
+      throw new Error(body.error || "Failed to update reply");
     }
 
-    if (!data || data.length === 0) {
-      throw new Error("Reply not found or update failed");
-    }
-
-    devLog("Successfully updated reply:", data[0].id);
-    return data[0];
+    const result = await resp.json();
+    devLog("Successfully updated reply:", result.data?.id || id);
+    return result.data;
   } catch (err: unknown) {
     devError("Error in updateReply:", err);
     const errorMessage =
@@ -621,6 +625,7 @@ export async function getUnreadMentionsForUser(userId: string) {
         message_id,
         reply_id,
         mentioned_at,
+        mentioned_user_id,
         coach_messages!message_id (
           id,
           content,
@@ -647,8 +652,13 @@ export async function getUnreadMentionsForUser(userId: string) {
       return [];
     }
 
-    devLog("Unread mentions fetched:", data?.length || 0);
-    return data || [];
+    // Additional safety filter: ensure all returned mentions are for the requested user
+    const filteredData = (data || []).filter(
+      (mention) => mention.mentioned_user_id === userId
+    );
+
+    devLog("Unread mentions fetched:", filteredData?.length || 0);
+    return filteredData;
   } catch (error) {
     devError("Error in getUnreadMentionsForUser:", error);
     return [];

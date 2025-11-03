@@ -468,6 +468,128 @@ export function getPlayerRegistrationEmail(data: {
 }
 
 /**
+ * Email template for welcome pending email (sent after registration)
+ * Encourages engagement while waiting for approval
+ */
+export function getWelcomePendingEmail(data: {
+  playerFirstName: string;
+  playerLastName: string;
+  parentFirstName?: string;
+}): { subject: string; html: string } {
+  const { playerFirstName, playerLastName, parentFirstName } = data;
+  const parentGreeting = parentFirstName ? `Hi ${parentFirstName},` : "Hello,";
+
+  const subject = "🏀 Welcome to WCS Basketball! Your Registration is Pending";
+
+  const baseUrl = getEmailBaseUrl();
+  const logoUrl = getLogoUrl();
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+          color: white;
+          padding: 30px 20px;
+          text-align: center;
+          border-radius: 8px 8px 0 0;
+        }
+        .content {
+          background: #ffffff;
+          padding: 30px;
+          border: 1px solid #e5e7eb;
+        }
+        .info-box {
+          background: #f0f9ff;
+          border-left: 4px solid #3b82f6;
+          padding: 20px;
+          margin: 20px 0;
+          border-radius: 4px;
+        }
+        .button {
+          display: inline-block;
+          background: #dc2626;
+          color: white;
+          padding: 12px 24px;
+          text-decoration: none;
+          border-radius: 6px;
+          margin: 10px 5px;
+          font-weight: 600;
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 20px;
+          text-align: center;
+          border-radius: 0 0 8px 8px;
+          border: 1px solid #e5e7eb;
+          border-top: none;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
+        <h1 style="margin: 0; font-size: 32px;">🏀 Welcome!</h1>
+        <p style="margin: 10px 0 0 0; font-size: 18px;">Your Registration is Pending Review</p>
+      </div>
+
+      <div class="content">
+        <div class="greeting">${parentGreeting}</div>
+
+        <p>Thank you for registering <strong>${playerFirstName} ${playerLastName}</strong> with WCS Basketball! We're excited to have you join our championship development program.</p>
+
+        <div class="info-box">
+          <h3 style="margin: 0 0 10px 0; color: #1e40af;">⏳ While We Review Your Registration</h3>
+          <p style="margin: 0; color: #1e40af;">
+            Our team is reviewing your registration and will assign ${playerFirstName} to an appropriate team based on age and skill level. This typically takes 1-2 business days.
+          </p>
+        </div>
+
+        <h3 style="color: #1e40af;">Stay Engaged - Explore Our Resources</h3>
+        <p>While you wait, here are some resources to help you get started:</p>
+
+        <div style="margin: 25px 0;">
+          <a href="${baseUrl}/schedules" class="button">View Schedules</a>
+          <a href="${baseUrl}/teams" class="button">Meet Our Teams</a>
+          <a href="${baseUrl}" class="button">Visit Homepage</a>
+        </div>
+
+        <h3 style="color: #1e40af;">What Happens Next?</h3>
+        <ul>
+          <li><strong>Team Assignment:</strong> Our coaches will review and assign ${playerFirstName} to a team</li>
+          <li><strong>Approval Email:</strong> You'll receive an email with team details and payment link</li>
+          <li><strong>Complete Payment:</strong> Secure your spot by completing payment</li>
+          <li><strong>Welcome Kit:</strong> After payment, you'll receive a welcome kit with all the details</li>
+        </ul>
+
+        <p style="margin-top: 30px;">
+          <strong>Questions?</strong><br>
+          If you have any questions while waiting, please don't hesitate to contact us at <a href="mailto:info@wcsbasketball.com" style="color: #3b82f6;">info@wcsbasketball.com</a>.
+        </p>
+      </div>
+
+      <div class="footer">
+        <p style="margin: 5px 0;"><strong>WCS Basketball - Where Champions Start</strong></p>
+        <p style="margin: 15px 0;">Questions? Contact us at <a href="mailto:info@wcsbasketball.com" style="color: #3b82f6;">info@wcsbasketball.com</a></p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return { subject, html };
+}
+
+/**
  * Email template for player approval notification
  * Sent to parents when their child is assigned to a team
  */
@@ -602,6 +724,214 @@ export function getPlayerApprovalEmail(data: {
           <a href="https://youtube.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">YouTube</a>
         </p>
         <p style="margin: 5px 0;">Questions? Contact us at <a href="mailto:info@wcsbasketball.com" style="color: #3b82f6;">info@wcsbasketball.com</a></p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return { subject, html };
+}
+
+/**
+ * Email template for when a player is placed on hold
+ */
+export function getPlayerOnHoldEmail(data: {
+  playerName: string;
+  reason?: string;
+}): { subject: string; html: string } {
+  const { playerName, reason } = data;
+
+  const subject = "⏸️ Player Registration On Hold";
+
+  const baseUrl = getEmailBaseUrl();
+  const logoUrl = getLogoUrl();
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
+          color: white;
+          padding: 30px 20px;
+          text-align: center;
+          border-radius: 8px 8px 0 0;
+        }
+        .content {
+          background: #ffffff;
+          padding: 30px;
+          border: 1px solid #e5e7eb;
+        }
+        .warning-box {
+          background: #fef3c7;
+          border-left: 4px solid #f59e0b;
+          padding: 20px;
+          margin: 20px 0;
+          border-radius: 4px;
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 20px;
+          text-align: center;
+          border-radius: 0 0 8px 8px;
+          border: 1px solid #e5e7eb;
+          border-top: none;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
+        <h1 style="margin: 0; font-size: 32px;">⏸️ Registration On Hold</h1>
+      </div>
+
+      <div class="content">
+        <p>Hello,</p>
+        
+        <p>We wanted to inform you that <strong>${playerName}</strong>'s registration has been placed on hold.</p>
+
+        <div class="warning-box">
+          <h3 style="margin: 0 0 10px 0; color: #92400e;">Reason:</h3>
+          <p style="margin: 0; color: #92400e;">${reason || "Pending additional review"}</p>
+        </div>
+
+        <h3 style="color: #1e40af;">What This Means</h3>
+        <p>Your registration is temporarily on hold while we review your application. This is not a rejection - we may need additional information or clarification.</p>
+
+        <h3 style="color: #1e40af;">Next Steps</h3>
+        <ul>
+          <li>You will receive another email once the review is complete</li>
+          <li>If we need additional information, we'll contact you directly</li>
+          <li>You can check your registration status in your parent profile</li>
+        </ul>
+
+        <p style="margin-top: 30px;">
+          <strong>Questions?</strong><br>
+          Please don't hesitate to reach out if you have any questions about this status.
+        </p>
+      </div>
+
+      <div class="footer">
+        <p style="margin: 5px 0;"><strong>WCS Basketball - Where Champions Start</strong></p>
+        <p style="margin: 15px 0;">Questions? Contact us at <a href="mailto:info@wcsbasketball.com" style="color: #3b82f6;">info@wcsbasketball.com</a></p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return { subject, html };
+}
+
+/**
+ * Email template for when a player is rejected
+ */
+export function getPlayerRejectedEmail(data: {
+  playerName: string;
+  reason: string;
+}): { subject: string; html: string } {
+  const { playerName, reason } = data;
+
+  const subject = "❌ Registration Status Update";
+
+  const baseUrl = getEmailBaseUrl();
+  const logoUrl = getLogoUrl();
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+          color: white;
+          padding: 30px 20px;
+          text-align: center;
+          border-radius: 8px 8px 0 0;
+        }
+        .content {
+          background: #ffffff;
+          padding: 30px;
+          border: 1px solid #e5e7eb;
+        }
+        .info-box {
+          background: #fee2e2;
+          border-left: 4px solid #dc2626;
+          padding: 20px;
+          margin: 20px 0;
+          border-radius: 4px;
+        }
+        .resubmission-box {
+          background: #f0f9ff;
+          border-left: 4px solid #3b82f6;
+          padding: 20px;
+          margin: 20px 0;
+          border-radius: 4px;
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 20px;
+          text-align: center;
+          border-radius: 0 0 8px 8px;
+          border: 1px solid #e5e7eb;
+          border-top: none;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
+        <h1 style="margin: 0; font-size: 32px;">Registration Status Update</h1>
+      </div>
+
+      <div class="content">
+        <p>Hello,</p>
+        
+        <p>We regret to inform you that <strong>${playerName}</strong>'s registration has not been approved at this time.</p>
+
+        <div class="info-box">
+          <h3 style="margin: 0 0 10px 0; color: #991b1b;">Reason:</h3>
+          <p style="margin: 0; color: #991b1b;">${reason}</p>
+        </div>
+
+        <h3 style="color: #1e40af;">What This Means</h3>
+        <p>After careful review, we were unable to approve this registration based on the current information provided.</p>
+
+        <div class="resubmission-box">
+          <h3 style="margin: 0 0 10px 0; color: #1e40af;">Resubmission</h3>
+          <p style="margin: 0; color: #1e40af;">
+            If you believe this decision was made in error or if your circumstances have changed, you may resubmit your registration after 30 days. 
+            Please review the reason provided above before resubmitting.
+          </p>
+        </div>
+
+        <h3 style="color: #1e40af;">Questions?</h3>
+        <p>If you have questions about this decision or would like to discuss your registration, please contact us at <a href="mailto:info@wcsbasketball.com" style="color: #3b82f6;">info@wcsbasketball.com</a>.</p>
+
+        <p style="margin-top: 30px;">
+          Thank you for your interest in WCS Basketball.
+        </p>
+      </div>
+
+      <div class="footer">
+        <p style="margin: 5px 0;"><strong>WCS Basketball - Where Champions Start</strong></p>
+        <p style="margin: 15px 0;">Questions? Contact us at <a href="mailto:info@wcsbasketball.com" style="color: #3b82f6;">info@wcsbasketball.com</a></p>
       </div>
     </body>
     </html>

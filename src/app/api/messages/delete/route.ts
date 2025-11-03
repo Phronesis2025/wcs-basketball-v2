@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
       messageId,
       requesterId,
       isAdmin,
+      hasAdminClient: !!supabaseAdmin,
     });
 
     // Fetch message to check author
@@ -61,19 +62,31 @@ export async function POST(request: NextRequest) {
       // Continue to fallback path below
     }
 
-    // Fallback: RLS-safe author-owned update via anon client
-    const { error: rlsErr } = await supabase
-      .from("coach_messages")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", messageId)
-      .eq("author_id", requesterId);
+    // Fallback: RLS-safe author-owned update via anon client (only for authors)
+    if (isAuthor) {
+      const { error: rlsErr } = await supabase
+        .from("coach_messages")
+        .update({ deleted_at: new Date().toISOString() })
+        .eq("id", messageId)
+        .eq("author_id", requesterId);
 
-    if (rlsErr) {
+      if (!rlsErr) {
+        return NextResponse.json({ success: true });
+      }
+
       devError("[API] Fallback delete message failed:", rlsErr);
       return NextResponse.json({ error: rlsErr.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true });
+    // If we reach here and isAdmin is true but admin client failed, return error
+    if (isAdmin) {
+      return NextResponse.json(
+        { error: "Admin delete failed - admin client may not be configured" },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   } catch (err) {
     devError("[API] Unexpected error deleting message:", err);
     return NextResponse.json(

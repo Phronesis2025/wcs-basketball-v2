@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
+import StartNowButton from "@/components/cta/StartNowButton";
 
 export default function Hero() {
   return (
@@ -73,14 +74,7 @@ export default function Hero() {
 
         {/* Bottom: Button then Tagline */}
         <div className="text-left mb-4 sm:mb-0">
-          <Button
-            asChild
-            className="bg-red text-white font-bebas font-bold rounded-lg hover:bg-red-700 hover:scale-105 focus:ring-4 focus:ring-red-500 focus:ring-offset-2 transition-all duration-300 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 uppercase shadow-2xl hover:shadow-red-500/25 mb-4 sm:mb-3"
-          >
-            <Link href="/register" className="no-underline">
-              Join Now
-            </Link>
-          </Button>
+          <StartNowButton variant="hero" />
 
           <p className="text-2xl sm:text-xl font-inter drop-shadow-lg font-medium">
             Basketball excellence that extends beyond the game

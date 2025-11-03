@@ -11,12 +11,51 @@ import ProfileHeader from "@/components/parent/ProfileHeader";
 import ChildDetailsCard from "@/components/parent/ChildDetailsCard";
 import ContactEditForm from "@/components/parent/ContactEditForm";
 import PaymentHistoryTable from "@/components/parent/PaymentHistoryTable";
-import { devError } from "@/lib/security";
+import StatusTimeline from "@/components/parent/StatusTimeline";
+import HandleAuthRedirect from "@/components/auth/HandleAuthRedirect";
+import { devError, devLog } from "@/lib/security";
+import BasketballLoader from "@/components/BasketballLoader";
 
 function ParentProfilePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isAuthenticated, user, loading } = useAuth();
+  const [mergingPending, setMergingPending] = useState(false);
+
+  // Check for pending registration to merge when user is authenticated
+  useEffect(() => {
+    const mergePendingRegistration = async () => {
+      if (!isAuthenticated || !user?.email || loading || mergingPending) return;
+      
+      const mergePending = searchParams.get("merge_pending");
+      if (!mergePending) return;
+
+      setMergingPending(true);
+      try {
+        const response = await fetch("/api/merge-pending-registration", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        });
+
+        if (response.ok) {
+          devLog("Profile: Merged pending registration successfully");
+          // Reload profile data
+          router.refresh();
+        } else {
+          devError("Profile: Failed to merge pending registration");
+        }
+      } catch (error) {
+        devError("Profile: Error merging pending registration", error);
+      } finally {
+        setMergingPending(false);
+        // Remove query param
+        router.replace("/parent/profile?registered=true");
+      }
+    };
+
+    mergePendingRegistration();
+  }, [isAuthenticated, user, loading, searchParams, router, mergingPending]);
   const [profile, setProfile] = useState<ParentProfile | null>(null);
   // No active child; show all children as cards
   const [isLoading, setIsLoading] = useState(true);
@@ -136,8 +175,7 @@ function ParentProfilePageInner() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-red mb-4"></div>
-          <p className="text-gray-600">Loading profile...</p>
+          <BasketballLoader size={80} />
         </div>
       </div>
     );
@@ -183,6 +221,7 @@ function ParentProfilePageInner() {
 
   return (
     <div className="bg-navy min-h-screen text-white pt-20 px-4 pb-12">
+      <HandleAuthRedirect />
       <div className="max-w-6xl mx-auto">
         <ProfileHeader
           name={profile?.parent.name || user?.email?.split("@")[0] || "Parent"}
@@ -235,11 +274,35 @@ function ParentProfilePageInner() {
             {activeTab === "players" && (
               <>
                 {profile.children.length > 0 ? (
-                  <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5 mb-6">
-                    {profile.children.map((child) => (
-                      <ChildDetailsCard key={child.id} child={child} />
-                    ))}
-                  </div>
+                  <>
+                    {/* Status Timeline Section - Show for first child, or all children if only one */}
+                    {profile.children.length === 1 && (
+                      <div className="mb-6 bg-gray-900/50 border border-gray-700 rounded-lg p-6">
+                        <StatusTimeline
+                          playerId={profile.children[0].id}
+                          initialStatus={profile.children[0].status || "pending"}
+                        />
+                      </div>
+                    )}
+
+                    {/* Children Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+                      {profile.children.map((child) => (
+                        <div key={child.id} className="space-y-4">
+                          <ChildDetailsCard child={child} />
+                          {/* Status Timeline for each child on mobile/tablet, or when multiple children */}
+                          {profile.children.length > 1 && (
+                            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
+                              <StatusTimeline
+                                playerId={child.id}
+                                initialStatus={child.status || "pending"}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 ) : (
                   <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-12 text-center mb-6">
                     <h3 className="text-xl font-bebas text-white mb-2 uppercase">No registered children yet</h3>
@@ -253,14 +316,14 @@ function ParentProfilePageInner() {
                 {/* Actions */}
                 <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 flex flex-col sm:flex-row gap-4">
                   <Link
-                    href="/checkout/new"
-                    className="flex-1 px-6 py-3 bg-red text-white text-center rounded hover:bg-red/90 transition"
+                    href="/register?fromProfile=true"
+                    className="flex-1 px-6 py-3 bg-red text-white text-center rounded hover:bg-red/90 transition min-h-[48px] flex items-center justify-center"
                   >
                     Add Another Child
                   </Link>
                   <Link
                     href="/teams"
-                    className="flex-1 px-6 py-3 bg-gray-800 text-gray-200 text-center rounded hover:bg-gray-700 transition"
+                    className="flex-1 px-6 py-3 bg-gray-800 text-gray-200 text-center rounded hover:bg-gray-700 transition min-h-[48px] flex items-center justify-center"
                   >
                     View Teams
                   </Link>
