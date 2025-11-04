@@ -55,3 +55,5 @@ tests/e2e/screenshots/
 .cursor/mcp.json
 # Sentry Config File
 .env.sentry-build-plugin
+# Secrets file (should use .env.local instead)
+secrets.txt

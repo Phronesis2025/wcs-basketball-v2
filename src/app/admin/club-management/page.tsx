@@ -154,11 +154,16 @@ function ClubManagementContent() {
   const [showProfanityModal, setShowProfanityModal] = useState(false);
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
   const [showOnHoldModal, setShowOnHoldModal] = useState(false);
-  const [selectedPlayerForHold, setSelectedPlayerForHold] = useState<{ id: string; name: string } | null>(null);
+  const [selectedPlayerForHold, setSelectedPlayerForHold] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [placingOnHold, setPlacingOnHold] = useState(false);
   const [showPlayerPaymentModal, setShowPlayerPaymentModal] = useState(false);
-  const [selectedPlayerForPaymentModal, setSelectedPlayerForPaymentModal] = useState<Player | null>(null);
-  const [selectedPlayerPaymentStatus, setSelectedPlayerPaymentStatus] = useState<"approved" | "pending" | "on_hold" | "rejected">("pending");
+  const [selectedPlayerForPaymentModal, setSelectedPlayerForPaymentModal] =
+    useState<Player | null>(null);
+  const [selectedPlayerPaymentStatus, setSelectedPlayerPaymentStatus] =
+    useState<"approved" | "pending" | "on_hold" | "rejected">("pending");
 
   // View modal states
   const [viewingItem, setViewingItem] = useState<
@@ -258,26 +263,34 @@ function ClubManagementContent() {
         setUserId(null);
         setIsAdmin(false);
         setUserRole(null);
-        
+
         // Clear auth data comprehensively
         AuthPersistence.clearAuthData();
-        
+
         // Clear any remaining Supabase storage
         try {
           Object.keys(localStorage).forEach((key) => {
-            if (key.startsWith("sb-") || key.includes("supabase") || key.includes("auth")) {
+            if (
+              key.startsWith("sb-") ||
+              key.includes("supabase") ||
+              key.includes("auth")
+            ) {
               localStorage.removeItem(key);
             }
           });
           Object.keys(sessionStorage).forEach((key) => {
-            if (key.startsWith("sb-") || key.includes("supabase") || key.includes("auth")) {
+            if (
+              key.startsWith("sb-") ||
+              key.includes("supabase") ||
+              key.includes("auth")
+            ) {
               sessionStorage.removeItem(key);
             }
           });
         } catch (cleanupErr) {
           devError("Club Management: Storage cleanup error", cleanupErr);
         }
-        
+
         // Use replace to prevent back navigation to protected page
         window.location.replace("/coaches/login");
       } else if (event === "TOKEN_REFRESHED" && session) {
@@ -290,7 +303,9 @@ function ClubManagementContent() {
     // Also listen for custom auth state change events (from Navbar sign out)
     const handleAuthStateChange = (event: CustomEvent) => {
       if (!event.detail.authenticated) {
-        devLog("Club Management: Auth state change event detected - signed out");
+        devLog(
+          "Club Management: Auth state change event detected - signed out"
+        );
         // Don't redirect here, let the SIGNED_OUT event handler do it
         // Just clear state
         setIsAuthorized(false);
@@ -302,11 +317,17 @@ function ClubManagementContent() {
       }
     };
 
-    window.addEventListener("authStateChanged", handleAuthStateChange as EventListener);
+    window.addEventListener(
+      "authStateChanged",
+      handleAuthStateChange as EventListener
+    );
 
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener("authStateChanged", handleAuthStateChange as EventListener);
+      window.removeEventListener(
+        "authStateChanged",
+        handleAuthStateChange as EventListener
+      );
     };
   }, [router]);
 
@@ -2729,18 +2750,30 @@ function ClubManagementContent() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-300">Pending:</span>
-                      <span className="text-yellow-400">{pendingPlayersCount}</span>
+                      <span className="text-yellow-400">
+                        {pendingPlayersCount}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
-                  <h3 className="text-lg font-bebas text-white mb-4">Revenue by Category (Stripe)</h3>
-                  <p className="text-gray-400 text-sm mb-4">Realized totals from Stripe (webhook-synced).</p>
+                  <h3 className="text-lg font-bebas text-white mb-4">
+                    Revenue by Category (Stripe)
+                  </h3>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Realized totals from Stripe (webhook-synced).
+                  </p>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-300">Membership Fees:</span>
-                      <span className="text-green-400">{membershipFees.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
+                      <span className="text-green-400">
+                        {membershipFees.toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-300">Tournament Fees:</span>
@@ -2754,16 +2787,32 @@ function ClubManagementContent() {
                 </div>
 
                 <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
-                  <h3 className="text-lg font-bebas text-white mb-4">Financial Summary</h3>
-                  <p className="text-gray-400 text-sm mb-4">Live totals from Stripe + pending dues.</p>
+                  <h3 className="text-lg font-bebas text-white mb-4">
+                    Financial Summary
+                  </h3>
+                  <p className="text-gray-400 text-sm mb-4">
+                    Live totals from Stripe + pending dues.
+                  </p>
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-300">Total Revenue:</span>
-                      <span className="text-green-400">{totalRevenue.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
+                      <span className="text-green-400">
+                        {totalRevenue.toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-300">Pending Dues:</span>
-                      <span className="text-yellow-400">{pendingDues.toLocaleString(undefined, { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
+                      <span className="text-yellow-400">
+                        {pendingDues.toLocaleString(undefined, {
+                          style: "currency",
+                          currency: "USD",
+                          minimumFractionDigits: 2,
+                        })}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -2774,8 +2823,8 @@ function ClubManagementContent() {
             <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bebas text-white">
-                Registrations
-              </h2>
+                  Registrations
+                </h2>
                 <button
                   onClick={async () => {
                     if (
@@ -2812,9 +2861,13 @@ function ClubManagementContent() {
               {/* Side-by-side tables */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Awaiting Payment */}
-                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
-                  <h3 className="text-lg font-bebas text-white mb-4">
-                    Awaiting Payment ({awaitingPaymentPlayers.length})
+                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4 border-l-[16px] border-l-green-500">
+                  <h3 className="text-lg font-bebas text-white mb-4 flex items-center gap-2">
+                    <span className="text-green-400">💳</span>
+                    <span>Awaiting Payment</span>
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800 border border-green-300">
+                      {awaitingPaymentPlayers.length}
+                    </span>
                   </h3>
                   {awaitingPaymentPlayers.length > 0 ? (
                     <div className="overflow-x-auto block">
@@ -2826,7 +2879,9 @@ function ClubManagementContent() {
                                 Player
                               </th>
                               <th className="py-2 pr-4 text-gray-300">Team</th>
-                              <th className="py-2 text-gray-300">Status</th>
+                              <th className="py-2 text-gray-300 hidden md:table-cell">
+                                Status
+                              </th>
                             </tr>
                           </thead>
                           <tbody>
@@ -2860,9 +2915,6 @@ function ClubManagementContent() {
                                     <div className="text-white font-medium">
                                       {p.name}
                                     </div>
-                                    <div className="hidden md:block text-gray-300 text-xs">
-                                      {p.parent_email}
-                                    </div>
                                     {playerAge && (
                                       <div className="text-gray-400 text-xs mt-1">
                                         Age: {playerAge} • {p.gender}
@@ -2880,8 +2932,8 @@ function ClubManagementContent() {
                                       </span>
                                     )}
                                   </td>
-                                  <td className="py-2">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-900 text-yellow-200 border border-yellow-700">
+                                  <td className="py-2 hidden md:table-cell">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-900 text-green-200 border border-green-700">
                                       Pending Payment
                                     </span>
                                   </td>
@@ -2900,9 +2952,13 @@ function ClubManagementContent() {
                 </div>
 
                 {/* Pending Approvals */}
-                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
-                  <h3 className="text-lg font-bebas text-white mb-4">
-                    Pending Player Approvals ({pendingPlayers.length})
+                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4 border-l-[16px] border-l-blue-500">
+                  <h3 className="text-lg font-bebas text-white mb-4 flex items-center gap-2">
+                    <span className="text-blue-400">📝</span>
+                    <span>Pending Player Approvals</span>
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
+                      {pendingPlayers.length}
+                    </span>
                   </h3>
                   <div className="overflow-x-auto">
                     <div className="min-w-0">
@@ -2911,7 +2967,9 @@ function ClubManagementContent() {
                           <tr className="text-left border-b border-gray-600">
                             <th className="py-2 pr-4 text-gray-300">Player</th>
                             <th className="py-2 pr-4 text-gray-300">Team</th>
-                            <th className="py-2 text-gray-300">Status</th>
+                            <th className="py-2 text-gray-300 hidden md:table-cell">
+                              Status
+                            </th>
                           </tr>
                         </thead>
                         <tbody>
@@ -2939,9 +2997,6 @@ function ClubManagementContent() {
                               >
                                 <td className="py-2 pr-4">
                                   <div className="text-white">{p.name}</div>
-                                  <div className="hidden md:block text-gray-300 text-xs">
-                                    {p.parent_email}
-                                  </div>
                                   {playerAge && (
                                     <div className="text-gray-400 text-xs mt-1">
                                       Age: {playerAge} • {p.gender}
@@ -2959,8 +3014,8 @@ function ClubManagementContent() {
                                     </span>
                                   )}
                                 </td>
-                                <td className="py-2">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-200 border border-gray-600">
+                                <td className="py-2 hidden md:table-cell">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-blue-200 border border-blue-700">
                                     Pending
                                   </span>
                                 </td>
@@ -2977,138 +3032,179 @@ function ClubManagementContent() {
               {/* On Hold and Rejected Players Section */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
                 {/* On Hold Players */}
-                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
-                  <h3 className="text-lg font-bebas text-white mb-4">
-                    On Hold ({onHoldPlayers.length})
+                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4 border-l-[16px] border-l-orange-500">
+                  <h3 className="text-lg font-bebas text-white mb-4 flex items-center gap-2">
+                    <span className="text-orange-400">⏸️</span>
+                    <span>On Hold</span>
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-300">
+                      {onHoldPlayers.length}
+                    </span>
                   </h3>
                   {onHoldPlayers.length > 0 ? (
-                    <div className="space-y-3">
-                      {onHoldPlayers.map((p: any) => {
-                        const playerAge = p.date_of_birth
-                          ? Math.floor(
-                              (new Date().getTime() -
-                                new Date(p.date_of_birth).getTime()) /
-                                (365.25 * 24 * 60 * 60 * 1000)
-                            )
-                          : null;
-                        const assignedTeam = teams.find(
-                          (t: any) => t.id === p.team_id
-                        );
+                    <div className="overflow-x-auto block">
+                      <div className="inline-block min-w-full align-middle">
+                        <table className="min-w-full text-sm">
+                          <thead>
+                            <tr className="text-left border-b border-gray-600">
+                              <th className="py-2 pr-4 text-gray-300">
+                                Player
+                              </th>
+                              <th className="py-2 pr-4 text-gray-300">Team</th>
+                              <th className="py-2 text-gray-300 hidden md:table-cell">
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {onHoldPlayers.map((p: any) => {
+                              const playerAge = p.date_of_birth
+                                ? Math.floor(
+                                    (new Date().getTime() -
+                                      new Date(p.date_of_birth).getTime()) /
+                                      (365.25 * 24 * 60 * 60 * 1000)
+                                  )
+                                : null;
+                              const assignedTeam = teams.find(
+                                (t: any) => t.id === p.team_id
+                              );
 
-                        return (
-                          <div
-                            key={p.id}
-                            className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 hover:bg-gray-900 transition-colors cursor-pointer"
-                            onClick={() => {
-                              setSelectedPlayerForPaymentModal(p);
-                              setSelectedPlayerPaymentStatus("on_hold");
-                              setShowPlayerPaymentModal(true);
-                            }}
-                          >
-                            <div className="flex flex-col gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="text-white font-medium mb-1">
-                                  {p.name}
-                                </div>
-                                <div className="hidden md:block text-gray-300 text-xs mb-2">
-                                  {p.parent_email}
-                                </div>
-                                {playerAge && (
-                                  <div className="text-gray-400 text-xs mb-2">
-                                    Age: {playerAge} • {p.gender}
-                                  </div>
-                                )}
-                                {assignedTeam && (
-                                  <div className="text-gray-300 text-xs mb-2">
-                                    Team: {assignedTeam.name}
-                                  </div>
-                                )}
-                                {p.on_hold_reason && (
-                                  <div className="mt-2 p-2 bg-orange-900/20 border border-orange-500/30 rounded text-xs text-orange-300">
-                                    <strong>Reason:</strong> {p.on_hold_reason}
-                                  </div>
-                                )}
-                              </div>
-                              <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-900 text-orange-200 border border-orange-700 w-fit">
-                                On Hold
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                              return (
+                                <tr
+                                  key={p.id}
+                                  className="border-b border-gray-600 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                                  onClick={() => {
+                                    setSelectedPlayerForPaymentModal(p);
+                                    setSelectedPlayerPaymentStatus("on_hold");
+                                    setShowPlayerPaymentModal(true);
+                                  }}
+                                >
+                                  <td className="py-2 pr-4">
+                                    <div className="text-white font-medium">
+                                      {p.name}
+                                    </div>
+                                    {playerAge && (
+                                      <div className="text-gray-400 text-xs mt-1">
+                                        Age: {playerAge} • {p.gender}
+                                      </div>
+                                    )}
+                                    {p.on_hold_reason && (
+                                      <div className="mt-2 p-2 bg-orange-900/20 border border-orange-500/30 rounded text-xs text-orange-300">
+                                        <strong>Reason:</strong>{" "}
+                                        {p.on_hold_reason}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-2 pr-4">
+                                    {assignedTeam ? (
+                                      <div className="text-white">
+                                        {assignedTeam.name}
+                                      </div>
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        Not assigned
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-2 hidden md:table-cell">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-900 text-orange-200 border border-orange-700">
+                                      On Hold
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-gray-400 text-sm">
-                      No players on hold
-                    </p>
+                    <p className="text-gray-400 text-sm">No players on hold</p>
                   )}
                 </div>
 
                 {/* Rejected Players */}
-                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4">
-                  <h3 className="text-lg font-bebas text-white mb-4">
-                    Rejected ({rejectedPlayers.length})
+                <div className="bg-gray-800 rounded-lg border border-gray-600 p-4 border-l-[16px] border-l-[red]">
+                  <h3 className="text-lg font-bebas text-white mb-4 flex items-center gap-2">
+                    <span className="text-[red]">❌</span>
+                    <span>Rejected</span>
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-[red] text-white border border-[red]">
+                      {rejectedPlayers.length}
+                    </span>
                   </h3>
                   {rejectedPlayers.length > 0 ? (
-                    <div className="space-y-3">
-                      {rejectedPlayers.map((p: any) => {
-                        const playerAge = p.date_of_birth
-                          ? Math.floor(
-                              (new Date().getTime() -
-                                new Date(p.date_of_birth).getTime()) /
-                                (365.25 * 24 * 60 * 60 * 1000)
-                            )
-                          : null;
-                        const assignedTeam = teams.find(
-                          (t: any) => t.id === p.team_id
-                        );
+                    <div className="overflow-x-auto block">
+                      <div className="inline-block min-w-full align-middle">
+                        <table className="min-w-full text-sm">
+                          <thead>
+                            <tr className="text-left border-b border-gray-600">
+                              <th className="py-2 pr-4 text-gray-300">
+                                Player
+                              </th>
+                              <th className="py-2 pr-4 text-gray-300">Team</th>
+                              <th className="py-2 text-gray-300 hidden md:table-cell">
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rejectedPlayers.map((p: any) => {
+                              const playerAge = p.date_of_birth
+                                ? Math.floor(
+                                    (new Date().getTime() -
+                                      new Date(p.date_of_birth).getTime()) /
+                                      (365.25 * 24 * 60 * 60 * 1000)
+                                  )
+                                : null;
+                              const assignedTeam = teams.find(
+                                (t: any) => t.id === p.team_id
+                              );
 
-                        return (
-                          <div
-                            key={p.id}
-                            className="bg-gray-900/50 border border-gray-700 rounded-lg p-4 hover:bg-gray-900 transition-colors cursor-pointer"
-                            onClick={() => {
-                              setSelectedPlayerForPaymentModal(p);
-                              setSelectedPlayerPaymentStatus("rejected");
-                              setShowPlayerPaymentModal(true);
-                            }}
-                          >
-                            <div className="flex flex-col gap-3">
-                              <div className="flex-1 min-w-0">
-                                <div className="text-white font-medium mb-1">
-                                  {p.name}
-                                </div>
-                                <div className="hidden md:block text-gray-300 text-xs mb-2">
-                                  {p.parent_email}
-                                </div>
-                                {playerAge && (
-                                  <div className="text-gray-400 text-xs mb-2">
-                                    Age: {playerAge} • {p.gender}
-                                  </div>
-                                )}
-                                {assignedTeam && (
-                                  <div className="text-gray-300 text-xs mb-2">
-                                    Team: {assignedTeam.name}
-                                  </div>
-                                )}
-                                {p.rejection_reason && (
-                                  <div className="mt-2 p-2 bg-red-900/20 border border-red-500/30 rounded text-xs text-red-300">
-                                    <strong>Reason:</strong> {p.rejection_reason}
-                                  </div>
-                                )}
-                              </div>
-                              <span className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-900 text-red-200 border border-red-700 w-fit">
-                                Rejected
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
+                              return (
+                                <tr
+                                  key={p.id}
+                                  className="border-b border-gray-600 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                                  onClick={() => {
+                                    setSelectedPlayerForPaymentModal(p);
+                                    setSelectedPlayerPaymentStatus("rejected");
+                                    setShowPlayerPaymentModal(true);
+                                  }}
+                                >
+                                  <td className="py-2 pr-4">
+                                    <div className="text-white font-medium">
+                                      {p.name}
+                                    </div>
+                                    {playerAge && (
+                                      <div className="text-gray-400 text-xs mt-1">
+                                        Age: {playerAge} • {p.gender}
+                                      </div>
+                                    )}
+                                    {/* Rejection reason removed from row view */}
+                                  </td>
+                                  <td className="py-2 pr-4">
+                                    {assignedTeam ? (
+                                      <div className="text-white">
+                                        {assignedTeam.name}
+                                      </div>
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        Not assigned
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-2 hidden md:table-cell">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[ red] text-red-200 border border-red-700">
+                                      Rejected
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   ) : (
-                    <p className="text-gray-400 text-sm">
-                      No rejected players
-                    </p>
+                    <p className="text-gray-400 text-sm">No rejected players</p>
                   )}
                 </div>
               </div>
@@ -3324,7 +3420,9 @@ function ClubManagementContent() {
                 });
                 if (resp.ok) {
                   toast.dismiss(loadingToast);
-                  toast.success("Player approved! Payment email sent to parent.");
+                  toast.success(
+                    "Player approved! Payment email sent to parent."
+                  );
                 } else {
                   const j = await resp.json().catch(() => ({}));
                   toast.dismiss(loadingToast);
@@ -3396,7 +3494,9 @@ function ClubManagementContent() {
               }
             }}
             onMoveToPending={async (playerId: string) => {
-              const loadingToast = toast.loading("Moving player back to pending...");
+              const loadingToast = toast.loading(
+                "Moving player back to pending..."
+              );
               try {
                 const resp = await fetch("/api/approve-player", {
                   method: "POST",

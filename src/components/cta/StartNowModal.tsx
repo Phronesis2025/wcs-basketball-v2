@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
@@ -15,9 +16,16 @@ interface StartNowModalProps {
 export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
   const { isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   useScrollLock(isOpen);
 
-  if (!isOpen) return null;
+  // Handle mounting on client side for portal
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!isOpen || !mounted) return null;
 
   const handleEmailSignUp = () => {
     onClose();
@@ -29,18 +37,17 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
     router.push("/parent/login");
   };
 
-  return (
+  // Render modal using portal to document body so it's not affected by parent component unmounting
+  return createPortal(
     <motion.div
-      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-3 sm:p-4 md:p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       onClick={onClose}
     >
       <motion.div
-        className={`bg-navy border border-red-500/50 rounded-lg p-4 md:p-6 w-full ${
-          isOpen ? "h-screen w-screen md:h-auto md:w-auto md:max-w-md lg:max-w-lg" : ""
-        }`}
+        className="bg-navy border border-red-500/50 rounded-lg p-4 sm:p-5 md:p-6 w-full max-w-[calc(100vw-1.5rem)] sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto max-h-[85vh] sm:max-h-[90vh] md:max-h-[calc(100vh-3rem)] overflow-y-auto"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -52,7 +59,7 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
       >
         <div className="space-y-4">
           <div className="mb-4">
-            <h2 id="start-now-modal-title" className="text-2xl font-bebas text-white">
+            <h2 id="start-now-modal-title" className="text-2xl font-bebas text-white text-center">
               {isAuthenticated ? "Continue Your Journey" : "Get Started with WCS Basketball"}
             </h2>
           </div>
@@ -121,7 +128,7 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
                     Already have an account?{" "}
                     <button
                       onClick={handleLogin}
-                      className="text-red hover:underline"
+                      className="text-red hover:underline font-bold"
                     >
                       Sign in
                     </button>
@@ -131,20 +138,10 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
             )}
           </div>
 
-          <button
-            onClick={onClose}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                onClose();
-              }
-            }}
-            className="bg-gray-700 text-white font-inter rounded p-2 mt-4 w-full min-h-[48px] touch-manipulation focus:outline-none focus:ring-2 focus:ring-red focus:ring-offset-2"
-            aria-label="Close dialog"
-          >
-            Close
-          </button>
+          {/* Close button removed; users can click outside modal to close */}
         </div>
       </motion.div>
-    </motion.div>
+    </motion.div>,
+    document.body
   );
 }

@@ -15,6 +15,7 @@ export async function GET() {
         gender, 
         grade_level, 
         season, 
+        logo_url,
         is_active,
         team_coaches(
           coaches(
@@ -43,6 +44,7 @@ export async function GET() {
           gender, 
           grade_level, 
           season,
+          logo_url,
           team_coaches(
             coaches(
               id,
@@ -96,6 +98,7 @@ export async function GET() {
         gender: team.gender,
         grade_level: team.grade_level,
         season: team.season,
+        logo_url: team.logo_url,
         is_active: team.is_active,
         coach_names: coachNames,
         coaches: activeCoaches.map((tc: any) => tc.coaches),

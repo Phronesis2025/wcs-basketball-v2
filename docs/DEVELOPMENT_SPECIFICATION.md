@@ -6,9 +6,9 @@
 **Technology Stack:** Next.js 15.5.2, TypeScript, Supabase, Tailwind CSS, Framer Motion  
 **Target Users:** Youth basketball players, coaches, parents, and administrators  
 **Primary Purpose:** Comprehensive basketball program management and community engagement platform  
-**Version:** v2.7.6  
+**Version:** v2.0.1  
 **Status:** Production Ready ✅  
-**Security Score:** 10/10 (Perfect) 🔒  
+**Security Score:** 8.5/10 (Good) 🔒  
 **Live URL:** https://wcs-basketball-v2.vercel.app
 
 ---

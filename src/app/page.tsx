@@ -2,6 +2,7 @@ import React from "react";
 import Hero from "../components/Hero";
 import LogoMarquee from "../components/LogoMarquee";
 import FanZone from "../components/FanZone";
+import AdSection from "../components/AdSection";
 import TeamUpdates from "../components/TeamUpdates";
 import { fetchTeams } from "../lib/actions";
 
@@ -28,13 +29,14 @@ export default async function Home() {
   return (
     <div className="bg-navy min-h-screen text-white">
       <Hero />
-      <LogoMarquee />
       <FanZone teamsError={teamsError} coachesError={coachesError} />
+      <AdSection />
       <TeamUpdates
         maxUpdates={3}
         disableSwiping={true}
         showViewMoreText={true}
       />
+      <LogoMarquee />
     </div>
   );
 }

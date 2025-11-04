@@ -133,6 +133,8 @@ export class AuthPersistence {
       // Set flags to prevent re-authentication during cleanup
       localStorage.setItem("auth.signingOut", "true");
       sessionStorage.setItem("auth.justSignedOut", "true");
+      // Set timestamp to track when sign-out occurred
+      sessionStorage.setItem("auth.justSignedOutTimestamp", Date.now().toString());
 
       // Clear primary auth keys
       localStorage.removeItem(this.STORAGE_KEYS.SESSION);
@@ -146,12 +148,10 @@ export class AuthPersistence {
       sessionStorage.removeItem("navbarRoleChecked");
       sessionStorage.removeItem("navbarAdminStatus");
 
-      // Clear additional auth-related keys
+      // Clear additional auth-related keys (but NOT signing-out flags - those are handled by the sign-out handler)
       const additionalKeys = [
         "login_attempts",
         "login_timestamp",
-        "auth.signingOut",
-        "auth.justSignedOut",
       ];
 
       additionalKeys.forEach((key) => {

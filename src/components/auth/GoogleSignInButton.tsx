@@ -77,7 +77,7 @@ export default function GoogleSignInButton({
         focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red
         ${className}
       `}
-      aria-label="Sign in with Google"
+      aria-label="Sign up with Gmail"
     >
       {loading ? (
         <>
@@ -108,7 +108,7 @@ export default function GoogleSignInButton({
               fill="#EA4335"
             />
           </svg>
-          <span className="font-medium">Sign in with Google</span>
+          <span className="font-medium">Sign up with Gmail</span>
         </>
       )}
     </button>

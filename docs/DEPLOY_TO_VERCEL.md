@@ -54,11 +54,33 @@ STRIPE_WEBHOOK_SECRET=whsec_[your-webhook-secret]
 NEXT_PUBLIC_BASE_URL=https://your-domain.vercel.app
 ```
 
+#### Additional Required Variables
+
+```
+NEXT_PUBLIC_BASE_URL=https://wcs-basketball-v2.vercel.app
+```
+
 #### Optional Environment Variables
 
 ```
-NEXT_PUBLIC_ENVIRONMENT=production
-NODE_ENV=production
+# Email Service (Resend)
+RESEND_API_KEY=re_[your-api-key]
+RESEND_FROM="WCS Basketball <onboarding@resend.dev>"
+ADMIN_NOTIFICATIONS_TO=admin@example.com
+
+# SMS Service (Twilio)
+TWILIO_SID=your_twilio_sid
+TWILIO_AUTH_TOKEN=your_twilio_token
+TWILIO_PHONE=your_twilio_phone_number
+ADMIN_PHONE=your_admin_phone_number
+
+# Monitoring
+NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn
+UPSTASH_REDIS_REST_URL=your_upstash_url
+UPSTASH_REDIS_REST_TOKEN=your_upstash_token
+
+# Cron Jobs
+CRON_SECRET=your_cron_secret
 ```
 
 ### 4. Import Environment Variables in Vercel

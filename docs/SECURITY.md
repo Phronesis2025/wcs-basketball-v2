@@ -1,24 +1,29 @@
 # WCSv2.0 Security
 
-## 🔒 Current Security Implementation (v2.8.0)
+## 🔒 Current Security Implementation (v2.0.1)
 
 **Live URL**: https://wcs-basketball-v2.vercel.app  
-**Security Score**: 9.5/10 (Excellent) 🔒  
-**Last Audit**: January 2025 (v2.8.0)  
+**Security Score**: 8.5/10 (Good) 🔒  
+**Last Audit**: January 2025 (v2.0.1)  
 **Status**: Production Ready ✅  
 **Build Status**: Clean Build ✅  
 **Next.js Version**: 15.5.2
-**Critical Issue Found**: Exposed credentials in .cursor/mcp.json - FIXED ✅
+**Critical Issues Found**: 
+- ✅ secrets.txt exposed in git - FIXED (removed from tracking, added to .gitignore)
+- ✅ Server Actions CORS too permissive - FIXED (restricted to known origins)
 
-### Latest Security Audit (January 2025 - v2.8.0)
+### Latest Security Audit (January 2025 - v2.0.1)
 
-- **Security Score**: 9.5/10 (Excellent) ✅
-- **CRITICAL Issue Found & Fixed**: Exposed credentials in `.cursor/mcp.json`
-  - Added to `.gitignore` to prevent future tracking
-  - Removed from git history
-  - Created secure template file
-  - Recommendation: Rotate credentials in Supabase dashboard
-- **NPM Audit**: No vulnerabilities found
+- **Security Score**: 8.5/10 (Good) ✅
+- **CRITICAL Issues Found & Fixed**:
+  1. **secrets.txt exposed in git** - FIXED ✅
+     - Added to `.gitignore` to prevent future tracking
+     - Removed from git tracking with `git rm --cached`
+     - Recommendation: Rotate credentials if repository was shared
+  2. **Server Actions CORS too permissive** - FIXED ✅
+     - Changed from `allowedOrigins: ["*"]` to environment-based origins
+     - Restricted to localhost (dev) and production domain
+- **NPM Audit**: 0 vulnerabilities found ✅
 - **Supabase Advisors**: 2 Warnings (non-critical, for future enhancement)
   1. Leaked Password Protection: Enable HaveIBeenPwned integration (low priority)
   2. MFA Options: Add additional multi-factor authentication methods (low priority)

@@ -4,7 +4,7 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 
 **Current Version**: v2.0.1  
 **Last Updated**: January 2025  
-**Security Score**: 10/10 (Perfect) 🔒  
+**Security Score**: 8.5/10 (Good) 🔒  
 **Build Status**: Clean Build ✅  
 **Live URL**: https://wcs-basketball-v2.vercel.app
 
@@ -21,7 +21,7 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 
 ### Security & Performance
 
-- **Security**: Perfect 10/10 security score with comprehensive audit and zero vulnerabilities
+- **Security**: 8.5/10 security score with comprehensive audit and zero dependency vulnerabilities
 - **Authentication**: Role-based access control with admin and coach permissions
 - **Input Sanitization**: XSS protection and comprehensive profanity filtering for all user content
 - **Delete Confirmation**: All destructive actions require user confirmation to prevent accidental data loss
@@ -95,9 +95,15 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 
 3. **Set up environment variables**
 
+   Create a `.env.local` file in the project root with:
    ```bash
-   cp .env.example .env.local
-   # Add your Supabase credentials
+   # Required
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+   NEXT_PUBLIC_BASE_URL=http://localhost:3000
+   
+   # See docs/ENVIRONMENT_SETUP.md for complete list
    ```
 
 4. **Run the development server**
@@ -129,9 +135,9 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 
 ## 📊 Performance
 
-- **Build Time**: ~6.5 seconds
-- **Bundle Size**: 163 kB First Load JS
-- **Security Score**: 10/10 (Perfect)
+- **Build Time**: ~2.8 minutes
+- **Bundle Size**: 181 kB First Load JS (shared)
+- **Security Score**: 8.5/10 (Good)
 - **Zero Vulnerabilities**: All dependencies secure
 - **TypeScript**: Zero errors
 - **ESLint**: Zero linting errors
@@ -144,18 +150,17 @@ The application is deployed on Vercel with automatic deployments from the main b
 
 ## 📝 Recent Updates
 
-### v2.7.6 - January 2025 (Current)
+### v2.0.1 - January 2025 (Current)
 
-- **Security Audit**: Completed comprehensive security check with perfect 10/10 score
-- **Registration Updates**: Enhanced club registration flow with proper navigation
-- **Admin Analytics**: Fixed admin role checking and access control
-- **Team Page Redesign**: Dashboard-style card layout with white theme
-- **Schedules Enhancement**: Mobile-first calendar with color-coded events
-- **Modal Improvements**: Fixed scrolling issues and enhanced accessibility
-- **Image Optimization**: Resolved Next.js Image aspect ratio warnings
-- **Recurring Practices**: Advanced management with group ID tracking
+- **Security Audit**: Completed comprehensive security check with 8.5/10 score
+- **Critical Security Fixes**: 
+  - Removed secrets.txt from git tracking (security risk)
+  - Fixed Server Actions CORS configuration (restricted to known origins)
+- **Build Optimization**: Successful production build with zero errors
+- **Documentation**: Comprehensive documentation updates and audit reports
+- **Deployment Ready**: All security fixes applied and verified
 
-### v2.7.5 - January 2025
+### Previous Versions
 
 - **Team Page Dashboard-Style Cards**: Modern card-based design matching coaches dashboard
 - **Modal Scrolling Fixes**: Prevented main page scrolling when modals are open

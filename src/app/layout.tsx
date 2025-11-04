@@ -1,7 +1,7 @@
 ﻿import React from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import Navbar from "../components/Navbar";
+import HomepageLayout from "../components/HomepageLayout";
 import Footer from "../components/Footer";
 import ScrollToTop from "../components/ScrollToTop";
 import QueryProvider from "../components/QueryProvider"; // Re-enabled
@@ -129,7 +129,7 @@ export default function RootLayout({
       <body>
         <QueryProvider>
           <ScrollToTop />
-          <Navbar />
+          <HomepageLayout />
           {children}
           <ConditionalFooter />
           {/* Vercel Analytics for user behavior tracking */}

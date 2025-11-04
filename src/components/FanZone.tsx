@@ -45,7 +45,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
   return (
     <section
       ref={ref}
-      className="bg-white py-12 sm:py-16"
+      className="bg-navy py-12 sm:py-16"
       aria-label="Fan Zone"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -59,7 +59,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
             )}
           </div>
         )}
-        <h2 className="text-3xl sm:text-4xl font-bebas text-center text-navy mb-8 sm:mb-12">
+        <h2 className="text-3xl sm:text-4xl font-bebas text-center text-white mb-8 sm:mb-12">
           Fan Zone
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

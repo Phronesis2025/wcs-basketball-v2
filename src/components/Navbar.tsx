@@ -13,46 +13,58 @@ import StartNowButton from "@/components/cta/StartNowButton";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [user, setUser] = useState<string | null>(null);
   const [userFullName, setUserFullName] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null); // Store full user role
   const [isSigningOut, setIsSigningOut] = useState(false);
 
+  // Only track scroll for background changes (not for visibility - navbar is always visible now)
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setIsVisible(false);
-      } else if (currentScrollY < lastScrollY) {
-        setIsVisible(true);
-      }
       setIsScrolled(currentScrollY > 30);
-      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       // Don't check auth status if we're in the process of signing out
       if (isSigningOut) {
         devLog("Navbar: Skipping auth check - signing out");
         return;
       }
 
-      // Check if we just signed out
+      // Check if we just signed out - keep flag longer to prevent re-authentication
       const justSignedOut = sessionStorage.getItem("auth.justSignedOut");
       if (justSignedOut) {
         devLog("Navbar: Skipping auth check - just signed out");
         setUser(null);
         setUserFullName(null);
         setIsAdmin(false);
+        setUserRole(null);
+        
+        // Clear the flag after a longer delay to ensure no re-authentication
+        // Check if flag timestamp is older than 10 seconds before clearing
+        const flagTimestamp = sessionStorage.getItem("auth.justSignedOutTimestamp");
+        const now = Date.now();
+        if (flagTimestamp) {
+          const timeSinceSignOut = now - parseInt(flagTimestamp);
+          if (timeSinceSignOut > 10000) {
+            // Only clear if more than 10 seconds have passed
+            sessionStorage.removeItem("auth.justSignedOut");
+            sessionStorage.removeItem("auth.justSignedOutTimestamp");
+            devLog("Navbar: Cleared sign-out flag after 10 seconds");
+          }
+        } else {
+          // If no timestamp, set one and keep flag for 10 seconds
+          sessionStorage.setItem("auth.justSignedOutTimestamp", now.toString());
+        }
         return;
       }
 
@@ -67,15 +79,94 @@ export default function Navbar() {
 
         // DO NOT restore to localStorage during sign-out
         // Only restore if we have valid data and not signing out
+        // Also verify token is not expired before restoring
         if (isAuthenticated && authToken && !isSigningOut) {
-          localStorage.setItem("auth.authenticated", isAuthenticated);
-          localStorage.setItem("supabase.auth.token", authToken);
+          try {
+            const session = JSON.parse(authToken);
+            // Check if token is expired
+            if (session.expires_at) {
+              const expiresAt = session.expires_at * 1000;
+              const now = Date.now();
+              if (now >= expiresAt) {
+                // Token expired, don't restore
+                devLog("Navbar: Token expired, not restoring from sessionStorage");
+                sessionStorage.removeItem("auth.authenticated");
+                sessionStorage.removeItem("supabase.auth.token");
+                return;
+              }
+            }
+            localStorage.setItem("auth.authenticated", isAuthenticated);
+            localStorage.setItem("supabase.auth.token", authToken);
+          } catch (parseError) {
+            devError("Navbar: Error parsing session token:", parseError);
+            // Don't restore if we can't parse the token
+            return;
+          }
         }
+      }
+
+      // Final check: make absolutely sure we're not signing out before proceeding
+      const finalSignOutCheck = sessionStorage.getItem("auth.justSignedOut");
+      if (finalSignOutCheck) {
+        devLog("Navbar: Sign-out flag still present, aborting auth restoration");
+        setUser(null);
+        setUserFullName(null);
+        setIsAdmin(false);
+        setUserRole(null);
+        return;
       }
 
       if (isAuthenticated && authToken) {
         try {
           const session = JSON.parse(authToken);
+          
+          // Verify token is not expired before restoring state
+          if (session.expires_at) {
+            const expiresAt = session.expires_at * 1000; // Convert to milliseconds
+            const now = Date.now();
+            if (now >= expiresAt) {
+              devLog("Navbar: Token expired, clearing auth state");
+              localStorage.removeItem("auth.authenticated");
+              localStorage.removeItem("supabase.auth.token");
+              sessionStorage.removeItem("auth.authenticated");
+              sessionStorage.removeItem("supabase.auth.token");
+              setUser(null);
+              setUserFullName(null);
+              setIsAdmin(false);
+              setUserRole(null);
+              return;
+            }
+          }
+          
+          // Before setting user state, verify the token is actually valid by checking with API
+          // This prevents restoring state from stale/invalid tokens after sign-out
+          try {
+            const accessToken = session.access_token || session.user?.access_token;
+            if (accessToken) {
+              const verifyResponse = await fetch("/api/auth/user", {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              
+              if (!verifyResponse.ok) {
+                // Token is invalid, clear everything
+                devLog("Navbar: Token validation failed, clearing auth state");
+                localStorage.removeItem("auth.authenticated");
+                localStorage.removeItem("supabase.auth.token");
+                sessionStorage.removeItem("auth.authenticated");
+                sessionStorage.removeItem("supabase.auth.token");
+                setUser(null);
+                setUserFullName(null);
+                setIsAdmin(false);
+                setUserRole(null);
+                return;
+              }
+            }
+          } catch (verifyError) {
+            devError("Navbar: Error verifying token:", verifyError);
+            // If verification fails, don't restore state
+            return;
+          }
+
           setUser(session?.user?.email || "authenticated");
           setUserFullName(session?.user?.user_metadata?.full_name || null);
 
@@ -100,12 +191,21 @@ export default function Navbar() {
 
               if (response.ok) {
                 const userData = await response.json();
-                const isAdminUser = userData.role === "admin";
+                const role = userData.role; // Can be "admin", "coach", "parent", or null
+                const isAdminUser = role === "admin";
                 setIsAdmin(isAdminUser);
+                setUserRole(role); // Store the full role
+                // Cache the role for future use
+                if (role) {
+                  sessionStorage.setItem("navbarUserRole", role);
+                } else {
+                  sessionStorage.removeItem("navbarUserRole");
+                }
                 return isAdminUser;
               } else if (response.status === 404) {
                 // User not in users table (likely a parent user)
                 setIsAdmin(false);
+                setUserRole(null); // Parent users have null role
                 return false;
               }
 
@@ -132,6 +232,7 @@ export default function Navbar() {
                 devError("Admin role check failed after all attempts");
               }
               setIsAdmin(false);
+              setUserRole(null); // Set role to null on error
               return false;
             }
           };
@@ -139,8 +240,20 @@ export default function Navbar() {
           // Only check role if we haven't cached it recently
           const cachedRoleCheck = sessionStorage.getItem("navbarRoleChecked");
           const cachedAdminStatus = sessionStorage.getItem("navbarAdminStatus");
+          const cachedRole = sessionStorage.getItem("navbarUserRole");
           const lastCheck = cachedRoleCheck ? parseInt(cachedRoleCheck) : 0;
           const now = Date.now();
+
+          // Load cached role if available (for immediate UI update)
+          // Only load cache if we have valid auth data
+          if (cachedRole && session?.user?.id) {
+            setUserRole(cachedRole);
+          } else if (!session?.user?.id) {
+            // Clear cache if no valid session
+            sessionStorage.removeItem("navbarUserRole");
+            sessionStorage.removeItem("navbarAdminStatus");
+            sessionStorage.removeItem("navbarRoleChecked");
+          }
 
           // Always check role immediately for Club Management page
           if (isAdminDashboard) {
@@ -149,6 +262,7 @@ export default function Navbar() {
                 "Navbar: Immediate admin check for Club Management:",
                 adminStatus
               );
+              // Role is already set in checkAdminRole function
             });
           } else if (now - lastCheck > 300000) {
             // Increased cache time to 5 minutes (300000ms)
@@ -159,6 +273,7 @@ export default function Navbar() {
                 "navbarAdminStatus",
                 adminStatus.toString()
               );
+              // Role is already cached in checkAdminRole function
               devLog("Navbar: Cached admin status:", adminStatus);
             });
             sessionStorage.setItem("navbarRoleChecked", now.toString());
@@ -166,6 +281,10 @@ export default function Navbar() {
             // Use cached admin status
             const cachedAdmin = cachedAdminStatus === "true";
             setIsAdmin(cachedAdmin);
+            // Also use cached role if available
+            if (cachedRole) {
+              setUserRole(cachedRole);
+            }
             // Only log in development mode
             if (process.env.NODE_ENV === "development") {
               console.log("Navbar: Using cached admin status:", cachedAdmin);
@@ -267,6 +386,7 @@ export default function Navbar() {
       setUser(null);
       setUserFullName(null);
       setIsAdmin(false);
+      setUserRole(null);
 
       // Import supabase client for sign out
       const { supabase } = await import("@/lib/supabaseClient");
@@ -312,19 +432,29 @@ export default function Navbar() {
             sessionStorage.removeItem(key);
           }
         });
+        
+        // Clear navbar role cache
+        sessionStorage.removeItem("navbarUserRole");
+        sessionStorage.removeItem("navbarAdminStatus");
+        sessionStorage.removeItem("navbarRoleChecked");
       } catch (storageErr) {
         devError("Storage cleanup error:", storageErr);
       }
 
       devLog("Navbar: Sign-out complete, redirecting to home");
 
+      // Set timestamp for sign-out flag to track when it was set
+      sessionStorage.setItem("auth.justSignedOutTimestamp", Date.now().toString());
+
       // Use replace instead of href to prevent back button navigation to protected pages
       setTimeout(() => {
-        // Final cleanup of any remaining flags
+        // Clear localStorage flags (sessionStorage flags will persist across redirect)
         localStorage.removeItem("auth.signingOut");
-        sessionStorage.removeItem("auth.justSignedOut");
         setIsSigningOut(false);
 
+        // Keep sessionStorage flag for the new page to detect sign-out
+        // It will be cleared by the new page after 5 seconds
+        
         // Use replace to prevent back button navigation to authenticated state
         window.location.replace("/");
       }, 500); // Reduced delay since we're doing thorough cleanup
@@ -361,14 +491,22 @@ export default function Navbar() {
     { name: "Drills", href: "/drills" },
   ];
 
-  // Add "Profile" link for authenticated users, "Coaches" link for non-authenticated users
+  // Add "Profile" link for parents, "Coaches" link for admin/coach, or login for non-authenticated
   let navLinks;
   if (user) {
-    // All authenticated users (admin or parent) see "Profile" link
-    navLinks = [
-      ...baseNavLinks,
-      { name: "Profile", href: "/parent/profile" },
-    ];
+    // Check user role: admin and coach see "Coaches" link, parents see "Profile" link
+    if (userRole === "admin" || userRole === "coach") {
+      navLinks = [
+        ...baseNavLinks,
+        { name: "Coaches", href: "/coaches/login" },
+      ];
+    } else {
+      // Parent users or users with null role see "Profile" link
+      navLinks = [
+        ...baseNavLinks,
+        { name: "Profile", href: "/parent/profile" },
+      ];
+    }
   } else {
     // Non-authenticated users see "Coaches" link to login
     navLinks = [...baseNavLinks, { name: "Coaches", href: "/coaches/login" }];
@@ -490,16 +628,12 @@ export default function Navbar() {
       ) : (
         // Regular Navbar for Home and other pages
         <motion.nav
-          className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
-            // Home page: transparent until scrolled; Other pages: always white
+          className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
+            // Home page: always black background; Other pages: always white
             isHome
-              ? isScrolled
-                ? "bg-white/95 backdrop-blur-md shadow-lg"
-                : "bg-transparent"
+              ? "bg-black"
               : "bg-white/95 backdrop-blur-md shadow-lg"
           }`}
-          animate={{ y: isVisible ? 0 : -100 }}
-          transition={{ duration: 0.3 }}
         >
           <div className="max-w-7xl mx-auto px-2 sm:px-6 py-1">
             <div className="flex items-center justify-between h-12">
@@ -509,8 +643,8 @@ export default function Navbar() {
               >
                 <div
                   className={`p-1 rounded-md transition-all duration-300 ease-out w-14 h-7 sm:w-16 sm:h-8 relative ${
-                    isHome && !isScrolled
-                      ? "bg-navy/10 backdrop-blur-sm"
+                    isHome
+                      ? "bg-transparent"
                       : "bg-transparent"
                   }`}
                 >
@@ -525,8 +659,8 @@ export default function Navbar() {
                 </div>
                 <span
                   className={`md:hidden font-bebas text-base sm:text-lg transition-colors duration-300 ease-out ${
-                    isHome && !isScrolled
-                      ? "text-white drop-shadow-lg"
+                    isHome
+                      ? "text-white"
                       : "text-navy"
                   }`}
                 >
@@ -534,8 +668,8 @@ export default function Navbar() {
                 </span>
                 <span
                   className={`hidden md:inline font-bebas text-lg transition-colors duration-300 ease-out ${
-                    isHome && !isScrolled
-                      ? "text-white drop-shadow-lg"
+                    isHome
+                      ? "text-white"
                       : "text-navy"
                   }`}
                 >
@@ -548,8 +682,8 @@ export default function Navbar() {
                     key={link.name}
                     href={link.href}
                     className={`font-inter font-medium text-sm transition-all duration-300 ease-out hover:text-red ${
-                      isHome && !isScrolled
-                        ? "text-white drop-shadow-lg"
+                      isHome
+                        ? "text-white"
                         : "text-navy"
                     }`}
                   >
@@ -559,7 +693,11 @@ export default function Navbar() {
                 {user ? (
                   <button
                     onClick={handleSignOut}
-                    className="bg-navy text-white font-bold px-4 py-2 rounded hover:bg-opacity-90 transition duration-300 text-sm"
+                    className={`font-bold px-4 py-2 rounded transition duration-300 text-sm ${
+                      isHome
+                        ? "bg-red text-white hover:bg-red-700"
+                        : "bg-navy text-white hover:bg-opacity-90"
+                    }`}
                   >
                     Sign Out
                   </button>
@@ -572,8 +710,8 @@ export default function Navbar() {
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className={`md:hidden p-2 rounded-md transition-all duration-300 ease-out ${
-                  isHome && !isScrolled
-                    ? "text-white hover:bg-navy/20"
+                  isHome
+                    ? "text-white hover:bg-white/10"
                     : "text-navy hover:bg-gray-100"
                 }`}
                 aria-label="Toggle mobile menu"
@@ -583,12 +721,6 @@ export default function Navbar() {
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
-                  style={{
-                    filter:
-                      isHome && !isScrolled
-                        ? "drop-shadow(0 0 2px rgba(0,0,0,0.5))"
-                        : "none",
-                  }}
                 >
                   <path
                     strokeLinecap="round"
@@ -695,9 +827,11 @@ export default function Navbar() {
                 ) : (
                   <div 
                     className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    <StartNowButton variant="navbar" />
+                    <StartNowButton 
+                      variant="navbar" 
+                      onOpen={() => setIsMobileMenuOpen(false)}
+                    />
                   </div>
                 )}
               </>

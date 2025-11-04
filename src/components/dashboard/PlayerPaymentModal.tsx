@@ -82,9 +82,21 @@ export default function PlayerPaymentModal({
 
   const assignedTeam = teams.find((t: Team) => t.id === player.team_id);
 
-  // Filter teams based on age compatibility for pending players
+  // Normalize gender labels between Player (Male/Female/Other) and Team (Boys/Girls/Co-ed)
+  const normalizeGender = (value: string | null | undefined): "male" | "female" | "coed" | "other" => {
+    const v = (value || "").trim().toLowerCase();
+    if (v === "male" || v === "m" || v === "boy" || v === "boys") return "male";
+    if (v === "female" || v === "f" || v === "girl" || v === "girls") return "female";
+    if (v === "coed" || v === "co-ed" || v === "co ed") return "coed";
+    return "other";
+  };
+
+  // Filter teams based on age and gender compatibility for pending players
   const compatibleTeams = playerStatus === "pending" && playerAge && player.gender
     ? teams.filter((t: Team) => {
+        // Only consider active teams when available
+        if ((t as any).is_active === false) return false;
+
         const ageRanges: Record<string, { min: number; max: number }> = {
           U8: { min: 6, max: 8 },
           U10: { min: 8, max: 10 },
@@ -94,19 +106,17 @@ export default function PlayerPaymentModal({
           U18: { min: 15, max: 18 },
         };
         const ageRange = ageRanges[t.age_group || ""];
-        if (
-          ageRange &&
-          (playerAge < ageRange.min || playerAge > ageRange.max)
-        ) {
+        if (ageRange && (playerAge < ageRange.min || playerAge > ageRange.max)) {
           return false;
         }
-        const playerGender = player.gender.toLowerCase();
-        const teamGender = t.gender.toLowerCase();
-        return (
-          teamGender === "coed" ||
-          teamGender === playerGender ||
-          playerGender === "coed"
-        );
+
+        const playerNorm = normalizeGender(player.gender);
+        const teamNorm = normalizeGender(t.gender);
+
+        // Compatibility: team coed accepts all, or genders match; players with "other" can only join coed
+        if (teamNorm === "coed") return true;
+        if (playerNorm === "other") return false;
+        return teamNorm === playerNorm;
       })
     : teams;
 
@@ -255,15 +265,15 @@ export default function PlayerPaymentModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto text-black"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="text-2xl font-bebas uppercase text-gray-900">Player Information</h2>
+          <h2 className="text-2xl font-bebas uppercase text-black">Player Information</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-black hover:text-black transition-colors"
           >
             <svg
               className="w-6 h-6"
@@ -286,48 +296,48 @@ export default function PlayerPaymentModal({
           {/* Player Basic Info */}
           <div className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <h3 className="text-lg font-semibold text-black mb-4">
                 {player.name}
               </h3>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Parent Email</label>
-                <p className="text-gray-900">{player.parent_email || "N/A"}</p>
+                <label className="block text-sm font-medium text-black mb-1">Parent Email</label>
+                <p className="text-black">{player.parent_email || "N/A"}</p>
               </div>
               {playerAge && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                  <p className="text-gray-900">{playerAge} years</p>
+                  <label className="block text-sm font-medium text-black mb-1">Age</label>
+                  <p className="text-black">{playerAge} years</p>
                 </div>
               )}
               {player.gender && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                  <p className="text-gray-900">{player.gender}</p>
+                  <label className="block text-sm font-medium text-black mb-1">Gender</label>
+                  <p className="text-black">{player.gender}</p>
                 </div>
               )}
               {player.grade && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Grade</label>
-                  <p className="text-gray-900">{player.grade}</p>
+                  <label className="block text-sm font-medium text-black mb-1">Grade</label>
+                  <p className="text-black">{player.grade}</p>
                 </div>
               )}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Registration Date</label>
-                <p className="text-gray-900">{registrationDate}</p>
+                <label className="block text-sm font-medium text-black mb-1">Registration Date</label>
+                <p className="text-black">{registrationDate}</p>
               </div>
               {assignedTeam && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Team</label>
-                  <p className="text-gray-900">{assignedTeam.name}</p>
+                  <label className="block text-sm font-medium text-black mb-1">Team</label>
+                  <p className="text-black">{assignedTeam.name}</p>
                 </div>
               )}
               {player.parent_phone && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Parent Phone</label>
-                  <p className="text-gray-900">{player.parent_phone}</p>
+                  <label className="block text-sm font-medium text-black mb-1">Parent Phone</label>
+                  <p className="text-black">{player.parent_phone}</p>
                 </div>
               )}
             </div>
@@ -335,7 +345,7 @@ export default function PlayerPaymentModal({
             {/* Status-specific reason fields */}
             {player.on_hold_reason && (
               <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded">
-                <p className="text-orange-700 text-sm">
+                <p className="text-black text-sm">
                   <strong>On Hold Reason:</strong> {player.on_hold_reason}
                 </p>
               </div>
@@ -343,7 +353,7 @@ export default function PlayerPaymentModal({
 
             {player.rejection_reason && (
               <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded">
-                <p className="text-red-700 text-sm">
+                <p className="text-black text-sm">
                   <strong>Rejection Reason:</strong> {player.rejection_reason}
                 </p>
               </div>
@@ -358,13 +368,13 @@ export default function PlayerPaymentModal({
                   <>
                     {compatibleTeams.length > 0 && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-black mb-2">
                           Assign Team
                         </label>
                         <select
                           value={selectedTeamId}
                           onChange={(e) => setSelectedTeamId(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                         >
                           <option value="" disabled>
                             Select team
@@ -402,7 +412,7 @@ export default function PlayerPaymentModal({
                     </div>
                     {showRejectInput && (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-black mb-2">
                           Rejection Reason
                         </label>
                         <input
@@ -410,7 +420,7 @@ export default function PlayerPaymentModal({
                           value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
                           placeholder="Enter reason for rejection..."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
                         />
                       </div>
                     )}
@@ -418,10 +428,10 @@ export default function PlayerPaymentModal({
                 ) : (
                   <>
                     <div className="mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <h3 className="text-lg font-semibold text-black mb-2">
                         Place Player On Hold
                       </h3>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <p className="text-sm text-black mb-4">
                         Select a reason for placing <strong>{player.name}</strong> on hold:
                       </p>
                     </div>
@@ -438,7 +448,7 @@ export default function PlayerPaymentModal({
                           onChange={(e) => setSelectedOnHoldReason(e.target.value)}
                           className="mt-1 mr-3"
                         />
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-black">
                           No teams spot available
                         </span>
                       </label>
@@ -453,7 +463,7 @@ export default function PlayerPaymentModal({
                           onChange={(e) => setSelectedOnHoldReason(e.target.value)}
                           className="mt-1 mr-3"
                         />
-                        <span className="text-sm text-gray-700">
+                        <span className="text-sm text-black">
                           Not enough players/coaches for full team
                         </span>
                       </label>
@@ -469,7 +479,7 @@ export default function PlayerPaymentModal({
                             onChange={(e) => setSelectedOnHoldReason(e.target.value)}
                             className="mt-1 mr-3"
                           />
-                          <span className="text-sm text-gray-700 flex-1">Other:</span>
+                          <span className="text-sm text-black flex-1">Other:</span>
                         </label>
                         
                         {selectedOnHoldReason === "other" && (
@@ -478,19 +488,19 @@ export default function PlayerPaymentModal({
                               value={otherOnHoldReason}
                               onChange={(e) => setOtherOnHoldReason(e.target.value)}
                               placeholder="Please provide additional details..."
-                              className={`w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 text-gray-900 ${
+                              className={`w-full p-2 border rounded-md text-sm focus:outline-none focus:ring-2 text-black ${
                                 profanityError
-                                  ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                                  : "border-gray-300 focus:ring-yellow-500 focus:border-yellow-500"
+                                  ? "border-black focus:ring-black focus:border-black"
+                                  : "border-gray-300 focus:ring-black focus:border-black"
                               }`}
                               rows={3}
                               maxLength={500}
                             />
                             {profanityError && (
-                              <p className="mt-1 text-xs text-red-600">{profanityError}</p>
+                              <p className="mt-1 text-xs text-black">{profanityError}</p>
                             )}
                             {!profanityError && otherOnHoldReason && (
-                              <p className="mt-1 text-xs text-gray-500">
+                              <p className="mt-1 text-xs text-black">
                                 {otherOnHoldReason.length}/500 characters
                               </p>
                             )}
@@ -508,7 +518,7 @@ export default function PlayerPaymentModal({
                           setProfanityError("");
                         }}
                         disabled={loading}
-                        className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition text-sm font-medium disabled:opacity-50"
+                        className="flex-1 px-4 py-2 text-black bg-gray-200 rounded-md hover:bg-gray-300 transition text-sm font-medium disabled:opacity-50"
                       >
                         Cancel
                       </button>
@@ -527,7 +537,7 @@ export default function PlayerPaymentModal({
 
             {playerStatus === "approved" && (
               <div className="text-center">
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 border border-yellow-300">
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-black border border-yellow-300">
                   Awaiting Payment
                 </span>
               </div>
@@ -546,7 +556,7 @@ export default function PlayerPaymentModal({
             {playerStatus === "rejected" && (
               <>
                 <div className="text-center mb-4">
-                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 border border-red-300">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-black border border-red-300">
                     Rejected
                   </span>
                 </div>

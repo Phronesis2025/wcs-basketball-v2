@@ -1,0 +1,225 @@
+<!--
+WCS Registration Ad Banner
+- Two variants: static and animated (pick ONE by swapping the class on the <a> root)
+- Color scheme: white background, WCS navy (#002C51), red (#E11D2E), black, white
+- Includes abstract/closeup logo treatment (masked circle on the left)
+- Accessible, responsive, and respects prefers-reduced-motion
+- To use: paste into your page and update the href on the <a> to your registration URL
+-->
+
+<a class="wcs-ad wcs-ad--animated" href="/register" aria-label="Register for WCS youth basketball">
+  <!-- Left: abstract logo disk -->
+  <span class="wcs-ad__logo" aria-hidden="true">
+    <!-- If you have an SVG logo, you can inline it here instead of using background-image -->
+  </span>
+
+  <!-- Middle: bold headline/subline -->
+  <span class="wcs-ad__copy">
+    <span class="wcs-ad__eyebrow">WCS • Youth Basketball</span>
+    <span class="wcs-ad__headline">Don’t just watch — <em>play</em>.</span>
+    <span class="wcs-ad__sub">Open spots for new players & teams • Ages 7–14</span>
+  </span>
+
+  <!-- Right: loud CTA button -->
+  <span class="wcs-ad__cta">
+    <span class="wcs-ad__ball" aria-hidden="true"></span>
+    <span class="wcs-ad__btn">REGISTER NOW</span>
+  </span>
+</a>
+
+<style>
+  /* ===== Design Tokens ===== */
+  .wcs-ad {
+    --wcs-navy: #002C51;
+    --wcs-red: #E11D2E; /* vivid red for CTA */
+    --ink: #0b1220; /* dark ink */
+    --muted: #5b6878; /* muted copy */
+    --bg: #ffffff;
+    --ring: rgba(0, 44, 81, 0.12);
+    --shine: rgba(255,255,255,0.8);
+    --logo-url: url(''); /* <-- Set to your WCS logo URL (PNG/SVG). Example: url(/assets/wcs-logo.svg) */
+  }
+
+  /* ===== Root Banner ===== */
+  .wcs-ad {
+    position: relative;
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    align-items: center;
+    gap: 20px;
+    width: min(1200px, 96vw);
+    min-height: 120px;
+    margin: 16px auto;
+    padding: 18px 22px;
+    background: var(--bg);
+    color: var(--ink);
+    text-decoration: none;
+    border: 2px solid var(--wcs-navy);
+    border-radius: 14px;
+    box-shadow: 0 10px 24px -12px var(--ring);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Subtle background motif — court arcs + seams, very faint */
+  .wcs-ad::before,
+  .wcs-ad::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wcs-ad::before {
+    background:
+      radial-gradient(90% 60% at -10% 120%, rgba(0,44,81,0.08) 0%, rgba(0,44,81,0) 60%) ,
+      radial-gradient(70% 50% at 120% -10%, rgba(225,29,46,0.06) 0%, rgba(225,29,46,0) 60%);
+  }
+  .wcs-ad::after {
+    background: repeating-linear-gradient(135deg, rgba(0,44,81,0.05) 0 6px, rgba(0,44,81,0.02) 6px 12px);
+    mask: linear-gradient(90deg, transparent, black 20% 80%, transparent);
+    opacity: .35;
+  }
+
+  /* ===== Logo Disk (abstract close-up) ===== */
+  .wcs-ad__logo {
+    position: relative;
+    z-index: 1;
+    width: 140px;
+    height: 84px;
+    border-radius: 12px;
+    background:
+      radial-gradient(circle at 28% 50%, rgba(0,44,81,0.08) 0 56%, transparent 57%),
+      var(--wcs-navy);
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,0.5), 0 6px 14px -8px var(--ring);
+  }
+  /* Masked logo: place your logo as background-image for a tight crop */
+  .wcs-ad__logo::before {
+    content: "";
+    position: absolute;
+    width: 160px; height: 160px;
+    background-image: var(--logo-url);
+    background-size: cover;
+    background-position: 40% 50%;
+    opacity: 0.9;
+    transform: translateX(10px) scale(1.05);
+    filter: saturate(1.2) contrast(1.05);
+    clip-path: circle(44% at 30% 50%);
+  }
+
+  /* ===== Copy ===== */
+  .wcs-ad__copy { z-index: 1; display: grid; gap: 4px; }
+  .wcs-ad__eyebrow {
+    font: 700 12px/1 Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--wcs-navy);
+  }
+  .wcs-ad__headline {
+    font: 800 28px/1.1 Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: -0.02em;
+  }
+  .wcs-ad__headline em { color: var(--wcs-red); font-style: normal; text-decoration: underline; text-decoration-thickness: .12em; }
+  .wcs-ad__sub {
+    font: 500 14px/1.4 Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    color: var(--muted);
+  }
+
+  /* ===== CTA ===== */
+  .wcs-ad__cta { z-index: 1; display: grid; grid-auto-flow: column; align-items: center; gap: 12px; }
+  .wcs-ad__btn {
+    display: inline-block;
+    padding: 14px 18px;
+    border-radius: 999px;
+    background: var(--wcs-red);
+    color: white;
+    font: 900 14px/1 Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    letter-spacing: .05em;
+    box-shadow: 0 10px 20px -10px rgba(225,29,46,0.6), inset 0 -2px 0 rgba(0,0,0,0.2);
+    transform: translateZ(0);
+    transition: transform .15s ease, box-shadow .2s ease, filter .2s ease;
+    white-space: nowrap;
+  }
+  .wcs-ad:hover .wcs-ad__btn { transform: translateY(-1px); box-shadow: 0 16px 28px -12px rgba(225,29,46,0.65), inset 0 -2px 0 rgba(0,0,0,0.18); filter: brightness(1.02); }
+
+  /* Decorative ball next to CTA */
+  .wcs-ad__ball {
+    width: 38px; height: 38px; border-radius: 50%;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.85), rgba(255,255,255,0) 40%),
+      radial-gradient(circle at 70% 70%, rgba(0,0,0,0.08), rgba(0,0,0,0) 40%),
+      #ff7a00;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.1), 0 4px 10px -6px var(--ring);
+    position: relative;
+  }
+  .wcs-ad__ball::before, .wcs-ad__ball::after {
+    content: ""; position: absolute; inset: 0; border-radius: 50%;
+    background:
+      radial-gradient(120% 60% at 50% 50%, transparent 45%, rgba(0,0,0,0.22) 46% 48%, transparent 49%),
+      radial-gradient(120% 60% at 50% 50%, transparent 51%, rgba(0,0,0,0.22) 52% 54%, transparent 55%);
+  }
+  .wcs-ad__ball::after { filter: blur(.3px); opacity: .7; }
+
+  /* ===== Interactions ===== */
+  .wcs-ad:hover { box-shadow: 0 18px 40px -18px var(--ring); }
+
+  /* ===== Animated Variant ===== */
+  .wcs-ad--animated::after { animation: wcsShimmer 3.2s linear infinite; }
+  .wcs-ad--animated .wcs-ad__btn { animation: wcsPulse 3.6s ease-in-out infinite; }
+  .wcs-ad--animated .wcs-ad__ball { animation: wcsBounce 2.8s ease-in-out infinite; }
+
+  @keyframes wcsShimmer {
+    0% { transform: translateX(-40%); opacity: .35; }
+    50% { opacity: .55; }
+    100% { transform: translateX(40%); opacity: .35; }
+  }
+  @keyframes wcsPulse {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.08); }
+  }
+  @keyframes wcsBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  /* ===== Static Variant ===== */
+  .wcs-ad--static::after, .wcs-ad--static .wcs-ad__btn, .wcs-ad--static .wcs-ad__ball { animation: none !important; }
+
+  /* ===== Reduced Motion ===== */
+  @media (prefers-reduced-motion: reduce) {
+    .wcs-ad--animated::after, .wcs-ad--animated .wcs-ad__btn, .wcs-ad--animated .wcs-ad__ball { animation: none !important; }
+  }
+
+  /* ===== Responsive ===== */
+  @media (max-width: 920px) {
+    .wcs-ad { grid-template-columns: 120px 1fr auto; min-height: 110px; }
+    .wcs-ad__logo { width: 120px; height: 72px; }
+    .wcs-ad__headline { font-size: 24px; }
+  }
+  @media (max-width: 640px) {
+    .wcs-ad {
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 14px;
+      padding: 14px 16px;
+      min-height: 96px;
+    }
+    .wcs-ad__logo { grid-column: 1 / -1; width: 100%; height: 60px; border-radius: 10px; }
+    .wcs-ad__copy { order: 2; }
+    .wcs-ad__headline { font-size: 22px; }
+    .wcs-ad__sub { font-size: 13px; }
+    .wcs-ad__cta .wcs-ad__ball { display: none; }
+  }
+</style>
+
+<!--
+USAGE NOTES:
+1) Update the href on the <a> to point to your registration route (e.g., "/register" or "/register?team=frost").
+2) Provide your logo URL by setting --logo-url in .wcs-ad inline style or globally, e.g.:
+   <a class="wcs-ad wcs-ad--animated" style="--logo-url:url('/images/wcs-logo.svg')" href="/register"> ...
+3) For a static, non-animated version, change the root class to: class="wcs-ad wcs-ad--static".
+4) If you want the ad to open in a new tab instead of redirect, add target="_blank" rel="noopener noreferrer" to the <a> element.
+-->

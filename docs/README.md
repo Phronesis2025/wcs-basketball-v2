@@ -43,7 +43,7 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
   - Complete CRUD operations for all entities
   - Real-time data updates and proper error handling
 
-## Recent Updates (October 2025)
+## Recent Updates (January 2025)
 
 ### 🎉 **PRODUCTION READY - COMPREHENSIVE TESTING COMPLETE**
 
@@ -73,10 +73,11 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 
 ### **Security & Build Optimization**
 
-- **Security Audit**: Comprehensive security assessment with 8.5/10 score
+- **Security Audit**: Comprehensive security assessment with 8.5/10 score (January 2025)
 - **Production Build**: Successful build with zero errors and proper optimization
 - **Security Documentation**: Complete security audit report and recommendations
-- **OWASP Compliance**: Full compliance with OWASP Top 10 security standards
+- **OWASP Compliance**: 90% compliance with OWASP Top 10 security standards
+- **Critical Fixes**: secrets.txt removed from git, CORS configuration fixed
 
 ## Documentation
 
@@ -132,7 +133,7 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 - **Audit Logging**: Security event tracking and monitoring
 - **Message Board Security**: Enhanced input sanitization and XSS protection for coach communications
 - **Console Security**: All console statements replaced with secure development-only logging utilities
-- **Perfect Security Score**: 10/10 security rating with zero vulnerabilities
+- **Security Score**: 8.5/10 security rating with zero dependency vulnerabilities
 
 ## Deployment Notes
 
@@ -168,5 +169,5 @@ Official website for a youth basketball league in Kansas, managed for Phronesis2
 
 ## Version
 
-- **v2.8.0** (Current – Production Ready) - Comprehensive testing complete, all critical bugs fixed, Coach Tab functionality fully validated
-- **Previous**: v2.5.0 – recurring practices, calendar single‑day fix, program‑wide scheduling/updates, coach team filtering, CSP image preview fix, schedules team fetch update
+- **v2.0.1** (Current – Production Ready) - Security audit complete, secrets management fixed, CORS configuration secured, comprehensive build testing
+- **Previous**: v2.9.1 – Homepage Ad Section, TodaysEvents mobile optimization

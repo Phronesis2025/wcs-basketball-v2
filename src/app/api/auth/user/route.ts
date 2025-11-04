@@ -22,9 +22,6 @@ export async function GET(request: NextRequest) {
 
     const token = authHeader.substring(7); // Remove "Bearer " prefix
 
-    devLog("Token received (first 50 chars):", token.substring(0, 50) + "...");
-    devLog("Token length:", token.length);
-
     // Verify the token and get user information
     const {
       data: { user },
@@ -32,12 +29,23 @@ export async function GET(request: NextRequest) {
     } = await supabaseAdmin.auth.getUser(token);
 
     if (error || !user) {
-      devError("User verification error:", error);
-      devError("Token validation failed. Error details:", {
-        error: error?.message,
-        status: error?.status,
-        name: error?.name,
-      });
+      // Check if token is expired - this is expected during sign-out
+      const isExpiredToken = error?.message?.includes("expired") || 
+                            error?.message?.includes("invalid claims");
+      
+      // Only log errors if it's not an expected expired token scenario
+      // (during normal operation, expired tokens should be handled silently)
+      if (!isExpiredToken) {
+        devLog("Token received (first 50 chars):", token.substring(0, 50) + "...");
+        devLog("Token length:", token.length);
+        devError("User verification error:", error);
+        devError("Token validation failed. Error details:", {
+          error: error?.message,
+          status: error?.status,
+          name: error?.name,
+        });
+      }
+      
       return NextResponse.json(
         { error: "Invalid or expired token" },
         { status: 401 }

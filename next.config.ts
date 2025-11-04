@@ -73,7 +73,13 @@ const nextConfig: NextConfig = {
   output: process.env.NODE_ENV === 'production' ? undefined : undefined,
   experimental: {
     serverActions: {
-      allowedOrigins: ["*"],
+      allowedOrigins: [
+        process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000",
+        // Add production domain when deploying
+        ...(process.env.NODE_ENV === "production" && process.env.VERCEL_URL
+          ? [`https://${process.env.VERCEL_URL}`]
+          : []),
+      ],
       bodySizeLimit: "10mb", // Allow 10MB for file uploads
     },
   },

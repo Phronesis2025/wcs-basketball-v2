@@ -9,20 +9,53 @@ This guide explains how to properly set up environment variables for the WCS v2.
 Create a `.env.local` file in your project root with the following variables:
 
 ```bash
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url_here
+# ============================================
+# REQUIRED - Supabase Configuration
+# ============================================
+NEXT_PUBLIC_SUPABASE_URL=https://htgkddahhgugesktujds.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
 
-# Sentry Configuration
-NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn_here
+# ============================================
+# REQUIRED - Base URL Configuration
+# ============================================
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+# Production: https://wcs-basketball-v2.vercel.app
 
-# Upstash Redis Configuration (for rate limiting)
-UPSTASH_REDIS_REST_URL=your_upstash_redis_url_here
-UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token_here
+# ============================================
+# OPTIONAL - Payment Integration (Stripe)
+# ============================================
+# STRIPE_SECRET_KEY=sk_live_[your-secret-key]
+# STRIPE_PRICE_ANNUAL=price_[your-price-id]
+# STRIPE_PRICE_MONTHLY=price_[your-price-id]
+# STRIPE_WEBHOOK_SECRET=whsec_[your-webhook-secret]
 
-# Optional: Stripe Configuration (if using payments)
-# STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
-# STRIPE_SECRET_KEY=your_stripe_secret_key_here
+# ============================================
+# OPTIONAL - Email Service (Resend)
+# ============================================
+# RESEND_API_KEY=re_[your-api-key]
+# RESEND_FROM="WCS Basketball <onboarding@resend.dev>"
+# ADMIN_NOTIFICATIONS_TO=admin@example.com
+
+# ============================================
+# OPTIONAL - SMS Service (Twilio)
+# ============================================
+# TWILIO_SID=your_twilio_sid
+# TWILIO_AUTH_TOKEN=your_twilio_token
+# TWILIO_PHONE=your_twilio_phone_number
+# ADMIN_PHONE=your_admin_phone_number
+
+# ============================================
+# OPTIONAL - Monitoring & Analytics
+# ============================================
+# NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn_here
+# UPSTASH_REDIS_REST_URL=your_upstash_redis_url_here
+# UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token_here
+
+# ============================================
+# OPTIONAL - Cron Jobs
+# ============================================
+# CRON_SECRET=your_cron_secret_here
 ```
 
 ## Security Features

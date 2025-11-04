@@ -41,7 +41,7 @@ export default function Footer() {
   // Removed unused contactInfo variable
 
   return (
-    <footer className="bg-navy text-white">
+    <footer className="bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Mobile Layout */}
         <div className="md:hidden space-y-6">
