@@ -3,18 +3,19 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, Variants, PanInfo } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import { Team, TeamUpdate } from "../types/supabase";
 import { sanitizeInput, devError } from "../lib/security";
 import { useInView } from "react-intersection-observer";
 import { useScrollLock } from "@/hooks/useScrollLock";
-// Remove server action import - we'll use API route instead
 
 interface TeamUpdatesProps {
   team?: Team;
   updates?: TeamUpdate[];
   maxUpdates?: number; // Limit number of updates to show
-  disableSwiping?: boolean; // Disable swiping functionality
+  disableSwiping?: boolean; // Disable swiping functionality (deprecated, use variant instead)
   showViewMoreText?: boolean; // Show "view your teams page for more updates" text
+  variant?: "compact-list" | "carousel"; // New prop for layout variant
 }
 
 const modalVariants: Variants = {
@@ -26,12 +27,46 @@ const modalVariants: Variants = {
   },
 };
 
+// Helper function to format relative time
+function formatRelativeTime(dateString: string): string {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) return "Just now";
+  if (diffInSeconds < 3600) {
+    const minutes = Math.floor(diffInSeconds / 60);
+    return `${minutes}m ago`;
+  }
+  if (diffInSeconds < 86400) {
+    const hours = Math.floor(diffInSeconds / 3600);
+    return `${hours}h ago`;
+  }
+  if (diffInSeconds < 604800) {
+    const days = Math.floor(diffInSeconds / 86400);
+    return `${days}d ago`;
+  }
+  if (diffInSeconds < 2592000) {
+    const weeks = Math.floor(diffInSeconds / 604800);
+    return `${weeks}w ago`;
+  }
+  const months = Math.floor(diffInSeconds / 2592000);
+  return `${months}mo ago`;
+}
+
+// Helper function to truncate content for dek/summary
+function truncateContent(content: string, maxLength: number = 150): string {
+  if (content.length <= maxLength) return content;
+  return content.substring(0, maxLength).trim() + "...";
+}
+
 export default function TeamUpdates({
   team,
   updates,
   maxUpdates,
   disableSwiping = false,
   showViewMoreText = false,
+  variant = "carousel", // Default to carousel for backward compatibility
 }: TeamUpdatesProps) {
   const [selectedUpdate, setSelectedUpdate] = useState<TeamUpdate | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,6 +83,9 @@ export default function TeamUpdates({
     triggerOnce: true,
     rootMargin: "200px",
   });
+
+  // Determine actual variant (backward compatibility: if disableSwiping is true and variant is carousel, use compact-list)
+  const actualVariant = variant === "compact-list" || (variant === "carousel" && disableSwiping) ? "compact-list" : "carousel";
 
   // Use provided updates or fetch them, and limit the number if specified
   const allUpdates = updates || fetchedUpdates;
@@ -82,8 +120,9 @@ export default function TeamUpdates({
     }
   }, [updates, isLoading, fetchedUpdates.length]);
 
-  // Calculate how many cards to show based on screen size and swiping setting
+  // Calculate how many cards to show based on screen size and swiping setting (for carousel only)
   const getCardsToShow = useCallback(() => {
+    if (actualVariant === "compact-list") return 0; // Not used in compact-list
     if (typeof window === "undefined") return disableSwiping ? 1 : 3; // SSR fallback
     if (disableSwiping) {
       return window.innerWidth >= 1024 ? 3 : 1; // Desktop: 3, Mobile: 1
@@ -91,15 +130,16 @@ export default function TeamUpdates({
     if (window.innerWidth >= 1024) return 3; // Desktop: lg breakpoint
     if (window.innerWidth >= 768) return 2; // Tablet: md breakpoint
     return 1; // Mobile: default
-  }, [disableSwiping]);
+  }, [disableSwiping, actualVariant]);
 
   const [cardsToShow, setCardsToShow] = useState(disableSwiping ? 1 : 3); // Default based on swiping setting
 
-  // Calculate maxIndex early
+  // Calculate maxIndex early (for carousel only)
   const maxIndex = Math.max(0, (displayUpdates?.length || 0) - cardsToShow);
 
-  // Update cards to show on resize and track container width
+  // Update cards to show on resize and track container width (for carousel only)
   useEffect(() => {
+    if (actualVariant === "compact-list") return; // Not needed for compact-list
     if (!inView) return; // Defer work until visible
     if (typeof window !== "undefined") {
       const handleResize = () => {
@@ -115,10 +155,11 @@ export default function TeamUpdates({
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);
     }
-  }, [inView, disableSwiping, getCardsToShow]);
+  }, [inView, disableSwiping, getCardsToShow, actualVariant]);
 
-  // Keyboard navigation
+  // Keyboard navigation (for carousel only)
   useEffect(() => {
+    if (actualVariant === "compact-list") return; // Not needed for compact-list
     if (!inView || disableSwiping) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!displayUpdates || displayUpdates.length <= cardsToShow) return;
@@ -139,6 +180,7 @@ export default function TeamUpdates({
     cardsToShow,
     inView,
     disableSwiping,
+    actualVariant,
   ]);
 
   // Prevent body scroll when modal is open
@@ -175,14 +217,14 @@ export default function TeamUpdates({
     setIsDragging(true);
   };
 
-  // Calculate the translateX value in pixels for smooth one-card-at-a-time movement
+  // Calculate the translateX value in pixels for smooth one-card-at-a-time movement (for carousel only)
   const getTranslateX = () => {
     if (containerWidth === 0) return 0;
     const cardWidthPx = containerWidth / cardsToShow; // exact pixel width per visible card
     return -currentIndex * cardWidthPx;
   };
 
-  // Calculate drag constraints based on available content
+  // Calculate drag constraints based on available content (for carousel only)
   const getDragConstraints = () => {
     if (containerWidth === 0) return { left: 0, right: 0 };
     const maxTranslate = Math.max(
@@ -192,6 +234,170 @@ export default function TeamUpdates({
     return { left: -maxTranslate, right: 0 };
   };
 
+  // Render compact list variant (NBA.com style)
+  if (actualVariant === "compact-list") {
+    return (
+      <section
+        ref={sectionRef}
+        aria-labelledby="team-updates-title"
+        className="mt-8 mb-12"
+      >
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2
+            id="team-updates-title"
+            className="text-3xl sm:text-4xl font-bebas text-center text-white mb-8 sm:mb-12"
+          >
+            Around the WCS
+          </h2>
+          {showViewMoreText && (
+            <p className="text-left text-gray-400 text-sm font-inter mb-6">
+              View your teams page for more updates
+            </p>
+          )}
+          {isLoading ? (
+            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
+              <p className="text-gray-300 font-inter">Loading updates…</p>
+            </div>
+          ) : displayUpdates && displayUpdates.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {displayUpdates.map((update, index) => {
+                const updateTeam = update.team_id
+                  ? teamsMap.get(update.team_id)
+                  : null;
+                const teamName =
+                  updateTeam?.name || (update.is_global ? "All Teams" : "Program");
+                const relativeTime = formatRelativeTime(update.created_at);
+                const truncatedContent = truncateContent(update.content);
+
+                return (
+                  <Link
+                    key={update.id}
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setSelectedUpdate(update);
+                    }}
+                    className={`flex gap-3 pb-6 border-b border-gray-600/30 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-navy rounded ${
+                      index < displayUpdates.length - 1 ? "" : "border-b-0"
+                    } ${
+                      // On desktop, add bottom border if not in last row of each column
+                      index < displayUpdates.length - 2 ? "md:border-b md:border-gray-600/30" : "md:border-b-0"
+                    }`}
+                    aria-label={`Read update: ${update.title}`}
+                  >
+                    {/* Thumbnail */}
+                    {update.image_url ? (
+                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded overflow-hidden bg-gray-800">
+                        <Image
+                          src={update.image_url}
+                          alt={update.title}
+                          width={80}
+                          height={80}
+                          className="w-full h-full object-cover"
+                          sizes="(max-width: 640px) 64px, 80px"
+                          loading="lazy"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded bg-gray-800 flex items-center justify-center">
+                        <span className="text-gray-500 text-xs">No Image</span>
+                      </div>
+                    )}
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      {/* Headline */}
+                      <h3 className="font-inter font-semibold text-white mb-1 line-clamp-2 leading-tight">
+                        {sanitizeInput(update.title)}
+                      </h3>
+
+                      {/* Dek/Summary */}
+                      <p className="text-gray-400 font-inter text-sm mb-2 line-clamp-2 leading-snug">
+                        {sanitizeInput(truncatedContent)}
+                      </p>
+
+                      {/* Meta row */}
+                      <div className="flex items-center gap-2 text-xs text-gray-500 font-inter">
+                        <span>{teamName}</span>
+                        <span>•</span>
+                        <span>{relativeTime}</span>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
+              <p className="text-gray-300 font-inter">No updates available</p>
+            </div>
+          )}
+        </div>
+
+        {/* Modal for viewing full update (same as carousel) */}
+        {selectedUpdate && (
+          <motion.div
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center p-4 z-[9999]"
+            role="dialog"
+            aria-labelledby="modal-title"
+            onClick={() => setSelectedUpdate(null)}
+          >
+            <motion.div
+              className="bg-black border border-red-500/50 rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex-shrink-0">
+                <h3 className="text-red-600 font-bebas uppercase text-base">
+                  {selectedUpdate?.team_id
+                    ? teamsMap.get(selectedUpdate.team_id)?.name ||
+                      (selectedUpdate.is_global ? "All Teams" : "Program")
+                    : "Program"}{" "}
+                  News
+                </h3>
+                <h2
+                  id="modal-title"
+                  className="text-2xl font-bebas mt-2 text-white"
+                >
+                  {sanitizeInput(selectedUpdate.title)}
+                </h2>
+              </div>
+
+              <div className="flex-1 overflow-y-auto mt-4">
+                <p className="text-gray-300 font-inter leading-relaxed">
+                  {sanitizeInput(selectedUpdate.content)}
+                </p>
+                {selectedUpdate.image_url && (
+                  <Image
+                    src={selectedUpdate.image_url}
+                    alt={selectedUpdate.title}
+                    width={400}
+                    height={320}
+                    className="w-full h-auto max-h-64 sm:max-h-80 object-contain rounded-md mt-4"
+                    sizes="100vw"
+                  />
+                )}
+              </div>
+
+              <div className="flex-shrink-0 mt-4">
+                <button
+                  onClick={() => setSelectedUpdate(null)}
+                  className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                  aria-label="Close modal"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </section>
+    );
+  }
+
+  // Render carousel variant (original implementation)
   return (
     <section
       ref={sectionRef}

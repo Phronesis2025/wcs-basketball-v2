@@ -1,5 +1,157 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.9.4 - TodaysEvents Mobile Improvements
+
+**Release Date**: November 4, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 8.5/10 (Good) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### 🎨 UI/UX Improvements
+
+- **TodaysEvents Mobile Optimization**:
+  - Reduced card width on mobile from `w-64` (256px) to `w-48` (192px) for better fit
+  - Reduced spacing between cards from `gap-2` to `gap-1.5` on mobile
+  - Reduced container padding and card internal padding for more compact layout
+  - Reduced logo size from `w-12 h-12` to `w-10 h-10` on mobile
+  - Fixed date section to stay in place while only cards scroll on mobile swipe
+  - Improved mobile whitespace utilization
+
+### 🐛 Fixed
+
+- **TodaysEvents Mobile Scrolling**:
+  - Fixed date section to remain fixed on left during horizontal swipe
+  - Cards now scroll independently while date section stays visible
+  - Improved mobile user experience with better space utilization
+
+---
+
+## 🚀 Version 2.9.3 - Security & Performance Review
+
+**Release Date**: November 4, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 8.5/10 (Good) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### 🔒 Security Improvements
+
+- **RLS Policy Consolidation**: 
+  - Consolidated multiple permissive RLS policies on `pending_registrations` table
+  - Combined 3 separate policies into 2 optimized policies (SELECT consolidated, admin-only modify)
+  - Improved query performance by eliminating redundant policy evaluations
+  - Maintained same security permissions while reducing database overhead
+
+- **Security Review Completed**: 
+  - Reviewed Supabase security advisors for all security and performance issues
+  - Identified and documented leaked password protection recommendation
+  - Verified all critical security measures are in place
+
+### ⚡ Performance Improvements
+
+- **Database Performance**: 
+  - Fixed multiple permissive policies warning on `pending_registrations` table
+  - Consolidated 3 separate policies into 4 optimized policies (1 SELECT, 3 modify operations)
+  - Optimized auth function calls with `(SELECT auth.uid())` and `(SELECT auth.role())` to prevent per-row re-evaluation
+  - Reduced policy evaluation overhead for SELECT queries
+  - Improved query execution time for authenticated users accessing pending registrations
+  - **Result**: All performance warnings resolved (only INFO-level unused index recommendations remain)
+
+### 📝 Documentation
+
+- **Security Documentation**: 
+  - Created comprehensive security review documentation
+  - Documented leaked password protection setup (requires manual dashboard configuration)
+  - Updated security best practices documentation
+
+### ⚠️ Manual Action Required
+
+- **Leaked Password Protection**: 
+  - Security advisor identified that leaked password protection is disabled
+  - This feature requires manual enablement in Supabase Dashboard (Auth → Providers → Email)
+  - See `docs/enable_leaked_password_protection.md` for detailed instructions
+  - **Priority**: Medium (recommended but not critical)
+  - **Note**: Requires Pro Plan or above on Supabase
+
+### 📊 Performance Notes
+
+- **Unused Indexes**: 
+  - Identified 24 unused indexes (INFO level, not critical)
+  - These are candidates for future cleanup but don't impact current performance
+  - Documented for future optimization opportunities
+
+---
+
+## 🚀 Version 2.9.2 - FanZone Carousel Redesign & Mobile Improvements
+
+**Release Date**: November 4, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 8.5/10 (Good) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Added
+
+- **FanZone Carousel Redesign**: 
+  - Converted FanZone section from static grid to interactive horizontal carousel
+  - Implemented framer-motion animations for smooth sliding transitions
+  - Added left/right navigation arrows with hover states on desktop/tablet
+  - Added always-visible navigation arrows on mobile to indicate more content
+  - Implemented swipe/drag functionality for mobile devices
+  - Added keyboard navigation support (arrow keys) for accessibility
+
+- **FanZone New Cards**: 
+  - Added Coach Login card linking to `/coaches/login` with coach_login.png image
+  - Added Parent Login card linking to `/parent/login` with parent_login.png image
+  - Added Tournament Information card linking to `/tournament-signup` with tournament.png image
+  - All new cards include descriptive text and proper navigation
+
+### 🎨 Changed
+
+- **FanZone Responsive Display**: 
+  - Updated card display logic: 4 cards on desktop/tablet (≥640px), 2 cards on mobile (<640px)
+  - Improved mobile experience with 2 visible cards instead of 1
+  - Better card visibility and user engagement on mobile devices
+
+- **FanZone Height Optimization**: 
+  - Reduced section minimum height from `min-h-[400px] sm:min-h-[450px]` to `min-h-[250px] sm:min-h-[280px]`
+  - Changed card image aspect ratio from `aspect-video` (16:9) to `aspect-[5/3]` for more compact cards
+  - Reduced content padding from `p-4 sm:p-5` to `p-3 sm:p-4`
+  - Reduced title font size from `text-lg sm:text-xl` to `text-base sm:text-lg`
+  - Reduced description font size from `text-sm` to `text-xs sm:text-sm`
+  - Added `line-clamp-2` to limit description text to 2 lines for consistent card heights
+
+- **FanZone Hover Effects**: 
+  - Replaced Tailwind `group-hover` utilities with React event handlers (`onMouseEnter`/`onMouseLeave`)
+  - Each card now independently handles hover effects (image scale, overlay, title color)
+  - Only the hovered card animates, preventing all cards from moving simultaneously
+
+- **AdSection Mobile Layout**: 
+  - Fixed mobile layout to match desktop horizontal arrangement
+  - Changed from `flex-col sm:flex-row` to `flex-row` for consistent side-by-side layout
+  - Adjusted text sizes, button sizes, and spacing to be appropriately scaled for mobile
+  - Maintained horizontal layout (text on left, button on right) across all screen sizes
+
+### 🐛 Fixed
+
+- **FanZone Cards Not Appearing**: 
+  - Fixed critical bug where cards were invisible due to missing `fan-zone-card-visible` CSS class
+  - Cards had `opacity: 0` from CSS animation but never received the visible class
+  - Added conditional class application based on `useInView` hook to trigger fade-in animation
+  - Cards now properly appear when section enters viewport
+
+- **FanZone Hover Effect Affecting All Cards**: 
+  - Fixed bug where hovering one card caused all cards to animate simultaneously
+  - Root cause was parent container having `group` class affecting all child cards
+  - Removed `group` class from individual cards and implemented direct event handlers
+  - Each card now has isolated hover effects using React event handlers
+
+---
+
 ## 🚀 Version 2.0.1 - Security Audit & Deployment Preparation
 
 **Release Date**: January 2025  

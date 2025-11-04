@@ -4,10 +4,10 @@
 
 **WCSv2.0** is a comprehensive youth basketball league website built for World Class Sports Basketball in Kansas. The project empowers kids (ages 8-18), builds character, and generates revenue through merchandise sales. Built with modern web technologies, it features a responsive design, comprehensive security measures, and interactive components for coaches, parents, and players.
 
-**Current Version**: v2.8.0  
-**Last Updated**: October 2025  
+**Current Version**: v2.9.2  
+**Last Updated**: November 4, 2025  
 **Status**: Production Ready ✅  
-**Security Score**: 10/10 (Perfect) 🔒  
+**Security Score**: 8.5/10 (Good) 🔒  
 **Build Status**: Clean Build ✅  
 **Testing Status**: Comprehensive Testing Complete ✅  
 **Security Audit**: Complete ✅  
@@ -56,7 +56,18 @@
 - Code: `src/lib/security.ts`, `next.config.ts`
 - Docs: [SECURITY.md](SECURITY.md)
 
-### **Latest Updates (v2.8.0)**
+### **Latest Updates (v2.9.2 - November 2025)**
+
+- **FanZone Carousel Redesign**: Converted from static grid to interactive horizontal carousel with framer-motion animations, navigation arrows, and swipe functionality
+- **New Navigation Cards**: Added Coach Login, Parent Login, and Tournament Information cards to FanZone
+- **Mobile Navigation**: Added always-visible navigation arrows on mobile to indicate more content
+- **Responsive Display**: Updated to show 4 cards on desktop/tablet, 2 cards on mobile before swiping
+- **Height Optimization**: Reduced FanZone section and card heights for more compact, efficient layout
+- **Hover Effects**: Fixed hover effects to only affect the hovered card, preventing all cards from animating
+- **AdSection Mobile Layout**: Fixed mobile layout to match desktop horizontal arrangement
+- **Bug Fixes**: Resolved cards not appearing and hover effects affecting all cards simultaneously
+
+### **Previous Updates (v2.8.0)**
 
 - Parent/Child Registration flows finalized (new parent vs. existing parent add-child)
 - Admin approval triggers professional approval email with deep link to payment
@@ -83,7 +94,7 @@ The main website showcases the basketball league with engaging content and infor
 - **Team Previews**: Dynamic team cards with logos and information
 - **Coaches Corner**: Staff profiles and information
 - **Shop Section**: Merchandise preview with pricing
-- **Fan Zone**: Interactive video cards with enhanced data validation
+- **Fan Zone**: Interactive horizontal carousel with 7 navigation cards (4 original + 3 new), responsive display (4 cards desktop/tablet, 2 cards mobile), navigation arrows, and swipe functionality
 
 **Reference Files:**
 

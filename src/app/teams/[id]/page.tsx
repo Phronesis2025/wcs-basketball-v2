@@ -6,13 +6,11 @@ import {
   fetchTeamById,
   fetchCoachesByTeamId,
   fetchSchedulesByTeamId,
-  fetchTeamUpdates,
 } from "../../../lib/actions";
 import {
   Team,
   Coach,
   Schedule,
-  TeamUpdate,
   Player,
 } from "../../../types/supabase";
 import * as Sentry from "@sentry/nextjs";
@@ -23,7 +21,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 import { devLog, devError } from "../../../lib/security";
-import TeamUpdates from "../../../components/TeamUpdates";
 import TeamGameCard from "../../../components/team/TeamGameCard";
 import TeamPracticeCard from "../../../components/team/TeamPracticeCard";
 
@@ -38,7 +35,6 @@ export default function TeamPage({ params }: TeamPageProps) {
   const [team, setTeam] = useState<Team | null>(null);
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [updates, setUpdates] = useState<TeamUpdate[]>([]);
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,10 +91,9 @@ export default function TeamPage({ params }: TeamPageProps) {
           timestamp: new Date().toISOString(),
         });
 
-        const [coachesData, schedulesData, updatesData] = await Promise.all([
+        const [coachesData, schedulesData] = await Promise.all([
           fetchCoachesByTeamId(resolvedParams.id),
           fetchSchedulesByTeamId(resolvedParams.id),
-          fetchTeamUpdates(resolvedParams.id),
         ]);
 
         // Fetch players for this team
@@ -126,7 +121,6 @@ export default function TeamPage({ params }: TeamPageProps) {
         setTeam(teamData);
         setCoaches(coachesData);
         setSchedules(schedulesData);
-        setUpdates(updatesData);
 
         // Subscriptions for real-time updates
         const scheduleChannel = supabase
@@ -151,33 +145,8 @@ export default function TeamPage({ params }: TeamPageProps) {
           )
           .subscribe();
 
-        const updateChannel = supabase
-          .channel("team_updates")
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "team_updates",
-              filter: `team_id=eq.${resolvedParams.id}`,
-            },
-            (payload) => {
-              setUpdates((prev) =>
-                [...prev, payload.new as TeamUpdate]
-                  .sort(
-                    (a, b) =>
-                      new Date(b.created_at).getTime() -
-                      new Date(a.created_at).getTime()
-                  )
-                  .slice(0, 5)
-              );
-            }
-          )
-          .subscribe();
-
         return () => {
           supabase.removeChannel(scheduleChannel);
-          supabase.removeChannel(updateChannel);
         };
       } catch (err) {
         devError("Fetch error:", err);
@@ -380,11 +349,6 @@ export default function TeamPage({ params }: TeamPageProps) {
               />
             </section>
           </div>
-        </div>
-
-        {/* Team Updates - Full Width */}
-        <div className="mb-12">
-          <TeamUpdates team={team} updates={updates} />
         </div>
 
         {/* Games & Practices - Side by Side */}

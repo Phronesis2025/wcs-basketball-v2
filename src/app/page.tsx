@@ -32,8 +32,8 @@ export default async function Home() {
       <FanZone teamsError={teamsError} coachesError={coachesError} />
       <AdSection />
       <TeamUpdates
-        maxUpdates={3}
-        disableSwiping={true}
+        maxUpdates={8}
+        variant="compact-list"
         showViewMoreText={true}
       />
       <LogoMarquee />

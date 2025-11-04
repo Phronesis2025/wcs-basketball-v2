@@ -4,7 +4,17 @@
 
 This is a **Next.js 15.5.2** application for World Class Sports Basketball, built with TypeScript, Tailwind CSS, and Supabase integration.
 
-**Latest Updates (v2.8.0):**
+**Latest Updates (v2.9.2 - November 2025):**
+
+- **FanZone Carousel Redesign**: Converted from static grid to interactive horizontal carousel with framer-motion animations, navigation arrows (hover on desktop/tablet, always visible on mobile), and swipe functionality
+- **FanZone New Cards**: Added Coach Login, Parent Login, and Tournament Information cards with appropriate images and navigation
+- **FanZone Responsive Display**: Updated to show 4 cards on desktop/tablet (≥640px) and 2 cards on mobile (<640px)
+- **FanZone Height Optimization**: Reduced section height and card aspect ratios for more compact layout
+- **FanZone Hover Effects**: Isolated hover effects using React event handlers so only hovered card animates
+- **AdSection Mobile Layout**: Fixed mobile layout to match desktop horizontal arrangement
+- **Bug Fixes**: Fixed cards not appearing (missing CSS class) and hover effects affecting all cards
+
+**Previous Updates (v2.8.0):**
 
 - **CRITICAL SECURITY FIX**: Eliminated XSS vulnerability in Team Updates
 - **Perfect Security Score**: Achieved 10/10 security rating
@@ -115,7 +125,8 @@ src/components/
 │   └── select.tsx             # Select dropdown component
 ├── 📄 ClientTeams.tsx         # Client-side teams component
 ├── 📄 Coaches.tsx             # (Legacy; not used on site)
-├── 📄 FanZone.tsx             # Fan zone section
+├── 📄 FanZone.tsx             # Fan zone section (horizontal carousel with 7 cards, responsive display, navigation arrows, swipe functionality)
+├── 📄 AdSection.tsx          # Promotional ad section (BE LEGENDARY ad with horizontal layout)
 ├── 📄 Footer.tsx              # Site footer
 ├── 📄 Hero.tsx                # Hero section (main banner)
 ├── 📄 HomeSections.tsx        # (Legacy; not used on site)

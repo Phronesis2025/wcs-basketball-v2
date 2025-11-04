@@ -49,6 +49,7 @@ import {
   deleteUpdate,
   fetchSchedulesByTeamId,
   fetchTeamUpdates,
+  fetchAllTeamUpdates,
   getUserRole,
   uploadFileToStorage,
 } from "@/lib/actions";
@@ -552,11 +553,14 @@ function ClubManagementContent() {
       });
       setSchedules(schedulesData || []);
 
-      // Fetch team updates
-      devLog("fetchCoachData: Fetching team updates");
-      const updatesData = await fetchTeamUpdates(selectedTeamId);
+      // Fetch team updates - admins see all updates, coaches see only their team's updates
+      devLog("fetchCoachData: Fetching team updates", { isAdmin, selectedTeamId });
+      const updatesData = isAdmin
+        ? await fetchAllTeamUpdates()
+        : await fetchTeamUpdates(selectedTeamId);
       devLog("fetchCoachData: Team updates fetched", {
         count: updatesData?.length || 0,
+        isAdmin,
       });
       setTeamUpdates(updatesData || []);
 
@@ -2369,7 +2373,7 @@ function ClubManagementContent() {
                           Recent Announcements
                         </h3>
                         <p className="text-sm text-gray-500 font-inter mt-1">
-                          Latest Team Updates
+                          {isAdmin ? "All Team Updates" : "Latest Team Updates"}
                         </p>
                       </div>
                       <button
@@ -2384,7 +2388,7 @@ function ClubManagementContent() {
                       </button>
                     </div>
                     <div className="space-y-3">
-                      {teamUpdates.slice(0, 3).map((update) => (
+                      {(isAdmin ? teamUpdates : teamUpdates.slice(0, 3)).map((update) => (
                         <div
                           key={update.id}
                           className="bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"

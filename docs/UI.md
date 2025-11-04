@@ -232,14 +232,42 @@
 
 - **Location**: `src/components/FanZone.tsx`
 - **Features**:
-  - Interactive video cards with hover effects
-  - Mobile-responsive layout with enhanced margins
-  - Black background for better contrast
-  - Video playback on hover
-- **Styling**: Black background, white cards, mobile-optimized margins
-- **Content**: 4 fan zone cards with videos and descriptions
+  - **Horizontal Carousel**: Interactive carousel with framer-motion animations for smooth sliding
+  - **Navigation Arrows**: Left/right arrows with hover states on desktop/tablet, always visible on mobile
+  - **Responsive Display**: Shows 4 cards on desktop/tablet (≥640px), 2 cards on mobile (<640px)
+  - **Swipe Functionality**: Drag/swipe support for mobile devices
+  - **Keyboard Navigation**: Arrow key support for accessibility
+  - **Isolated Hover Effects**: Each card independently handles hover (image scale, overlay, title color)
+  - **7 Navigation Cards**: Our Values, Our Teams, Schedules, Practice Drills, Coach Login, Parent Login, Tournament Information
+  - **Optimized Height**: Compact cards with aspect-[5/3] image ratio and reduced padding
+- **Styling**: Navy background, white cards, smooth animations, mobile-optimized
+- **Content**: 7 navigation cards with images, titles, and descriptions linking to various pages
+- **Technical Details**:
+  - Uses `useInView` hook for fade-in animations when section enters viewport
+  - React event handlers for isolated hover effects (onMouseEnter/onMouseLeave)
+  - Framer-motion for carousel animations and drag gestures
+  - ResizeObserver for responsive width tracking
 
-### 11. Shop Component
+### 11. AdSection Component
+
+- **Location**: `src/components/AdSection.tsx`
+- **Features**:
+  - **BE LEGENDARY Promotional Ad**: Full-width promotional section with basketball court background
+  - **Horizontal Layout**: Consistent side-by-side layout (text on left, button on right) across all screen sizes
+  - **Responsive Text Scaling**: Text sizes scale appropriately from mobile to desktop (headline: text-2xl to text-8xl, tagline: text-[10px] to text-lg)
+  - **Responsive Button**: Button scales from text-xs on mobile to text-2xl on large screens
+  - **Click-to-Register**: Entire section and button link to `/register` page
+  - **Gradient Overlay**: Dark gradient overlay (darker on left, lighter on right) for text readability
+  - **Background Image**: Basketball court background image with object-contain for proper scaling
+- **Styling**: White background section, dark gradient overlay, red CTA button, responsive text and spacing
+- **Content**: "BE LEGENDARY" headline, "Train. Compete. Rise above." tagline, "GET IN THE GAME" button
+- **Technical Details**:
+  - Uses Next.js Image component with priority loading
+  - Fixed aspect ratio (1200/190) for consistent display
+  - Horizontal flex layout (flex-row) for all screen sizes
+  - Properly scaled padding and margins for mobile/desktop
+
+### 12. Shop Component
 
 - **Location**: `src/components/Shop.tsx`
 - **Features**:
@@ -250,7 +278,7 @@
 - **Styling**: Navy background, white cards, mobile-optimized margins
 - **Products**: Jersey, Basketball, Team Hat with pricing
 
-### 12. Logo Marquee Component
+### 13. Logo Marquee Component
 
 - **Location**: `src/components/LogoMarquee.tsx`
 - **Features**:
@@ -261,7 +289,7 @@
 - **Styling**: Navy background with opacity, smaller logos, enhanced spacing
 - **Content**: Team logos from `/public/logos/`
 
-### 13. Footer Component
+### 14. Footer Component
 
 - **Location**: `src/components/Footer.tsx`
 - **Features**:
@@ -276,7 +304,7 @@
 - **Styling**: Navy background, white text, centered mobile layout
 - **Content**: Navigation links, social media, contact information
 
-### 14. ScrollToTop Component
+### 15. ScrollToTop Component
 
 - **Location**: `src/components/ScrollToTop.tsx`
 - **Features**:
@@ -285,7 +313,7 @@
   - Visibility change and focus event handling
   - No visual element (utility component)
 
-### 15. Dialog Component (NEW)
+### 16. Dialog Component (UI Library)
 
 - **Location**: `src/components/ui/dialog.tsx`
 - **Features**:

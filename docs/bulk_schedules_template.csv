@@ -1,0 +1,5 @@
+team_name,event_type,date_time,end_date_time,location,opponent,title,description,recurring_group_id
+,Practice,YYYY-MM-DD HH:MM:SS,,Gym 1,,Team Practice,Weekly practice,bulk_window_manual_YYYYMM
+,Game,YYYY-MM-DD HH:MM:SS,,Field 1,Opponent Name,League Game,Home/away note,bulk_window_manual_YYYYMM
+,Tournament,YYYY-MM-DD HH:MM:SS,YYYY-MM-DD HH:MM:SS,Complex 1,,Tournament Name,Two-day tourney,bulk_window_manual_YYYYMM
+

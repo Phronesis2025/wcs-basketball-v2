@@ -251,10 +251,10 @@ export default function TodaysEvents({
     >
       <div className="w-full">
         {/* Horizontal Scroll Container */}
-        <div className="bg-gray-100 border-t border-gray-300 w-full">
-          <div className="flex overflow-x-auto scrollbar-hide h-[80px]">
-            {/* Date Column - Fixed on Left */}
-            <div className="flex-shrink-0 w-16 sm:w-20 px-2 py-1 flex flex-col items-center justify-center border-r border-gray-300">
+        <div className="bg-gray-100 border-t border-gray-300 w-full relative">
+          <div className="flex h-[80px]">
+            {/* Date Column - Fixed on Left (Not Scrollable) */}
+            <div className="flex-shrink-0 w-16 sm:w-20 px-2 py-1 flex flex-col items-center justify-center border-r border-gray-300 bg-gray-100 z-10">
               <div className="text-center">
                 <div className="text-gray-700 font-bold text-xs uppercase leading-tight">
                   {dateInfo.dayAbbrev}
@@ -265,8 +265,9 @@ export default function TodaysEvents({
               </div>
             </div>
 
-            {/* Events Cards - Horizontal Scroll */}
-            <div className="flex gap-2 px-2">
+            {/* Events Cards - Horizontal Scroll Only */}
+            <div className="flex-1 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-1.5 md:gap-2 px-1.5 md:px-2 h-full items-center">
               {todayEvents.map((event) => {
                 const team = getTeam(event);
                 const teamName = getTeamName(event);
@@ -280,10 +281,10 @@ export default function TodaysEvents({
                 return (
                   <div
                     key={`${event.id}-${event.date_time}`}
-                    className="flex-shrink-0 w-64 md:w-52 lg:w-64 bg-white rounded border border-gray-200 p-2 md:p-2.5 lg:p-3 flex gap-2 md:gap-2.5 lg:gap-3"
+                    className="flex-shrink-0 w-48 md:w-52 lg:w-64 bg-white rounded border border-gray-200 p-1.5 md:p-2.5 lg:p-3 flex gap-1.5 md:gap-2.5 lg:gap-3"
                   >
                     {/* Large Logo on Left */}
-                    <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 flex items-center justify-center">
+                    <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16 flex items-center justify-center">
                       {logoUrl ? (
                         <Image
                           src={logoUrl}
@@ -344,6 +345,7 @@ export default function TodaysEvents({
                   </div>
                 );
               })}
+              </div>
             </div>
           </div>
         </div>
