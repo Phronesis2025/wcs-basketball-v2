@@ -836,8 +836,10 @@ export default function CoachProfile({
                   </h3>
                   {unreadMentions > 0 && (
                     <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-inter">
-                      {unreadMentions} unread mention
-                      {unreadMentions !== 1 ? "s" : ""}
+                      <span className="md:hidden">{unreadMentions} unread</span>
+                      <span className="hidden md:inline">
+                        {unreadMentions} unread mention{unreadMentions !== 1 ? "s" : ""}
+                      </span>
                     </div>
                   )}
                 </div>

@@ -1,8 +1,8 @@
 # WCSv2.0 UI Components
 
-**Version**: v2.7.6  
+**Version**: v2.9.6  
 **Last Updated**: January 2025  
-**Security Score**: 10/10 (Perfect) 🔒  
+**Security Score**: 8.5/10 (Good) 🔒  
 **Live URL**: https://wcs-basketball-v2.vercel.app
 
 ## 🎨 Design System
@@ -91,6 +91,9 @@
   - Fixed delete button rendering in confirmation modal with enhanced styling
   - Resolved TypeScript build errors with proper JSX compatibility
   - Enhanced user experience by maintaining scroll position during interactions
+- **Mobile UI Improvements (v2.9.6)**:
+  - Unread badge text now responsive: shows `"{count} unread"` on mobile, `"{count} unread mention(s)"` on desktop/tablet
+  - Badge size optimized for mobile view with better visual balance
 - **Message Features**: Create, edit, delete, pin messages and replies
 - **Input Sanitization**: Enhanced security with XSS protection
 - **Mobile Optimized**: Fully responsive interface for all devices
@@ -248,7 +251,33 @@
   - Framer-motion for carousel animations and drag gestures
   - ResizeObserver for responsive width tracking
 
-### 11. AdSection Component
+### 11. Quote Section Component
+
+- **Location**: `src/components/QuoteSection.tsx`
+- **Features**:
+  - **Auto-Rotating Carousel**: Displays motivational basketball quotes with automatic 7-second rotation
+  - **Horizontal Swipe Animation**: Smooth horizontal slide transitions using Framer Motion
+  - **15 Inspirational Quotes**: Quotes from legendary coaches and players (John Wooden, Michael Jordan, LeBron James, etc.)
+  - **Responsive Font Sizing**: 
+    - Quote: `text-lg` on mobile, `text-2xl` on desktop/tablet
+    - Author: `text-sm` on mobile, `text-base` on desktop/tablet
+  - **Line Clamping**: Quotes limited to 2 lines, author to 1 line for consistent layout
+  - **Compact Design**: Minimal padding (`py-2`) and reduced height (`min-h-[80px]`)
+  - **Brand Styling**: 
+    - Quote text uses `font-bebas-bold-italic` (matches "BE LEGENDARY" styling)
+    - Author text uses `font-bebas-light` (matches tagline styling)
+  - **Visual Separation**: Brand red top and bottom borders for visual distinction
+- **Styling**: Black background, white text, brand red borders, compact height
+- **Content**: Rotating motivational quotes with author attribution
+- **Technical Details**:
+  - Fetches quotes from Supabase `quotes` table on component mount
+  - Uses `useEffect` with `setInterval` for auto-rotation
+  - Framer Motion `AnimatePresence` for smooth transitions
+  - Horizontal slide animation (x-axis: 100 → 0 → -100)
+  - Error handling and loading states
+  - Positioned between Hero and FanZone sections on home page
+
+### 12. AdSection Component
 
 - **Location**: `src/components/AdSection.tsx`
 - **Features**:
@@ -267,7 +296,7 @@
   - Horizontal flex layout (flex-row) for all screen sizes
   - Properly scaled padding and margins for mobile/desktop
 
-### 12. Shop Component
+### 13. Shop Component
 
 - **Location**: `src/components/Shop.tsx`
 - **Features**:

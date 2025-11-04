@@ -117,17 +117,17 @@ export default function LogoMarquee() {
         {displayLogos.map((logo, index) => (
           <div
             key={`${logo.id}-${index}`}
-            className="flex-shrink-0 mx-12 w-[100px] h-[100px] relative flex items-center justify-center"
+            className="flex-shrink-0 mx-8 w-[70px] h-[70px] relative flex items-center justify-center"
           >
             {/* Black circle background */}
             <div className="absolute inset-0 bg-black rounded-full"></div>
-            {/* Logo container - keeping the same size as before */}
-            <div className="relative w-[140px] h-[70px] z-10">
+            {/* Logo container */}
+            <div className="relative w-[100px] h-[50px] z-10">
               <Image
                 src={logo.logo_url}
                 alt={`${logo.name} logo`}
                 fill
-                sizes="140px"
+                sizes="100px"
                 className="object-contain"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;

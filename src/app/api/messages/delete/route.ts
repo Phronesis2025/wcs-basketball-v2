@@ -44,26 +44,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Attempt admin update first if admin client exists
-    if (adminClient) {
+    // Attempt admin delete first if admin client is available and user is admin
+    if (adminClient && isAdmin) {
       const { error: adminErr } = await adminClient
         .from("coach_messages")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", messageId);
 
       if (!adminErr) {
+        // Admin delete succeeded
         return NextResponse.json({ success: true });
       }
 
-      devError(
-        "[API] Admin delete failed, will try RLS-safe fallback:",
-        adminErr
-      );
-      // Continue to fallback path below
+      devError("[API] Admin delete failed:", adminErr);
+      // Fall through to check if we can use fallback
     }
 
     // Fallback: RLS-safe author-owned update via anon client (only for authors)
-    if (isAuthor) {
+    if (isAuthor && !isAdmin) {
       const { error: rlsErr } = await supabase
         .from("coach_messages")
         .update({ deleted_at: new Date().toISOString() })
@@ -78,10 +76,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: rlsErr.message }, { status: 500 });
     }
 
-    // If we reach here and isAdmin is true but admin client failed, return error
+    // If we reach here and isAdmin is true but admin client failed or doesn't exist
     if (isAdmin) {
+      if (!adminClient) {
+        return NextResponse.json(
+          { error: "Admin delete failed - admin client not configured" },
+          { status: 500 }
+        );
+      }
+      // Admin client exists but delete failed
       return NextResponse.json(
-        { error: "Admin delete failed - admin client may not be configured" },
+        { error: "Admin delete failed - please try again" },
         { status: 500 }
       );
     }

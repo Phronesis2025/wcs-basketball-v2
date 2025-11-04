@@ -6,7 +6,7 @@
 
 ### Database Statistics
 
-- **Tables**: 20 active tables
+- **Tables**: 21 active tables
 - **Platform**: Supabase PostgreSQL
 - **RLS**: Enabled on all tables
 - **Functions**: `set_updated_at()`, `is_admin()`, `is_admin(uid uuid)`
@@ -749,6 +749,35 @@ CREATE TABLE public.changelog (
 **Indexes:**
 
 - `idx_changelog_created_by` - Index on `created_by` for foreign key performance
+
+### 21. Quotes Table
+
+```sql
+CREATE TABLE public.quotes (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  quote_text text NOT NULL,
+  author text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  display_order integer,
+  CONSTRAINT quotes_pkey PRIMARY KEY (id)
+);
+```
+
+**Columns:**
+
+- `id` (uuid, PK) - Auto-generated UUID
+- `quote_text` (text, NOT NULL) - The motivational quote text
+- `author` (text, NOT NULL) - Author name (coach or player)
+- `created_at` (timestamptz, DEFAULT now()) - Creation timestamp
+- `display_order` (integer) - Optional ordering for manual quote sequencing
+
+**Indexes:**
+
+- `idx_quotes_display_order` - Index on `display_order` and `created_at` for sorting performance
+
+**RLS Policies:**
+
+- `Allow public read access to quotes`: Public SELECT access for displaying quotes on homepage
 
 ## 🔐 Row Level Security (RLS)
 

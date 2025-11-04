@@ -70,7 +70,7 @@ export default function ChangelogTable({ userId, isAdmin }: Props) {
         <h2 className="text-2xl font-bebas text-white">Changelog</h2>
         <div className="flex gap-2">
           <input
-            className="bg-gray-800 text-white border border-gray-600 rounded px-3 py-2 text-sm"
+            className="hidden md:block bg-gray-800 text-white border border-gray-600 rounded px-3 py-2 text-sm"
             placeholder="Search version or description"
             value={search}
             onChange={(e) => setSearch(e.target.value)}

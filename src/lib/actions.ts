@@ -8,6 +8,7 @@ import {
   PracticeDrill,
   TeamUpdate,
   News,
+  Quote,
 } from "../types/supabase";
 import { devLog, devError } from "../lib/security";
 
@@ -1263,6 +1264,29 @@ export async function updatePasswordReset(userId: string) {
     devError("Password reset DB update error:", err);
     const errorMessage =
       err instanceof Error ? err.message : "Failed to update password reset";
+    throw new Error(errorMessage);
+  }
+}
+
+// Fetch all quotes for the quote carousel
+export async function fetchQuotes(): Promise<Quote[]> {
+  try {
+    const { data, error } = await supabase
+      .from("quotes")
+      .select("*")
+      .order("display_order", { ascending: true, nullsLast: true })
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      devError("Supabase quotes fetch error:", error);
+      throw new Error(error.message);
+    }
+
+    return data || [];
+  } catch (err: unknown) {
+    devError("Fetch quotes error:", err);
+    const errorMessage =
+      err instanceof Error ? err.message : "Failed to fetch quotes";
     throw new Error(errorMessage);
   }
 }

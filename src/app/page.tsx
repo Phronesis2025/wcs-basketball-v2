@@ -1,5 +1,6 @@
 import React from "react";
 import Hero from "../components/Hero";
+import QuoteSection from "../components/QuoteSection";
 import LogoMarquee from "../components/LogoMarquee";
 import FanZone from "../components/FanZone";
 import AdSection from "../components/AdSection";
@@ -29,6 +30,7 @@ export default async function Home() {
   return (
     <div className="bg-navy min-h-screen text-white">
       <Hero />
+      <QuoteSection />
       <FanZone teamsError={teamsError} coachesError={coachesError} />
       <AdSection />
       <TeamUpdates

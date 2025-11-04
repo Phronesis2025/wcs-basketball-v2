@@ -28,11 +28,11 @@ const BeLegendaryAd = () => {
       {/* Background Image - container height is half of original (1200/200 aspect ratio) */}
       <div
         className="relative w-full bg-transparent"
-        style={{ aspectRatio: "1200/190" }}
+        style={{ aspectRatio: "1200/180" }}
       >
         <div className="absolute inset-0 flex items-center justify-center">
           <Image
-            src="/BE_LEDENDARY_BACKGROUND_AD.png"
+            src="/BE_LEDENDARY_BACKGROUND_AD.jpg"
             alt=""
             fill
             className="object-contain"

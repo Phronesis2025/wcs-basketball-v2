@@ -856,7 +856,8 @@ export default function MessageBoard({
               <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-lg font-bebas text-black dark:text-black">
-                    UNREAD MENTIONS ({userMentions.length})
+                    <span className="md:hidden">{userMentions.length} unread</span>
+                    <span className="hidden md:inline">UNREAD MENTIONS ({userMentions.length})</span>
                   </h4>
                   <button
                     onClick={() => {

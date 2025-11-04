@@ -311,3 +311,12 @@ export type ParentProfile = {
   total_paid: number;
   pending_payments: number;
 };
+
+// Quote Types
+export type Quote = {
+  id: string;
+  quote_text: string;
+  author: string;
+  created_at: string;
+  display_order: number | null;
+};

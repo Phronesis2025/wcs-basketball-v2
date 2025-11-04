@@ -4,7 +4,7 @@
 
 The Club Management System is a comprehensive administrative interface for managing basketball clubs, built with Next.js 15.5.2, TypeScript, and Supabase. This system provides real-time monitoring, analytics, and entity management capabilities through a secure, role-based interface.
 
-**Version**: v2.0.1 - Security Audit & Build Optimization  
+**Version**: v2.9.6 - Bug Fixes & Mobile UI Improvements  
 **Last Updated**: January 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 8.5/10 (Good) 🔒  
@@ -44,7 +44,11 @@ The Club Management System is a comprehensive administrative interface for manag
 - **Overview Tab**: Real-time statistics and analytics
 - **Manage Tab**: CRUD operations for coaches, teams, and players
 - **Analytics Tab**: Performance metrics and user statistics
-- **Error Logs Tab**: System monitoring and debugging
+- **Monitor Tab**: System monitoring, error logs, and changelog management
+  - **Changelog Section**: Version history with search and category filtering
+    - Search bar hidden on mobile view for space optimization
+    - Category filter remains visible on all screen sizes
+    - Responsive design for mobile, tablet, and desktop
 
 ### 2. Coach Dashboard
 
