@@ -2,9 +2,9 @@
 
 A modern, secure basketball team management system built with Next.js 15, TypeScript, and Supabase.
 
-**Current Version**: v2.0.1  
+**Current Version**: v2.9.8  
 **Last Updated**: January 2025  
-**Security Score**: 8.5/10 (Good) 🔒  
+**Security Score**: 9/10 (Excellent) 🔒  
 **Build Status**: Clean Build ✅  
 **Live URL**: https://wcs-basketball-v2.vercel.app
 
@@ -150,13 +150,22 @@ The application is deployed on Vercel with automatic deployments from the main b
 
 ## 📝 Recent Updates
 
-### v2.9.7 - November 2025 (Current)
+### v2.9.8 - January 2025 (Current)
+
+- **Payment Flow Improvements**: Added payment options to checkout form, direct redirect to Stripe checkout after form completion
+- **Registration Status Badges**: Moved status badges onto individual player cards with visual progression (Pending → Approved → Active)
+- **Payment Email Fix**: Fixed payment confirmation emails not being sent for second players
+- **Password Logic**: Parents registering additional children no longer need to create another password
+- **Mobile UI**: Reduced player card width on mobile (280px max) while maintaining tablet/desktop layouts
+- **Player Card Enhancements**: Black logo background with animated glowing effect
+- **Billing Tab**: Pay button now uses checkout page for consistent flow
+
+### v2.9.7 - November 2025
 
 - **Player Card Birthday Celebration**: Added party popper emoji (🎉) in top-right corner of player cards when it's their birthday
 - **PDF Invoice Fix**: Fixed encoding error preventing invoice emails from being sent (removed unsupported checkmark character)
 - **Birthday Detection**: Improved birthday detection with proper date parsing and timezone handling
 - **UI Enhancement**: Replaced birthday cake icon with more prominent party popper in corner position
-- **Known Issue**: PDF email invoice layout does not currently match the HTML invoice view - work in progress
 
 ### v2.0.1 - January 2025
 

@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
       season,
       coachEmails, // Changed from coachEmail to coachEmails array
       coach_id, // Single coach ID
+      coach_ids, // Array of coach IDs (from Manage tab)
       logoUrl,
       logo_url, // Support both naming conventions
       teamImageUrl,
@@ -52,24 +53,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate coach assignment (either coach_id or coachEmails)
+    // Validate coach assignment (either coach_id, coach_ids array, or coachEmails)
     if (
       !coach_id &&
+      (!coach_ids || !Array.isArray(coach_ids) || coach_ids.length === 0) &&
       (!coachEmails || !Array.isArray(coachEmails) || coachEmails.length === 0)
     ) {
       return NextResponse.json(
         {
-          error: "Either a coach ID or coach emails are required",
+          error: "Either a coach ID, coach IDs array, or coach emails are required",
         },
         { status: 400 }
       );
     }
 
     // Validate age group
-    const validAgeGroups = ["U10", "U12", "U14", "U16", "U18"];
+    const validAgeGroups = ["U8", "U10", "U12", "U14", "U16", "U18"];
     if (!validAgeGroups.includes(ageGroup)) {
       return NextResponse.json(
-        { error: "Invalid age group. Must be U10, U12, U14, U16, or U18" },
+        { error: "Invalid age group. Must be U8, U10, U12, U14, U16, or U18" },
         { status: 400 }
       );
     }
@@ -111,8 +113,32 @@ export async function POST(request: NextRequest) {
 
     let activeCoaches: any[] = [];
 
-    // Handle single coach assignment if provided
-    if (coach_id) {
+    // Handle coach assignment - prioritize coach_ids array (from Manage tab), then coach_id, then coachEmails
+    if (coach_ids && Array.isArray(coach_ids) && coach_ids.length > 0) {
+      // Find coaches by IDs (from Manage tab checkboxes)
+      const { data: coaches, error: coachesError } = await supabaseAdmin!
+        .from("coaches")
+        .select("id, first_name, last_name, email, is_active")
+        .in("id", coach_ids);
+
+      if (coachesError || !coaches || coaches.length === 0) {
+        return NextResponse.json(
+          { error: "No coaches found with the provided IDs" },
+          { status: 404 }
+        );
+      }
+
+      // Filter out inactive coaches
+      activeCoaches = coaches.filter((coach) => coach.is_active !== false);
+      
+      // Check if some coaches were inactive
+      if (activeCoaches.length < coaches.length) {
+        const inactiveCoaches = coaches.filter((coach) => coach.is_active === false);
+        devLog(
+          `Warning: ${inactiveCoaches.length} coaches were inactive and excluded from team assignment`
+        );
+      }
+    } else if (coach_id) {
       // Get the specific coach
       const { data: coach, error: coachError } = await supabaseAdmin!
         .from("coaches")
@@ -135,7 +161,7 @@ export async function POST(request: NextRequest) {
       }
 
       activeCoaches = [coach];
-    } else {
+    } else if (coachEmails && Array.isArray(coachEmails) && coachEmails.length > 0) {
       // Find coaches by emails, including is_active status
       const { data: coaches, error: coachesError } = await supabaseAdmin!
         .from("coaches")
@@ -161,7 +187,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if all provided coach emails were found (only for coachEmails)
-    if (!coach_id && coachEmails) {
+    if (!coach_id && !coach_ids && coachEmails) {
       const foundEmails = activeCoaches.map((coach) => coach.email);
       const missingEmails = coachEmails.filter(
         (email) => !foundEmails.includes(email)
@@ -187,6 +213,22 @@ export async function POST(request: NextRequest) {
         );
         devLog(
           `Warning: ${inactiveCoaches.length} coaches were inactive and excluded from team assignment`
+        );
+      }
+    }
+    
+    // Check if all provided coach IDs were found (only for coach_ids array)
+    if (coach_ids && Array.isArray(coach_ids) && coach_ids.length > 0) {
+      const foundIds = activeCoaches.map((coach) => coach.id);
+      const missingIds = coach_ids.filter(
+        (id) => !foundIds.includes(id)
+      );
+      if (missingIds.length > 0) {
+        return NextResponse.json(
+          {
+            error: `Coaches not found with IDs: ${missingIds.join(", ")}`,
+          },
+          { status: 404 }
         );
       }
     }

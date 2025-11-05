@@ -356,7 +356,8 @@ export default function PaymentHistoryTable({
                     const remaining = getRemainingForPlayer(payment.player_id);
                     const approved = isApproved(payment.player_id);
                     if (remaining <= 0 || !approved) return null;
-                    const url = `/payment/${payment.player_id}?custom=${remaining.toFixed(2)}&from=billing`;
+                    // Use the same link format as the approval email (checkout page)
+                    const url = `/checkout/${payment.player_id}?from=billing`;
                     return (
                       <a
                         href={url}
@@ -389,7 +390,7 @@ export default function PaymentHistoryTable({
                   <span className="text-sm font-semibold text-gray-900">{formatAmount(remaining)}</span>
                   {remaining > 0 && approved && (
                     <a
-                      href={`/payment/${payment.player_id}?custom=${remaining.toFixed(2)}`}
+                      href={`/checkout/${payment.player_id}?from=billing`}
                       className="px-3 py-1.5 bg-red text-white rounded text-sm"
                     >
                       Pay

@@ -60,6 +60,12 @@ export default function CheckoutPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMismatch, setPasswordMismatch] = useState(false);
   const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [needsPassword, setNeedsPassword] = useState(true); // Track if user needs to set password
+
+  // Payment options
+  const [paymentType, setPaymentType] = useState<"annual" | "monthly" | "custom">("annual");
+  const [customAmount, setCustomAmount] = useState("");
+  const annualFee = Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -175,6 +181,12 @@ export default function CheckoutPage() {
             setConsentPhotoRelease(profile.parent.consent_photo_release || false);
             setConsentMedicalTreatment(profile.parent.consent_medical_treatment || false);
             setConsentParticipation(profile.parent.consent_participation || false);
+            
+            // Check if user already has a password (has completed checkout before or has multiple children)
+            // If checkout_completed is true OR they have more than one child, they likely have a password
+            const hasCompletedCheckout = profile.parent.checkout_completed === true;
+            const hasMultipleChildren = profile.children && profile.children.length > 1;
+            setNeedsPassword(!hasCompletedCheckout && !hasMultipleChildren);
           }
         }
       } catch (error) {
@@ -220,6 +232,11 @@ export default function CheckoutPage() {
             setConsentPhotoRelease(profile.parent.consent_photo_release || false);
             setConsentMedicalTreatment(profile.parent.consent_medical_treatment || false);
             setConsentParticipation(profile.parent.consent_participation || false);
+            
+            // Check if user already has a password (has completed checkout before or has multiple children)
+            const hasCompletedCheckout = profile.parent.checkout_completed === true;
+            const hasMultipleChildren = profile.children && profile.children.length > 1;
+            setNeedsPassword(!hasCompletedCheckout && !hasMultipleChildren);
           }
         }
       } catch (error) {
@@ -257,22 +274,33 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Password validation
-    if (!password) {
-      setMessage("Please set a password for your account");
-      return;
+    // Payment validation
+    if (paymentType === "custom") {
+      const customValue = Number(customAmount || 0);
+      if (!customAmount || isNaN(customValue) || customValue < 0.50) {
+        setMessage("Custom amount must be at least $0.50");
+        return;
+      }
     }
 
-    if (password !== confirmPassword) {
-      setMessage("Passwords do not match");
-      setPasswordMismatch(true);
-      return;
-    }
+    // Password validation - only if user needs to set password
+    if (needsPassword) {
+      if (!password) {
+        setMessage("Please set a password for your account");
+        return;
+      }
 
-    const passwordValidationErrors = validatePassword(password);
-    if (passwordValidationErrors.length > 0) {
-      setMessage(`Password must meet the following requirements: ${passwordValidationErrors.join(", ")}`);
-      return;
+      if (password !== confirmPassword) {
+        setMessage("Passwords do not match");
+        setPasswordMismatch(true);
+        return;
+      }
+
+      const passwordValidationErrors = validatePassword(password);
+      if (passwordValidationErrors.length > 0) {
+        setMessage(`Password must meet the following requirements: ${passwordValidationErrors.join(", ")}`);
+        return;
+      }
     }
 
     // Profanity validation across relevant text inputs
@@ -345,8 +373,8 @@ export default function CheckoutPage() {
           consent_photo_release: consentPhotoRelease,
           consent_medical_treatment: consentMedicalTreatment,
           consent_participation: consentParticipation,
-          // Password for account setup
-          password: password,
+          // Password for account setup (only if needed)
+          password: needsPassword ? password : null,
         }),
       });
 
@@ -358,8 +386,32 @@ export default function CheckoutPage() {
       const data = await response.json();
       const redirectPlayerId = isNewPlayer ? data.player_id : playerId;
 
-      // Redirect to payment page
-      router.push(`/payment/${redirectPlayerId}`);
+      // Create Stripe checkout session and redirect directly to Stripe
+      try {
+        const checkoutResponse = await fetch("/api/create-checkout-session", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            player_id: redirectPlayerId,
+            payment_type: paymentType,
+            custom_amount: paymentType === "custom" ? Number(customAmount || 0) : undefined,
+            from: "checkout",
+          }),
+        });
+
+        const checkoutData = await checkoutResponse.json();
+        if (checkoutData?.url) {
+          // Redirect directly to Stripe checkout
+          window.location.href = checkoutData.url;
+        } else {
+          // Fallback to payment page if checkout session creation fails
+          router.push(`/payment/${redirectPlayerId}`);
+        }
+      } catch (checkoutError) {
+        // Fallback to payment page if checkout session creation fails
+        devError("Failed to create checkout session", checkoutError);
+        router.push(`/payment/${redirectPlayerId}`);
+      }
     } catch (e: any) {
       setMessage(e.message || "An error occurred. Please try again.");
     } finally {
@@ -733,71 +785,75 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                <hr className="my-6 border-gray-700" />
+                {/* Account Password Section - Only show if user needs to set password */}
+                {needsPassword && (
+                  <>
+                    <hr className="my-6 border-gray-700" />
 
-                {/* Account Password Section */}
-                <div className="space-y-4">
-                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                    Set Your Account Password
-                  </h2>
-                  <p className="text-sm text-gray-400">
-                    Create a secure password to access your account. This password will be required for future logins.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Password *</label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                        placeholder="Enter your password"
-                      />
-                      {passwordErrors.length > 0 && (
-                        <ul className="mt-1 text-xs text-yellow-400 list-disc list-inside">
-                          {passwordErrors.map((error, idx) => (
-                            <li key={idx}>{error}</li>
-                          ))}
+                    <div className="space-y-4">
+                      <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
+                        Set Your Account Password
+                      </h2>
+                      <p className="text-sm text-gray-400">
+                        Create a secure password to access your account. This password will be required for future logins.
+                      </p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm text-gray-300 mb-1">Password *</label>
+                          <input
+                            className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            placeholder="Enter your password"
+                          />
+                          {passwordErrors.length > 0 && (
+                            <ul className="mt-1 text-xs text-yellow-400 list-disc list-inside">
+                              {passwordErrors.map((error, idx) => (
+                                <li key={idx}>{error}</li>
+                              ))}
+                            </ul>
+                          )}
+                          {password && passwordErrors.length === 0 && (
+                            <p className="mt-1 text-xs text-green-400">✓ Password meets all requirements</p>
+                          )}
+                        </div>
+                        <div>
+                          <label className="block text-sm text-gray-300 mb-1">Confirm Password *</label>
+                          <input
+                            className={`w-full rounded px-3 py-2 bg-gray-800 border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                              passwordMismatch && confirmPassword
+                                ? "border-red-500"
+                                : "border-gray-700"
+                            }`}
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                            placeholder="Confirm your password"
+                          />
+                          {passwordMismatch && confirmPassword && (
+                            <p className="mt-1 text-xs text-red-400">Passwords do not match</p>
+                          )}
+                          {confirmPassword && !passwordMismatch && password && (
+                            <p className="mt-1 text-xs text-green-400">✓ Passwords match</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="bg-gray-800/50 border border-gray-700 rounded p-3 text-xs text-gray-400">
+                        <strong className="text-gray-300">Password Requirements:</strong>
+                        <ul className="mt-1 ml-4 list-disc">
+                          <li>At least 8 characters</li>
+                          <li>At least one uppercase letter</li>
+                          <li>At least one lowercase letter</li>
+                          <li>At least one number</li>
+                          <li>At least one special character (!@#$%^&*(),.?":{}|&lt;&gt;)</li>
                         </ul>
-                      )}
-                      {password && passwordErrors.length === 0 && (
-                        <p className="mt-1 text-xs text-green-400">✓ Password meets all requirements</p>
-                      )}
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">Confirm Password *</label>
-                      <input
-                        className={`w-full rounded px-3 py-2 bg-gray-800 border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                          passwordMismatch && confirmPassword
-                            ? "border-red-500"
-                            : "border-gray-700"
-                        }`}
-                        type="password"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        required
-                        placeholder="Confirm your password"
-                      />
-                      {passwordMismatch && confirmPassword && (
-                        <p className="mt-1 text-xs text-red-400">Passwords do not match</p>
-                      )}
-                      {confirmPassword && !passwordMismatch && (
-                        <p className="mt-1 text-xs text-green-400">✓ Passwords match</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="bg-gray-800/50 border border-gray-700 rounded p-3 text-xs text-gray-400">
-                    <strong className="text-gray-300">Password Requirements:</strong>
-                    <ul className="mt-1 ml-4 list-disc">
-                      <li>At least 8 characters</li>
-                      <li>At least one uppercase letter</li>
-                      <li>At least one lowercase letter</li>
-                      <li>At least one number</li>
-                      <li>At least one special character (!@#$%^&*(),.?":{}|&lt;&gt;)</li>
-                    </ul>
-                  </div>
-                </div>
+                  </>
+                )}
 
                 <hr className="my-6 border-gray-700" />
 
@@ -836,6 +892,59 @@ export default function CheckoutPage() {
                         required
                       />
                       <span>I consent to participation in sports activities *</span>
+                    </label>
+                  </div>
+                </div>
+
+                <hr className="my-6 border-gray-700" />
+
+                {/* Payment Options Section */}
+                <div className="space-y-4">
+                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
+                    Choose Payment Option
+                  </h2>
+                  <div className="space-y-3">
+                    <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paymentPlan"
+                        checked={paymentType === "annual"}
+                        onChange={() => setPaymentType("annual")}
+                        className="w-5 h-5 text-red focus:ring-2 focus:ring-blue-500 bg-gray-800 border-gray-700"
+                      />
+                      <span>Annual – ${annualFee.toFixed(2)}</span>
+                    </label>
+                    <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paymentPlan"
+                        checked={paymentType === "monthly"}
+                        onChange={() => setPaymentType("monthly")}
+                        className="w-5 h-5 text-red focus:ring-2 focus:ring-blue-500 bg-gray-800 border-gray-700"
+                      />
+                      <span>Monthly – $30.00</span>
+                    </label>
+                    <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paymentPlan"
+                        checked={paymentType === "custom"}
+                        onChange={() => setPaymentType("custom")}
+                        className="w-5 h-5 text-red focus:ring-2 focus:ring-blue-500 bg-gray-800 border-gray-700"
+                      />
+                      <span className="flex items-center gap-2">
+                        Custom Amount:
+                        <input
+                          className="ml-2 border border-gray-600 bg-gray-800 text-white rounded px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          type="number"
+                          step="0.01"
+                          min="0.50"
+                          value={customAmount}
+                          onChange={(e) => setCustomAmount(e.target.value)}
+                          disabled={paymentType !== "custom"}
+                          placeholder="0.00"
+                        />
+                      </span>
                     </label>
                   </div>
                 </div>

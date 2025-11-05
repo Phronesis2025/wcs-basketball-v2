@@ -36,6 +36,31 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
   });
   const annualFee = Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360);
 
+  // Add glowing animation CSS
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      const existingStyle = document.head.querySelector('style[data-glow-animation]');
+      if (!existingStyle) {
+        const style = document.createElement('style');
+        style.setAttribute('data-glow-animation', 'true');
+        style.textContent = `
+          @keyframes glow {
+            0%, 100% {
+              box-shadow: 0 0 10px rgba(255, 255, 255, 0.3), 0 0 20px rgba(255, 255, 255, 0.2);
+            }
+            50% {
+              box-shadow: 0 0 20px rgba(255, 255, 255, 0.5), 0 0 30px rgba(255, 255, 255, 0.4), 0 0 40px rgba(255, 255, 255, 0.2);
+            }
+          }
+          .glow-animation {
+            animation: glow 2s ease-in-out infinite;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     let isMounted = true;
     const loadTeamLogo = async () => {
@@ -311,7 +336,7 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
             )}
             
             {/* Top logo */}
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-2 sm:border-4 border-gray-200 shadow-md mx-auto flex items-center justify-center overflow-hidden relative">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-black border-2 sm:border-4 border-gray-300 shadow-md mx-auto flex items-center justify-center overflow-hidden relative glow-animation">
               <img
                 src={teamLogoUrl}
                 alt="Team logo"
@@ -334,13 +359,84 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
               {age ? ` • Age ${age}` : ""}
             </p>
 
-            {/* Status pill */}
-            <div className="flex justify-center mt-3 sm:mt-4">
-              <span
-                className={`px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold ${getStatusColor()}`}
-              >
-                {getStatusLabel()}
-              </span>
+            {/* Status badges - show progression based on status */}
+            <div className="flex justify-center items-center gap-2 mt-3 sm:mt-4 flex-wrap">
+              {(() => {
+                const status = (child.status || "pending").toLowerCase();
+                
+                // On Hold: Show Pending (colored) + On Hold (bolder orange) + Active (greyed)
+                if (status === "on_hold") {
+                  return (
+                    <>
+                      <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
+                        Pending
+                      </span>
+                      <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-orange-200 text-orange-900 border-2 border-orange-400">
+                        On Hold
+                      </span>
+                      <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-gray-100 text-gray-400 border border-gray-300 opacity-50">
+                        Active
+                      </span>
+                    </>
+                  );
+                }
+                
+                // Pending: Show Pending (colored) + Approved (greyed) + Active (greyed)
+                if (status === "pending") {
+                  return (
+                    <>
+                      <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
+                        Pending
+                      </span>
+                      <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-gray-100 text-gray-400 border border-gray-300 opacity-50">
+                        Approved
+                      </span>
+                      <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-gray-100 text-gray-400 border border-gray-300 opacity-50">
+                        Active
+                      </span>
+                    </>
+                  );
+                }
+                
+                // Approved: Show Approved (bluish) + Active (greyed)
+                if (status === "approved") {
+                  return (
+                    <>
+                      <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
+                        Approved
+                      </span>
+                      <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-gray-100 text-gray-400 border border-gray-300 opacity-50">
+                        Active
+                      </span>
+                    </>
+                  );
+                }
+                
+                // Active: Show only Active (greenish)
+                if (status === "active") {
+                  return (
+                    <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-green-100 text-green-800 border border-green-300">
+                      Active
+                    </span>
+                  );
+                }
+                
+                // Rejected: Show only Rejected badge
+                if (status === "rejected") {
+                  return (
+                    <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-red-100 text-red-800 border border-red-300">
+                      Rejected
+                    </span>
+                  );
+                }
+                
+                // Fallback: Show pending
+                return (
+                  <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
+                    Pending
+                  </span>
+                );
+              })()}
             </div>
 
             {/* Info rows */}
@@ -676,7 +772,7 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
       )}
       
       {/* Top logo */}
-      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white border-2 sm:border-4 border-gray-200 shadow-md mx-auto flex items-center justify-center overflow-hidden relative">
+      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-black border-2 sm:border-4 border-gray-300 shadow-md mx-auto flex items-center justify-center overflow-hidden relative glow-animation">
         <img
           src={teamLogoUrl}
           alt="Team logo"
@@ -699,13 +795,84 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
         {age ? ` • Age ${age}` : ""}
       </p>
 
-      {/* Status pill */}
-      <div className="flex justify-center mt-3 sm:mt-4">
-        <span
-          className={`px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold ${getStatusColor()}`}
-        >
-          {getStatusLabel()}
-        </span>
+      {/* Status badges - show progression based on status */}
+      <div className="flex justify-center items-center gap-2 mt-3 sm:mt-4 flex-wrap">
+        {(() => {
+          const status = (child.status || "pending").toLowerCase();
+          
+          // On Hold: Show Pending (colored) + On Hold (bolder orange) + Active (greyed)
+          if (status === "on_hold") {
+            return (
+              <>
+                <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
+                  Pending
+                </span>
+                <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-orange-200 text-orange-900 border-2 border-orange-400">
+                  On Hold
+                </span>
+                <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-gray-100 text-gray-400 border border-gray-300 opacity-50">
+                  Active
+                </span>
+              </>
+            );
+          }
+          
+          // Pending: Show Pending (colored) + Approved (greyed) + Active (greyed)
+          if (status === "pending") {
+            return (
+              <>
+                <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
+                  Pending
+                </span>
+                <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-gray-100 text-gray-400 border border-gray-300 opacity-50">
+                  Approved
+                </span>
+                <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-gray-100 text-gray-400 border border-gray-300 opacity-50">
+                  Active
+                </span>
+              </>
+            );
+          }
+          
+          // Approved: Show Approved (bluish) + Active (greyed)
+          if (status === "approved") {
+            return (
+              <>
+                <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
+                  Approved
+                </span>
+                <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-gray-100 text-gray-400 border border-gray-300 opacity-50">
+                  Active
+                </span>
+              </>
+            );
+          }
+          
+          // Active: Show only Active (greenish)
+          if (status === "active") {
+            return (
+              <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-green-100 text-green-800 border border-green-300">
+                Active
+              </span>
+            );
+          }
+          
+          // Rejected: Show only Rejected badge
+          if (status === "rejected") {
+            return (
+              <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-red-100 text-red-800 border border-red-300">
+                Rejected
+              </span>
+            );
+          }
+          
+          // Fallback: Show pending
+          return (
+            <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm md:text-xs font-semibold bg-yellow-100 text-yellow-800 border border-yellow-300">
+              Pending
+            </span>
+          );
+        })()}
       </div>
 
       {/* Info rows */}

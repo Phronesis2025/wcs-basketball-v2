@@ -47,9 +47,9 @@ export const playerInfoSchema = z.object({
           (monthDiff === 0 && today.getDate() < birthDate.getDate())
             ? age - 1
             : age;
-        return calculatedAge >= 8 && calculatedAge <= 18;
+        return calculatedAge >= 6 && calculatedAge <= 18;
       },
-      "Player must be between 8 and 18 years old"
+      "Player must be between 6 and 18 years old"
     ),
   player_grade: z.string().optional(),
   player_gender: z.enum(["Male", "Female", "Other"], {

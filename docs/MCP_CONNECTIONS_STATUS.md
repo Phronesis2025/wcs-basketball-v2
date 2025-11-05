@@ -49,7 +49,7 @@
   - Type: Command
   - Command: `node`
   - Path: `C:\dev\mcp-send-email\build\index.js`
-  - API Key: Configured (key starts with `re_cq58MCi7...`)
+  - API Key: Configured (redacted for security)
 - **Purpose:** Email verification and testing during E2E tests
 - **Note:** May require Cursor restart to fully activate
 - **Setup Location:** `C:\dev\mcp-send-email`
@@ -87,7 +87,7 @@
       "command": "node",
       "args": [
         "C:\\dev\\mcp-send-email\\build\\index.js",
-        "--key=re_cq58MCi7_DzpRsiSvq1LN96Zn9vC3viFu"
+        "--key=REDACTED_FOR_SECURITY"
       ]
     }
   }

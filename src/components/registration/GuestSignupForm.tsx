@@ -25,9 +25,9 @@ const guestSignupSchema = z.object({
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
         age--;
       }
-      return age >= 8 && age <= 18;
+      return age >= 6 && age <= 18;
     },
-    "Player must be between 8 and 18 years old"
+    "Player must be between 6 and 18 years old"
   ),
   player_grade: z.string().optional(),
   player_experience: z.string().regex(/^[1-5]$/, "Experience level must be between 1 and 5"),
@@ -70,7 +70,7 @@ export default function GuestSignupForm() {
 
   const getMinDate = (): string => {
     const today = new Date();
-    const maxAge = new Date(today.getFullYear() - 8, today.getMonth(), today.getDate());
+    const maxAge = new Date(today.getFullYear() - 6, today.getMonth(), today.getDate());
     return maxAge.toISOString().split("T")[0];
   };
 

@@ -11,7 +11,6 @@ import ProfileHeader from "@/components/parent/ProfileHeader";
 import ChildDetailsCard from "@/components/parent/ChildDetailsCard";
 import ContactEditForm from "@/components/parent/ContactEditForm";
 import PaymentHistoryTable from "@/components/parent/PaymentHistoryTable";
-import StatusTimeline from "@/components/parent/StatusTimeline";
 import HandleAuthRedirect from "@/components/auth/HandleAuthRedirect";
 import { devError, devLog } from "@/lib/security";
 import BasketballLoader from "@/components/BasketballLoader";
@@ -304,30 +303,11 @@ function ParentProfilePageInner() {
               <>
                 {profile.children.length > 0 ? (
                   <>
-                    {/* Status Timeline Section - Show for first child, or all children if only one */}
-                    {profile.children.length === 1 && (
-                      <div className="mb-6 bg-gray-900/50 border border-gray-700 rounded-lg p-6">
-                        <StatusTimeline
-                          playerId={profile.children[0].id}
-                          initialStatus={profile.children[0].status || "pending"}
-                        />
-                      </div>
-                    )}
-
                     {/* Children Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6 justify-items-center md:justify-items-stretch">
                       {profile.children.map((child) => (
-                        <div key={child.id} className="space-y-4">
+                        <div key={child.id} className="w-full max-w-[280px] md:max-w-none">
                           <ChildDetailsCard child={child} />
-                          {/* Status Timeline for each child on mobile/tablet, or when multiple children */}
-                          {profile.children.length > 1 && (
-                            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
-                              <StatusTimeline
-                                playerId={child.id}
-                                initialStatus={child.status || "pending"}
-                              />
-                            </div>
-                          )}
                         </div>
                       ))}
                     </div>

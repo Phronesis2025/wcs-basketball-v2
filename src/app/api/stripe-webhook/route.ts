@@ -136,7 +136,7 @@ export async function POST(req: Request) {
           const { data: player, error: playerErr } = await supabaseAdmin!
             .from("players")
             .select(
-              "id, name, parent_email, parent_first_name, parent_last_name, team_id, teams(name)"
+              "id, name, parent_email, parent_first_name, parent_last_name, parent_id, team_id, teams(name)"
             )
             .eq("id", paymentRow.player_id)
             .single();
@@ -158,17 +158,38 @@ export async function POST(req: Request) {
             break;
           }
 
+          // If parent_email is missing, fetch it from the parent record
+          let parentEmail = player.parent_email;
+          if (!parentEmail && player.parent_id) {
+            const { data: parentData, error: parentErr } = await supabaseAdmin!
+              .from("parents")
+              .select("email")
+              .eq("id", player.parent_id)
+              .single();
+            
+            if (!parentErr && parentData?.email) {
+              parentEmail = parentData.email;
+              devLog("webhook: fetched parent_email from parents table", {
+                playerId: paymentRow.player_id,
+                parentId: player.parent_id,
+                email: parentEmail,
+              });
+            } else if (parentErr) {
+              devError("webhook: failed to fetch parent email", parentErr);
+            }
+          }
+
           devLog("webhook: player data fetched", {
             playerId: paymentRow.player_id,
             playerName: player.name || "",
-            hasEmail: !!player.parent_email,
+            hasEmail: !!parentEmail,
             hasTeam: !!player.team_id,
           });
 
           const { firstName: playerFirstName, lastName: playerLastName } =
             splitFullName(player.name);
 
-          if (player.parent_email) {
+          if (parentEmail) {
             // Optionally fetch team info for the next 2 weeks
             let teamInfo = null as any;
             try {
@@ -197,17 +218,22 @@ export async function POST(req: Request) {
 
             try {
               await sendEmail(
-                player.parent_email,
+                parentEmail,
                 parentEmailData.subject,
                 parentEmailData.html
               );
 
               devLog("webhook: parent confirmation email sent", {
-                to: player.parent_email,
+                to: parentEmail,
               });
             } catch (emailErr) {
               devError("webhook: failed to send parent email", emailErr);
             }
+          } else {
+            devError("webhook: no parent email available for payment confirmation", {
+              playerId: paymentRow.player_id,
+              parentId: player.parent_id,
+            });
           }
 
           const adminSubject = `WCS Payment received - $${amount.toFixed(2)}`;
@@ -254,7 +280,7 @@ export async function POST(req: Request) {
         const { data: player, error: findPlayerErr } = await supabaseAdmin!
           .from("players")
           .select(
-            "id, name, parent_email, parent_first_name, parent_last_name, team_id"
+            "id, name, parent_email, parent_first_name, parent_last_name, parent_id, team_id"
           )
           .eq("stripe_customer_id", customerId)
           .single();
@@ -265,6 +291,27 @@ export async function POST(req: Request) {
             customerId,
           });
           break;
+        }
+
+        // If parent_email is missing, fetch it from the parent record
+        let parentEmail = player.parent_email;
+        if (!parentEmail && player.parent_id) {
+          const { data: parentData, error: parentErr } = await supabaseAdmin!
+            .from("parents")
+            .select("email")
+            .eq("id", player.parent_id)
+            .single();
+          
+          if (!parentErr && parentData?.email) {
+            parentEmail = parentData.email;
+            devLog("webhook: fetched parent_email from parents table (renewal)", {
+              playerId: player.id,
+              parentId: player.parent_id,
+              email: parentEmail,
+            });
+          } else if (parentErr) {
+            devError("webhook: failed to fetch parent email (renewal)", parentErr);
+          }
         }
 
         // Insert a new paid payment record for the renewal
@@ -306,7 +353,7 @@ export async function POST(req: Request) {
           splitFullName(player.name);
 
         // Send confirmation email to parent
-        if (player.parent_email) {
+        if (parentEmail) {
           // Optionally fetch team info
           let teamInfo = null as any;
           try {
@@ -341,17 +388,22 @@ export async function POST(req: Request) {
             });
 
             await sendEmail(
-              player.parent_email,
+              parentEmail,
               parentEmailData.subject,
               parentEmailData.html
             );
 
             devLog("webhook: parent subscription renewal email sent", {
-              to: player.parent_email,
+              to: parentEmail,
             });
           } catch (emailErr) {
             devError("webhook: parent renewal email error", emailErr);
           }
+        } else {
+          devError("webhook: no parent email available for payment confirmation (renewal)", {
+            playerId: player.id,
+            parentId: player.parent_id,
+          });
         }
 
         // Notify admins on renewal

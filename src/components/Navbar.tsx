@@ -369,7 +369,7 @@ export default function Navbar() {
     return null;
   }
 
-  // Check if we're on admin dashboard page
+  // Check if we're on admin dashboard page (but we'll use regular navbar now)
   const isAdminDashboard = pathname === "/admin/club-management";
 
   const handleSignOut = async () => {
@@ -492,16 +492,26 @@ export default function Navbar() {
   ];
 
   // Add "Profile" link for parents, "Coaches" link for admin/coach, or login for non-authenticated
+  // Note: On club management page, we don't show these links in navbar
   let navLinks;
-  if (user) {
+  if (isAdminDashboard) {
+    // On club management page, don't show Coaches/Profile links in navbar
+    navLinks = baseNavLinks;
+  } else if (user) {
     // Check user role: admin and coach see "Coaches" link, parents see "Profile" link
     if (userRole === "admin" || userRole === "coach") {
       navLinks = [
         ...baseNavLinks,
-        { name: "Coaches", href: "/coaches/login" },
+        { name: "Coaches", href: "/admin/club-management?tab=coaches-dashboard" },
+      ];
+    } else if (userRole === "parent") {
+      // Parent users see "Profile" link
+      navLinks = [
+        ...baseNavLinks,
+        { name: "Profile", href: "/parent/profile" },
       ];
     } else {
-      // Parent users or users with null role see "Profile" link
+      // Users with null role or unknown role - show Profile link
       navLinks = [
         ...baseNavLinks,
         { name: "Profile", href: "/parent/profile" },
@@ -531,110 +541,15 @@ export default function Navbar() {
       <Suspense fallback={null}>
         <HandleAuthRedirect />
       </Suspense>
-      {isAdminDashboard ? (
-        // Coaches Dashboard Style Navbar for Admin Dashboard
-        <div className="bg-white/95 backdrop-blur-md shadow-lg">
-          <div className="max-w-7xl mx-auto px-2 sm:px-6 py-1">
-            <div className="flex items-center justify-between h-12">
-              <Link
-                href="/"
-                className="flex items-center gap-1 sm:gap-2 hover:opacity-80 transition-opacity duration-300"
-              >
-                <div className="p-1 rounded-md transition-all duration-300 ease-out w-14 h-7 sm:w-16 sm:h-8 relative bg-transparent">
-                  <Image
-                    src="/logo4.png"
-                    alt="WCS Basketball Logo"
-                    fill
-                    sizes="(max-width: 640px) 56px, 64px"
-                    className="object-contain"
-                    priority
-                  />
-                </div>
-                <span className="md:hidden font-bebas text-base sm:text-lg transition-colors duration-300 ease-out text-navy">
-                  World Class
-                </span>
-                <span className="hidden md:inline font-bebas text-lg transition-colors duration-300 ease-out text-navy">
-                  World Class
-                </span>
-              </Link>
-              <div className="flex items-center space-x-4">
-                <span className="text-gray-900 font-inter text-sm sm:text-base">
-                  Coach{" "}
-                  {(() => {
-                    const fullName = userFullName || user?.split("@")[0] || "";
-                    const nameParts = fullName.split(" ");
-
-                    if (nameParts.length >= 2) {
-                      // Full name with spaces: "Jason Boyer"
-                      const firstName = nameParts[0];
-                      const lastName = nameParts[nameParts.length - 1];
-                      return `${firstName.charAt(0).toUpperCase()}. ${lastName
-                        .charAt(0)
-                        .toUpperCase()}${lastName.slice(1).toLowerCase()}`;
-                    } else if (nameParts.length === 1) {
-                      // Single name or email format: "jason.boyer" or "Jason"
-                      const name = nameParts[0];
-
-                      // Check if it contains dots (email format)
-                      if (name.includes(".")) {
-                        const dotParts = name.split(".");
-                        if (dotParts.length >= 2) {
-                          const firstName = dotParts[0];
-                          const lastName = dotParts[dotParts.length - 1];
-                          return `${firstName
-                            .charAt(0)
-                            .toUpperCase()}. ${lastName
-                            .charAt(0)
-                            .toUpperCase()}${lastName.slice(1).toLowerCase()}`;
-                        }
-                      }
-
-                      // Single name without dots
-                      return (
-                        name.charAt(0).toUpperCase() +
-                        name.slice(1).toLowerCase()
-                      );
-                    }
-                    return "User";
-                  })()}
-                </span>
-                <button
-                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="p-2 rounded-md transition-all duration-300 ease-out text-navy hover:bg-gray-100"
-                  aria-label="Toggle menu"
-                >
-                  <svg
-                    className="h-6 w-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d={
-                        isMobileMenuOpen
-                          ? "M6 18L18 6M6 6l12 12"
-                          : "M4 6h16M4 12h16m-7 6h7"
-                      }
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        // Regular Navbar for Home and other pages
-        <motion.nav
-          className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
-            // Home page: always black background; Other pages: always white
-            isHome
-              ? "bg-black"
-              : "bg-white/95 backdrop-blur-md shadow-lg"
-          }`}
-        >
+      {/* Regular Navbar for all pages (including club management) */}
+      <motion.nav
+        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
+          // Home page: always black background; Other pages: always white
+          isHome
+            ? "bg-black"
+            : "bg-white/95 backdrop-blur-md shadow-lg"
+        }`}
+      >
           <div className="max-w-7xl mx-auto px-2 sm:px-6 py-1">
             <div className="flex items-center justify-between h-12">
               <Link
@@ -737,7 +652,7 @@ export default function Navbar() {
             </div>
           </div>
         </motion.nav>
-      )}
+      {/* Mobile Menu for all pages */}
       <div
         className={`fixed top-12 left-0 right-0 z-50 transition-all duration-300 ease-out ${
           isMobileMenuOpen
@@ -747,94 +662,35 @@ export default function Navbar() {
       >
         <div className="bg-white shadow-lg">
           <div className="max-w-7xl mx-auto px-4 py-6">
-            {isAdminDashboard ? (
-              // Admin Dashboard Menu (two columns layout)
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Left: Admin Dashboard */}
-                <div>
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-4">
-                    Admin Dashboard
-                  </div>
-                  <ul className="space-y-3">
-                    {(isAdmin ? adminMenuLinks : coachMenuLinks).map((link) => (
-                      <li key={link.name}>
-                        <Link
-                          href={link.href}
-                          className="block text-navy font-bebas text-lg tracking-wide hover:text-red transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {link.name}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Right: Navigation */}
-                <div className="md:border-l md:border-gray-200 md:pl-8">
-                  <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-4">
-                    Navigation
-                  </div>
-                  <ul className="space-y-3">
-                    {navLinks.map((link) => (
-                      <li key={link.name}>
-                        <Link
-                          href={link.href}
-                          className="block text-navy font-bebas text-lg tracking-wide hover:text-red transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {link.name}
-                        </Link>
-                      </li>
-                    ))}
-                    <li>
-                      <button
-                        onClick={() => {
-                          setIsMobileMenuOpen(false);
-                          handleSignOut();
-                        }}
-                        className="text-navy font-bebas text-lg tracking-wide hover:text-red transition-colors"
-                      >
-                        Sign Out
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                href={link.href}
+                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                {link.name}
+              </Link>
+            ))}
+            {user ? (
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleSignOut();
+                }}
+                className="w-full text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
+              >
+                Sign Out
+              </button>
             ) : (
-              // Regular Mobile Menu for other pages
-              <>
-                {navLinks.map((link) => (
-                  <Link
-                    key={link.name}
-                    href={link.href}
-                    className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {link.name}
-                  </Link>
-                ))}
-                {user ? (
-                  <button
-                    onClick={() => {
-                      setIsMobileMenuOpen(false);
-                      handleSignOut();
-                    }}
-                    className="w-full text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
-                  >
-                    Sign Out
-                  </button>
-                ) : (
-                  <div 
-                    className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
-                  >
-                    <StartNowButton 
-                      variant="navbar" 
-                      onOpen={() => setIsMobileMenuOpen(false)}
-                    />
-                  </div>
-                )}
-              </>
+              <div 
+                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
+              >
+                <StartNowButton 
+                  variant="navbar" 
+                  onOpen={() => setIsMobileMenuOpen(false)}
+                />
+              </div>
             )}
           </div>
         </div>

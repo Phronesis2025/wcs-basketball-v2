@@ -1546,15 +1546,24 @@ function ClubManagementContent() {
 
         if (!response.ok) {
           console.error("Error creating team:", result.error);
-          throw new Error(result.error || "Failed to create team");
+          const errorMessage = result.error || result.details || "Failed to create team";
+          toast.error(errorMessage);
+          throw new Error(errorMessage);
         }
 
         console.log("Team created successfully:", result);
         toast.success("Team added successfully");
+        setShowEditTeamModal(false); // Close the modal
+        setEditingTeam(null); // Clear editing state
+        await fetchManagementData(); // Refresh the data
       }
     } catch (e) {
       devError("Failed to save team", e);
-      toast.error("Failed to save team");
+      const errorMessage = e instanceof Error ? e.message : "Failed to save team";
+      if (!errorMessage.includes("Failed to create team")) {
+        toast.error(errorMessage);
+      }
+      // Don't show generic error if specific error was already shown
     }
   };
 
