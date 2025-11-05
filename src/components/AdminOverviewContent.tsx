@@ -731,27 +731,38 @@ export default function AdminOverviewContent({
               />
             </svg>
           </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setEditingPlayer(null);
-              setPlayerForm({
-                teamId: "",
-                name: "",
-                jerseyNumber: "",
-                grade: "",
-                parentName: "",
-                parentPhone: "",
-                parentEmail: "",
-                dateOfBirth: "",
-                is_active: true,
-              });
-              setShowEditPlayerModal(true);
-            }}
-            className="bg-[red] text-white font-bebas uppercase py-2 px-4 rounded hover:bg-[#b80000] transition-colors"
-          >
-            Add Player
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingPlayer(null);
+                setPlayerForm({
+                  teamId: "",
+                  name: "",
+                  jerseyNumber: "",
+                  grade: "",
+                  parentName: "",
+                  parentPhone: "",
+                  parentEmail: "",
+                  dateOfBirth: "",
+                  is_active: true,
+                });
+                setShowEditPlayerModal(true);
+              }}
+              className="bg-[red] text-white font-bebas uppercase py-2 px-4 rounded hover:bg-[#b80000] transition-colors"
+            >
+              Add Player
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                window.location.href = "/admin/import";
+              }}
+              className="hidden md:block bg-blue-600 text-white font-bebas uppercase py-2 px-4 rounded hover:bg-blue-700 transition-colors"
+            >
+              Import Players
+            </button>
+          </div>
         </div>
         {expandedSections.players && (
           <div>

@@ -51,6 +51,7 @@ NEXT_PUBLIC_BASE_URL=http://localhost:3000
 # NEXT_PUBLIC_SENTRY_DSN=your_sentry_dsn_here
 # UPSTASH_REDIS_REST_URL=your_upstash_redis_url_here
 # UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_token_here
+# UPTIMEROBOT_API_KEY=your_uptimerobot_api_key_here
 
 # ============================================
 # OPTIONAL - Cron Jobs

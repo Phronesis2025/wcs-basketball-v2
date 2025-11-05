@@ -44,11 +44,11 @@ function InvoiceEmailButton({ playerId, playerName }: { playerId: string; player
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full sm:w-auto">
       <button
         onClick={sendInvoice}
         disabled={sendingInvoice}
-        className="px-4 py-2 bg-red text-white rounded hover:bg-red/90 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+        className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-red text-white rounded hover:bg-red/90 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-center"
       >
         {sendingInvoice ? "Sending..." : "Email Invoice"}
       </button>
@@ -183,10 +183,6 @@ export default function PaymentHistoryTable({
     .filter((p) => (p.status || "").toString().toLowerCase().includes("paid") || (p.status || "").toString().toLowerCase() === "succeeded")
     .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-  const pendingAmount = augmentedPayments
-    .filter((p) => p.status === "pending")
-    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-
   // Per-player totals for remaining balance and due date
   const paidByPlayer = new Map<string, number>();
   const lastPaidDateByPlayer = new Map<string, Date>();
@@ -209,6 +205,11 @@ export default function PaymentHistoryTable({
     const paid = paidByPlayer.get(playerId) || 0;
     return Math.max(annualFee - paid, 0);
   };
+
+  // Calculate total pending amount as sum of remaining balances for approved players
+  const pendingAmount = Array.from(playersById.values())
+    .filter((player) => isApproved(player.id))
+    .reduce((sum, player) => sum + getRemainingForPlayer(player.id), 0);
 
   const getDueDateForPlayer = (playerId: string) => {
     // If there is a previous paid payment, due date is 30 days after that
@@ -253,7 +254,7 @@ export default function PaymentHistoryTable({
                 return (
                   <div
                     key={player.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 gap-4"
                   >
                     <div>
                       <p className="font-semibold text-gray-900">{player.name}</p>
@@ -261,10 +262,10 @@ export default function PaymentHistoryTable({
                         Total Paid: {formatAmount(playerPaid)}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
                       <a
                         href={`/payment/${player.id}`}
-                        className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium"
+                        className="px-4 py-3 sm:py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium text-center"
                       >
                         View Invoice
                       </a>
@@ -374,23 +375,31 @@ export default function PaymentHistoryTable({
         </table>
       </div>
 
-      {/* Mobile stacked list */}
+      {/* Mobile stacked list - Show one row per player */}
       <div className="md:hidden divide-y divide-gray-200">
-        {augmentedPayments
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .map((payment) => {
-            const remaining = getRemainingForPlayer(payment.player_id);
-            const approved = isApproved(payment.player_id);
+        {Array.from(new Set(augmentedPayments.map(p => p.player_id)))
+          .map(playerId => {
+            const playerPayments = augmentedPayments.filter(p => p.player_id === playerId);
+            const latestPayment = playerPayments.sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            )[0];
+            const remaining = getRemainingForPlayer(playerId);
+            const approved = isApproved(playerId);
+            
             return (
-              <div key={payment.id} className="flex items-center justify-between py-3 px-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{payment.player_name || "Unknown"}</p>
+              <div key={playerId} className="py-3 px-4">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-sm font-semibold text-gray-900">{latestPayment.player_name || "Unknown"}</p>
+                  <span className="text-xs text-gray-600">{playerPayments.length} payment{playerPayments.length !== 1 ? 's' : ''}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold text-gray-900">{formatAmount(remaining)}</span>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs text-gray-600">
+                    <span className="block">Remaining:</span>
+                    <span className="font-semibold text-gray-900 text-sm">{formatAmount(remaining)}</span>
+                  </div>
                   {remaining > 0 && approved && (
                     <a
-                      href={`/checkout/${payment.player_id}?from=billing`}
+                      href={`/checkout/${playerId}?from=billing`}
                       className="px-3 py-1.5 bg-red text-white rounded text-sm"
                     >
                       Pay

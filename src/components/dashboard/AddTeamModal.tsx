@@ -298,7 +298,8 @@ export default function AddTeamModal({
 
     try {
       let logoUrl = formData.logoUrl;
-      let imageUrl = "";
+      // Initialize imageUrl with existing team_image value (important for edit mode)
+      let imageUrl = editingTeam?.team_image || "";
 
       // Upload logo if a new file is selected
       if (selectedLogoFile) {
@@ -309,13 +310,14 @@ export default function AddTeamModal({
       console.log("🖼️ Checking for team image upload:", {
         selectedImageFile,
         hasFile: !!selectedImageFile,
+        existingImage: editingTeam?.team_image,
       });
       if (selectedImageFile) {
         console.log("🖼️ Uploading team image...");
         imageUrl = await uploadImage(selectedImageFile, formData.name.trim());
         console.log("🖼️ Team image uploaded successfully:", imageUrl);
       } else {
-        console.log("🖼️ No team image file selected, using existing image");
+        console.log("🖼️ No team image file selected, preserving existing image:", imageUrl);
       }
 
       // Add cache-busting param to avoid stale cached images after overwrite

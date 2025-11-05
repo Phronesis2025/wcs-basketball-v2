@@ -1,173 +1,188 @@
-# WCSv2.0 - World Class Sports Basketball League
+# WCS Basketball v2.0 Documentation
 
-## Overview
+**Last Updated**: January 2025  
+**Organization**: Organized by category for easier navigation
 
-Official website for a youth basketball league in Kansas, managed for Phronesis2025's brother. Built to empower kids (8-18), build character, and generate revenue via merch sales. Features a modern, responsive design with comprehensive security measures, enhanced mobile experience, and interactive components.
+---
 
-## Tech Stack
+## 📁 Documentation Structure
 
-- **Frontend**: Next.js 15.5.2, Tailwind CSS 3.3.3, TypeScript, Framer Motion
-- **UI Components**: Swiper.js, React Icons, react-intersection-observer
-- **Backend**: Supabase (auth, DB, storage), Rate limiting with Upstash Redis
-- **Security**: Sentry monitoring, comprehensive CSP headers, CSRF protection, RLS policies, input sanitization, security utilities, profanity filtering, admin permission system
-- **Deployment**: Vercel with automatic deployments
-- **Fonts**: Local Inter, Bebas Neue
+### Core Documentation (Root Level)
 
-## Features
+- **`CHANGELOG.md`** - Complete version history and release notes
+- **`README.md`** - This file - documentation index
+- **`SECURITY.md`** - Comprehensive security guide
+- **`PERFORMANCE_OPTIMIZATION.md`** - Performance optimization guide
+- **`PERFORMANCE_MONITORING_SETUP.md`** - Performance monitoring setup guide
+- **`ENVIRONMENT_SETUP.md`** - Environment variables configuration
+- **`DB_SETUP.md`** - Database schema and setup guide
+- **`OVERVIEW.md`** - Project overview and architecture
+- **`PROGRESS.md`** - Development progress tracking
+- **`ROADMAP.md`** - Future development roadmap
 
-- **Hero Section**: Enhanced responsive design with mobile-optimized text sizing and positioning, fixed flaming basketball positioning
-- **Values Section**: Interactive 3-card carousel showcasing league values
-- **News Carousel**: Swipeable news section with modal details
-- **Team Previews**: Dynamic team cards with logos and information
-- **Coaches Corner**: Staff profiles and information
-- **Coaches Dashboard**: Modern card-based dashboard with statistics cards, unified modal system, and comprehensive team management interface
-- **Message Board**: Real-time communication system for coaches with live updates, role-based permissions, mobile optimization, and enhanced UI fixes
-- **Practice Drills**: Comprehensive drill library with filtering by time, skill level, and difficulty
-- **Coaches Authentication**: Secure login system with role-based access control
-  - Coaches now only see teams they are assigned to
-  - Admins see all teams and can create program‑wide schedules/updates
-  - Real-time message board for coach communication
-- **Shop Section**: Merchandise preview with updated product descriptions and mobile-optimized margins
-- **Fan Zone**: Interactive video cards with mobile-responsive layout and enhanced data validation
-- **Footer**: Complete redesign with mobile and desktop layouts, centered quick links, clean design
-- **Navigation**: Clickable logo and text with hover effects for improved user experience
-- **User Authentication**: Secure registration and login system with rate limiting
-- **Enhanced Data Validation**: Defensive programming with proper error handling and recovery
-- **Responsive Design**: Mobile-first approach with enhanced mobile experience
-- **Security**: Comprehensive security utilities, rate limiting, input validation, CSP headers (now allow `blob:` for image previews), security audit completion
-- **Scroll Management**: Automatic scroll-to-top functionality
-- **Logo Marquee**: Animated team logos with enhanced spacing and opacity
-- **UI Components**: Enhanced component library with dialog, input, and select components
-- **Admin Club Management**: Comprehensive admin interface with team, coach, and player management
-  - TeamDetailModal and PlayerDetailModal with white styling and mobile optimization
-  - Complete CRUD operations for all entities
-  - Real-time data updates and proper error handling
+### 📂 Subdirectories
 
-## Recent Updates (January 2025)
+#### `/deployment` - Deployment Guides
+- **`VERCEL_DEPLOYMENT.md`** - Complete Vercel deployment guide (consolidated)
 
-### 🎉 **PRODUCTION READY - COMPREHENSIVE TESTING COMPLETE**
+#### `/security` - Security Documentation
+- **`SECURITY_AUDITS.md`** - Consolidated security audit reports
 
-**Status**: ✅ **PRODUCTION READY** - All critical functionality tested and validated
+#### `/mcp` - MCP (Model Context Protocol) Setup
+- **`MCP_SETUP.md`** - Complete MCP configuration guide (consolidated)
 
-### **Coach Tab Functionality - FULLY TESTED & VALIDATED**
+#### `/database` - Database Migrations & Scripts
+- All SQL migration files (`.sql`)
+- Database setup and migration scripts
 
-- **Games Management**: Create, edit, delete operations - ✅ **100% SUCCESS**
-- **Practice Management**: Create, edit, delete operations - ✅ **100% SUCCESS**
-- **Team Updates**: Create, edit operations - ✅ **100% SUCCESS**
-- **Practice Drills**: Full CRUD operations - ✅ **100% SUCCESS**
-- **Message Board**: Full CRUD operations with real-time updates - ✅ **100% SUCCESS**
+---
 
-### **Critical Bugs Fixed During Testing**
+## 🚀 Quick Start Guides
 
-- **Game Scheduling Form**: Fixed field name mismatch causing validation failures
-- **Modal State Management**: Fixed state conflicts when creating new entries after editing
-- **Team Update Deletion**: Fixed database permission issues
+### For New Developers
 
-### **Database Schema Enhancements**
+1. Read `OVERVIEW.md` for project architecture
+2. Follow `ENVIRONMENT_SETUP.md` for local setup
+3. Review `DB_SETUP.md` for database configuration
+4. Check `SECURITY.md` for security best practices
 
-- **Extended Players Table**: Added comprehensive contact and medical information fields
-- **Enhanced Teams Table**: Added gender, grade level, and season categorization
-- **Team-Coach Relationships**: Implemented proper many-to-many relationships via junction table
-- **Soft Delete Support**: Added `is_deleted` flags across all major tables
-- **API Route Updates**: Enhanced admin API endpoints with complete field coverage
+### For Deployment
 
-### **Security & Build Optimization**
+1. Follow `deployment/VERCEL_DEPLOYMENT.md` for production deployment
+2. Configure environment variables per `ENVIRONMENT_SETUP.md`
+3. Review `SECURITY.md` before deploying
 
-- **Security Audit**: Comprehensive security assessment with 8.5/10 score (January 2025)
-- **Production Build**: Successful build with zero errors and proper optimization
-- **Security Documentation**: Complete security audit report and recommendations
-- **OWASP Compliance**: 90% compliance with OWASP Top 10 security standards
-- **Critical Fixes**: secrets.txt removed from git, CORS configuration fixed
+### For Security Audits
 
-## Documentation
+1. Review `security/SECURITY_AUDITS.md` for latest audit findings
+2. Check `SECURITY.md` for security best practices
+3. Review `CHANGELOG.md` for security-related changes
 
-- **Final Testing Report**: `docs/FINAL_COMPREHENSIVE_TESTING_REPORT.md` - Complete production testing results
-- **Security Test Report**: `docs/SECURITY_TEST_REPORT.md` - Security assessment and validation
-- **Production Testing Guide**: `docs/PRODUCTION_TESTING_GUIDE.md` - Comprehensive testing procedures
-- **Coach Tab Testing Plan**: `docs/COACH_TAB_TESTING_PLAN.md` - Detailed testing procedures
-- **Database Schema**: `docs/DATABASE_FIELD_MAPPING.md` - Field mappings and relationships
-- **Security Report**: `docs/SECURITY_AUDIT_REPORT.md` - Security audit and recommendations
-- **Current Issues**: `docs/CURRENT_ISSUES.md` - Known issues and resolutions
-- **Progress Tracking**: `docs/PROGRESS.md` - Development progress and milestones
-- **Environment Setup**: `docs/ENVIRONMENT_SETUP.md` - Setup and configuration guide
+---
 
-## Setup Instructions
+## 📚 Documentation by Category
 
-1. Clone repo: `git clone https://github.com/Phronesis2025/wcs-basketball-v2.git`
-2. Install deps: `npm install`
-3. Environment variables
-   - Local: add to `.env.local`
-   - Vercel: add in Project Settings → Environment Variables
-   ```
-   # Required
-   NEXT_PUBLIC_SUPABASE_URL=...               # Supabase project URL
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=...          # Supabase anon key (public)
-   SUPABASE_SERVICE_ROLE_KEY=...              # Supabase service role key (secret)
-   NEXT_PUBLIC_BASE_URL=https://wcs-basketball-v2.vercel.app
+### Setup & Configuration
+- `ENVIRONMENT_SETUP.md` - Environment variables
+- `DB_SETUP.md` - Database setup
+- `deployment/VERCEL_DEPLOYMENT.md` - Deployment
 
-   STRIPE_SECRET_KEY=...
-   STRIPE_WEBHOOK_SECRET=...
-   ADMIN_NOTIFICATIONS_TO=admin@example.com
-   NEXT_PUBLIC_ANNUAL_FEE_USD=360
+### Security
+- `SECURITY.md` - Security guide
+- `security/SECURITY_AUDITS.md` - Audit reports
+- `enable_leaked_password_protection.md` - Password protection setup
 
-   # Optional integrations
-   RESEND_API_KEY=...
-   SENTRY_DSN=...
-   UPSTASH_REDIS_REST_URL=...
-   UPSTASH_REDIS_REST_TOKEN=...
-   ```
-4. Run locally: `npm run dev`
-5. Build: `npm run build`
+### Performance
+- `PERFORMANCE_OPTIMIZATION.md` - Optimization guide
+- `PERFORMANCE_MONITORING_SETUP.md` - Monitoring setup
 
-## Security Features
+### Development
+- `CODEBASE_STRUCTURE.md` - Code structure
+- `DEVELOPMENT_SPECIFICATION.md` - Development specs
+- `CLUB_MANAGEMENT_SYSTEM.md` - Club management features
+- `COACH_PROFILE_SYSTEM.md` - Coach profile system
+- `EXCEL_IMPORT_IMPLEMENTATION.md` - Excel import feature
 
-- **Security Headers**: Comprehensive CSP, HSTS, X-Frame-Options, X-XSS-Protection, and more
-- **Input Validation**: Email format, password strength, length validation
-- **Rate Limiting**: Client-side protection against brute force attacks
-- **CSRF Protection**: Cryptographically secure token-based form protection
-- **Row Level Security**: Database-level access control with RLS policies
-- **Input Sanitization**: XSS prevention for user-generated content
-- **Environment Validation**: Secure environment variable handling
-- **Production Security**: Test endpoints disabled in production
-- **Error Monitoring**: Sentry integration for production monitoring
-- **Audit Logging**: Security event tracking and monitoring
-- **Message Board Security**: Enhanced input sanitization and XSS protection for coach communications
-- **Console Security**: All console statements replaced with secure development-only logging utilities
-- **Security Score**: 8.5/10 security rating with zero dependency vulnerabilities
+### Features
+- `REGISTRATION_FLOW.md` - Registration process
+- `PAYMENTS_SETUP.md` - Payment integration
+- `MESSAGE_BOARD_SETUP.md` - Message board system
+- `REALTIME_TROUBLESHOOTING.md` - Realtime features
 
-## Deployment Notes
+### Testing
+- `PRODUCTION_TESTING_GUIDE.md` - Testing procedures
+- `TEST_REGISTRATION_FLOW.md` - Registration testing
+- `WEBHOOK_TESTING_GUIDE.md` - Webhook testing
 
-- Supabase Authentication
-  - Enable "Email confirmations" for signups.
-  - Redirect URLs:
-    - `https://wcs-basketball-v2.vercel.app/registration-success`
-    - `https://wcs-basketball-v2.vercel.app/auth/callback`
-  - Use the customized "Confirm signup" email template (confirm link routes to our app).
+### Troubleshooting
+- `ERRORS.md` - Common errors and solutions
+- `LOGIN_DEBUGGING_GUIDE.md` - Login issues
+- `REALTIME_TROUBLESHOOTING.md` - Realtime issues
 
-- Stripe
-  - Configure webhook to `https://wcs-basketball-v2.vercel.app/api/stripe-webhook` and set `STRIPE_WEBHOOK_SECRET`.
+---
 
-- CSP for Invoice PDF (if using html2pdf)
-  - Add to `script-src` in production CSP: `https://cdn.jsdelivr.net https://unpkg.com`
-  - Or use print‑only fallback to avoid CSP changes.
+## 📝 Document Maintenance
 
-- Suspense Wrappers for Next.js 15
-  - Pages using `useSearchParams()` are wrapped in `React.Suspense` to satisfy build requirements:
-    - `/register`, `/add-child`, `/parent/profile`, `/payment/success`.
+### Adding New Documentation
 
-## Live Site
+1. **Core docs** go in root `docs/` directory
+2. **Category-specific docs** go in appropriate subdirectory:
+   - Deployment guides → `/deployment`
+   - Security audits → `/security`
+   - MCP setup → `/mcp`
+   - Database scripts → `/database`
 
-- **Production**: https://wcs-basketball-v2.vercel.app
-- **Status**: ✅ Active and deployed with enhanced security
+### Updating Documentation
 
-## Contribution Guide
+1. Update relevant documentation files
+2. Update `CHANGELOG.md` if significant changes
+3. Update this README if structure changes
 
-- Use feature branches (e.g., `feature/navbar`)
-- Commit messages: `[type] short description` (e.g., `[feat] add hero carousel`)
-- Push to GitHub, create PR for review
-- Follow security best practices for all new features
+### Consolidating Duplicate Files
 
-## Version
+When consolidating:
+1. Keep the most comprehensive/up-to-date version
+2. Move older versions to `.backup` files
+3. Update references in this README
 
-- **v2.0.1** (Current – Production Ready) - Security audit complete, secrets management fixed, CORS configuration secured, comprehensive build testing
-- **Previous**: v2.9.1 – Homepage Ad Section, TodaysEvents mobile optimization
+---
+
+## 🔍 Finding Documentation
+
+### By Topic
+
+- **Security**: `SECURITY.md`, `security/SECURITY_AUDITS.md`
+- **Performance**: `PERFORMANCE_OPTIMIZATION.md`, `PERFORMANCE_MONITORING_SETUP.md`
+- **Deployment**: `deployment/VERCEL_DEPLOYMENT.md`
+- **Database**: `DB_SETUP.md`, `/database` directory
+- **Features**: Check feature-specific files (e.g., `CLUB_MANAGEMENT_SYSTEM.md`)
+
+### By File Type
+
+- **Setup Guides**: Files with `SETUP` or `CONFIGURATION` in name
+- **Feature Docs**: Files with feature names (e.g., `REGISTRATION`, `PAYMENTS`)
+- **Migration Scripts**: All `.sql` files in `/database`
+- **Audit Reports**: Files in `/security` directory
+
+---
+
+## 📖 Important Documents
+
+### Must-Read for All Developers
+
+1. `ENVIRONMENT_SETUP.md` - Required for local development
+2. `SECURITY.md` - Security best practices
+3. `CHANGELOG.md` - Latest changes and updates
+
+### Must-Read Before Deployment
+
+1. `deployment/VERCEL_DEPLOYMENT.md` - Deployment guide
+2. `security/SECURITY_AUDITS.md` - Security audit results
+3. `PERFORMANCE_OPTIMIZATION.md` - Performance considerations
+
+---
+
+## 🔄 Recent Organization Changes (January 2025)
+
+### Consolidated Files
+
+- **Deployment**: Combined `DEPLOY_TO_VERCEL.md`, `VERCEL_DEPLOYMENT_2025.md`, and `DEPLOY.md` into `deployment/VERCEL_DEPLOYMENT.md`
+- **Security Audits**: Combined multiple audit files into `security/SECURITY_AUDITS.md`
+- **MCP Setup**: Combined MCP files into `mcp/MCP_SETUP.md`
+
+### Organized by Category
+
+- **Deployment guides** → `/deployment`
+- **Security audits** → `/security`
+- **MCP setup** → `/mcp`
+- **Database scripts** → `/database`
+
+---
+
+## 📞 Questions?
+
+For questions about:
+- **Documentation**: Check this README and relevant files
+- **Code**: See `CODEBASE_STRUCTURE.md`
+- **Setup Issues**: See `ENVIRONMENT_SETUP.md` or `ERRORS.md`
+- **Security**: See `SECURITY.md` or `security/SECURITY_AUDITS.md`

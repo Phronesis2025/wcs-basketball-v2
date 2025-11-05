@@ -181,15 +181,15 @@ export default function ContactEditForm({
         </div>
       )}
 
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-900">
+          <h3 className="text-xl font-bold text-white">
             Contact Information
           </h3>
           {!isEditing && (
             <button
               onClick={() => setIsEditing(true)}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition text-sm"
             >
               Edit
             </button>
@@ -197,14 +197,14 @@ export default function ContactEditForm({
         </div>
 
         {error && (
-          <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
+          <div className="bg-red-900/50 text-red-200 border border-red-500/40 p-3 rounded mb-4">
             {error}
           </div>
         )}
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               First Name
             </label>
             <input
@@ -212,14 +212,14 @@ export default function ContactEditForm({
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               disabled={!isEditing}
-            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
+              className="w-full border border-gray-600 rounded px-3 py-2 text-white bg-gray-700 disabled:bg-gray-800 disabled:text-gray-400"
               placeholder="First name"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               Last Name
             </label>
             <input
@@ -227,14 +227,14 @@ export default function ContactEditForm({
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               disabled={!isEditing}
-            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
+              className="w-full border border-gray-600 rounded px-3 py-2 text-white bg-gray-700 disabled:bg-gray-800 disabled:text-gray-400"
               placeholder="Last name"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               Parent Phone
             </label>
             <input
@@ -242,13 +242,13 @@ export default function ContactEditForm({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               disabled={!isEditing}
-            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
+              className="w-full border border-gray-600 rounded px-3 py-2 text-white bg-gray-700 disabled:bg-gray-800 disabled:text-gray-400"
               placeholder="(555) 123-4567"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               Emergency Contact Name
             </label>
             <input
@@ -256,13 +256,13 @@ export default function ContactEditForm({
               value={emergencyContact}
               onChange={(e) => setEmergencyContact(e.target.value)}
               disabled={!isEditing}
-            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
+              className="w-full border border-gray-600 rounded px-3 py-2 text-white bg-gray-700 disabled:bg-gray-800 disabled:text-gray-400"
               placeholder="Emergency contact name"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-300 mb-1">
               Emergency Phone
             </label>
             <input
@@ -270,7 +270,7 @@ export default function ContactEditForm({
               value={emergencyPhone}
               onChange={(e) => setEmergencyPhone(e.target.value)}
               disabled={!isEditing}
-            className="w-full border rounded px-3 py-2 text-black disabled:text-black disabled:bg-gray-50"
+              className="w-full border border-gray-600 rounded px-3 py-2 text-white bg-gray-700 disabled:bg-gray-800 disabled:text-gray-400"
               placeholder="(555) 123-4567"
             />
           </div>
@@ -287,7 +287,7 @@ export default function ContactEditForm({
               <button
                 onClick={handleCancel}
                 disabled={isLoading}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition disabled:opacity-60"
+                className="flex-1 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -295,10 +295,10 @@ export default function ContactEditForm({
           )}
 
           {!isEditing && (
-            <div className="pt-4 border-t border-gray-200">
+            <div className="pt-4 border-t border-gray-700">
               <button
                 onClick={() => setShowPasswordResetModal(true)}
-                className="w-full px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded hover:bg-blue-100 transition"
+                className="w-full px-4 py-2 bg-blue-900/30 text-blue-300 border border-blue-700 rounded hover:bg-blue-900/50 transition"
               >
                 Reset Password
               </button>

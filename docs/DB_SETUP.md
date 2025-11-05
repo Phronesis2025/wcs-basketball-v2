@@ -1,12 +1,12 @@
 # WCSv2.0 Complete Database Schema
 
-## 📝 Current Schema (v2.8.2)
+## 📝 Current Schema (v2.9.9)
 
-**Last Updated**: October 31, 2025 - Complete schema synced from production Supabase database
+**Last Updated**: January 2025 - Complete schema synced from production Supabase database via MCP
 
 ### Database Statistics
 
-- **Tables**: 21 active tables
+- **Tables**: 22 active tables
 - **Platform**: Supabase PostgreSQL
 - **RLS**: Enabled on all tables
 - **Functions**: `set_updated_at()`, `is_admin()`, `is_admin(uid uuid)`
@@ -19,7 +19,7 @@
 CREATE TABLE public.teams (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL UNIQUE,
-  age_group text CHECK (age_group = ANY (ARRAY['U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
+  age_group text CHECK (age_group = ANY (ARRAY['U8'::text, 'U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
   gender text CHECK (gender = ANY (ARRAY['Boys'::text, 'Girls'::text])),
   coach_email text NOT NULL,
   grade_level text,
@@ -29,7 +29,7 @@ CREATE TABLE public.teams (
   is_active boolean DEFAULT true,
   is_deleted boolean DEFAULT false,
   CONSTRAINT teams_pkey PRIMARY KEY (id),
-  CONSTRAINT teams_age_group_check CHECK (age_group = ANY (ARRAY['U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
+  CONSTRAINT teams_age_group_check CHECK (age_group = ANY (ARRAY['U8'::text, 'U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
   CONSTRAINT teams_gender_check CHECK (gender = ANY (ARRAY['Boys'::text, 'Girls'::text]))
 );
 ```
@@ -38,7 +38,7 @@ CREATE TABLE public.teams (
 
 - `id` (uuid, PK) - Auto-generated UUID
 - `name` (text, NOT NULL, UNIQUE) - Team name
-- `age_group` (text) - U10, U12, U14, U16, U18
+- `age_group` (text) - U8, U10, U12, U14, U16, U18
 - `gender` (text) - Boys or Girls
 - `coach_email` (text, NOT NULL) - Primary coach email
 - `grade_level` (text) - School grade level
@@ -69,6 +69,7 @@ CREATE TABLE public.users (
   last_password_reset timestamp with time zone,
   login_count integer DEFAULT 0,
   last_login_at timestamp with time zone,
+  last_active_at timestamp with time zone,
   CONSTRAINT users_pkey PRIMARY KEY (id),
   CONSTRAINT users_role_check CHECK (role = ANY (ARRAY['coach'::text, 'parent'::text, 'admin'::text]))
 );
@@ -84,6 +85,7 @@ CREATE TABLE public.users (
 - `last_password_reset` (timestamptz) - Last reset timestamp
 - `login_count` (integer, DEFAULT 0) - Login count
 - `last_login_at` (timestamptz) - Last login timestamp
+- `last_active_at` (timestamptz) - Last activity timestamp (tracks user activity)
 
 **Foreign Keys Referencing This Table:**
 
@@ -101,6 +103,7 @@ CREATE TABLE public.users (
 - `practice_drills.created_by` → `users.id`
 - `news.created_by` → `users.id`
 - `login_logs.user_id` → `users.id`
+- `imports.created_by` → `users.id`
 
 ### 3. Coaches Table
 
@@ -384,7 +387,16 @@ CREATE TABLE public.players (
   position_preference text,
   previous_experience text,
   school_name text,
+  rejection_reason text, -- Comment: Reason for rejection (if status is rejected)
+  rejected_at timestamp with time zone, -- Comment: Timestamp when player was rejected
+  medical_allergies text, -- Comment: Player allergies (food, medication, environmental, etc.)
+  medical_conditions text, -- Comment: Player medical conditions (asthma, diabetes, etc.)
+  medical_medications text, -- Comment: Current medications the player is taking
+  doctor_name text, -- Comment: Primary care physician name
+  doctor_phone text, -- Comment: Primary care physician phone number
+  external_id text,
   CONSTRAINT players_pkey PRIMARY KEY (id),
+  CONSTRAINT players_status_check CHECK (status = ANY (ARRAY['pending'::text, 'approved'::text, 'active'::text, 'on_hold'::text, 'rejected'::text])),
   CONSTRAINT players_team_id_fkey FOREIGN KEY (team_id) REFERENCES public.teams(id) ON DELETE CASCADE,
   CONSTRAINT players_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.parents(id)
 );
@@ -407,7 +419,7 @@ CREATE TABLE public.players (
 - `gender` (text) - Gender
 - `is_active` (boolean, DEFAULT true) - Active status
 - `is_deleted` (boolean, DEFAULT false) - Soft delete flag
-- `status` (text, DEFAULT 'pending') - Registration status: pending, approved, active
+- `status` (text, DEFAULT 'pending') - Registration status: pending, approved, active, on_hold, rejected
 - `waiver_signed` (boolean, DEFAULT false) - Waiver signature status
 - `stripe_customer_id` (text) - Stripe customer ID
 - `parent_first_name` (text) - Parent first name
@@ -422,6 +434,14 @@ CREATE TABLE public.players (
 - `position_preference` (text) - Preferred playing position
 - `previous_experience` (text) - Previous basketball experience
 - `school_name` (text) - School name
+- `rejection_reason` (text) - Reason for rejection (if status is rejected)
+- `rejected_at` (timestamptz) - Timestamp when player was rejected
+- `medical_allergies` (text) - Player allergies (food, medication, environmental, etc.)
+- `medical_conditions` (text) - Player medical conditions (asthma, diabetes, etc.)
+- `medical_medications` (text) - Current medications the player is taking
+- `doctor_name` (text) - Primary care physician name
+- `doctor_phone` (text) - Primary care physician phone number
+- `external_id` (text) - External system ID for matching during imports
 - `created_at` (timestamptz) - Creation timestamp
 
 **Foreign Keys Referencing This Table:**
@@ -750,7 +770,49 @@ CREATE TABLE public.changelog (
 
 - `idx_changelog_created_by` - Index on `created_by` for foreign key performance
 
-### 21. Quotes Table
+### 21. Pending Registrations Table
+
+```sql
+CREATE TABLE public.pending_registrations (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  email text NOT NULL UNIQUE CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'::text),
+  parent_first_name text NOT NULL,
+  parent_last_name text NOT NULL,
+  player_first_name text NOT NULL,
+  player_last_name text NOT NULL,
+  player_gender text NOT NULL,
+  player_birthdate date NOT NULL,
+  player_grade text,
+  player_experience text,
+  magic_link_token text UNIQUE,
+  magic_link_expires_at timestamp with time zone,
+  merged_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT pending_registrations_pkey PRIMARY KEY (id),
+  CONSTRAINT pending_registrations_email_check CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'::text)
+);
+```
+
+**Columns:**
+
+- `id` (uuid, PK) - Auto-generated UUID
+- `email` (text, NOT NULL, UNIQUE) - Parent email address (with email format validation)
+- `parent_first_name` (text, NOT NULL) - Parent first name
+- `parent_last_name` (text, NOT NULL) - Parent last name
+- `player_first_name` (text, NOT NULL) - Player first name
+- `player_last_name` (text, NOT NULL) - Player last name
+- `player_gender` (text, NOT NULL) - Player gender
+- `player_birthdate` (date, NOT NULL) - Player birth date
+- `player_grade` (text) - Player grade level
+- `player_experience` (text) - Player experience level
+- `magic_link_token` (text, UNIQUE) - Magic link token for registration completion
+- `magic_link_expires_at` (timestamptz) - Magic link expiration timestamp
+- `merged_at` (timestamptz) - Timestamp when registration was merged into main tables
+- `created_at` (timestamptz, DEFAULT now()) - Creation timestamp
+
+**Purpose:** Temporary storage for initial registration data before full registration completion. Used for magic link registration flow.
+
+### 22. Quotes Table
 
 ```sql
 CREATE TABLE public.quotes (
@@ -778,6 +840,95 @@ CREATE TABLE public.quotes (
 **RLS Policies:**
 
 - `Allow public read access to quotes`: Public SELECT access for displaying quotes on homepage
+
+### 23. Imports Table
+
+```sql
+CREATE TABLE public.imports (
+  id uuid NOT NULL DEFAULT uuid_generate_v4(),
+  status text NOT NULL CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'partial'::text, 'failed'::text, 'dry_run'::text])),
+  created_by uuid NOT NULL,
+  summary_json jsonb,
+  error_json jsonb,
+  started_at timestamp with time zone,
+  finished_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT imports_pkey PRIMARY KEY (id),
+  CONSTRAINT imports_status_check CHECK (status = ANY (ARRAY['pending'::text, 'processing'::text, 'completed'::text, 'partial'::text, 'failed'::text, 'dry_run'::text])),
+  CONSTRAINT imports_created_by_fkey FOREIGN KEY (created_by) REFERENCES public.users(id)
+);
+```
+
+**Columns:**
+
+- `id` (uuid, PK) - Auto-generated UUID
+- `status` (text, NOT NULL) - Import status: pending, processing, completed, partial, failed, dry_run
+- `created_by` (uuid, FK to users, NOT NULL) - Admin who created the import
+- `summary_json` (jsonb) - Import summary with counts and statistics
+- `error_json` (jsonb) - Error details if import failed
+- `started_at` (timestamptz) - When import started processing
+- `finished_at` (timestamptz) - When import completed
+- `created_at` (timestamptz, DEFAULT now()) - Creation timestamp
+
+**Foreign Keys Referencing This Table:**
+- `imports.created_by` → `users.id`
+
+### 23. Performance Metrics Table
+
+```sql
+-- Comment: Stores API route performance metrics for analytics
+CREATE TABLE public.performance_metrics (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  route_path text NOT NULL,
+  method text NOT NULL,
+  response_time_ms integer NOT NULL,
+  status_code integer,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT performance_metrics_pkey PRIMARY KEY (id)
+);
+```
+
+**Columns:**
+
+- `id` (uuid, PK) - Auto-generated UUID
+- `route_path` (text, NOT NULL) - API route path (e.g., "/api/admin/analytics/stats")
+- `method` (text, NOT NULL) - HTTP method (GET, POST, PUT, DELETE, etc.)
+- `response_time_ms` (integer, NOT NULL) - Response time in milliseconds
+- `status_code` (integer) - HTTP status code
+- `created_at` (timestamptz, NOT NULL, DEFAULT now()) - Metric collection timestamp
+
+**Purpose:** Tracks API route performance for monitoring and analytics dashboard.
+
+### 24. Web Vitals Table
+
+```sql
+-- Comment: Stores Core Web Vitals metrics captured from client-side for performance monitoring
+CREATE TABLE public.web_vitals (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  page text NOT NULL,
+  metric_name text NOT NULL CHECK (metric_name = ANY (ARRAY['LCP'::text, 'FID'::text, 'CLS'::text, 'FCP'::text, 'TTFB'::text, 'INP'::text])),
+  metric_value numeric NOT NULL,
+  metric_id text,
+  user_id uuid,
+  session_id text,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  CONSTRAINT web_vitals_pkey PRIMARY KEY (id),
+  CONSTRAINT web_vitals_metric_name_check CHECK (metric_name = ANY (ARRAY['LCP'::text, 'FID'::text, 'CLS'::text, 'FCP'::text, 'TTFB'::text, 'INP'::text]))
+);
+```
+
+**Columns:**
+
+- `id` (uuid, PK) - Auto-generated UUID
+- `page` (text, NOT NULL) - Page path where metric was captured (e.g., "/", "/teams")
+- `metric_name` (text, NOT NULL) - Metric type: LCP, FID, CLS, FCP, TTFB, or INP
+- `metric_value` (numeric, NOT NULL) - Metric value (in milliseconds for LCP, FID, FCP, TTFB, INP; as score for CLS)
+- `metric_id` (text) - Unique metric ID from web-vitals library
+- `user_id` (uuid) - User who triggered the metric (if authenticated)
+- `session_id` (text) - Session identifier for grouping metrics
+- `created_at` (timestamptz, NOT NULL, DEFAULT now()) - Metric capture timestamp
+
+**Purpose:** Stores Core Web Vitals metrics captured client-side for performance monitoring and analytics dashboard.
 
 ## 🔐 Row Level Security (RLS)
 
@@ -808,6 +959,115 @@ All tables have RLS enabled with optimized policies that use `(select auth.uid()
 - `rpl_select_consolidated`: Coaches and admins can view non-deleted; owners can view own
 - `rpl_update_consolidated`: Admins can update any; owners can update own
 - `rpl_delete_consolidated`: Admins can delete any; owners can delete own
+
+**Message Notifications Policies:**
+- `Users can view their own notifications`: Users can SELECT where `mentioned_user_id = auth.uid()`
+- `Users can update their own notifications`: Users can UPDATE where `mentioned_user_id = auth.uid()`
+- `Authenticated users can create notifications`: Any authenticated user can INSERT notifications
+
+**Performance Metrics Policies:**
+- `System can insert performance metrics`: Service role can INSERT (for API route tracking)
+- `Admins can read performance metrics`: Admins can SELECT (optimized with `(SELECT auth.uid())`)
+
+**Web Vitals Policies:**
+- `Anyone can insert web vitals`: Authenticated users can INSERT (for client-side tracking)
+- `Anonymous users can insert web vitals`: Anonymous users can INSERT (for client-side tracking)
+- `Admins can read web vitals`: Admins can SELECT (optimized with `(SELECT auth.uid())`)
+
+**Imports Policies:**
+- `Admins can view all imports`: Admins can SELECT all imports (optimized with `(SELECT auth.uid())`)
+- `Admins can create imports`: Admins can INSERT imports (optimized with `(SELECT auth.uid())`)
+- `Admins can update imports`: Admins can UPDATE imports (optimized with `(SELECT auth.uid())`)
+
+**Error Logs Policies:**
+- `Admins view all error logs`: Admins can SELECT all error logs
+- `Admins insert error logs`: Admins can INSERT error logs
+- `Admins update error logs`: Admins can UPDATE error logs (for marking as resolved)
+
+**Login Logs Policies:**
+- `login_logs_insert_policy`: Authenticated users can INSERT their own login logs
+- `login_logs_select_policy`: Admins can SELECT all; users can SELECT their own
+
+**Payments Policies:**
+- `Users can view payments based on role`: Admins can view all; parents can view payments for their players
+- `Admins can insert payments`: Only admins can INSERT
+- `Admins can update payments`: Only admins can UPDATE
+- `Admins can delete payments`: Only admins can DELETE
+
+**Players Policies:**
+- `players_select_policy`: Public can SELECT (for displaying players on team pages)
+- `players_insert_policy`: Only admins can INSERT
+- `players_update_policy`: Only admins can UPDATE
+- `players_delete_policy`: Only admins can DELETE
+
+**Teams Policies:**
+- `teams_select_policy`: Authenticated users can SELECT (public access)
+- `teams_insert_policy`: Only admins can INSERT (via `is_admin()` function)
+- `teams_update_policy`: Only admins can UPDATE (via `is_admin()` function)
+- `teams_delete_policy`: Only admins can DELETE (via `is_admin()` function)
+
+**Schedules Policies:**
+- `schedules_select_policy`: Authenticated users can SELECT all schedules
+- `schedules_insert_policy`: Authenticated users can INSERT (admin check or unrestricted)
+- `schedules_update_policy`: Admins or team coaches can UPDATE
+- `schedules_delete_policy`: Admins or team coaches can DELETE
+
+**Users Policies:**
+- `users_select_policy`: Admins can SELECT all; users can SELECT their own record
+- `users_insert_policy`: Only admins can INSERT (via `is_admin()` function)
+- `users_update_policy`: Only admins can UPDATE (via `is_admin()` function)
+- `users_delete_policy`: Only admins can DELETE (via `is_admin()` function)
+
+**Coaches Policies:**
+- `coaches_select_policy`: Public can SELECT (for displaying coaches on website)
+- `coaches_insert_policy`: Only admins can INSERT
+- `coaches_update_policy`: Only admins can UPDATE
+- `coaches_delete_policy`: Only admins can DELETE
+
+**Team Coaches Policies:**
+- `team_coaches_select_policy`: Authenticated users can SELECT
+- `team_coaches_insert_policy`: Only admins can INSERT (via `is_admin()` function)
+- `team_coaches_update_policy`: Only admins can UPDATE (via `is_admin()` function)
+- `team_coaches_delete_policy`: Only admins can DELETE (via `is_admin()` function)
+
+**Practice Drills Policies:**
+- `practice_drills_select_policy`: Public can SELECT (for displaying drills)
+- `practice_drills_insert_policy`: Admins or team coaches can INSERT
+- `practice_drills_update_policy`: Admins or team coaches can UPDATE
+- `practice_drills_delete_policy`: Admins or team coaches can DELETE
+
+**Team Updates Policies:**
+- `team_updates_select_policy`: Authenticated users can SELECT all
+- `team_updates_insert_policy`: Admins or team coaches can INSERT
+- `team_updates_update_policy`: Admins or owners can UPDATE
+- `team_updates_delete_policy`: Authenticated users can DELETE (very permissive)
+
+**News Policies:**
+- `news_select_policy`: Public can SELECT (for displaying news on website)
+- `news_insert_policy`: Admins or team coaches can INSERT
+- `news_update_policy`: Admins or team coaches can UPDATE
+- `news_delete_policy`: Admins or team coaches can DELETE
+
+**Products Policies:**
+- `products_select_policy`: Public can SELECT (for displaying products)
+- `products_insert_policy`: Only admins can INSERT
+- `products_update_policy`: Only admins can UPDATE
+- `products_delete_policy`: Only admins can DELETE
+
+**Resources Policies:**
+- `resources_select_policy`: Public can SELECT (for displaying resources)
+- `resources_insert_policy`: Coaches can INSERT their own resources (via `coach_email = auth.email()`)
+- `resources_update_policy`: Coaches can UPDATE their own resources
+- `resources_delete_policy`: Coaches can DELETE their own resources
+
+**Audit Logs Policies:**
+- `Admins can view audit logs`: Only admins can SELECT audit logs
+
+**Pending Registrations Policies:**
+- `pending_registrations_select_consolidated`: Admins can SELECT all; users can SELECT their own; anonymous users can SELECT
+- `pending_registrations_admin_insert`: Only admins can INSERT
+- `pending_registrations_admin_update`: Only admins can UPDATE
+- `pending_registrations_admin_delete`: Only admins can DELETE
 
 ## 🎯 Key Relationships
 
@@ -852,7 +1112,10 @@ Key indexes for performance:
 
 ---
 
-**Last Updated**: October 31, 2025  
-**Schema Version**: 2.8.2  
+**Last Updated**: January 2025  
+**Schema Version**: 2.9.9  
 **Database**: Supabase PostgreSQL  
-**RLS Optimization**: All policies use `(select auth.uid())` pattern for optimal performance
+**RLS Optimization**: All policies use `(select auth.uid())` pattern for optimal performance  
+**Total Tables**: 22 tables (including performance_metrics and web_vitals for monitoring)
+
+**Note**: The `pending_registrations` table is included in the count but is a temporary table used during the registration flow. It is cleaned up after successful registration completion.

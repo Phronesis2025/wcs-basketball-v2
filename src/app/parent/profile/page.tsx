@@ -11,6 +11,7 @@ import ProfileHeader from "@/components/parent/ProfileHeader";
 import ChildDetailsCard from "@/components/parent/ChildDetailsCard";
 import ContactEditForm from "@/components/parent/ContactEditForm";
 import PaymentHistoryTable from "@/components/parent/PaymentHistoryTable";
+import PlayerMedicalInfo from "@/components/parent/PlayerMedicalInfo";
 import HandleAuthRedirect from "@/components/auth/HandleAuthRedirect";
 import { devError, devLog } from "@/lib/security";
 import BasketballLoader from "@/components/BasketballLoader";
@@ -62,6 +63,7 @@ function ParentProfilePageInner() {
   const [error, setError] = useState<string | null>(null);
   const hasShownSuccessToast = useRef(false);
   const [activeTab, setActiveTab] = useState<"players" | "contact" | "billing">("players");
+  const [contactSubTab, setContactSubTab] = useState<"contact" | "medical">("contact");
 
   // Authentication check - give more time for session to be established
   useEffect(() => {
@@ -342,24 +344,67 @@ function ParentProfilePageInner() {
 
             {/* Contact Info Tab */}
             {activeTab === "contact" && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
-                  <ContactEditForm
-                    email={profile.parent.email}
-                    initialFirstName={
-                      profile.parent.name?.split(" ")[0] ||
-                      (user?.email ? user.email.split("@")[0] : null)
-                    }
-                    initialLastName={
-                      profile.parent.name?.split(" ").slice(1).join(" ") || null
-                    }
-                    initialPhone={profile.parent.phone}
-                    initialEmergencyContact={profile.parent.emergency_contact}
-                    initialEmergencyPhone={profile.parent.emergency_phone}
-                    onSave={handleUpdateContact}
-                    onPasswordReset={handlePasswordReset}
-                  />
+              <div className="space-y-6 mb-6">
+                {/* Sub-tab Navigation */}
+                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-2">
+                  <div className="flex gap-2">
+                    <button
+                      className={`flex-1 px-6 py-3 rounded-lg font-bebas uppercase tracking-wide transition-all ${
+                        contactSubTab === "contact"
+                          ? "bg-red text-white shadow-lg"
+                          : "bg-transparent text-gray-400 hover:text-white hover:bg-gray-800"
+                      }`}
+                      onClick={() => setContactSubTab("contact")}
+                    >
+                      <span>Parent Contact Info</span>
+                    </button>
+                    <button
+                      className={`flex-1 px-6 py-3 rounded-lg font-bebas uppercase tracking-wide transition-all ${
+                        contactSubTab === "medical"
+                          ? "bg-red text-white shadow-lg"
+                          : "bg-transparent text-gray-400 hover:text-white hover:bg-gray-800"
+                      }`}
+                      onClick={() => setContactSubTab("medical")}
+                    >
+                      <span>Player Medical Info</span>
+                    </button>
+                  </div>
                 </div>
+
+                {/* Parent Contact Info Section */}
+                {contactSubTab === "contact" && (
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
+                    <h3 className="text-xl font-bold text-white mb-4">
+                      Parent Contact Information
+                    </h3>
+                    <p className="text-sm text-gray-400 mb-6">
+                      Manage your contact details and emergency information
+                    </p>
+                    <ContactEditForm
+                      email={profile.parent.email}
+                      initialFirstName={
+                        profile.parent.name?.split(" ")[0] ||
+                        (user?.email ? user.email.split("@")[0] : null)
+                      }
+                      initialLastName={
+                        profile.parent.name?.split(" ").slice(1).join(" ") || null
+                      }
+                      initialPhone={profile.parent.phone}
+                      initialEmergencyContact={profile.parent.emergency_contact}
+                      initialEmergencyPhone={profile.parent.emergency_phone}
+                      onSave={handleUpdateContact}
+                      onPasswordReset={handlePasswordReset}
+                    />
+                  </div>
+                )}
+
+                {/* Player Medical Information Section */}
+                {contactSubTab === "medical" && (
+                  <PlayerMedicalInfo
+                    players={profile.children}
+                    onUpdate={fetchProfile}
+                  />
+                )}
               </div>
             )}
 

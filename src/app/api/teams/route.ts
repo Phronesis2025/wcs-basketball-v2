@@ -105,7 +105,12 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(transformedTeams);
+    return NextResponse.json(transformedTeams, {
+      headers: {
+        // Cache for 60 seconds, then revalidate in background
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+      },
+    });
   } catch (error) {
     devError("Error fetching teams:", error);
     return NextResponse.json(

@@ -21,8 +21,6 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 import { devLog, devError } from "../../../lib/security";
-import TeamGameCard from "../../../components/team/TeamGameCard";
-import TeamPracticeCard from "../../../components/team/TeamPracticeCard";
 
 type TeamPageProps = { params: Promise<{ id: string }> };
 
@@ -188,10 +186,43 @@ export default function TeamPage({ params }: TeamPageProps) {
     );
   }
 
-  const games = schedules.filter(
-    (s) => s.event_type === "Game" || s.event_type === "Tournament"
-  );
-  const practices = schedules.filter((s) => s.event_type === "Practice");
+  // Filter and sort games/practices, then take only the next 3 upcoming ones
+  const allGames = schedules
+    .filter((s) => s.event_type === "Game" || s.event_type === "Tournament")
+    .sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
+    .filter((s) => new Date(s.date_time) >= new Date()); // Only future events
+
+  const allPractices = schedules
+    .filter((s) => s.event_type === "Practice")
+    .sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
+    .filter((s) => new Date(s.date_time) >= new Date()); // Only future events
+
+  const games = allGames.slice(0, 3);
+  const practices = allPractices.slice(0, 3);
+
+  // Helper function to format player name: "First Name L."
+  const formatPlayerName = (fullName: string): string => {
+    const parts = fullName.trim().split(" ");
+    if (parts.length === 0) return fullName;
+    if (parts.length === 1) return parts[0];
+    const firstName = parts[0];
+    const lastInitial = parts[parts.length - 1][0]?.toUpperCase() || "";
+    return `${firstName} ${lastInitial}.`;
+  };
+
+  // Helper function to format date/time for Chicago timezone
+  const formatDateTimeChicago = (dateTime: string) => {
+    const date = new Date(dateTime);
+    return date.toLocaleString("en-US", {
+      timeZone: "America/Chicago",
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
 
   return (
     <motion.div
@@ -332,10 +363,11 @@ export default function TeamPage({ params }: TeamPageProps) {
                     : "/logos/logo2.png"
                 }
                 alt={`${team.name} team photo`}
-                width={0}
-                height={0}
-                sizes="100vw"
+                width={800}
+                height={384}
+                sizes="(max-width: 1024px) 0vw, 100vw"
                 className="w-full h-96 object-cover rounded-lg"
+                style={{ aspectRatio: "800/384" }}
                 priority
                 onError={(e) => {
                   devError(
@@ -362,19 +394,45 @@ export default function TeamPage({ params }: TeamPageProps) {
               <h3 className="text-xl font-bebas uppercase mb-4 text-center">
                 Games & Tournaments
               </h3>
-              <div className="space-y-4">
-                {games.length > 0 ? (
-                  games.map((game) => (
-                    <TeamGameCard key={game.id} schedule={game} />
-                  ))
-                ) : (
-                  <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
-                    <p className="text-gray-300 font-inter">
-                      No games or tournaments scheduled.
-                    </p>
-                  </div>
-                )}
-              </div>
+              {games.length > 0 ? (
+                <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-lg border border-red-500/50">
+                  <table className="w-full bg-gray-900/50 rounded-lg overflow-hidden">
+                    <thead className="sticky top-0 bg-gray-900/95 z-10">
+                      <tr className="border-b border-gray-700">
+                        <th className="text-left p-4 font-bebas uppercase">Opponent</th>
+                        <th className="text-left p-4 font-bebas uppercase">Date & Time</th>
+                        <th className="text-left p-4 font-bebas uppercase">Location</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {games.map((game, index) => (
+                        <tr
+                          key={game.id}
+                          className={`border-b border-gray-800 hover:bg-gray-800/50 ${
+                            index === games.length - 1 ? "border-b-0" : ""
+                          }`}
+                        >
+                          <td className="p-4 font-inter text-white">
+                            vs {game.opponent || "TBD"}
+                          </td>
+                          <td className="p-4 font-inter text-gray-300">
+                            {formatDateTimeChicago(game.date_time)}
+                          </td>
+                          <td className="p-4 font-inter text-gray-300">
+                            {game.location || "TBD"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
+                  <p className="text-gray-300 font-inter">
+                    No games or tournaments scheduled.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Right Column - Practices */}
@@ -382,19 +440,45 @@ export default function TeamPage({ params }: TeamPageProps) {
               <h3 className="text-xl font-bebas uppercase mb-4 text-center">
                 Practices
               </h3>
-              <div className="space-y-4">
-                {practices.length > 0 ? (
-                  practices.map((practice) => (
-                    <TeamPracticeCard key={practice.id} schedule={practice} />
-                  ))
-                ) : (
-                  <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
-                    <p className="text-gray-300 font-inter">
-                      No practices scheduled.
-                    </p>
-                  </div>
-                )}
-              </div>
+              {practices.length > 0 ? (
+                <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-lg border border-red-500/50">
+                  <table className="w-full bg-gray-900/50 rounded-lg overflow-hidden">
+                    <thead className="sticky top-0 bg-gray-900/95 z-10">
+                      <tr className="border-b border-gray-700">
+                        <th className="text-left p-4 font-bebas uppercase">Description</th>
+                        <th className="text-left p-4 font-bebas uppercase">Date & Time</th>
+                        <th className="text-left p-4 font-bebas uppercase">Location</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {practices.map((practice, index) => (
+                        <tr
+                          key={practice.id}
+                          className={`border-b border-gray-800 hover:bg-gray-800/50 ${
+                            index === practices.length - 1 ? "border-b-0" : ""
+                          }`}
+                        >
+                          <td className="p-4 font-inter text-white">
+                            {practice.description || "Practice Session"}
+                          </td>
+                          <td className="p-4 font-inter text-gray-300">
+                            {formatDateTimeChicago(practice.date_time)}
+                          </td>
+                          <td className="p-4 font-inter text-gray-300">
+                            {practice.location || "TBD"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
+                  <p className="text-gray-300 font-inter">
+                    No practices scheduled.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <Link
@@ -412,8 +496,8 @@ export default function TeamPage({ params }: TeamPageProps) {
             Team Players
           </h2>
           {players.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full bg-gray-900/50 border border-red-500/50 rounded-lg">
+            <div className="overflow-x-auto rounded-lg border border-red-500/50">
+              <table className="w-full bg-gray-900/50 rounded-lg overflow-hidden">
                 <thead>
                   <tr className="border-b border-gray-700">
                     <th className="text-left p-4 font-bebas uppercase">Name</th>
@@ -437,7 +521,7 @@ export default function TeamPage({ params }: TeamPageProps) {
                       }`}
                     >
                       <td className="p-4 font-inter text-white">
-                        {player.name}
+                        {formatPlayerName(player.name)}
                       </td>
                       <td className="p-4 font-inter text-gray-300">
                         {(player as any).jersey_number || "N/A"}

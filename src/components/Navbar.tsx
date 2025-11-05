@@ -522,17 +522,6 @@ export default function Navbar() {
     navLinks = [...baseNavLinks, { name: "Coaches", href: "/coaches/login" }];
   }
 
-  // Admin/Coach menu entries for Club Management page menu
-  const adminMenuLinks = [
-    { name: "Manage", href: "/admin/club-management?tab=overview" },
-    { name: "Coach", href: "/admin/club-management?tab=coaches-dashboard" },
-    { name: "Payments", href: "/admin/club-management?tab=payments" },
-    { name: "Monitor", href: "/admin/club-management?tab=analytics" },
-  ];
-  const coachMenuLinks = [
-    { name: "Manage", href: "/admin/club-management?tab=overview" },
-    { name: "Coach", href: "/admin/club-management?tab=coaches-dashboard" },
-  ];
 
   const isHome = pathname === "/";
 

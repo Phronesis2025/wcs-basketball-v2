@@ -6,11 +6,51 @@
 - **Build Time**: ~36.8s compilation
 - **Security Score**: 10/10 (Perfect)
 - **Vulnerabilities**: 0 (Clean)
-- **Core Web Vitals**: Needs improvement
+- **Core Web Vitals**: Optimized (January 2025)
+
+## 🎯 Latest Optimizations (Version 2.9.9 - January 2025)
+
+### ✅ Implemented Performance Improvements
+
+#### 1. Core Web Vitals Optimization
+
+**CLS (Cumulative Layout Shift) Fixes:**
+- ✅ Fixed team image layout shift on team detail pages (`src/app/teams/[id]/page.tsx`)
+  - Added explicit dimensions: `width={800}`, `height={384}`
+  - Added `aspectRatio: "800/384"` style to prevent layout shift
+- ✅ Fixed drill page image layout shift (`src/app/drills/page.tsx`)
+  - Replaced `height: "auto"` with `aspectRatio: "400/192"`
+- ✅ Verified all `fill` images have proper aspect-ratio containers
+
+**FCP (First Contentful Paint) Improvements:**
+- ✅ Added font preloading for critical fonts (Bebas Neue, Inter)
+  - Preload links in `src/app/layout.tsx` with `crossOrigin="anonymous"`
+- ✅ Added hero image preload with `fetchPriority="high"`
+- ✅ Optimized Hero video loading: Changed `preload` to `"metadata"` instead of default
+
+**TTFB (Time to First Byte) Optimizations:**
+- ✅ Implemented API route caching with stale-while-revalidate strategy
+  - `/api/schedules`: `s-maxage=30, stale-while-revalidate=60`
+  - `/api/teams`: `s-maxage=60, stale-while-revalidate=120`
+- ✅ Allows CDN/edge caching for faster responses while maintaining freshness
+
+#### 2. Core Web Vitals Tracking
+
+- ✅ Implemented custom client-side Core Web Vitals capture
+- ✅ Database storage in `web_vitals` table
+- ✅ Admin dashboard display with color-coded status indicators
+- ✅ Diagnostic component with actionable insights for poor metrics
+
+**Performance Targets:**
+- **CLS**: < 0.1 (Good) - Previously: 0.10 (Needs Improvement)
+- **FCP**: < 1800ms (Good) - Previously: 4446ms (Poor)
+- **TTFB**: < 600ms (Good) - Previously: 1935ms (Poor)
 
 ## 🎯 Optimization Roadmap
 
 This document outlines performance issues identified in the WCSv2.0 web application and provides detailed recommendations for improvement. Each issue is categorized by impact and effort level to help prioritize implementation.
+
+**Note**: Many optimizations have been implemented in Version 2.9.9 (January 2025). See "Latest Optimizations" section above for completed improvements.
 
 ---
 

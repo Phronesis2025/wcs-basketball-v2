@@ -1,5 +1,116 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.9.9 - Performance Optimizations & Core Web Vitals Improvements
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Focus**: Performance Optimization & Core Web Vitals  
+
+---
+
+### ⚡ Performance Improvements
+
+- **Core Web Vitals Optimization**:
+  - **CLS (Cumulative Layout Shift)**: Fixed layout stability issues by adding proper image dimensions and aspect ratios
+  - **FCP (First Contentful Paint)**: Improved initial load time through font preloading and resource hints
+  - **TTFB (Time to First Byte)**: Reduced server response time with API route caching strategies
+
+- **Image Layout Stability**:
+  - Fixed team image on team detail pages: Added explicit `width={800}`, `height={384}`, and `aspectRatio: "800/384"` to prevent layout shift
+  - Fixed drill page images: Replaced `height: "auto"` with proper `aspectRatio: "400/192"` styling
+  - All images using `fill` prop already have proper `aspect-ratio` containers (FanZone, TeamUpdates components)
+
+- **Font & Resource Preloading**:
+  - Added preload links for critical fonts (Bebas Neue, Inter) with `crossOrigin="anonymous"` for faster FCP
+  - Added preload for hero image (`/hero-basketball.jpg`) with `fetchPriority="high"` for improved LCP
+  - Optimized Hero video loading: Changed `preload` from default to `"metadata"` to reduce initial load impact
+
+- **API Route Caching**:
+  - Implemented `Cache-Control` headers with stale-while-revalidate strategy:
+    - `/api/schedules`: `s-maxage=30, stale-while-revalidate=60` (30 seconds cache, 60 seconds stale window)
+    - `/api/teams`: `s-maxage=60, stale-while-revalidate=120` (60 seconds cache, 120 seconds stale window)
+  - Allows CDN/edge caching for faster TTFB while maintaining data freshness through background revalidation
+
+### 📊 Core Web Vitals Tracking
+
+- **Custom Web Vitals Dashboard**:
+  - Added Core Web Vitals section to Monitor tab in admin dashboard
+  - Displays real-time metrics: LCP, INP, CLS, FCP, and TTFB
+  - Color-coded status indicators (Green: Good, Yellow: Needs Improvement, Red: Poor)
+  - Diagnostic information with expandable panels showing causes and fixes for poor metrics
+
+- **Web Vitals Diagnostics**:
+  - Created `WebVitalsDiagnostic` component with actionable insights
+  - Shows common causes and recommended fixes for metrics that need improvement
+  - Helps administrators identify and resolve performance issues quickly
+
+### 🔧 Technical Details
+
+- **Files Modified**:
+  - `src/app/teams/[id]/page.tsx`: Fixed team image dimensions and aspect ratio
+  - `src/app/layout.tsx`: Added font and hero image preloading
+  - `src/components/Hero.tsx`: Optimized video preload strategy
+  - `src/app/api/schedules/route.ts`: Added caching headers
+  - `src/app/api/teams/route.ts`: Added caching headers
+  - `src/app/drills/page.tsx`: Fixed image aspect ratio
+  - `src/components/WebVitalsDiagnostics.tsx`: Created diagnostic component with red formatting fixes
+
+- **Performance Metrics**:
+  - **Before**: CLS: 0.10 (needs improvement), FCP: 4446ms (poor), TTFB: 1935ms (poor)
+  - **Target**: CLS: < 0.1 (good), FCP: < 1800ms (good), TTFB: < 600ms (good)
+  - All optimizations maintain existing layouts, functions, and formatting - performance-only changes
+
+### 📝 Notes
+
+- All performance optimizations are non-breaking changes
+- No layout, functionality, or formatting modifications
+- Caching strategy balances freshness (30-60 seconds) with speed (instant cache responses)
+- Font preloading improves perceived performance without blocking render
+- Image aspect ratios prevent layout shift during image loading
+
+### 🔒 Security Audit (January 2025)
+
+- **Security Test**: ✅ PASSED - No exposed keys or secrets found
+- **API Keys**: All properly secured via environment variables
+- **Git Ignore**: Verified `.cursor/mcp.json` is in `.gitignore`
+- **Codebase Scan**: No hardcoded Stripe keys, Supabase keys, or JWT tokens found
+- **Documentation**: All example keys use placeholder format only
+- **Status**: ✅ All security best practices followed
+
+### 📊 Database Schema Documentation Update (January 2025)
+
+- **Schema Verification**: ✅ Verified all 22 tables match production database via Supabase MCP
+- **Schema Updates**:
+  - Updated table count from 21 to 22 (added `performance_metrics` and `web_vitals` tables)
+  - Added `U8` to `teams.age_group` check constraint (was missing from docs)
+  - Added `users.last_active_at` column (was missing from docs)
+  - Added complete documentation for `performance_metrics` table
+  - Added complete documentation for `web_vitals` table
+  - Added complete documentation for `imports` table
+  - Added complete documentation for `pending_registrations` table
+  - Added missing player columns: `rejection_reason`, `rejected_at`, `medical_allergies`, `medical_conditions`, `medical_medications`, `doctor_name`, `doctor_phone`, `external_id`
+  - Updated player status constraint to include `on_hold` and `rejected` statuses
+- **RLS Policies**: ✅ Complete documentation of all RLS policies for all 22 tables
+- **Last Updated**: January 2025 - Schema synced from production Supabase database via MCP
+- **Status**: ✅ Documentation matches current production database schema
+
+### 🔧 Supabase Advisors Issues Fixed (January 2025)
+
+- **Performance Optimizations**: ✅ Fixed 5 RLS performance issues
+  - Optimized `imports` table policies (3 policies): Replaced `auth.uid()` with `(SELECT auth.uid())`
+  - Optimized `performance_metrics` table policy: Replaced `auth.uid()` with `(SELECT auth.uid())`
+  - Optimized `web_vitals` table policy: Replaced `auth.uid()` with `(SELECT auth.uid())`
+  - **Migration Applied**: `fix_rls_performance_optimization_jan_2025.sql` successfully applied
+  - **Impact**: Improved query performance at scale by preventing re-evaluation of auth functions for each row
+- **Security Recommendation**: ⚠️ Leaked Password Protection disabled (requires manual Supabase Dashboard configuration)
+  - **Documentation**: See `docs/enable_leaked_password_protection.md` for setup instructions
+  - **Priority**: Medium (recommended but not critical)
+- **Unused Indexes**: ℹ️ 24 indexes identified as unused (INFO level - low priority)
+  - **Action**: No immediate action required, monitor for future use
+- **Status**: ✅ All fixable performance issues resolved
+
+---
+
 ## 🚀 Version 2.9.8 - Payment Flow Improvements & Mobile UI Updates
 
 **Release Date**: January 2025  

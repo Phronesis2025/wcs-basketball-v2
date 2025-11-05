@@ -9,6 +9,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "react-hot-toast";
 import ConditionalFooter from "../components/ConditionalFooter";
+import WebVitalsTracker from "../components/WebVitalsTracker";
 
 export const metadata: Metadata = {
   title: "WCS Basketball - Where Champions Start",
@@ -124,6 +125,30 @@ export default function RootLayout({
           href="https://htgkddahhgugesktujds.supabase.co"
         />
 
+        {/* Preload critical fonts for faster FCP */}
+        <link
+          rel="preload"
+          href="/fonts/BebasNeue-Regular.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/Inter-Regular.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+
+        {/* Preload critical hero image for faster LCP */}
+        <link
+          rel="preload"
+          href="/hero-basketball.jpg"
+          as="image"
+          fetchPriority="high"
+        />
+
         {/* Note: No preload for animated flames to avoid LCP impact */}
       </head>
       <body>
@@ -137,6 +162,9 @@ export default function RootLayout({
 
           {/* Vercel Speed Insights for Core Web Vitals monitoring */}
           <SpeedInsights />
+
+          {/* Custom Web Vitals Tracker - stores metrics in our database */}
+          <WebVitalsTracker />
 
           {/* Toast notifications */}
           <Toaster

@@ -182,6 +182,52 @@ export default function PaymentPage() {
   const isPrint = (search?.get("print") || "").toLowerCase() === "1";
   const isPaidInFull = remaining <= 0;
   const invoiceRef = useRef<HTMLDivElement | null>(null);
+  const invoiceContentRef = useRef<HTMLDivElement | null>(null);
+
+  // Scale the desktop invoice down on small screens while preserving aspect ratio
+  const BASE_WIDTH = 768; // matches max-w-3xl (48rem)
+  const [scale, setScale] = useState(1);
+  const [invoiceHeight, setInvoiceHeight] = useState(0);
+  
+  useEffect(() => {
+    if (isPrint) {
+      setScale(1);
+      return;
+    }
+    const computeScale = () => {
+      try {
+        const viewport = Math.min(window.innerWidth, document.documentElement.clientWidth || window.innerWidth);
+        const available = Math.max(0, viewport - 32); // account for page padding (px-4)
+        const s = Math.min(1, Math.max(0.5, available / BASE_WIDTH));
+        setScale(s);
+      } catch {}
+    };
+    computeScale();
+    window.addEventListener("resize", computeScale);
+    return () => window.removeEventListener("resize", computeScale);
+  }, [isPrint]);
+
+  // Measure invoice height and update wrapper to prevent empty space
+  useEffect(() => {
+    if (isPrint || !invoiceContentRef.current) return;
+    
+    const measureHeight = () => {
+      if (invoiceContentRef.current) {
+        const height = invoiceContentRef.current.offsetHeight;
+        setInvoiceHeight(height);
+      }
+    };
+    
+    measureHeight();
+    // Re-measure on window resize and after content loads
+    window.addEventListener("resize", measureHeight);
+    const timer = setTimeout(measureHeight, 100);
+    
+    return () => {
+      window.removeEventListener("resize", measureHeight);
+      clearTimeout(timer);
+    };
+  }, [isPrint, player, payments, parent, teamName]);
 
   // Get paid payments for invoice items with proper formatting
   const paidPayments = useMemo(() => {
@@ -336,8 +382,24 @@ export default function PaymentPage() {
       
       <div className={`${isPrint ? 'bg-white text-black pt-0' : 'bg-navy text-white pt-20'} min-h-screen pb-16 px-4`}>
         <div className={`${isPrint ? 'max-w-4xl' : 'max-w-3xl'} mx-auto`} ref={invoiceRef}>
-          {/* Invoice Template - Matches image exactly */}
-          <div className="bg-white text-black p-8">
+          {/* Scaled desktop invoice on mobile to preserve aspect ratio */}
+          <div
+            className="mx-auto overflow-hidden"
+            style={{ 
+              width: isPrint ? undefined : `${Math.round(BASE_WIDTH * scale)}px`,
+              height: isPrint || !invoiceHeight ? undefined : `${Math.round(invoiceHeight * scale)}px`
+            }}
+          >
+            {/* Invoice Template - Matches image exactly */}
+            <div
+              ref={invoiceContentRef}
+              className="bg-white text-black p-8"
+              style={{
+                width: BASE_WIDTH,
+                transform: isPrint ? undefined : `scale(${scale})`,
+                transformOrigin: 'top left',
+              }}
+            >
             {/* Header: INVOICE on left, Logo on right */}
             <div className="flex items-start justify-between mb-6">
               <h1 className="text-5xl font-bold uppercase tracking-tight" style={{ fontFamily: 'Arial, sans-serif' }}>
@@ -399,7 +461,7 @@ export default function PaymentPage() {
               </div>
 
               {/* Right: Player and Team */}
-              <div>
+              <div className="text-right">
                 <div className="text-sm space-y-1">
                   <p>
                     <span className="font-bold">Player:</span> {player?.name || "—"}
@@ -480,16 +542,16 @@ export default function PaymentPage() {
               <div className="flex flex-col gap-3">
                 {/* Total box */}
                 <div className="border-2 border-black px-4 py-2 min-w-[200px]">
-                  <p className="text-sm font-bold mb-1">Total:</p>
-                  <p className="text-lg font-bold">{formatCurrency(annualFee)}</p>
+                  <p className="text-sm font-bold mb-1 text-right">Total:</p>
+                  <p className="text-lg font-bold text-right">{formatCurrency(annualFee)}</p>
                   {isPaidInFull && (
-                    <p className="text-xs text-green-700 font-semibold mt-1">PAID</p>
+                    <p className="text-xs text-green-700 font-semibold mt-1 text-right">PAID</p>
                   )}
                 </div>
                 {/* Due box */}
                 <div className="border-2 border-black px-4 py-2 min-w-[200px]">
-                  <p className="text-sm font-bold mb-1">Due:</p>
-                  <p className="text-lg font-bold">{formatCurrency(remaining)}</p>
+                  <p className="text-sm font-bold mb-1 text-right">Due:</p>
+                  <p className="text-lg font-bold text-right">{formatCurrency(remaining)}</p>
                 </div>
               </div>
             </div>
@@ -520,6 +582,7 @@ export default function PaymentPage() {
                   Thank you for your business!
                 </p>
               </div>
+            </div>
             </div>
           </div>
 

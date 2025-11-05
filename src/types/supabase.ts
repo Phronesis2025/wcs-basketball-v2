@@ -211,6 +211,19 @@ export type AnalyticsStats = {
       desktop: number;
     };
   };
+  systemHealth?: {
+    uptime: number;
+    responseTime: number;
+    database: string;
+  };
+  webVitals?: {
+    lcp: number; // Largest Contentful Paint (ms)
+    fid: number; // First Input Delay (ms)
+    inp: number; // Interaction to Next Paint (ms)
+    cls: number; // Cumulative Layout Shift (score)
+    fcp: number; // First Contentful Paint (ms)
+    ttfb: number; // Time to First Byte (ms)
+  };
 };
 
 // Player Management Types
@@ -235,6 +248,12 @@ export type Player = {
   parent_phone?: string | null;
   emergency_contact?: string | null;
   emergency_phone?: string | null;
+  // Medical information fields
+  medical_allergies?: string | null;
+  medical_conditions?: string | null;
+  medical_medications?: string | null;
+  doctor_name?: string | null;
+  doctor_phone?: string | null;
   created_at: string;
   is_active: boolean;
   is_deleted?: boolean;

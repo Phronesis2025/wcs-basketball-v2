@@ -11,7 +11,8 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:report": "playwright show-report tests/e2e/reports/html"
+    "test:e2e:report": "playwright show-report tests/e2e/reports/html",
+    "test:monitoring": "tsx scripts/test-performance-monitoring.ts"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.19",
@@ -53,6 +54,8 @@
     "stripe": "^18.5.0",
     "tailwind-merge": "^3.3.1",
     "twilio": "^5.10.4",
+    "web-vitals": "^5.1.0",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.5",
     "zustand": "^5.0.8"
   },

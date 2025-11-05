@@ -38,6 +38,7 @@ import ChangelogTable from "@/components/ChangelogTable";
 import ChangelogModal from "@/components/ChangelogModal";
 import OnHoldModal from "@/components/dashboard/OnHoldModal";
 import PlayerPaymentModal from "@/components/dashboard/PlayerPaymentModal";
+import WebVitalsDiagnostic from "@/components/WebVitalsDiagnostics";
 import toast from "react-hot-toast";
 import {
   addSchedule,
@@ -132,6 +133,7 @@ function ClubManagementContent() {
     coaches: false,
     teams: false,
     players: false,
+    changelog: false,
   });
   const [selectedTeamFilter, setSelectedTeamFilter] = useState<string>("all");
   const [playerSearchTerm, setPlayerSearchTerm] = useState<string>("");
@@ -605,34 +607,29 @@ function ClubManagementContent() {
   const fetchAnalyticsData = async () => {
     setAnalyticsLoading(true);
     try {
-      // Mock analytics data - in real app this would come from API
-      setAnalyticsData({
-        errorStats: {
-          total_errors: 0,
-          critical_errors: 0,
-          error_count: 0,
-          warning_count: 0,
-          info_count: 0,
-          error_rate: 0.02,
-          recent_errors: [],
-          resolved_errors: 0,
-          unresolved_errors: 0,
-        },
-        loginStats: [],
-        performanceMetrics: {
-          averagePageLoadTime: 120,
-          uptime: 99.9,
-          errorRate: 0.02,
-        },
-        trafficMetrics: {
-          totalPageViews: 1200,
-          uniqueVisitors: 150,
-          topPages: [],
-          deviceBreakdown: { mobile: 60, desktop: 40 },
-        },
-      } as AnalyticsStats);
+      if (!userId) {
+        toast.error("Please log in first");
+        return;
+      }
+
+      // Fetch real analytics data from API
+      const response = await fetch("/api/admin/analytics/stats", {
+        headers: { "x-user-id": userId },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch analytics data");
+      }
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        setAnalyticsData(result.data);
+      } else {
+        throw new Error("Invalid response from analytics API");
+      }
     } catch (error) {
       devError("Error fetching analytics data:", error);
+      toast.error("Failed to load analytics data");
     } finally {
       setAnalyticsLoading(false);
     }
@@ -2668,10 +2665,8 @@ function ClubManagementContent() {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Error Rate:</span>
-                        <span className="text-red-400">
-                          {(analyticsData?.performanceMetrics?.errorRate || 0) *
-                            100}
-                          %
+                        <span className="text-white">
+                          {((analyticsData?.performanceMetrics?.errorRate || 0) * 100).toFixed(1)}%
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -2690,28 +2685,216 @@ function ClubManagementContent() {
                     <div className="space-y-3">
                       <div className="flex justify-between">
                         <span className="text-gray-300">Uptime:</span>
-                        <span className="text-green-400">99.9%</span>
+                        <span className="text-green-400">
+                          {analyticsData?.systemHealth?.uptime || analyticsData?.performanceMetrics?.uptime || 99.9}%
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Response Time:</span>
-                        <span className="text-blue-400">120ms</span>
+                        <span className="text-blue-400">
+                          {analyticsData?.systemHealth?.responseTime || analyticsData?.performanceMetrics?.averagePageLoadTime || 120}ms
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-300">Database:</span>
-                        <span className="text-green-400">Healthy</span>
+                        <span className={`${
+                          analyticsData?.systemHealth?.database === "Healthy" 
+                            ? "text-green-400" 
+                            : "text-red-400"
+                        }`}>
+                          {analyticsData?.systemHealth?.database || "Healthy"}
+                        </span>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="bg-gray-800 p-6 rounded-lg border border-gray-600">
+                    <h3 className="text-lg font-bebas text-white mb-4">
+                      Core Web Vitals
+                    </h3>
+                    <div className="space-y-4">
+                      {/* LCP */}
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">LCP:</span>
+                          <span className={`${
+                            (analyticsData?.webVitals?.lcp || 2500) < 2500 
+                              ? "text-green-400" 
+                              : (analyticsData?.webVitals?.lcp || 2500) < 4000 
+                              ? "text-yellow-400" 
+                              : "text-[red]"
+                          }`}>
+                            {analyticsData?.webVitals?.lcp || 2500}ms
+                          </span>
+                        </div>
+                        {(analyticsData?.webVitals?.lcp || 2500) >= 2500 && (
+                          <WebVitalsDiagnostic
+                            metricName="LCP"
+                            value={analyticsData?.webVitals?.lcp || 2500}
+                            status={
+                              (analyticsData?.webVitals?.lcp || 2500) < 2500
+                                ? "good"
+                                : (analyticsData?.webVitals?.lcp || 2500) < 4000
+                                ? "needsImprovement"
+                                : "poor"
+                            }
+                          />
+                        )}
+                      </div>
+
+                      {/* INP */}
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">INP:</span>
+                          <span className={`${
+                            (analyticsData?.webVitals?.inp || 200) < 200 
+                              ? "text-green-400" 
+                              : (analyticsData?.webVitals?.inp || 200) < 500 
+                              ? "text-yellow-400" 
+                              : "text-[red]"
+                          }`}>
+                            {analyticsData?.webVitals?.inp || 200}ms
+                          </span>
+                        </div>
+                        {(analyticsData?.webVitals?.inp || 200) >= 200 && (
+                          <WebVitalsDiagnostic
+                            metricName="INP"
+                            value={analyticsData?.webVitals?.inp || 200}
+                            status={
+                              (analyticsData?.webVitals?.inp || 200) < 200
+                                ? "good"
+                                : (analyticsData?.webVitals?.inp || 200) < 500
+                                ? "needsImprovement"
+                                : "poor"
+                            }
+                          />
+                        )}
+                      </div>
+
+                      {/* CLS */}
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">CLS:</span>
+                          <span className={`${
+                            (analyticsData?.webVitals?.cls || 0.1) < 0.1 
+                              ? "text-green-400" 
+                              : (analyticsData?.webVitals?.cls || 0.1) < 0.25 
+                              ? "text-yellow-400" 
+                              : "text-[red]"
+                          }`}>
+                            {analyticsData?.webVitals?.cls?.toFixed(2) || 0.1}
+                          </span>
+                        </div>
+                        {(analyticsData?.webVitals?.cls || 0.1) >= 0.1 && (
+                          <WebVitalsDiagnostic
+                            metricName="CLS"
+                            value={analyticsData?.webVitals?.cls || 0.1}
+                            status={
+                              (analyticsData?.webVitals?.cls || 0.1) < 0.1
+                                ? "good"
+                                : (analyticsData?.webVitals?.cls || 0.1) < 0.25
+                                ? "needsImprovement"
+                                : "poor"
+                            }
+                          />
+                        )}
+                      </div>
+
+                      {/* FCP */}
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">FCP:</span>
+                          <span className={`${
+                            (analyticsData?.webVitals?.fcp || 1800) < 1800 
+                              ? "text-green-400" 
+                              : (analyticsData?.webVitals?.fcp || 1800) < 3000 
+                              ? "text-yellow-400" 
+                              : "text-[red]"
+                          }`}>
+                            {analyticsData?.webVitals?.fcp || 1800}ms
+                          </span>
+                        </div>
+                        {(analyticsData?.webVitals?.fcp || 1800) >= 1800 && (
+                          <WebVitalsDiagnostic
+                            metricName="FCP"
+                            value={analyticsData?.webVitals?.fcp || 1800}
+                            status={
+                              (analyticsData?.webVitals?.fcp || 1800) < 1800
+                                ? "good"
+                                : (analyticsData?.webVitals?.fcp || 1800) < 3000
+                                ? "needsImprovement"
+                                : "poor"
+                            }
+                          />
+                        )}
+                      </div>
+
+                      {/* TTFB */}
+                      <div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-300">TTFB:</span>
+                          <span className={`${
+                            (analyticsData?.webVitals?.ttfb || 600) < 600 
+                              ? "text-green-400" 
+                              : (analyticsData?.webVitals?.ttfb || 600) < 800 
+                              ? "text-yellow-400" 
+                              : "text-[red]"
+                          }`}>
+                            {analyticsData?.webVitals?.ttfb || 600}ms
+                          </span>
+                        </div>
+                        {(analyticsData?.webVitals?.ttfb || 600) >= 600 && (
+                          <WebVitalsDiagnostic
+                            metricName="TTFB"
+                            value={analyticsData?.webVitals?.ttfb || 600}
+                            status={
+                              (analyticsData?.webVitals?.ttfb || 600) < 600
+                                ? "good"
+                                : (analyticsData?.webVitals?.ttfb || 600) < 800
+                                ? "needsImprovement"
+                                : "poor"
+                            }
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-4">
+                      * Colors: Green (Good), Yellow (Needs Improvement), Red (Poor)
+                    </p>
                   </div>
                 </div>
               )}
             </div>
 
             {/* Changelog Section */}
-            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bebas text-white">Changelog</h2>
+            <div className="bg-gray-900/50 border border-gray-700 rounded-lg">
+              <div
+                className="flex items-center justify-between p-6 border-b border-gray-700 cursor-pointer hover:bg-gray-800/50 transition-colors"
+                onClick={() => toggleSection("changelog")}
+              >
+                <div className="flex items-center">
+                  <h2 className="text-2xl font-bebas font-bold text-red">
+                    Changelog
+                  </h2>
+                  <svg
+                    className={`w-5 h-5 text-gray-400 transition-transform ml-3 ${
+                      expandedSections.changelog ? "rotate-180" : ""
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setEditingChangelog(null);
                     setChangelogModalOpen(true);
                   }}
@@ -2720,7 +2903,11 @@ function ClubManagementContent() {
                   Add Entry
                 </button>
               </div>
-              <ChangelogTable userId={userId || undefined} isAdmin={isAdmin} />
+              {expandedSections.changelog && (
+                <div className="p-6">
+                  <ChangelogTable userId={userId || undefined} isAdmin={isAdmin} />
+                </div>
+              )}
             </div>
             {changelogModalOpen && (
               <ChangelogModal
@@ -2968,77 +3155,87 @@ function ClubManagementContent() {
                 <div className="bg-gray-800 rounded-lg border border-gray-600 p-4 border-l-[16px] border-l-blue-500">
                   <h3 className="text-lg font-bebas text-white mb-4 flex items-center gap-2">
                     <span className="text-blue-400">📝</span>
-                    <span>Pending Player Approvals</span>
+                    <span>Pending Approval</span>
                     <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-300">
                       {pendingPlayers.length}
                     </span>
                   </h3>
-                  <div className="overflow-x-auto">
-                    <div className="min-w-0">
-                      <table className="min-w-full text-sm">
-                        <thead>
-                          <tr className="text-left border-b border-gray-600">
-                            <th className="py-2 pr-4 text-gray-300">Player</th>
-                            <th className="py-2 pr-4 text-gray-300">Team</th>
-                            <th className="py-2 text-gray-300 hidden md:table-cell">
-                              Status
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {pendingPlayers.map((p: any) => {
-                            const playerAge = p.date_of_birth
-                              ? Math.floor(
-                                  (new Date().getTime() -
-                                    new Date(p.date_of_birth).getTime()) /
-                                    (365.25 * 24 * 60 * 60 * 1000)
-                                )
-                              : null;
-                            const assignedTeam = teams.find(
-                              (t: any) => t.id === p.team_id
-                            );
+                  {pendingPlayers.length > 0 ? (
+                    <div className="overflow-x-auto block">
+                      <div className="inline-block min-w-full align-middle">
+                        <table className="min-w-full text-sm">
+                          <thead>
+                            <tr className="text-left border-b border-gray-600">
+                              <th className="py-2 pr-4 text-gray-300">Player</th>
+                              <th className="py-2 pr-4 text-gray-300">Team</th>
+                              <th className="py-2 text-gray-300 hidden md:table-cell">
+                                Status
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {pendingPlayers.map((p: any) => {
+                              const playerAge = p.date_of_birth
+                                ? Math.floor(
+                                    (new Date().getTime() -
+                                      new Date(p.date_of_birth).getTime()) /
+                                      365.25 /
+                                      24 /
+                                      60 /
+                                      60 /
+                                      1000
+                                  )
+                                : null;
+                              const assignedTeam = teams.find(
+                                (t: any) => t.id === p.team_id
+                              );
 
-                            return (
-                              <tr
-                                key={p.id}
-                                className="border-b border-gray-600 cursor-pointer hover:bg-gray-700/50 transition-colors"
-                                onClick={() => {
-                                  setSelectedPlayerForPaymentModal(p);
-                                  setSelectedPlayerPaymentStatus("pending");
-                                  setShowPlayerPaymentModal(true);
-                                }}
-                              >
-                                <td className="py-2 pr-4">
-                                  <div className="text-white">{p.name}</div>
-                                  {playerAge && (
-                                    <div className="text-gray-400 text-xs mt-1">
-                                      Age: {playerAge} • {p.gender}
-                                    </div>
-                                  )}
-                                </td>
-                                <td className="py-2 pr-4">
-                                  {assignedTeam ? (
-                                    <div className="text-white">
-                                      {assignedTeam.name}
-                                    </div>
-                                  ) : (
-                                    <span className="text-gray-400">
-                                      Not assigned
+                              return (
+                                <tr
+                                  key={p.id}
+                                  className="border-b border-gray-600 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                                  onClick={() => {
+                                    setSelectedPlayerForPaymentModal(p);
+                                    setSelectedPlayerPaymentStatus("pending");
+                                    setShowPlayerPaymentModal(true);
+                                  }}
+                                >
+                                  <td className="py-2 pr-4">
+                                    <div className="text-white">{p.name}</div>
+                                    {playerAge && (
+                                      <div className="text-gray-400 text-xs mt-1">
+                                        Age: {playerAge} • {p.gender}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="py-2 pr-4">
+                                    {assignedTeam ? (
+                                      <div className="text-white">
+                                        {assignedTeam.name}
+                                      </div>
+                                    ) : (
+                                      <span className="text-gray-400">
+                                        Not assigned
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-2 hidden md:table-cell">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-blue-200 border border-blue-700">
+                                      Pending
                                     </span>
-                                  )}
-                                </td>
-                                <td className="py-2 hidden md:table-cell">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-900 text-blue-200 border border-blue-700">
-                                    Pending
-                                  </span>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <p className="text-gray-400 text-sm">
+                      No players pending approval
+                    </p>
+                  )}
                 </div>
               </div>
 

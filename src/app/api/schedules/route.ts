@@ -97,10 +97,8 @@ export async function GET() {
         status: 200,
         headers: {
           "Content-Type": "application/json",
-          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-          SurrogateControl: "no-store",
+          // Cache for 30 seconds, then revalidate in background
+          "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
         },
       }
     );
