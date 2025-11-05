@@ -1,6 +1,69 @@
 "use client";
 
+import { useState } from "react";
 import { Payment, Player } from "@/types/supabase";
+
+// Invoice Email Button Component
+function InvoiceEmailButton({ playerId, playerName }: { playerId: string; playerName: string }) {
+  const [sendingInvoice, setSendingInvoice] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const sendInvoice = async () => {
+    if (sendingInvoice) return;
+    
+    setSendingInvoice(true);
+    setMessage(null);
+    
+    try {
+      const response = await fetch("/api/send-invoice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ playerId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(`Error: ${data.error || "Failed to send invoice"}`);
+        return;
+      }
+
+      setMessage(`Invoice Sent`);
+      
+      // Clear message after 5 seconds
+      setTimeout(() => {
+        setMessage(null);
+      }, 5000);
+    } catch (error) {
+      setMessage("Failed to send invoice. Please try again.");
+    } finally {
+      setSendingInvoice(false);
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        onClick={sendInvoice}
+        disabled={sendingInvoice}
+        className="px-4 py-2 bg-red text-white rounded hover:bg-red/90 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+      >
+        {sendingInvoice ? "Sending..." : "Email Invoice"}
+      </button>
+      {message && (
+        <div className={`absolute top-full mt-2 left-0 right-0 p-2 rounded text-xs whitespace-nowrap z-10 ${
+          message.includes("Error") || message.includes("Failed")
+            ? "bg-red-100 text-red-800 border border-red-300"
+            : "bg-green-100 text-green-800 border border-green-300"
+        }`}>
+          {message}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface PaymentHistoryTableProps {
   payments: Payment[];
@@ -160,17 +223,72 @@ export default function PaymentHistoryTable({
     return new Date(created.getTime() + 30 * 24 * 60 * 60 * 1000);
   };
 
+  // Check if player has at least one paid payment
+  const hasPaidPayment = (playerId: string) => {
+    return paidByPlayer.has(playerId) && paidByPlayer.get(playerId)! > 0;
+  };
+
+  // Get unique players (for invoice section)
+  const uniquePlayers = Array.from(playersById.values()).filter((player) => {
+    const approved = isApproved(player.id);
+    const hasPaid = hasPaidPayment(player.id);
+    return approved && hasPaid;
+  });
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-xl font-bold text-gray-900">Payment History</h3>
-        {totalPaid > 0 && (
-          <p className="text-sm text-gray-600 mt-1">
-            Total paid:{" "}
-            <span className="font-semibold">{formatAmount(totalPaid)}</span>
-          </p>
-        )}
-      </div>
+    <div className="space-y-6">
+      {/* Invoice Section - Show for approved players with payments */}
+      {uniquePlayers.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-xl font-bold text-gray-900">Invoices</h3>
+            <p className="text-sm text-gray-600 mt-1">
+              View and email invoices for your children
+            </p>
+          </div>
+          <div className="p-6">
+            <div className="space-y-4">
+              {uniquePlayers.map((player) => {
+                const playerPaid = paidByPlayer.get(player.id) || 0;
+                return (
+                  <div
+                    key={player.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
+                  >
+                    <div>
+                      <p className="font-semibold text-gray-900">{player.name}</p>
+                      <p className="text-sm text-gray-600 mt-1">
+                        Total Paid: {formatAmount(playerPaid)}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <a
+                        href={`/payment/${player.id}`}
+                        className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium"
+                      >
+                        View Invoice
+                      </a>
+                      <InvoiceEmailButton playerId={player.id} playerName={player.name} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment History Table */}
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-xl font-bold text-gray-900">Payment History</h3>
+          {totalPaid > 0 && (
+            <p className="text-sm text-gray-600 mt-1">
+              Total paid:{" "}
+              <span className="font-semibold">{formatAmount(totalPaid)}</span>
+            </p>
+          )}
+        </div>
 
       <div className="overflow-x-auto hidden md:block">
         <table className="w-full">
@@ -291,6 +409,7 @@ export default function PaymentHistoryTable({
           </p>
         </div>
       )}
+      </div>
     </div>
   );
 }

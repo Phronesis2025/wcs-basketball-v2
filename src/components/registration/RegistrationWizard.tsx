@@ -255,9 +255,9 @@ export default function RegistrationWizard({
           tags: { flow: "registration", type: "guest" },
         });
 
-        // Redirect to confirmation page
+        // Redirect to registration pending page
         setTimeout(() => {
-          router.push("/register?guest_confirmation=true");
+          router.push(`/registration-pending?player=${encodeURIComponent(allFormData.player_first_name)}`);
         }, 1500);
         return;
       }

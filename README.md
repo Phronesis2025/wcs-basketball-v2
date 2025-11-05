@@ -150,7 +150,15 @@ The application is deployed on Vercel with automatic deployments from the main b
 
 ## 📝 Recent Updates
 
-### v2.0.1 - January 2025 (Current)
+### v2.9.7 - November 2025 (Current)
+
+- **Player Card Birthday Celebration**: Added party popper emoji (🎉) in top-right corner of player cards when it's their birthday
+- **PDF Invoice Fix**: Fixed encoding error preventing invoice emails from being sent (removed unsupported checkmark character)
+- **Birthday Detection**: Improved birthday detection with proper date parsing and timezone handling
+- **UI Enhancement**: Replaced birthday cake icon with more prominent party popper in corner position
+- **Known Issue**: PDF email invoice layout does not currently match the HTML invoice view - work in progress
+
+### v2.0.1 - January 2025
 
 - **Security Audit**: Completed comprehensive security check with 8.5/10 score
 - **Critical Security Fixes**: 

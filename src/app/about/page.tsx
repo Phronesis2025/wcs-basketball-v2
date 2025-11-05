@@ -70,21 +70,44 @@ export default function About() {
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 uppercase">
-              About World Class Sports Kansas
+              About World Class Sports
             </h1>
             <p className="text-lg font-inter mb-6 max-w-3xl mx-auto">
-              Founded in 2010, World Class Sports Kansas began as a community
-              initiative to empower youth through basketball. Growing from a
-              small local league, WCS has become a cornerstone of youth sports
-              in Kansas, fostering character, confidence, and community through
-              competitive programs and dedicated mentorship.
+              WCS stands for World Class Sports. Our basketball club is meant
+              for those players who have a desire for serious and competitive
+              tournament competition. Since 2000, World Class Sports has made a
+              name for itself by fielding teams known throughout the Midwest
+              region as being highly competitive, talented, fundamentally sound,
+              and well coached.
             </p>
+            <h2 className="text-white text-[clamp(2rem,4vw,2.5rem)] font-bebas font-bold mb-8 text-center uppercase">
+              Our Mission
+            </h2>
             <p className="text-lg font-inter mb-12 max-w-3xl mx-auto">
-              Built on the mission to develop well-rounded athletes, WCS offers
-              a positive, competitive environment where young players learn
-              discipline, respect, and perseverance. Our programs emphasize
-              skill-building, teamwork, and leadership, inspiring the next
-              generation of athletes and leaders both on and off the court.
+              World Class Sports is a basketball club designed to provide a
+              learning opportunity for youth in Salina, KS and the surrounding
+              area to play competitive basketball. The goal of WCS is to teach
+              young players the game of basketball. The game of basketball is
+              taught with an emphasis on defense, sportsmanship, teamwork, and
+              the improvement of each individual player so that they might
+              become a successful young person in middle school and beyond, both
+              on and off the basketball court.
+            </p>
+            <h2 className="text-white text-[clamp(2rem,4vw,2.5rem)] font-bebas font-bold mb-8 text-center uppercase">
+              Our History
+            </h2>
+            <p className="text-lg font-inter mb-12 max-w-3xl mx-auto">
+              In the summer of 2000 WCS came to Salina by way of a direct link
+              to a screen printing and sport camp company named World Class
+              Sports in Chicago, Illinois. This link was asked by World Class
+              Sports to spread the word and get their name to more of the
+              MidWest region of the U.S. World Class started by sponsoring two
+              youth basketball teams. From these two teams, a basketball club
+              was formed in the city of Salina, thus giving more youth the
+              opportunity to play. Now since it's formation in 2000, the World
+              Class Basketball Club has sponsored over 32 different teams
+              encompassing over 300 kids ranging in levels from 2nd grade to 8th
+              grade boys and girls.
             </p>
           </div>
           <div>

@@ -101,8 +101,9 @@ export default function GuestSignupForm() {
       toast.success("Magic link sent! Check your email to complete registration.");
       devLog("GuestSignupForm: Magic link sent successfully");
 
-      // Redirect to a confirmation page or show message
-      router.push("/register?guest_confirmation=true");
+      // Redirect to registration pending page
+      const playerName = data.player_first_name || "";
+      router.push(`/registration-pending${playerName ? `?player=${encodeURIComponent(playerName)}` : ""}`);
     } catch (error) {
       devError("GuestSignupForm: Submit error", error);
       toast.error(error instanceof Error ? error.message : "Registration failed. Please try again.");

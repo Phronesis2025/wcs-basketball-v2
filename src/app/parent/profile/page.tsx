@@ -15,6 +15,7 @@ import StatusTimeline from "@/components/parent/StatusTimeline";
 import HandleAuthRedirect from "@/components/auth/HandleAuthRedirect";
 import { devError, devLog } from "@/lib/security";
 import BasketballLoader from "@/components/BasketballLoader";
+import { supabase } from "@/lib/supabaseClient";
 
 function ParentProfilePageInner() {
   const router = useRouter();
@@ -63,11 +64,39 @@ function ParentProfilePageInner() {
   const hasShownSuccessToast = useRef(false);
   const [activeTab, setActiveTab] = useState<"players" | "contact" | "billing">("players");
 
-  // Authentication check
+  // Authentication check - give more time for session to be established
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push("/");
-    }
+    const checkAuthAndRedirect = async () => {
+      // Wait for auth to finish loading
+      if (loading) return;
+      
+      // If authenticated, proceed
+      if (isAuthenticated) return;
+      
+      // If not authenticated, double-check with Supabase directly
+      // This handles cases where session exists but useAuth hasn't picked it up yet
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (session && !error) {
+          // Session exists but useAuth didn't catch it - refresh the page
+          // This will trigger useAuth to re-check
+          devLog("Profile: Found session that useAuth missed, refreshing");
+          window.location.reload();
+          return;
+        }
+        
+        // No session found - redirect to homepage
+        devLog("Profile: No session found, redirecting to homepage");
+        router.push("/");
+      } catch (err) {
+        devError("Profile: Error checking session", err);
+        // On error, redirect to homepage
+        router.push("/");
+      }
+    };
+    
+    checkAuthAndRedirect();
   }, [loading, isAuthenticated, router]);
 
   const fetchProfile = async (email: string) => {

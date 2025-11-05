@@ -1,5 +1,57 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.9.7 - Player Card Birthday Celebration & Invoice PDF Fix
+
+**Release Date**: November 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 8.5/10 (Good) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Added
+
+- **Birthday Party Popper Icon**:
+  - Added party popper emoji (🎉) to player cards when it's the player's birthday
+  - Positioned in the top-right corner of the card with proper offset
+  - Large, visible size (`text-7xl sm:text-8xl`) for better visibility
+  - Appears on both flip cards (active players) and regular cards (non-active players)
+  - Improved birthday detection function with proper date parsing and timezone handling
+
+### 🎨 Changed
+
+- **Player Card Birthday Display**:
+  - Removed birthday cake icon (🎂) from next to player name
+  - Replaced with party popper emoji in top-right corner
+  - Party popper positioned with `-translate-y-6 translate-x-8` for optimal corner placement
+  - More prominent and celebratory visual indicator for birthdays
+
+### 🐛 Fixed
+
+- **PDF Invoice Encoding Error**:
+  - Fixed "WinAnsi cannot encode ✓" error when generating PDF invoices
+  - Removed checkmark character (✓) from "✓ PAID IN FULL" text in PDF
+  - Changed to "PAID IN FULL" text only (still displayed in green for paid invoices)
+  - Invoice emails now generate successfully without encoding errors
+
+### ⚠️ Known Issues
+
+- **PDF Email Invoice Layout**:
+  - **IMPORTANT**: The PDF invoice layout sent via email does NOT currently match the HTML invoice displayed on the parent profile page
+  - Layout differences include badge positioning, checkmark rendering, and overall visual alignment
+  - Work in progress to align PDF layout with HTML invoice design
+  - HTML invoice view remains accurate and functional
+
+### 🔧 Technical Improvements
+
+- **Birthday Detection Function**:
+  - Improved `isTodayBirthday()` function with direct date string parsing
+  - Handles timezone issues by parsing YYYY-MM-DD format directly
+  - Validates date components before comparison
+  - Added error handling for invalid date formats
+
+---
+
 ## 🚀 Version 2.9.6 - Bug Fixes & Mobile UI Improvements
 
 **Release Date**: January 2025  

@@ -1,21 +1,24 @@
 "use client";
 
-import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { Suspense } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { devLog, devError } from "@/lib/security";
 import BasketballLoader from "@/components/BasketballLoader";
+import Link from "next/link";
 
 function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [step, setStep] = useState<"username" | "reset">("username");
+  const [resetToken, setResetToken] = useState<string | null>(null);
 
   // Password requirements validation
   const passwordRequirements = {
@@ -28,7 +31,58 @@ function ResetPasswordContent() {
 
   const allRequirementsMet = Object.values(passwordRequirements).every(Boolean);
 
-  const handleReset = async (e: React.FormEvent) => {
+  // Check if we have a reset token in URL
+  useEffect(() => {
+    const token = searchParams.get("token");
+    if (token) {
+      setResetToken(token);
+      setStep("reset");
+    }
+  }, [searchParams]);
+
+  const handleUsernameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage("");
+
+    if (!username) {
+      setMessage("Please enter your username");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Call API to verify username and get reset token
+      const response = await fetch("/api/auth/coach-forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.error || "Failed to verify username. Please try again.");
+        setLoading(false);
+        return;
+      }
+
+      // If successful, redirect to reset password page with token
+      if (data.redirectUrl) {
+        router.push(data.redirectUrl);
+      } else {
+        setMessage("An error occurred. Please contact an administrator.");
+        setLoading(false);
+      }
+    } catch (err: any) {
+      devError("Username verification error:", err);
+      setMessage("An error occurred. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
 
@@ -48,40 +102,122 @@ function ResetPasswordContent() {
       return;
     }
 
+    if (!resetToken) {
+      setMessage("Invalid reset token. Please start over.");
+      router.push("/coaches/reset-password");
+      return;
+    }
+
     setLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
+      // Verify token and reset password
+      const response = await fetch("/api/auth/coach-reset-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token: resetToken,
+          newPassword: password,
+        }),
       });
 
-      if (error) {
-        setMessage("Failed to reset password. Please try again.");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(data.error || "Failed to reset password. Please try again.");
+        setLoading(false);
         return;
       }
 
       setMessage("Password reset successfully! Redirecting to login...");
       setTimeout(() => {
-        router.push("/parent/login");
+        router.push("/coaches/login");
       }, 2000);
     } catch (err: any) {
+      devError("Password reset error:", err);
       setMessage(err.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="max-w-lg w-full bg-gray-900 border border-gray-700 rounded-lg shadow-xl">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-700">
-          <h2 className="text-2xl font-bebas text-white uppercase">
+  if (step === "username") {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-8">
+          <h2 className="text-2xl font-bebas text-white uppercase mb-6 text-center">
             Reset Password
           </h2>
-        </div>
+          <p className="text-sm text-gray-300 mb-6 text-center">
+            Enter your username to reset your password
+          </p>
 
-        {/* Content */}
-        <form onSubmit={handleReset} className="p-6 space-y-4">
+          <form onSubmit={handleUsernameSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="username" className="block text-sm font-inter text-white mb-2">
+                Username
+              </label>
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                className="w-full p-3 bg-gray-800 text-white rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red"
+                placeholder="Enter your username"
+                disabled={loading}
+              />
+            </div>
+
+            {message && (
+              <div
+                className={`rounded-md border p-4 ${
+                  message.includes("successfully") || message.includes("sent")
+                    ? "bg-green-900/20 border-green-500"
+                    : "bg-red-900/20 border-red-500"
+                }`}
+              >
+                <div
+                  className={`text-sm font-inter ${
+                    message.includes("successfully") || message.includes("sent")
+                      ? "text-green-300"
+                      : "text-red-300"
+                  }`}
+                >
+                  {message}
+                </div>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red/90 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
+            >
+              {loading ? "Verifying..." : "Continue"}
+            </button>
+
+            <Link
+              href="/coaches/login"
+              className="block text-center text-sm text-gray-400 hover:text-white underline"
+            >
+              Back to login
+            </Link>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-gray-900 border border-gray-700 rounded-lg shadow-xl p-8">
+        <h2 className="text-2xl font-bebas text-white uppercase mb-6 text-center">
+          Set New Password
+        </h2>
+
+        <form onSubmit={handlePasswordReset} className="space-y-4">
           <div>
             <label className="block text-sm font-inter text-white mb-2">
               New Password
@@ -316,7 +452,7 @@ function ResetPasswordContent() {
               {loading ? "Resetting..." : "Reset Password"}
             </button>
             <Link
-              href="/parent/login"
+              href="/coaches/login"
               className="px-6 py-2 bg-gray-600 text-white font-bebas uppercase rounded-md hover:bg-gray-700 transition-colors text-center"
             >
               Cancel
@@ -332,7 +468,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center">
             <BasketballLoader size={80} />
           </div>
@@ -343,3 +479,4 @@ export default function ResetPasswordPage() {
     </Suspense>
   );
 }
+

@@ -1,7 +1,7 @@
 # WCSv2.0 UI Components
 
-**Version**: v2.9.6  
-**Last Updated**: January 2025  
+**Version**: v2.9.7  
+**Last Updated**: November 2025  
 **Security Score**: 8.5/10 (Good) 🔒  
 **Live URL**: https://wcs-basketball-v2.vercel.app
 
@@ -378,6 +378,39 @@
   - Forward ref support for form libraries
 - **Styling**: Navy background, gray borders, red focus states
 - **Props**: Standard HTML select props + `className`
+
+### 18. Player Card Component (Parent Profile)
+
+- **Location**: `src/components/parent/ChildDetailsCard.tsx`
+- **Features**:
+  - **Flip Card Effect**: Active players have interactive 3D flip cards
+    - Click to flip and view detailed player information
+    - Smooth CSS 3D transform animation (0.6s transition)
+    - Front shows basic player info (logo, name, status, team, coach, jersey)
+    - Back shows detailed registration information (DOB, grade, gender, shirt size, position, school)
+  - **Birthday Celebration**: Party popper emoji (🎉) appears in top-right corner on player's birthday
+    - Large, visible size (`text-7xl sm:text-8xl`)
+    - Positioned with `-translate-y-6 translate-x-8` for optimal corner placement
+    - Improved birthday detection with proper date parsing and timezone handling
+  - **Edit Player Information**: Modal for parents to edit player details
+    - Pre-filled form with current player data
+    - Fields: Name (required), Grade, Date of Birth, Gender, Jersey Number, Shirt Size, Position Preference, Experience Level, School Name
+    - Toast notifications for save success/failure
+    - Scroll lock when modal is open
+    - Page reload after successful save to reflect changes
+  - **Regular Cards**: Non-active players display standard card layout
+    - Team logo, player name, basic info, status badge
+    - Team, coach, jersey number, and birthdate information
+    - Payment status messages for non-approved/paid players
+- **Styling**: White background, rounded corners, shadow effects, responsive sizing
+- **Content**: Player information, team details, status indicators
+- **Technical Details**:
+  - Uses `perspective`, `transform-style`, `rotateY`, and `backfaceVisibility` for 3D flip effect
+  - `isTodayBirthday()` function with direct date string parsing (YYYY-MM-DD format)
+  - Birthday detection compares month and day (ignores year) using local timezone
+  - Modal uses `useScrollLock` hook to prevent body scrolling
+  - API endpoint: `/api/parent/update-player` for saving player updates
+  - Toast notifications using `react-hot-toast`
 
 ## 🎭 Animations & Interactions
 

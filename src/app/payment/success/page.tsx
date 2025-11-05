@@ -18,6 +18,7 @@ function PaymentSuccessInner() {
       rotation: number;
       duration: string;
       size: number;
+      type: "square" | "basketball";
     }>
   >([]);
   const [playerName, setPlayerName] = useState<string>("");
@@ -27,7 +28,8 @@ function PaymentSuccessInner() {
 
   useEffect(() => {
     // Generate confetti particles only on client side
-    const particles = Array.from({ length: 80 }, () => ({
+    // Increased from 80 to 150 particles for a more festive celebration
+    const particles = Array.from({ length: 150 }, () => ({
       left: `${Math.random() * 100}%`,
       delay: `${Math.random() * 1.5}s`,
       color: ["#ef4444", "#3b82f6", "#10b981", "#f59e0b", "#8b5cf6"][
@@ -36,6 +38,8 @@ function PaymentSuccessInner() {
       rotation: Math.random() * 360,
       duration: `${2.5 + Math.random() * 2.5}s`,
       size: 6 + Math.floor(Math.random() * 8),
+      // Make about 30% of particles basketballs (more basketballs now with increased total)
+      type: Math.random() < 0.3 ? "basketball" : "square",
     }));
 
     setConfettiParticles(particles);
@@ -124,18 +128,33 @@ function PaymentSuccessInner() {
           {confettiParticles.map((particle, i) => (
             <div
               key={i}
-              className="absolute animate-confetti rounded-sm"
+              className="absolute animate-confetti"
               style={{
                 left: particle.left,
                 animationDelay: particle.delay,
-                backgroundColor: particle.color,
                 transform: `rotate(${particle.rotation}deg)`,
                 animationDuration: particle.duration,
-                width: particle.size,
-                height: particle.size,
+                width: particle.type === "basketball" ? particle.size * 1.5 : particle.size,
+                height: particle.type === "basketball" ? particle.size * 1.5 : particle.size,
               }}
             >
-              <div className="w-full h-full" />
+              {particle.type === "basketball" ? (
+                <span
+                  className="text-2xl sm:text-3xl"
+                  style={{ fontSize: `${particle.size * 1.5}px` }}
+                >
+                  🏀
+                </span>
+              ) : (
+                <div
+                  className="rounded-sm"
+                  style={{
+                    backgroundColor: particle.color,
+                    width: "100%",
+                    height: "100%",
+                  }}
+                />
+              )}
             </div>
           ))}
         </div>
