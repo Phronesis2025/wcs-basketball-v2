@@ -60,7 +60,7 @@ const BeLegendaryAd = () => {
                 initial={{ x: -100, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ duration: 0.8, ease: "easeOut", delay: 2 }}
-                className="font-bebas-bold-italic text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl text-white mb-0 drop-shadow-2xl leading-tight"
+                className="font-bebas-bold-italic text-2xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl text-white mb-0 drop-shadow-2xl leading-tight"
               >
                 BE LEGENDARY
               </motion.h2>

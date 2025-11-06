@@ -123,7 +123,7 @@ const CoachNateAd2 = () => {
               transition={{ duration: 1, delay: 1.5 }}
               className="text-center z-10"
             >
-              <h2 className="font-bebas-bold-italic text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl text-white mb-0 leading-tight neon-text">
+              <h2 className="font-bebas-bold-italic text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl 2xl:text-9xl text-white mb-0 leading-tight neon-text">
                 COACH NATE CLASSIC
               </h2>
               <p className="font-bebas text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-white drop-shadow-lg -mt-1 sm:-mt-1 md:-mt-2 lg:-mt-2">
@@ -182,4 +182,3 @@ const CoachNateAd2 = () => {
 };
 
 export default CoachNateAd2;
-
