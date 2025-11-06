@@ -1,6 +1,6 @@
 # WCSv2.0 UI Components
 
-**Version**: v2.9.8  
+**Version**: v2.10.1  
 **Last Updated**: January 2025  
 **Security Score**: 9/10 (Excellent) 🔒  
 **Live URL**: https://wcs-basketball-v2.vercel.app
@@ -79,6 +79,41 @@
 - **Image Optimization**: Fixed Next.js Image aspect ratio warnings
 - **Recurring Practices**: Advanced recurring practice management with group ID tracking
 - **Real-time Updates**: Live synchronization of schedule changes across all users
+
+### Tournament Signup Page (v2.10.1)
+
+- **Location**: `src/app/tournament-signup/page.tsx`
+- **Tournament Information Section**:
+  - Tournament title: "Coach Nate Classic 2026" with prominent red heading (Bebas Neue font)
+  - Engaging description honoring Coach Nate as a founding member
+  - Three information cards in responsive grid layout:
+    - **Registration Deadline**: January 30, 2026 with "Don't miss out!" reminder
+    - **Entry Fee**: $180 per team with "Competitive pricing" note
+    - **Divisions**: 9 divisions with "All skill levels welcome" message
+  - Cards stack vertically on mobile (1 column), display horizontally on tablet/desktop (3 columns)
+  - Call-to-action message encouraging registration
+- **Tourneymachine Integration**:
+  - Embedded iframe with Tourneymachine registration form
+  - Tournament ID: `h2025110322180881499b2c2309fc540`
+  - Full-width responsive iframe (100% width)
+  - Proper scrolling and fullscreen support enabled
+- **Ad Hiding Workaround**:
+  - CSS-based solution to hide Tourneymachine advertisement at top of embedded form
+  - Responsive negative margins:
+    - Mobile: `-85px` margin-top
+    - Tablet/Desktop: `-250px` margin-top
+  - Uses Tailwind responsive classes (`-mt-[85px] md:-mt-[250px]`)
+  - Wrapper container with `overflow-hidden` to clip hidden content
+  - Increased iframe height (3200px) to compensate for negative margin
+- **Styling**:
+  - Navy background (`bg-navy`) matching site theme
+  - Gray information cards with red accents (`bg-gray-900/50`, `border-red-500/50`)
+  - Consistent typography: Bebas Neue for headings, Inter for body text
+  - Responsive padding and spacing (`p-4 sm:p-8`)
+- **Security**:
+  - Content Security Policy (CSP) updated to allow Tourneymachine iframes
+  - Only allows specific Tourneymachine domain, not arbitrary external sites
+  - All other security restrictions maintained
 
 ### 1. Coaches Dashboard – Complete Redesign (v2.6.1)
 

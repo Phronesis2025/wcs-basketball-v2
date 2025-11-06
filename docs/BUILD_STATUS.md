@@ -1,22 +1,24 @@
-# Build Status - WCS Basketball v2.8.0
+# Build Status - WCS Basketball v2.10.1
 
 **Last Updated**: January 2025  
-**Version**: v2.8.0  
+**Version**: v2.10.1  
 **Status**: Production Ready ✅  
-**Build Time**: ~14-27s (optimized)
+**Build Time**: 119s (optimized)
 
 ---
 
 ## ✅ Build Results
 
-### Latest Build
+### Latest Build (v2.10.1 - January 2025)
 
 - **Status**: Clean Build ✅
-- **Build Time**: 14.4s (optimized)
+- **Build Time**: 119s (optimized)
 - **Errors**: 0
-- **Warnings**: 2 non-critical (Prisma instrumentation dependency)
-- **Static Pages**: 58 pages generated successfully
+- **Warnings**: 0
+- **Static Pages**: 102 pages generated successfully (static and dynamic)
 - **Bundle Size**: Optimized with code splitting
+- **First Load JS**: 181 kB shared by all pages
+- **Tournament Signup Page**: Successfully built (1.52 kB, static)
 
 ### Build Configuration
 
@@ -28,20 +30,31 @@
 
 ### Key Routes
 
-- `/` - 13.2 kB, 205 kB First Load
-- `/admin/club-management` - 39.9 kB, 199 kB First Load
-- `/teams/[id]` - 4.71 kB, 200 kB First Load
-- `/schedules` - 7.08 kB, 161 kB First Load
+- `/` - 13.9 kB, 289 kB First Load
+- `/admin/club-management` - 53.5 kB, 292 kB First Load
+- `/teams/[id]` - 7.7 kB, 274 kB First Load
+- `/schedules` - 7.34 kB, 238 kB First Load
+- `/tournament-signup` - 1.52 kB, 185 kB First Load (NEW)
 
 ### API Routes
 
-- 50+ API endpoints configured
+- 80+ API endpoints configured
 - All routes properly optimized
 - File upload routes functional
+- All routes successfully built
 
 ---
 
 ## 🎯 Recent Build Fixes
+
+### v2.10.1 (January 2025)
+
+- ✅ Tournament signup page successfully built
+- ✅ Tourneymachine iframe integration verified
+- ✅ CSP policy updates compiled correctly
+- ✅ All security headers properly configured
+- ✅ Clean build with zero errors and zero warnings
+- ✅ 102 pages generated (increased from 58)
 
 ### v2.8.0 (January 2025)
 
@@ -63,10 +76,10 @@
 
 ### Shared Chunks
 
-- **Total Shared JS**: 102 kB
-- **Chunk 1255**: 45.7 kB
-- **Chunk 4bd1b696**: 54.2 kB
-- **Other shared chunks**: 2 kB
+- **Total Shared JS**: 181 kB
+- **Chunk 4bd1b696**: 54.4 kB
+- **Chunk 6766**: 124 kB
+- **Other shared chunks**: 3.03 kB
 
 ### Optimization
 

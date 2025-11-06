@@ -17,7 +17,7 @@ const cspDev = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com",
-  "frame-src 'none'",
+  "frame-src 'self' https://tourneymachine.com https://*.tourneymachine.com", // Allow Tourneymachine iframes for tournament registration
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -33,7 +33,7 @@ const cspProd = [
   "font-src 'self' data:",
   "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics connections
-  "frame-src 'none'",
+  "frame-src 'self' https://tourneymachine.com https://*.tourneymachine.com", // Allow Tourneymachine iframes for tournament registration
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",

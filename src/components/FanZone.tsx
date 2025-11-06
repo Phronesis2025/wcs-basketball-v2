@@ -211,7 +211,82 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
           Fan Zone
         </h2>
         <div className="bg-white border border-slate-400 rounded-lg p-6 sm:p-8" style={{ borderWidth: '1px' }}>
-          <div ref={parentContainerRef} className="relative overflow-hidden group min-h-[250px] sm:min-h-[280px]">
+          {/* Mobile: Grid layout with all cards in 2 columns */}
+          <div className="grid grid-cols-2 gap-4 sm:hidden">
+            {cards.map((card, index) => {
+              const isLastCard = index === cards.length - 1;
+              const isOddTotal = cards.length % 2 === 1;
+              
+              return (
+                <div
+                  key={card.title}
+                  className={isLastCard && isOddTotal ? "col-span-2 flex justify-center" : ""}
+                >
+                  <div className={isLastCard && isOddTotal ? "w-full max-w-[calc(50%-0.5rem)]" : "w-full"}>
+                    <Link
+                      href={card.href}
+                      className="block h-full"
+                      data-testid={
+                        card.title === "Our Teams" ? "fan-zone-teams-link" : undefined
+                      }
+                    >
+                      <div 
+                        className={`relative bg-white rounded-lg shadow-lg overflow-hidden fan-zone-card ${
+                          inView ? "fan-zone-card-visible" : ""
+                        } h-full flex flex-col`}
+                        onMouseEnter={(e) => {
+                          const card = e.currentTarget;
+                          const img = card.querySelector('img');
+                          const overlay = card.querySelector('.absolute.inset-0');
+                          const title = card.querySelector('.card-title');
+                          if (img) img.style.transform = 'scale(1.05)';
+                          if (overlay) overlay.classList.add('bg-black/20');
+                          if (title) title.classList.add('text-red');
+                        }}
+                        onMouseLeave={(e) => {
+                          const card = e.currentTarget;
+                          const img = card.querySelector('img');
+                          const overlay = card.querySelector('.absolute.inset-0');
+                          const title = card.querySelector('.card-title');
+                          if (img) img.style.transform = 'scale(1)';
+                          if (overlay) overlay.classList.remove('bg-black/20');
+                          if (title) title.classList.remove('text-red');
+                        }}
+                      >
+                        {/* Image Section */}
+                        <div className="relative w-full aspect-[5/3] overflow-hidden">
+                          <Image
+                            src={card.image}
+                            alt={card.title}
+                            fill
+                            className="object-cover transition-transform duration-500"
+                            sizes="(max-width: 640px) 50vw, 25vw"
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.src = "/images/placeholder-team-default.jpg";
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/0 transition-all duration-300" />
+                        </div>
+                        {/* Content Section */}
+                        <div className="p-3 sm:p-4 flex-1 flex flex-col">
+                          <h4 className="text-base sm:text-lg font-bebas text-navy mb-1 sm:mb-2 transition-colors duration-300 card-title">
+                            {card.title}
+                          </h4>
+                          <p className="text-gray-600 font-inter text-xs sm:text-sm flex-1 line-clamp-2">
+                            {card.description}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Desktop/Tablet: Carousel layout */}
+          <div ref={parentContainerRef} className="hidden sm:block relative overflow-hidden group min-h-[250px] sm:min-h-[280px]">
           {/* Left Arrow - Always visible when available, hover effect on desktop/tablet */}
           {cards.length > cardsToShow && currentIndex > 0 && (
             <button

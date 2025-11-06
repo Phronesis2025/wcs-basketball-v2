@@ -4,10 +4,10 @@
 
 **WCSv2.0** is a comprehensive youth basketball league website built for World Class Sports Basketball in Kansas. The project empowers kids (ages 8-18), builds character, and generates revenue through merchandise sales. Built with modern web technologies, it features a responsive design, comprehensive security measures, and interactive components for coaches, parents, and players.
 
-**Current Version**: v2.9.2  
-**Last Updated**: November 4, 2025  
+**Current Version**: v2.10.1  
+**Last Updated**: January 2025  
 **Status**: Production Ready ✅  
-**Security Score**: 8.5/10 (Good) 🔒  
+**Security Score**: 9/10 (Excellent) 🔒  
 **Build Status**: Clean Build ✅  
 **Testing Status**: Comprehensive Testing Complete ✅  
 **Security Audit**: Complete ✅  
@@ -56,7 +56,16 @@
 - Code: `src/lib/security.ts`, `next.config.ts`
 - Docs: [SECURITY.md](SECURITY.md)
 
-### **Latest Updates (v2.9.2 - November 2025)**
+### **Latest Updates (v2.10.1 - January 2025)**
+
+- **Tournament Signup Integration**: Embedded Tourneymachine registration form on tournament-signup page with full iframe integration
+- **Tournament Information Section**: Added comprehensive tournament details including Coach Nate Classic 2026 information, registration deadline, entry fee, and divisions
+- **CSP Policy Updates**: Updated Content Security Policy to securely allow Tourneymachine iframes while maintaining all other security restrictions
+- **Responsive Ad Hiding**: Implemented CSS-based solution to hide advertisements with responsive negative margins (-85px mobile, -250px desktop/tablet)
+- **Security Maintained**: CSP changes are secure, only allowing specific Tourneymachine domain, not arbitrary external sites
+- **Comprehensive Security Audit**: Complete security review completed with 9/10 (Excellent) score, 100% OWASP Top 10 compliance, no critical vulnerabilities found
+
+### **Previous Updates (v2.9.2 - November 2025)**
 
 - **FanZone Carousel Redesign**: Converted from static grid to interactive horizontal carousel with framer-motion animations, navigation arrows, and swipe functionality
 - **New Navigation Cards**: Added Coach Login, Parent Login, and Tournament Information cards to FanZone
