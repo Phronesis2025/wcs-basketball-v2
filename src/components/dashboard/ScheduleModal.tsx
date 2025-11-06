@@ -80,6 +80,7 @@ export default function ScheduleModal({
   const [drillImagePreview, setDrillImagePreview] = useState<string | null>(
     null
   );
+  const [drillYoutubeUrl, setDrillYoutubeUrl] = useState("");
   const [updateImageError, setUpdateImageError] = useState<string | null>(null);
   const [drillImageError, setDrillImageError] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState("");
@@ -145,6 +146,7 @@ export default function ScheduleModal({
     setDrillCategory("Drill");
     setDrillImage(null);
     setDrillImagePreview(null);
+    setDrillYoutubeUrl("");
     setUpdateImageError(null);
     setDrillImageError(null);
     setDateValidationError(null);
@@ -336,6 +338,7 @@ export default function ScheduleModal({
             | "Skill Development"
             | "Team Building"
         );
+        setDrillYoutubeUrl(editingData.youtube_url || "");
       }
     } else {
       // Reset form when opening for new item
@@ -490,6 +493,14 @@ export default function ScheduleModal({
         validationErrors.push(...additionalInfoValidation.errors);
       if (!benefitsValidation.isValid)
         validationErrors.push(...benefitsValidation.errors);
+
+      // Validate YouTube URL if provided
+      if (drillYoutubeUrl.trim()) {
+        const youtubeUrlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
+        if (!youtubeUrlPattern.test(drillYoutubeUrl.trim())) {
+          validationErrors.push("Please enter a valid YouTube URL");
+        }
+      }
     }
 
     // If there are validation errors, show them and prevent submission
@@ -580,6 +591,7 @@ export default function ScheduleModal({
           difficulty: drillDifficulty,
           category: drillCategory,
           image: drillImage,
+          youtube_url: drillYoutubeUrl.trim() || undefined,
         };
         break;
     }
@@ -1119,6 +1131,23 @@ export default function ScheduleModal({
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 />
+              </div>
+
+              {/* YouTube URL */}
+              <div>
+                <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
+                  YouTube URL (optional)
+                </label>
+                <input
+                  type="url"
+                  value={drillYoutubeUrl}
+                  onChange={(e) => setDrillYoutubeUrl(e.target.value)}
+                  placeholder="e.g., https://www.youtube.com/watch?v=VIDEO_ID"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  If provided, the YouTube thumbnail will be used instead of the uploaded image
+                </p>
               </div>
 
               {/* Skills and Equipment Row */}

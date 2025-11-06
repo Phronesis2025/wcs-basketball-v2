@@ -1,6 +1,11 @@
 // src/components/dashboard/DrillCard.tsx
 import React from "react";
 import { PracticeDrill } from "../../types/supabase";
+import Image from "next/image";
+import {
+  extractYouTubeVideoId,
+  getYouTubeThumbnailUrl,
+} from "../../lib/youtubeUtils";
 
 interface DrillCardProps {
   drill: PracticeDrill;

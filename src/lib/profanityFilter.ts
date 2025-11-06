@@ -53,7 +53,6 @@ const PROFANITY_WORDS = new Set([
   "murder",
   "suicide",
   "bomb",
-  "explosive",
   "weapon",
   "stab",
   "stabbed",

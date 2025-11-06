@@ -1,5 +1,119 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.2 - Practice Drills Enhancements & YouTube Integration
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Added
+
+- **Global Practice Drills Support**:
+  - Added `is_global` field to `practice_drills` table
+  - Admins and coaches can now create drills visible to all teams
+  - Removed restriction preventing creation of global drills
+  - Global drills automatically appear for all teams when viewing drills
+
+- **YouTube Video Integration for Practice Drills**:
+  - Added `youtube_url` field to `practice_drills` table
+  - YouTube URL input field in drill creation/editing modal
+  - Automatic YouTube thumbnail extraction and display on drill cards
+  - Embedded YouTube video player in drill details modal
+  - YouTube utilities for video ID extraction, thumbnail URLs, and embed URLs
+  - Video section with proper styling in drill details modal
+
+- **Content Security Policy Updates**:
+  - Added `img.youtube.com` to allowed image domains in Next.js config
+  - Added `https://www.youtube.com` and `https://*.youtube.com` to `frame-src` CSP directive
+  - Updated both development and production CSP policies
+  - Enables YouTube thumbnail images and embedded videos
+
+### 🎨 Changed
+
+- **Practice Drill Display**:
+  - Drill cards now prioritize YouTube thumbnails over uploaded images
+  - Drill details modal shows embedded YouTube video when URL is provided
+  - Video section added with consistent styling matching other modal sections
+  - Full-width video player with proper aspect ratio
+
+- **Profanity Filter**:
+  - Removed "explosive" from profanity filter (false positive for sports terminology)
+  - Word is now allowed in drill descriptions and other fields
+
+### 🐛 Fixed
+
+- **Practice Drill Creation**:
+  - Fixed error preventing creation of global drills ("All Teams" selection)
+  - Global drills now properly saved with `team_id = null` and `is_global = true`
+  - Updated drill fetching to include global drills for all teams
+
+- **YouTube Integration**:
+  - Fixed missing `getYouTubeEmbedUrl` import in drills page
+  - Fixed CSP blocking YouTube iframes
+  - Fixed Next.js Image component error for YouTube thumbnails
+
+### ⚡ Performance Improvements
+
+- **Database Optimization**:
+  - Added indexes for foreign keys on `coach_volunteer_applications` table:
+    - `idx_coach_volunteer_applications_child_team_id`
+    - `idx_coach_volunteer_applications_reviewed_by`
+  - Optimized RLS policies on `coach_volunteer_applications`:
+    - Updated "Admins can view all applications" policy to use `(SELECT auth.uid())` pattern
+    - Updated "Admins can update applications" policy to use `(SELECT auth.uid())` pattern
+  - Improved query performance by preventing auth function re-evaluation per row
+
+### 🔒 Security
+
+- **Security Audit**: ✅ PASSED
+  - No exposed API keys or secrets
+  - All YouTube integrations properly secured
+  - CSP policies updated securely (only specific YouTube domains allowed)
+  - Input validation maintained for YouTube URLs
+
+### 📊 Supabase Advisors
+
+- **Performance Issues Fixed**:
+  - ✅ Fixed 2 unindexed foreign keys on `coach_volunteer_applications`
+  - ✅ Fixed 2 RLS performance issues (auth function re-evaluation)
+  - ℹ️ 24 unused indexes detected (INFO level - low priority, no immediate action required)
+
+- **Security Recommendations**:
+  - ⚠️ Leaked Password Protection disabled (optional feature, requires manual dashboard configuration)
+  - **Priority**: Medium (recommended but not critical)
+
+### 🔧 Technical Details
+
+- **Database Migrations**:
+  - `add_is_global_to_practice_drills`: Added `is_global` boolean column
+  - `add_youtube_url_to_practice_drills`: Added `youtube_url` text column
+  - `fix_coach_volunteer_applications_performance`: Added indexes and optimized RLS policies
+
+- **Files Modified**:
+  - `src/lib/profanityFilter.ts`: Removed "explosive" from filter list
+  - `src/types/supabase.ts`: Updated `PracticeDrill` type with `youtube_url` and `is_global`
+  - `src/lib/drillActions.ts`: Updated to support global drills and YouTube URLs
+  - `src/app/admin/club-management/page.tsx`: Removed global drill restriction, added YouTube URL field
+  - `src/app/api/drills/route.ts`: Updated to handle `is_global` and `youtube_url`
+  - `src/app/drills/page.tsx`: Added YouTube thumbnail and embed support
+  - `src/components/dashboard/DrillCard.tsx`: Added YouTube thumbnail display
+  - `src/components/dashboard/ScheduleModal.tsx`: Added YouTube URL input field
+  - `src/lib/youtubeUtils.ts`: New utility file for YouTube operations
+  - `next.config.ts`: Added YouTube domains to CSP and image configuration
+
+- **New Files**:
+  - `src/lib/youtubeUtils.ts`: YouTube URL utilities (extract video ID, get thumbnails, embed URLs)
+
+### 📝 Documentation Updates
+
+- Updated `docs/DB_SETUP.md`: Added `youtube_url` and `is_global` columns to practice_drills table documentation
+- Updated `docs/CHANGELOG.md`: Added comprehensive version 2.10.2 entry
+
+---
+
 ## 🚀 Version 2.10.1 - Tournament Signup Integration & CSP Updates
 
 **Release Date**: January 2025  

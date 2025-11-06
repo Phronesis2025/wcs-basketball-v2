@@ -15,9 +15,9 @@ const cspDev = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allows dev tools and Vercel Analytics
   "style-src 'self' 'unsafe-inline'", // Allows Tailwind CSS
   "font-src 'self' data:",
-  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co",
+  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co https://img.youtube.com",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com",
-  "frame-src 'self' https://tourneymachine.com https://*.tourneymachine.com", // Allow Tourneymachine iframes for tournament registration
+  "frame-src 'self' https://tourneymachine.com https://*.tourneymachine.com https://www.youtube.com https://*.youtube.com", // Allow Tourneymachine iframes and YouTube embeds
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -31,9 +31,9 @@ const cspProd = [
   "script-src 'self' 'unsafe-inline' https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics with inline scripts
   "style-src 'self' 'unsafe-inline'", // Allows Tailwind CSS
   "font-src 'self' data:",
-  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co",
+  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co https://img.youtube.com",
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics connections
-  "frame-src 'self' https://tourneymachine.com https://*.tourneymachine.com", // Allow Tourneymachine iframes for tournament registration
+  "frame-src 'self' https://tourneymachine.com https://*.tourneymachine.com https://www.youtube.com https://*.youtube.com", // Allow Tourneymachine iframes and YouTube embeds
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -113,6 +113,11 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "example.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "img.youtube.com",
         pathname: "/**",
       },
     ],

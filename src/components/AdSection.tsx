@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import CoachNateAd2 from "./CoachNateAd2";
+import CoachVolunteerAd from "./CoachVolunteerAd";
 
 // Special BE LEGENDARY ad component matching the exact design
 const BeLegendaryAd = () => {
@@ -121,13 +122,14 @@ export default function AdSection() {
   const ads = [
     { id: "be-legendary", component: <BeLegendaryAd key="be-legendary" /> },
     { id: "coach-nate-2", component: <CoachNateAd2 key="coach-nate-2" /> },
+    { id: "coach-volunteer", component: <CoachVolunteerAd key="coach-volunteer" /> },
   ];
 
-  // Auto-rotate carousel every 10 seconds
+  // Auto-rotate carousel every 7 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-    }, 10000); // 10 seconds
+    }, 7000); // 7 seconds
 
     return () => clearInterval(interval);
   }, [ads.length]);

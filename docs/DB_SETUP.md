@@ -251,6 +251,8 @@ CREATE TABLE public.practice_drills (
   category text NOT NULL,
   week_number integer NOT NULL,
   image_url text,
+  youtube_url text,
+  is_global boolean NOT NULL DEFAULT false,
   created_by uuid,
   created_at timestamp with time zone DEFAULT now(),
   CONSTRAINT practice_drills_pkey PRIMARY KEY (id),
@@ -274,6 +276,8 @@ CREATE TABLE public.practice_drills (
 - `category` (text, NOT NULL) - Category
 - `week_number` (integer, NOT NULL) - Week number
 - `image_url` (text) - Drill image URL
+- `youtube_url` (text) - Optional YouTube video URL for drill demonstration
+- `is_global` (boolean, NOT NULL, DEFAULT false) - Global drill flag (visible to all teams)
 - `created_by` (uuid, FK to users) - Creator user ID
 - `created_at` (timestamptz) - Creation timestamp
 

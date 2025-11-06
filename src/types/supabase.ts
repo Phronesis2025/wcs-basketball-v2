@@ -61,7 +61,7 @@ export type ChangelogEntry = {
 
 export type PracticeDrill = {
   id: string;
-  team_id: string;
+  team_id: string | null;
   title: string;
   skills: string[];
   equipment: string[];
@@ -73,6 +73,8 @@ export type PracticeDrill = {
   category: string;
   week_number: number;
   image_url: string | null;
+  youtube_url: string | null;
+  is_global: boolean;
   created_by: string;
   created_at: string;
 };

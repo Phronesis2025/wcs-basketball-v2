@@ -3,7 +3,7 @@ import { supabase } from "./supabaseClient";
 import { devLog, devError } from "./security";
 
 export type PracticeDrillInput = {
-  team_id: string;
+  team_id: string | null;
   title: string;
   skills: string[];
   equipment: string[];
@@ -15,9 +15,11 @@ export type PracticeDrillInput = {
   category: string;
   week_number?: number; // Optional since we provide default
   image_url?: string;
+  youtube_url?: string;
+  is_global?: boolean;
 };
 
-// Get all practice drills for a team
+// Get all practice drills for a team (includes global drills)
 export async function getPracticeDrills(teamId: string) {
   try {
     devLog("Fetching practice drills for team:", teamId);
@@ -25,7 +27,7 @@ export async function getPracticeDrills(teamId: string) {
     const { data, error } = await supabase
       .from("practice_drills")
       .select("*")
-      .eq("team_id", teamId)
+      .or(`team_id.eq.${teamId},is_global.eq.true`)
       .order("created_at", { ascending: false });
 
     if (error) {

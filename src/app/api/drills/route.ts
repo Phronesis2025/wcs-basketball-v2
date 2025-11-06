@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = {
-      team_id: drillData.team_id,
+      team_id: drillData.team_id || null,
       title: sanitizeInput(String(drillData.title || "").trim()),
       skills: Array.isArray(drillData.skills) ? drillData.skills : [],
       equipment: Array.isArray(drillData.equipment) ? drillData.equipment : [],
@@ -30,6 +30,10 @@ export async function POST(request: NextRequest) {
       category: sanitizeInput(String(drillData.category || "").trim()),
       week_number: 1,
       image_url: drillData.image_url || null,
+      youtube_url: drillData.youtube_url
+        ? sanitizeInput(String(drillData.youtube_url).trim())
+        : null,
+      is_global: drillData.is_global || false,
       created_by: userId,
     };
 
@@ -110,6 +114,14 @@ export async function PUT(request: NextRequest) {
       updateData.category = sanitizeInput(String(drillData.category).trim());
     if (drillData.image_url !== undefined)
       updateData.image_url = drillData.image_url;
+    if (drillData.youtube_url !== undefined)
+      updateData.youtube_url = drillData.youtube_url
+        ? sanitizeInput(String(drillData.youtube_url).trim())
+        : null;
+    if (drillData.team_id !== undefined)
+      updateData.team_id = drillData.team_id || null;
+    if (drillData.is_global !== undefined)
+      updateData.is_global = drillData.is_global || false;
 
     const { data, error } = await supabaseAdmin
       .from("practice_drills")

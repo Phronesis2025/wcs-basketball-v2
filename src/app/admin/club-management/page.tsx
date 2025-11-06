@@ -68,11 +68,23 @@ import BasketballLoader from "@/components/BasketballLoader";
 function ClubManagementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const activeTab = searchParams.get("tab") || "profile";
+  
+  // Always default to profile tab when no tab is specified
+  const tabFromUrl = searchParams.get("tab");
+  const activeTab = tabFromUrl || "profile";
+  
+  // Ensure profile tab is set on initial load if no tab is specified
+  useEffect(() => {
+    if (!tabFromUrl) {
+      router.replace("/admin/club-management?tab=profile");
+    }
+  }, [tabFromUrl, router]);
 
   // State management
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [userFirstName, setUserFirstName] = useState<string | null>(null);
+  const [userLastName, setUserLastName] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -262,6 +274,8 @@ function ClubManagementContent() {
         setIsLoadingUserData(false);
         setIsAuthorized(false);
         setUserName(null);
+        setUserFirstName(null);
+        setUserLastName(null);
         setUserEmail(null);
         setUserId(null);
         setIsAdmin(false);
@@ -313,6 +327,8 @@ function ClubManagementContent() {
         // Just clear state
         setIsAuthorized(false);
         setUserName(null);
+        setUserFirstName(null);
+        setUserLastName(null);
         setUserEmail(null);
         setUserId(null);
         setIsAdmin(false);
@@ -390,10 +406,16 @@ function ClubManagementContent() {
         if (coachError) {
           devError("Error fetching coach name:", coachError);
           setUserName("Coach");
+          setUserFirstName(null);
+          setUserLastName(null);
         } else if (coachRows && Array.isArray(coachRows) && coachRows[0]) {
           setUserName(`${coachRows[0].first_name} ${coachRows[0].last_name}`);
+          setUserFirstName(coachRows[0].first_name);
+          setUserLastName(coachRows[0].last_name);
         } else {
           setUserName("Coach");
+          setUserFirstName(null);
+          setUserLastName(null);
         }
       } catch (error) {
         devError("Error fetching coach data:", error);
@@ -1248,13 +1270,9 @@ function ClubManagementContent() {
         return;
       }
 
-      // Note: practice_drills table may not support is_global, so drills can only be team-specific
-      if (selectedTeamId === "__GLOBAL__") {
-        toast.error(
-          "Practice drills can only be created for specific teams, not all teams"
-        );
-        return;
-      }
+      // Handle global drills (for all teams)
+      const isGlobal = selectedTeamId === "__GLOBAL__";
+      const teamIdForDrill = isGlobal ? null : selectedTeamId;
 
       let imageUrl = data.image_url;
 
@@ -1271,7 +1289,7 @@ function ClubManagementContent() {
 
       await createPracticeDrill(
         {
-          team_id: selectedTeamId, // Guaranteed to be a string (not __GLOBAL__) due to check above
+          team_id: teamIdForDrill,
           title: data.title,
           skills: data.skills || [],
           equipment: data.equipment || [],
@@ -1282,6 +1300,8 @@ function ClubManagementContent() {
           difficulty: data.difficulty || "",
           category: data.category || "",
           image_url: imageUrl,
+          youtube_url: data.youtube_url,
+          is_global: isGlobal,
         },
         userId || ""
       );
@@ -1691,6 +1711,11 @@ function ClubManagementContent() {
           <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-2 text-center uppercase">
             Club Management
           </h1>
+          {userFirstName && userLastName && (
+            <p className="text-white text-xl font-bebas font-bold mb-2 text-center">
+              {userFirstName} {userLastName}
+            </p>
+          )}
           <p className="text-blue-400 text-xl font-bebas mb-8 text-center italic">
             "Success is built on the foundation of unity, discipline, and
             relentless effort"

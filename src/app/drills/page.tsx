@@ -8,6 +8,11 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, Variants } from "framer-motion";
 import { sanitizeInput } from "@/lib/security";
+import {
+  extractYouTubeVideoId,
+  getYouTubeThumbnailUrl,
+  getYouTubeEmbedUrl,
+} from "@/lib/youtubeUtils";
 
 const modalVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -265,23 +270,48 @@ export default function DrillsPage() {
 
                   <div className="flex-1 flex flex-col justify-between mt-4">
                     <div className="flex-shrink-0 mb-4">
-                      {drill.image_url ? (
-                        <Image
-                          src={drill.image_url}
-                          alt={drill.title}
-                          width={400}
-                          height={192}
-                          className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
-                          style={{ aspectRatio: "400/192" }}
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
-                          <span className="text-gray-500 text-sm">
-                            No Image
-                          </span>
-                        </div>
-                      )}
+                      {(() => {
+                        // Check for YouTube URL first
+                        if (drill.youtube_url) {
+                          const videoId = extractYouTubeVideoId(drill.youtube_url);
+                          if (videoId) {
+                            const thumbnailUrl = getYouTubeThumbnailUrl(videoId);
+                            return (
+                              <Image
+                                src={thumbnailUrl}
+                                alt={drill.title}
+                                width={400}
+                                height={192}
+                                className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
+                                style={{ aspectRatio: "400/192" }}
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              />
+                            );
+                          }
+                        }
+                        // Fallback to image_url if no YouTube URL
+                        if (drill.image_url) {
+                          return (
+                            <Image
+                              src={drill.image_url}
+                              alt={drill.title}
+                              width={400}
+                              height={192}
+                              className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
+                              style={{ aspectRatio: "400/192" }}
+                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                            />
+                          );
+                        }
+                        // No image or YouTube URL
+                        return (
+                          <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
+                            <span className="text-gray-500 text-sm">
+                              No Image
+                            </span>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex-shrink-0 py-2">
@@ -449,8 +479,41 @@ export default function DrillsPage() {
               </div>
             </div>
 
-            {/* Drill Diagram/Image */}
-            {selectedDrill.image_url && (
+            {/* Drill Video/Image */}
+            {selectedDrill.youtube_url ? (
+              <div className="p-6 bg-white">
+                <div className="flex items-center mb-4">
+                  <div className="w-1 h-6 bg-red-600 mr-3 flex-shrink-0"></div>
+                  <h3 className="text-2xl font-bebas font-bold text-gray-900 text-left">
+                    Video
+                  </h3>
+                </div>
+                <div className="bg-gray-100 rounded-lg p-4">
+                  {(() => {
+                    const videoId = extractYouTubeVideoId(selectedDrill.youtube_url);
+                    if (videoId) {
+                      const embedUrl = getYouTubeEmbedUrl(videoId);
+                      return (
+                        <div className="w-full aspect-video rounded-lg overflow-hidden shadow-lg">
+                          <iframe
+                            src={embedUrl}
+                            title={selectedDrill.title}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="w-full h-full border-0"
+                          />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="text-center py-8 text-gray-500">
+                        Invalid YouTube URL
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            ) : selectedDrill.image_url ? (
               <div className="p-6">
                 <div className="bg-gray-100 rounded-lg p-4">
                   <Image
@@ -463,7 +526,7 @@ export default function DrillsPage() {
                   />
                 </div>
               </div>
-            )}
+            ) : null}
 
             {/* Instructions */}
             <div className="p-6">

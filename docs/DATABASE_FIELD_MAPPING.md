@@ -189,14 +189,19 @@ For complete CREATE TABLE statements and schema definitions, see [DB_SETUP.md](.
 | Form Field      | Database Column   | Data Type | Required | Notes                      |
 | --------------- | ----------------- | --------- | -------- | -------------------------- |
 | Title           | `title`           | `text`    | ✅ Yes   | Drill name                 |
-| Skills          | `skills`          | `text`    | ❌ No    | Skills developed           |
-| Equipment       | `equipment`       | `text`    | ❌ No    | Required equipment         |
-| Time            | `time`            | `text`    | ❌ No    | Duration                   |
-| Instructions    | `instructions`    | `text`    | ❌ No    | Step-by-step instructions  |
+| Skills          | `skills`          | `text[]`  | ✅ Yes   | Skills developed (array)   |
+| Equipment       | `equipment`       | `text[]`  | ✅ Yes   | Required equipment (array) |
+| Time            | `time`            | `text`    | ✅ Yes   | Duration                   |
+| Instructions    | `instructions`    | `text`    | ✅ Yes   | Step-by-step instructions  |
 | Additional Info | `additional_info` | `text`    | ❌ No    | Extra notes                |
-| Benefits        | `benefits`        | `text`    | ❌ No    | Drill benefits             |
-| Team            | `team_id`         | `uuid`    | ✅ Yes   | Foreign key to teams table |
-| Created By      | `created_by`      | `uuid`    | ✅ Yes   | Foreign key to users table |
+| Benefits        | `benefits`        | `text`    | ✅ Yes   | Drill benefits             |
+| Difficulty      | `difficulty`      | `text`    | ✅ Yes   | Difficulty level           |
+| Category        | `category`        | `text`    | ✅ Yes   | Drill category             |
+| YouTube URL     | `youtube_url`     | `text`   | ❌ No    | Optional YouTube video URL |
+| Image URL       | `image_url`       | `text`    | ❌ No    | Drill image URL            |
+| Team            | `team_id`         | `uuid`    | ❌ No    | Foreign key to teams (null for global) |
+| Is Global       | `is_global`       | `boolean` | ✅ Yes   | Global drill flag (default: false) |
+| Created By      | `created_by`      | `uuid`    | ❌ No    | Foreign key to users table |
 
 ---
 

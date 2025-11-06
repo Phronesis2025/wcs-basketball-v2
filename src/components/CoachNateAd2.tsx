@@ -70,8 +70,60 @@ const CoachNateAd2 = () => {
               0 0 1.5rem #f40;
           }
         }
+        @keyframes neon-flicker-mobile {
+          0%, 85%, 100% {
+            text-shadow: none;
+          }
+          86%, 88% {
+            text-shadow:
+              -0.02rem -0.02rem 0.1rem #fff,
+              0.02rem 0.02rem 0.1rem #fff,
+              0 0 0.2rem #08f,
+              0 0 0.4rem #08f;
+          }
+          87%, 89% {
+            text-shadow:
+              -0.02rem -0.02rem 0.1rem #fff,
+              0.02rem 0.02rem 0.1rem #fff,
+              0 0 0.2rem #f40,
+              0 0 0.4rem #f40;
+          }
+          15%, 17% {
+            text-shadow:
+              -0.02rem -0.02rem 0.1rem #fff,
+              0.02rem 0.02rem 0.1rem #fff,
+              0 0 0.2rem #f40,
+              0 0 0.4rem #f40;
+          }
+          16%, 18% {
+            text-shadow:
+              -0.02rem -0.02rem 0.1rem #fff,
+              0.02rem 0.02rem 0.1rem #fff,
+              0 0 0.2rem #08f,
+              0 0 0.4rem #08f;
+          }
+          45%, 47% {
+            text-shadow:
+              -0.02rem -0.02rem 0.1rem #fff,
+              0.02rem 0.02rem 0.1rem #fff,
+              0 0 0.2rem #08f,
+              0 0 0.4rem #08f;
+          }
+          46%, 48% {
+            text-shadow:
+              -0.02rem -0.02rem 0.1rem #fff,
+              0.02rem 0.02rem 0.1rem #fff,
+              0 0 0.2rem #f40,
+              0 0 0.4rem #f40;
+          }
+        }
         .neon-text {
           animation: neon-flicker 15s infinite;
+        }
+        @media (max-width: 640px) {
+          .neon-text {
+            animation: neon-flicker-mobile 15s infinite;
+          }
         }
       `,
         }}
