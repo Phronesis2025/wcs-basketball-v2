@@ -240,23 +240,19 @@ export default function TeamUpdates({
       <section
         ref={sectionRef}
         aria-labelledby="team-updates-title"
-        className="mt-8 mb-12"
+        className="bg-[#F6F6F6] mt-8 mb-12 pt-6 sm:pt-8 pb-12 sm:pb-16 mx-4 sm:mx-6 lg:mx-8"
       >
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2
             id="team-updates-title"
-            className="text-3xl sm:text-4xl font-bebas text-center text-white mb-8 sm:mb-12"
+            className="text-3xl sm:text-4xl font-bebas text-center text-navy mb-6 sm:mb-8"
           >
             Around the WCS
           </h2>
-          {showViewMoreText && (
-            <p className="text-left text-gray-400 text-sm font-inter mb-6">
-              View your teams page for more updates
-            </p>
-          )}
+          <div className="bg-white border border-slate-400 rounded-lg p-6 sm:p-8" style={{ borderWidth: '1px' }}>
           {isLoading ? (
-            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
-              <p className="text-gray-300 font-inter">Loading updates…</p>
+            <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 text-center">
+              <p className="text-gray-700 font-inter">Loading updates…</p>
             </div>
           ) : displayUpdates && displayUpdates.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -307,17 +303,17 @@ export default function TeamUpdates({
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {/* Headline */}
-                      <h3 className="font-inter font-semibold text-white mb-1 line-clamp-2 leading-tight">
+                      <h3 className="font-inter font-semibold text-gray-900 mb-1 line-clamp-2 leading-tight">
                         {sanitizeInput(update.title)}
                       </h3>
 
                       {/* Dek/Summary */}
-                      <p className="text-gray-400 font-inter text-sm mb-2 line-clamp-2 leading-snug">
+                      <p className="text-gray-700 font-inter text-sm mb-2 line-clamp-2 leading-snug">
                         {sanitizeInput(truncatedContent)}
                       </p>
 
                       {/* Meta row */}
-                      <div className="flex items-center gap-2 text-xs text-gray-500 font-inter">
+                      <div className="flex items-center gap-2 text-xs text-gray-600 font-inter">
                         <span>{teamName}</span>
                         <span>•</span>
                         <span>{relativeTime}</span>
@@ -328,10 +324,11 @@ export default function TeamUpdates({
               })}
             </div>
           ) : (
-            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
-              <p className="text-gray-300 font-inter">No updates available</p>
+            <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 text-center">
+              <p className="text-gray-700 font-inter">No updates available</p>
             </div>
           )}
+          </div>
         </div>
 
         {/* Modal for viewing full update (same as carousel) */}
@@ -402,20 +399,15 @@ export default function TeamUpdates({
     <section
       ref={sectionRef}
       aria-label="All Team Updates"
-      className="mt-8 mb-12 space-y-4"
+      className="bg-[#F6F6F6] mt-8 mb-12 py-12 sm:py-16 mx-4 sm:mx-6 lg:mx-8 space-y-4"
     >
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bebas uppercase text-center">
+        <h2 className="text-2xl font-bebas uppercase text-center text-navy">
           All Team Updates
         </h2>
-        {showViewMoreText && (
-          <p className="text-center text-gray-400 text-sm font-inter mt-2">
-            View your teams page for more updates
-          </p>
-        )}
         {isLoading ? (
-          <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
-            <p className="text-gray-300 font-inter">Loading updates…</p>
+          <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 text-center">
+            <p className="text-gray-700 font-inter">Loading updates…</p>
           </div>
         ) : displayUpdates && displayUpdates.length > 0 ? (
           <div className="relative overflow-hidden group">
@@ -601,8 +593,8 @@ export default function TeamUpdates({
             </motion.div>
           </div>
         ) : (
-          <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
-            <p className="text-gray-300 font-inter">No updates available</p>
+          <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 text-center">
+            <p className="text-gray-700 font-inter">No updates available</p>
           </div>
         )}
         {selectedUpdate && (

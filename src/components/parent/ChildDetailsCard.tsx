@@ -551,13 +551,6 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
                 </div>
               )}
 
-              {child.position_preference && (
-                <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-gray-200">
-                  <span className="text-gray-500">Position Preference:</span>
-                  <span className="font-semibold text-gray-900 text-right">{child.position_preference}</span>
-                </div>
-              )}
-
               {child.school_name && (
                 <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-gray-200">
                   <span className="text-gray-500">School:</span>

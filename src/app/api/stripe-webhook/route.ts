@@ -3,7 +3,10 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { sendEmail } from "@/lib/email";
-import { getPaymentConfirmationEmail } from "@/lib/emailTemplates";
+import {
+  getPaymentConfirmationEmail,
+  getAdminPaymentConfirmationEmail,
+} from "@/lib/emailTemplates";
 import { fetchTeamDataForEmail } from "@/lib/emailHelpers";
 
 export const dynamic = "force-dynamic";
@@ -38,15 +41,37 @@ function splitFullName(fullName?: string | null) {
   return { firstName, lastName };
 }
 
-// Helper to notify admins (safe no-op if list empty)
-async function notifyAdmins(subject: string, html: string) {
+// Helper to notify admins using BCC (maintains privacy)
+// If only one admin: sends directly to that email
+// If multiple admins: sends to first email, BCC to others
+async function notifyAdmins(
+  subject: string,
+  html: string,
+  options?: { bcc?: string[] }
+) {
   if (ADMIN_NOTIFICATIONS_TO.length === 0) return;
   try {
-    await Promise.all(
-      ADMIN_NOTIFICATIONS_TO.map((to) => sendEmail(to, subject, html))
-    );
+    const firstAdmin = ADMIN_NOTIFICATIONS_TO[0];
+    const otherAdmins =
+      ADMIN_NOTIFICATIONS_TO.length > 1
+        ? ADMIN_NOTIFICATIONS_TO.slice(1)
+        : undefined;
+    
+    // Merge any additional BCC from options
+    const bcc = options?.bcc
+      ? [...(otherAdmins || []), ...options.bcc]
+      : otherAdmins;
+
+    await sendEmail(firstAdmin, subject, html, {
+      bcc: bcc && bcc.length > 0 ? bcc : undefined,
+    });
+
+    devLog("webhook: admin notification sent", {
+      to: firstAdmin,
+      bcc: bcc,
+      totalAdmins: ADMIN_NOTIFICATIONS_TO.length,
+    });
   } catch (err) {
-    // keep logs consistent with project
     devError("notifyAdmins failed", err);
   }
 }
@@ -236,21 +261,52 @@ export async function POST(req: Request) {
             });
           }
 
-          const adminSubject = `WCS Payment received - $${amount.toFixed(2)}`;
-          const adminHtml = `
-            <p><strong>Payment received</strong></p>
-            <p>Player: ${player.name || ""}</p>
-            <p>Parent: ${player.parent_email || ""}</p>
-            <p>Team: ${player.teams?.name || "Not assigned"}</p>
-            <p>Amount: $${amount.toFixed(2)}</p>
-            <p>Type: ${paymentRow.payment_type}</p>
-            <p>Session: ${session.id}</p>
-          `;
-          try {
-            await notifyAdmins(adminSubject, adminHtml);
-            devLog("webhook: admin notification sent");
-          } catch (adminEmailErr) {
-            devError("webhook: failed to send admin notification", adminEmailErr);
+          // Send admin payment confirmation email
+          if (ADMIN_NOTIFICATIONS_TO.length > 0) {
+            // Get parent name for admin email
+            let parentName = "";
+            try {
+              if (player.parent_id) {
+                const { data: parent } = await supabaseAdmin
+                  .from("parents")
+                  .select("first_name, last_name")
+                  .eq("id", player.parent_id)
+                  .single();
+                if (parent) {
+                  parentName = `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || player.parent_email || "Parent";
+                }
+              }
+            } catch (e) {
+              devError("webhook: error fetching parent name for admin email", e);
+              parentName = player.parent_email || "Parent";
+            }
+
+            const adminEmailData = getAdminPaymentConfirmationEmail({
+              playerFirstName,
+              playerLastName,
+              parentName: parentName || player.parent_email || "Parent",
+              parentEmail: player.parent_email || "",
+              teamName: player.teams?.name || undefined,
+              amount: amount,
+              paymentType: paymentRow.payment_type,
+              paymentDate: new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              playerId: player.id,
+              paymentId: paymentRow.id,
+            });
+
+            try {
+              await notifyAdmins(
+                adminEmailData.subject,
+                adminEmailData.html
+              );
+              devLog("webhook: admin payment confirmation email sent");
+            } catch (adminEmailErr) {
+              devError("webhook: failed to send admin payment notification", adminEmailErr);
+            }
           }
         } catch (e) {
           devError("webhook: notification error", e);
@@ -406,19 +462,53 @@ export async function POST(req: Request) {
           });
         }
 
-        // Notify admins on renewal
-        const adminSubject = `WCS Subscription renewal - $${amount.toFixed(
-          2
-        )}`;
-        const adminHtml = `
-          <p><strong>Subscription renewal paid</strong></p>
-          <p>Player: ${player.name || ""}</p>
-          <p>Parent: ${player.parent_email}</p>
-          <p>Team: ${playerWithTeam?.teams?.name || "Not assigned"}</p>
-          <p>Amount: $${amount.toFixed(2)}</p>
-          <p>Invoice: ${invoice.id}</p>
-        `;
-        await notifyAdmins(adminSubject, adminHtml);
+        // Send admin payment confirmation email for renewal
+        if (ADMIN_NOTIFICATIONS_TO.length > 0) {
+          // Get parent name for admin email
+          let parentName = "";
+          try {
+            if (player.parent_id) {
+              const { data: parent } = await supabaseAdmin
+                .from("parents")
+                .select("first_name, last_name")
+                .eq("id", player.parent_id)
+                .single();
+              if (parent) {
+                parentName = `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || parentEmail || "Parent";
+              }
+            }
+          } catch (e) {
+            devError("webhook: error fetching parent name for admin email (renewal)", e);
+            parentName = parentEmail || "Parent";
+          }
+
+          const adminEmailData = getAdminPaymentConfirmationEmail({
+            playerFirstName: renewalFirstName,
+            playerLastName: renewalLastName,
+            parentName: parentName || parentEmail || "Parent",
+            parentEmail: parentEmail || "",
+            teamName: playerWithTeam?.teams?.name || undefined,
+            amount: amount,
+            paymentType: "monthly",
+            paymentDate: new Date().toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            }),
+            playerId: player.id,
+            paymentId: invoice.id,
+          });
+
+          try {
+            await notifyAdmins(
+              adminEmailData.subject,
+              adminEmailData.html
+            );
+            devLog("webhook: admin subscription renewal email sent");
+          } catch (adminEmailErr) {
+            devError("webhook: failed to send admin renewal notification", adminEmailErr);
+          }
+        }
 
         break;
       }

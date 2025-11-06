@@ -87,6 +87,7 @@ NEXT_PUBLIC_BASE_URL=https://wcs-basketball-v2.vercel.app
 STRIPE_SECRET_KEY=sk_live_[your-secret-key]
 STRIPE_PRICE_ANNUAL=price_[your-price-id]
 STRIPE_PRICE_MONTHLY=price_[your-price-id]
+STRIPE_PRICE_QUARTERLY=price_[your-quarterly-price-id]  # Optional: Quarterly payment option
 STRIPE_WEBHOOK_SECRET=whsec_[your-webhook-secret]
 ```
 

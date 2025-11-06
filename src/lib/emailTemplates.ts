@@ -1570,3 +1570,234 @@ export function getPaymentConfirmationEmail(data: {
 
   return { subject, html };
 }
+
+/**
+ * Email template for admin payment confirmation notifications
+ * Sent to admins when a payment is received
+ */
+export function getAdminPaymentConfirmationEmail(data: {
+  playerFirstName: string;
+  playerLastName: string;
+  parentName: string;
+  parentEmail: string;
+  teamName?: string;
+  amount: number;
+  paymentType: string;
+  paymentDate?: string;
+  playerId: string;
+  paymentId?: string;
+}): { subject: string; html: string } {
+  const {
+    playerFirstName,
+    playerLastName,
+    parentName,
+    parentEmail,
+    teamName,
+    amount,
+    paymentType,
+    paymentDate,
+    playerId,
+    paymentId,
+  } = data;
+
+  const subject = `💰 Payment Received - ${playerFirstName} ${playerLastName} - $${amount.toFixed(2)}`;
+
+  const baseUrl = getEmailBaseUrl();
+  const logoUrl = getLogoUrl();
+  const dashboardLink = `${baseUrl}/admin/club-management`;
+
+  const formattedAmount = `$${amount.toFixed(2)}`;
+  const formattedDate =
+    paymentDate ||
+    new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .header {
+          background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 8px 8px 0 0;
+        }
+        .content {
+          background: #ffffff;
+          padding: 25px;
+          border: 1px solid #e5e7eb;
+        }
+        .success-box {
+          background: #f0fdf4;
+          border-left: 4px solid #22c55e;
+          padding: 20px;
+          margin: 20px 0;
+          border-radius: 4px;
+          text-align: center;
+        }
+        .success-box h2 {
+          margin: 0 0 10px 0;
+          color: #16a34a;
+          font-size: 24px;
+        }
+        .info-grid {
+          background: #f9fafb;
+          padding: 20px;
+          border-radius: 8px;
+          margin: 20px 0;
+        }
+        .info-row {
+          display: flex;
+          padding: 8px 0;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .info-row:last-child {
+          border-bottom: none;
+        }
+        .info-label {
+          font-weight: 600;
+          width: 150px;
+          color: #6b7280;
+        }
+        .info-value {
+          flex: 1;
+          color: #111827;
+        }
+        .amount-highlight {
+          font-size: 28px;
+          font-weight: 700;
+          color: #16a34a;
+          text-align: center;
+          margin: 20px 0;
+        }
+        .button {
+          display: inline-block;
+          background: #3b82f6;
+          color: white;
+          padding: 12px 24px;
+          text-decoration: none;
+          border-radius: 6px;
+          margin: 15px 0;
+          font-weight: 600;
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 20px;
+          text-align: center;
+          border-radius: 0 0 8px 8px;
+          border: 1px solid #e5e7eb;
+          border-top: none;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 60px; height: auto; display: block; margin: 0 auto 10px auto; width: 60px;">
+        <h2 style="margin: 0;">💰 Payment Received</h2>
+        <p style="margin: 5px 0 0 0; opacity: 0.9;">New Payment Confirmation</p>
+      </div>
+
+      <div class="content">
+        <div class="success-box">
+          <h2>✅ Payment Successfully Processed</h2>
+          <div class="amount-highlight">${formattedAmount}</div>
+        </div>
+
+        <h3 style="color: #1e40af; margin-top: 25px;">Player Information</h3>
+        <div class="info-grid">
+          <div class="info-row">
+            <div class="info-label">Player Name:</div>
+            <div class="info-value"><strong>${playerFirstName} ${playerLastName}</strong></div>
+          </div>
+          ${teamName ? `
+          <div class="info-row">
+            <div class="info-label">Team:</div>
+            <div class="info-value">${teamName}</div>
+          </div>
+          ` : ""}
+          <div class="info-row">
+            <div class="info-label">Player ID:</div>
+            <div class="info-value"><code>${playerId}</code></div>
+          </div>
+        </div>
+
+        <h3 style="color: #1e40af;">Parent/Guardian Information</h3>
+        <div class="info-grid">
+          <div class="info-row">
+            <div class="info-label">Name:</div>
+            <div class="info-value">${parentName}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Email:</div>
+            <div class="info-value"><a href="mailto:${parentEmail}">${parentEmail}</a></div>
+          </div>
+        </div>
+
+        <h3 style="color: #1e40af;">Payment Details</h3>
+        <div class="info-grid">
+          <div class="info-row">
+            <div class="info-label">Amount:</div>
+            <div class="info-value" style="font-size: 20px; font-weight: 700; color: #16a34a;">${formattedAmount}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Payment Type:</div>
+            <div class="info-value">${
+              paymentType === "annual"
+                ? "Annual Registration"
+                : paymentType === "monthly"
+                ? "Monthly Subscription"
+                : paymentType.charAt(0).toUpperCase() + paymentType.slice(1)
+            }</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Payment Date:</div>
+            <div class="info-value">${formattedDate}</div>
+          </div>
+          ${paymentId ? `
+          <div class="info-row">
+            <div class="info-label">Payment ID:</div>
+            <div class="info-value"><code>${paymentId}</code></div>
+          </div>
+          ` : ""}
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${dashboardLink}" class="button">View Player in Admin Dashboard →</a>
+        </div>
+
+        <p style="color: #6b7280; font-size: 14px; margin-top: 25px;">
+          <strong>Note:</strong> The parent has been automatically notified via email about this payment.
+        </p>
+      </div>
+
+      <div class="footer">
+        <p style="margin: 5px 0;"><strong>WCS Basketball - Where Champions Start</strong></p>
+        <p style="margin: 15px 0;">
+          <a href="https://facebook.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">Facebook</a>
+          |
+          <a href="https://instagram.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">Instagram</a>
+          |
+          <a href="https://twitter.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">Twitter</a>
+          |
+          <a href="https://youtube.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">YouTube</a>
+        </p>
+        <p style="margin: 5px 0;">Questions? Contact us at <a href="mailto:info@wcsbasketball.com" style="color: #3b82f6;">info@wcsbasketball.com</a></p>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return { subject, html };
+}

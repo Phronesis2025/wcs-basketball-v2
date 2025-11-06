@@ -5,7 +5,7 @@ interface InvoiceData {
   invoiceDate: string;
   invoiceNumber: string;
   parentName: string;
-  parentAddress: string;
+  parentAddress: string; // may be multi-line or comma-separated
   playerName: string;
   teamName: string;
   teamLogoUrl?: string | null;
@@ -27,620 +27,501 @@ interface InvoiceData {
 export async function generateInvoicePDF(
   data: InvoiceData
 ): Promise<Uint8Array> {
-  // Create a new PDF document
   const pdfDoc = await PDFDocument.create();
+  const helv = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const helvB = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Embed fonts
-  const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const helveticaBoldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
-
-  // Add a new page
-  const page = pdfDoc.addPage([612, 792]); // Letter size (8.5 x 11 inches)
+  // US Letter
+  const page = pdfDoc.addPage([612, 792]);
   const { width, height } = page.getSize();
 
   // Colors
   const black = rgb(0, 0, 0);
-  const gray = rgb(0.8, 0.8, 0.8);
+  const headerGray = rgb(0.95, 0.95, 0.95);
+  const borderGray = rgb(0.7, 0.7, 0.7);
 
-  let yPosition = height - 60;
+  // --- PAGE MARGINS & GRID ---
+  const M = 40;
+  let y = height - 50;
 
-  // Header: INVOICE title (left) - large and bold
-  page.drawText("INVOICE", {
-    x: 50,
-    y: yPosition,
-    size: 48,
-    font: helveticaBoldFont,
-    color: black,
-  });
+  // --- RIGHT HEADER BLOCK (WCS logo + team logo stacked) ---
+  const rightX = width - M - 100;
+  let cursorY = y;
 
-  // Right side: WCS Logo and business info
-  const rightColumnX = width - 200;
-  let logoY = yPosition;
-
+  // WCS Logo
+  let wcsLogoHeight = 0;
+  let wcsLogoWidth = 0;
   try {
-    // Load WCS logo from file system (public folder)
     const fs = await import("fs");
     const path = await import("path");
     const logoPath = path.join(process.cwd(), "public", "logo.png");
-
     if (fs.existsSync(logoPath)) {
       const logoBytes = fs.readFileSync(logoPath);
-      const logoImage = await pdfDoc.embedPng(logoBytes);
-      const logoDims = logoImage.scale(0.3); // Scale down to fit
-      page.drawImage(logoImage, {
-        x: rightColumnX,
-        y: logoY - logoDims.height,
-        width: logoDims.width,
-        height: logoDims.height,
+      const logo = await pdfDoc.embedPng(logoBytes);
+      const dims = logo.scale(0.18);
+      wcsLogoHeight = dims.height;
+      wcsLogoWidth = dims.width;
+      page.drawImage(logo, {
+        x: rightX,
+        y: cursorY - dims.height,
+        width: dims.width,
+        height: dims.height,
       });
-      logoY -= logoDims.height + 10;
+      cursorY -= dims.height + 8;
     }
-  } catch (error) {
-    // Logo not found, continue without it
-    devError("Could not load WCS logo:", error);
+  } catch (e) {
+    devError("WCS logo load fail", e);
   }
 
-  // Business address under logo
-  const businessInfo = [
-    "World Class Sports",
-    "123 World Class Ave.",
-    "Salina, KS 67401",
-  ];
-
-  businessInfo.forEach((line, idx) => {
-    page.drawText(line, {
-      x: rightColumnX,
-      y: logoY - idx * 14,
-      size: 11,
-      font: helveticaFont,
-      color: black,
-    });
-  });
-  logoY -= businessInfo.length * 14 + 10;
-
-  // Team logo if available
+  // Team logo directly below WCS logo, right-aligned
   if (data.teamLogoUrl) {
     try {
-      const teamLogoResponse = await fetch(data.teamLogoUrl);
-      if (teamLogoResponse.ok) {
-        const teamLogoBytes = await teamLogoResponse.arrayBuffer();
-        // Try PNG first, then JPG
-        let teamLogoImage;
+      const r = await fetch(data.teamLogoUrl);
+      if (r.ok) {
+        const buf = await r.arrayBuffer();
+        let img;
         try {
-          teamLogoImage = await pdfDoc.embedPng(teamLogoBytes);
+          img = await pdfDoc.embedPng(buf);
         } catch {
-          teamLogoImage = await pdfDoc.embedJpg(teamLogoBytes);
+          img = await pdfDoc.embedJpg(buf);
         }
-        const teamLogoDims = teamLogoImage.scale(0.15); // Smaller than main logo
-        page.drawImage(teamLogoImage, {
-          x: rightColumnX,
-          y: logoY - teamLogoDims.height,
-          width: teamLogoDims.width,
-          height: teamLogoDims.height,
+        const dims = img.scale(0.12);
+        // Right align with WCS logo
+        const teamLogoX = rightX + wcsLogoWidth - dims.width;
+        page.drawImage(img, {
+          x: teamLogoX,
+          y: cursorY - dims.height,
+          width: dims.width,
+          height: dims.height,
         });
-        logoY -= teamLogoDims.height + 5;
       }
-    } catch (error) {
-      devError("Could not load team logo:", error);
+    } catch (e) {
+      devError("Team logo load fail", e);
     }
   }
 
-  yPosition -= 80;
+  // --- TITLE - top aligned with WCS logo ---
+  page.drawText("INVOICE", {
+    x: M,
+    y: y - wcsLogoHeight + 10,
+    size: 36,
+    font: helvB,
+    color: black,
+  });
 
-  // Date and Invoice # (left side) with "PAID IN FULL" badge on right (same Y level)
-  const dateY = yPosition;
+  // --- META ROW (Date, Invoice #) ---
+  y -= 70;
   page.drawText(`Date: ${data.invoiceDate}`, {
-    x: 50,
-    y: dateY,
-    size: 12,
-    font: helveticaFont,
+    x: M,
+    y,
+    size: 10,
+    font: helv,
     color: black,
   });
-
   page.drawText(`Invoice #: ${data.invoiceNumber}`, {
-    x: 50,
-    y: dateY - 18,
-    size: 12,
-    font: helveticaFont,
+    x: M,
+    y: y - 14,
+    size: 10,
+    font: helv,
     color: black,
   });
 
-  // "PAID IN FULL" badge (right side, aligned with Date/Invoice #) if paid in full
-  if (data.isPaidInFull) {
-    const badgeX = rightColumnX - 10; // Align with right column (business address)
-    const badgeY = dateY; // Same Y as Date line
-    const badgeWidth = 120;
-    const badgeHeight = 30;
+  // --- BILL TO (LEFT) / PLAYER (RIGHT) ---
+  y -= 50;
 
-    // Draw green background box
-    page.drawRectangle({
-      x: badgeX,
-      y: badgeY - badgeHeight,
-      width: badgeWidth,
-      height: badgeHeight,
-      color: rgb(0.94, 1, 0.94), // Light green background
-      borderColor: rgb(0, 0.6, 0), // Green border
-      borderWidth: 2,
-    });
-
-    // Draw "PAID IN FULL" text
-    page.drawText("PAID IN FULL", {
-      x: badgeX + 10,
-      y: badgeY - 20,
-      size: 11,
-      font: helveticaBoldFont,
-      color: rgb(0, 0.5, 0), // Green text
-    });
-  }
-
-  yPosition -= 60;
-
-  // Two-column layout: Bill to (left) and Player info (right)
-  // Bill to section (left column)
   page.drawText("Bill to:", {
-    x: 50,
-    y: yPosition,
-    size: 12,
-    font: helveticaBoldFont,
+    x: M,
+    y,
+    size: 10,
+    font: helvB,
     color: black,
   });
+  let by = y - 16;
 
-  let billToY = yPosition - 18;
   page.drawText(data.parentName, {
-    x: 50,
-    y: billToY,
-    size: 12,
-    font: helveticaFont,
+    x: M,
+    y: by,
+    size: 10,
+    font: helv,
+    color: black,
+  });
+  by -= 14;
+
+  // Split address into multiple lines if needed
+  const addrParts = data.parentAddress
+    .replace(/\n/g, ", ")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const addrLine = addrParts.join(", ");
+  page.drawText(addrLine, {
+    x: M,
+    y: by,
+    size: 10,
+    font: helv,
     color: black,
   });
 
-  // Handle address - split by comma if no newlines, or use newlines
-  const addressLines = data.parentAddress.includes("\n")
-    ? data.parentAddress.split("\n").filter((line) => line.trim())
-    : data.parentAddress.split(", ").filter((line) => line.trim());
-
-  billToY -= 16;
-  addressLines.forEach((line) => {
-    if (line.trim()) {
-      page.drawText(line.trim(), {
-        x: 50,
-        y: billToY,
-        size: 12,
-        font: helveticaFont,
-        color: black,
-      });
-      billToY -= 16;
-    }
-  });
-
-  // Player info (right column) - positioned at center of page
-  const playerInfoX = width / 2 + 50;
+  const rx = width - M - 200;
   page.drawText(`Player: ${data.playerName}`, {
-    x: playerInfoX,
-    y: yPosition,
-    size: 12,
-    font: helveticaFont,
+    x: rx,
+    y,
+    size: 10,
+    font: helv,
     color: black,
   });
-
   page.drawText(`Team: ${data.teamName}`, {
-    x: playerInfoX,
-    y: yPosition - 18,
-    size: 12,
-    font: helveticaFont,
+    x: rx,
+    y: y - 16,
+    size: 10,
+    font: helv,
     color: black,
   });
-
   page.drawText(data.email, {
-    x: playerInfoX,
-    y: yPosition - 36,
-    size: 12,
-    font: helveticaFont,
+    x: rx,
+    y: y - 32,
+    size: 10,
+    font: helv,
     color: black,
   });
 
-  yPosition -= 100;
+  // --- ITEMS TABLE ---
+  y -= 90;
+  const tX = M;
+  const tW = width - M * 2;
+  const rowH = 40;
 
-  // Items Table - matches website exactly with borders
-  const tableTopY = yPosition;
-  const tableStartX = 50;
-  const tableWidth = width - 100;
-  const colWidths = [80, 200, 100, 60, 80];
-  const colX = [
-    tableStartX,
-    tableStartX + colWidths[0],
-    tableStartX + colWidths[0] + colWidths[1],
-    tableStartX + colWidths[0] + colWidths[1] + colWidths[2],
-    tableStartX + colWidths[0] + colWidths[1] + colWidths[2] + colWidths[3],
+  // Column widths
+  const cw = [80, 240, 90, 50, 72];
+  const cx = [
+    tX,
+    tX + cw[0],
+    tX + cw[0] + cw[1],
+    tX + cw[0] + cw[1] + cw[2],
+    tX + cw[0] + cw[1] + cw[2] + cw[3],
   ];
 
-  // Table header
-  const headerY = tableTopY;
-  const rowHeight = 35; // Row height to match website
-  const headerBgY = headerY - rowHeight;
+  // Ensure at least 2 empty rows for clean look
+  const nRows = Math.max(3, data.items.length);
 
-  // Draw gray background for header (rgb(0.8, 0.8, 0.8) = gray)
+  // Outer border
   page.drawRectangle({
-    x: tableStartX,
-    y: headerBgY,
-    width: tableWidth,
-    height: rowHeight,
-    color: gray,
-  });
-
-  // Draw border around entire table
-  page.drawRectangle({
-    x: tableStartX,
-    y: headerBgY,
-    width: tableWidth,
-    height: rowHeight * (Math.max(data.items.length, 3) + 1), // +1 for header
+    x: tX,
+    y: y - rowH * (nRows + 1),
+    width: tW,
+    height: rowH * (nRows + 1),
     borderColor: black,
-    borderWidth: 1,
+    borderWidth: 1.5,
   });
 
-  // Header text - centered
-  const headers = ["Date:", "Description", "Price", "Qty", "Amount"];
-  headers.forEach((header, idx) => {
-    // Calculate text width for centering (approximate)
-    const textWidth = header.length * 6; // Approximate character width
-    const cellWidth =
-      idx < colWidths.length - 1
-        ? colWidths[idx]
-        : tableWidth - (colX[idx] - tableStartX);
-    const textX = colX[idx] + (cellWidth - textWidth) / 2;
+  // Header band
+  page.drawRectangle({
+    x: tX,
+    y: y - rowH,
+    width: tW,
+    height: rowH,
+    color: headerGray,
+  });
 
-    page.drawText(header, {
+  const headers = ["Date:", "Description", "Price", "Qty", "Amount"];
+  headers.forEach((h, i) => {
+    const cellW = cw[i];
+    const textW = helvB.widthOfTextAtSize(h, 10);
+    const textX = cx[i] + (cellW - textW) / 2;
+    page.drawText(h, {
       x: textX,
-      y: headerY - 20,
-      size: 11,
-      font: helveticaBoldFont,
+      y: y - 24,
+      size: 10,
+      font: helvB,
       color: black,
     });
   });
 
-  // Table rows - always show at least 3 rows (matching website)
-  let currentY = headerY - rowHeight;
-  const minRows = 3;
-  const itemsToShow =
-    data.items.length > 0
-      ? [
-          ...data.items,
-          ...Array(Math.max(minRows - data.items.length, 0)).fill(null),
-        ]
-      : Array(minRows).fill(null);
-
-  itemsToShow.forEach((item, idx) => {
-    // Draw cell borders for each row
-    // Draw vertical lines between columns
-    for (let i = 0; i <= colX.length; i++) {
-      const lineX =
-        i === 0
-          ? tableStartX
-          : i === colX.length
-          ? tableStartX + tableWidth
-          : colX[i];
-      page.drawLine({
-        start: { x: lineX, y: currentY },
-        end: { x: lineX, y: currentY - rowHeight },
-        thickness: 1,
-        color: black,
-      });
-    }
-
-    // Draw horizontal line for row
+  // Column lines
+  for (let i = 1; i < cx.length; i++) {
     page.drawLine({
-      start: { x: tableStartX, y: currentY - rowHeight },
-      end: { x: tableStartX + tableWidth, y: currentY - rowHeight },
-      thickness: 1,
+      start: { x: cx[i], y },
+      end: { x: cx[i], y: y - rowH * (nRows + 1) },
+      thickness: 1.5,
+      color: black,
+    });
+  }
+
+  // Header bottom
+  page.drawLine({
+    start: { x: tX, y: y - rowH },
+    end: { x: tX + tW, y: y - rowH },
+    thickness: 1.5,
+    color: black,
+  });
+
+  // Rows
+  let ry = y - rowH;
+  const rows = [
+    ...data.items,
+    ...Array(Math.max(0, 3 - data.items.length)).fill(null),
+  ];
+
+  rows.forEach((item) => {
+    // row bottom line
+    page.drawLine({
+      start: { x: tX, y: ry - rowH },
+      end: { x: tX + tW, y: ry - rowH },
+      thickness: 1.5,
       color: black,
     });
 
     if (item) {
-      // Draw item data - left aligned for Date and Description, right aligned for Price and Amount, center for Qty
       page.drawText(item.date, {
-        x: colX[0] + 5,
-        y: currentY - 20,
-        size: 11,
-        font: helveticaFont,
+        x: cx[0] + 8,
+        y: ry - 24,
+        size: 10,
+        font: helv,
         color: black,
       });
 
-      // Description - left aligned
-      const description =
-        item.description.length > 40
-          ? item.description.substring(0, 37) + "..."
+      const desc =
+        item.description.length > 50
+          ? item.description.slice(0, 47) + "..."
           : item.description;
-      page.drawText(description, {
-        x: colX[1] + 5,
-        y: currentY - 20,
-        size: 11,
-        font: helveticaFont,
+      page.drawText(desc, {
+        x: cx[1] + 8,
+        y: ry - 24,
+        size: 10,
+        font: helv,
         color: black,
       });
 
-      // Price - right aligned
-      const priceText =
+      const priceLabel =
         item.priceLabel.length > 20
-          ? item.priceLabel.substring(0, 17) + "..."
+          ? item.priceLabel.slice(0, 17) + "..."
           : item.priceLabel;
-      const priceWidth = priceText.length * 6;
-      page.drawText(priceText, {
-        x: colX[2] + colWidths[2] - priceWidth - 5,
-        y: currentY - 20,
-        size: 11,
-        font: helveticaFont,
+      const priceW = helv.widthOfTextAtSize(priceLabel, 10);
+      page.drawText(priceLabel, {
+        x: cx[2] + (cw[2] - priceW) / 2,
+        y: ry - 24,
+        size: 10,
+        font: helv,
         color: black,
       });
 
-      // Qty - center aligned
-      const qtyText = item.quantity.toString();
-      const qtyWidth = qtyText.length * 6;
+      const qtyText = String(item.quantity);
+      const qtyW = helv.widthOfTextAtSize(qtyText, 10);
       page.drawText(qtyText, {
-        x: colX[3] + (colWidths[3] - qtyWidth) / 2,
-        y: currentY - 20,
-        size: 11,
-        font: helveticaFont,
+        x: cx[3] + (cw[3] - qtyW) / 2,
+        y: ry - 24,
+        size: 10,
+        font: helv,
         color: black,
       });
 
-      // Amount - right aligned
-      const amountText = `$${item.amountPaid.toFixed(2)}`;
-      const amountWidth = amountText.length * 6;
-      page.drawText(amountText, {
-        x: colX[4] + colWidths[4] - amountWidth - 5,
-        y: currentY - 20,
-        size: 11,
-        font: helveticaFont,
+      const amtText = `$${item.amountPaid.toFixed(2)}`;
+      const amtW = helv.widthOfTextAtSize(amtText, 10);
+      page.drawText(amtText, {
+        x: cx[4] + cw[4] - amtW - 8,
+        y: ry - 24,
+        size: 10,
+        font: helv,
         color: black,
       });
     }
-
-    currentY -= rowHeight;
+    ry -= rowH;
   });
 
-  // Subtotal line - aligned right (half width from right edge)
-  currentY -= 20;
-  const subtotalY = currentY;
-  const subtotalStartX = tableStartX + tableWidth * 0.5; // Start at half width
-  const subtotalLineWidth = tableWidth * 0.5; // Half the table width
-
-  // Draw horizontal line
+  // --- SUBTOTAL LINE ---
+  const subY = ry - 20;
   page.drawLine({
-    start: { x: subtotalStartX, y: subtotalY },
-    end: { x: tableStartX + tableWidth, y: subtotalY },
+    start: { x: tX, y: subY },
+    end: { x: tX + tW, y: subY },
     thickness: 1,
+    color: borderGray,
+  });
+
+  const subLabel = "Subtotal:";
+  const subLabelW = helvB.widthOfTextAtSize(subLabel, 10);
+  page.drawText(subLabel, {
+    x: tX + tW / 2 - 80,
+    y: subY - 16,
+    size: 10,
+    font: helvB,
     color: black,
   });
 
-  // Subtotal label and value
-  page.drawText("Subtotal:", {
-    x: subtotalStartX + 10,
-    y: subtotalY - 15,
-    size: 11,
-    font: helveticaBoldFont,
+  const subVal = `$${data.subtotal.toFixed(2)}`;
+  const subValW = helvB.widthOfTextAtSize(subVal, 10);
+  page.drawText(subVal, {
+    x: tX + tW - subValW - 8,
+    y: subY - 16,
+    size: 10,
+    font: helvB,
     color: black,
   });
 
-  page.drawText(`$${data.subtotal.toFixed(2)}`, {
-    x: tableStartX + tableWidth - 80,
-    y: subtotalY - 15,
-    size: 11,
-    font: helveticaBoldFont,
+  // --- THANK-YOU MESSAGE ---
+  let msgY = subY - 50;
+  const msg1 =
+    "We're grateful for your commitment to our club and players—thank you for";
+  const msg2 = "your payment.";
+
+  page.drawText(msg1, {
+    x: M,
+    y: msgY,
+    size: 10,
+    font: helv,
+    color: black,
+  });
+  page.drawText(msg2, {
+    x: M,
+    y: msgY - 14,
+    size: 10,
+    font: helv,
     color: black,
   });
 
-  currentY = subtotalY - 40;
+  // --- TOTALS BOXES ---
+  const boxX = width - M - 160;
+  const totalTop = msgY + 10;
+  const boxW = 160;
+  const totalH = 60;
+  const dueH = 60;
 
-  // Footer: Thank you message (left) and Total/Due boxes (right)
-  const footerY = currentY - 20;
-  let messageY = footerY;
-
-  // Add "✓ PAID IN FULL" text if paid in full (green text with checkmark)
-  // Note: Drawing checkmark using lines since WinAnsi can't encode ✓ symbol
-  if (data.isPaidInFull) {
-    // Draw checkmark shape using lines (green checkmark)
-    const checkmarkX = 50;
-    const checkmarkY = messageY + 8; // Slightly above text baseline
-    const checkmarkSize = 10;
-
-    // Draw checkmark using two lines forming a V shape
-    // First line: from bottom-left to middle
-    page.drawLine({
-      start: { x: checkmarkX, y: checkmarkY - checkmarkSize * 0.3 },
-      end: {
-        x: checkmarkX + checkmarkSize * 0.35,
-        y: checkmarkY - checkmarkSize * 0.65,
-      },
-      thickness: 2,
-      color: rgb(0, 0.5, 0),
-    });
-    // Second line: from middle to top-right
-    page.drawLine({
-      start: {
-        x: checkmarkX + checkmarkSize * 0.35,
-        y: checkmarkY - checkmarkSize * 0.65,
-      },
-      end: { x: checkmarkX + checkmarkSize, y: checkmarkY - checkmarkSize },
-      thickness: 2,
-      color: rgb(0, 0.5, 0),
-    });
-
-    // Draw "PAID IN FULL" text after checkmark
-    page.drawText("PAID IN FULL", {
-      x: checkmarkX + checkmarkSize + 6,
-      y: messageY,
-      size: 11,
-      font: helveticaBoldFont,
-      color: rgb(0, 0.5, 0), // Green color
-    });
-    messageY -= 18;
-  }
-
-  const thankYouMessage = data.isPaidInFull
-    ? "This invoice has been paid in full. Thank you for your commitment to our club and players!"
-    : "We're grateful for your commitment to our club and players—thank you for your payment.";
-
-  // Split message into multiple lines if needed
-  const words = thankYouMessage.split(" ");
-  const lines: string[] = [];
-  let currentLine = "";
-
-  words.forEach((word) => {
-    if ((currentLine + word).length < 50) {
-      currentLine += (currentLine ? " " : "") + word;
-    } else {
-      if (currentLine) lines.push(currentLine);
-      currentLine = word;
-    }
-  });
-  if (currentLine) lines.push(currentLine);
-
-  lines.forEach((line) => {
-    page.drawText(line, {
-      x: 50,
-      y: messageY,
-      size: 11,
-      font: helveticaFont,
-      color: black,
-    });
-    messageY -= 14;
-  });
-
-  // Total and Due boxes (right side, positioned at top of footer section)
-  const totalBoxX = width - 200;
-  const totalBoxY = footerY;
-  const totalBoxWidth = 150;
-  const totalBoxHeight = 50;
-  const dueBoxHeight = 50;
-  const boxSpacing = 10;
-
-  // Draw border around total box (2px border to match website)
+  // Total box
   page.drawRectangle({
-    x: totalBoxX,
-    y: totalBoxY - totalBoxHeight,
-    width: totalBoxWidth,
-    height: totalBoxHeight,
+    x: boxX,
+    y: totalTop - totalH,
+    width: boxW,
+    height: totalH,
     borderColor: black,
-    borderWidth: 2,
+    borderWidth: 1.5,
   });
-
   page.drawText("Total:", {
-    x: totalBoxX + 10,
-    y: totalBoxY - 20,
-    size: 11,
-    font: helveticaBoldFont,
+    x: boxX + 12,
+    y: totalTop - 24,
+    size: 10,
+    font: helvB,
+    color: black,
+  });
+  page.drawText(`${data.totalAmount.toFixed(2)}`, {
+    x: boxX + 12,
+    y: totalTop - 48,
+    size: 18,
+    font: helvB,
     color: black,
   });
 
-  page.drawText(`$${data.totalAmount.toFixed(2)}`, {
-    x: totalBoxX + 10,
-    y: totalBoxY - 40,
-    size: 16,
-    font: helveticaBoldFont,
-    color: black,
-  });
-
-  // Add "PAID" indicator if paid in full (smaller, gray-green text below amount)
-  if (data.isPaidInFull) {
-    page.drawText("PAID", {
-      x: totalBoxX + 10,
-      y: totalBoxY - 55,
-      size: 9,
-      font: helveticaBoldFont,
-      color: rgb(0, 0.5, 0), // Green color
-    });
-  }
-
-  // Draw border around Due box (below Total box)
-  const dueBoxY = totalBoxY - totalBoxHeight - boxSpacing - dueBoxHeight;
+  // Due box
+  const dueTop = totalTop - totalH - 12;
+  const dueBottom = dueTop - dueH;
   page.drawRectangle({
-    x: totalBoxX,
-    y: dueBoxY - dueBoxHeight,
-    width: totalBoxWidth,
-    height: dueBoxHeight,
+    x: boxX,
+    y: dueBottom,
+    width: boxW,
+    height: dueH,
     borderColor: black,
-    borderWidth: 2,
+    borderWidth: 1.5,
   });
-
   page.drawText("Due:", {
-    x: totalBoxX + 10,
-    y: dueBoxY - 20,
-    size: 11,
-    font: helveticaBoldFont,
+    x: boxX + 12,
+    y: dueTop - 24,
+    size: 10,
+    font: helvB,
+    color: black,
+  });
+  page.drawText(`${data.remaining.toFixed(2)}`, {
+    x: boxX + 12,
+    y: dueTop - 48,
+    size: 18,
+    font: helvB,
     color: black,
   });
 
-  page.drawText(`$${data.remaining.toFixed(2)}`, {
-    x: totalBoxX + 10,
-    y: dueBoxY - 40,
-    size: 16,
-    font: helveticaBoldFont,
-    color: black,
+  // --- FOOTER SECTION ---
+  const footerY = dueBottom - 20;
+  page.drawLine({
+    start: { x: M, y: footerY },
+    end: { x: width - M, y: footerY },
+    thickness: 1,
+    color: borderGray,
   });
 
-  // Footer: Payment Terms and Contact Info (reduced size)
-  const contactFooterStartY = 80;
-  let contactFooterY = contactFooterStartY;
+  let fy = footerY - 20;
 
-  // Payment Terms
-  page.drawText("Payment Terms:", {
-    x: 50,
-    y: contactFooterY,
+  // Business address on the right side, aligned under Due box
+  const bizAddressX = boxX;
+  page.drawText("World Class Sports", {
+    x: bizAddressX,
+    y: fy,
     size: 9,
-    font: helveticaBoldFont,
+    font: helv,
     color: black,
   });
-  contactFooterY -= 12;
-  const paymentTermsText = data.isPaidInFull
+  page.drawText("123 World Class Ave.", {
+    x: bizAddressX,
+    y: fy - 11,
+    size: 9,
+    font: helv,
+    color: black,
+  });
+  page.drawText("Salina, KS 67401", {
+    x: bizAddressX,
+    y: fy - 22,
+    size: 9,
+    font: helv,
+    color: black,
+  });
+
+  page.drawText("Payment Terms:", {
+    x: M,
+    y: fy,
+    size: 9,
+    font: helvB,
+    color: black,
+  });
+  fy -= 12;
+  const terms = data.isPaidInFull
     ? "This invoice has been paid in full. No further payment is required."
     : "Payment is due upon receipt. Payments can be made online via Stripe.";
-  page.drawText(paymentTermsText, {
-    x: 50,
-    y: contactFooterY,
+  page.drawText(terms, {
+    x: M,
+    y: fy,
     size: 8,
-    font: helveticaFont,
+    font: helv,
     color: black,
   });
-  contactFooterY -= 10;
 
-  // Contact Information (reduced size)
-  page.drawText("Contact Information:", {
-    x: 50,
-    y: contactFooterY,
+  fy -= 16;
+  page.drawText("Contact information:", {
+    x: M,
+    y: fy,
     size: 9,
-    font: helveticaBoldFont,
+    font: helvB,
     color: black,
   });
-  contactFooterY -= 12;
+  fy -= 12;
   page.drawText("Email: info@wcsbasketball.com | Phone: (785) 123-4567", {
-    x: 50,
-    y: contactFooterY,
+    x: M,
+    y: fy,
     size: 8,
-    font: helveticaFont,
+    font: helv,
     color: black,
   });
-  contactFooterY -= 10;
-
-  // Tax ID (if applicable - you may want to make this configurable)
+  fy -= 10;
   page.drawText("Tax ID: [To be added if applicable]", {
-    x: 50,
-    y: contactFooterY,
+    x: M,
+    y: fy,
     size: 8,
-    font: helveticaFont,
+    font: helv,
     color: black,
   });
-  contactFooterY -= 15;
-
-  // Thank you message
+  fy -= 16;
   page.drawText("Thank you for your business!", {
-    x: 50,
-    y: contactFooterY,
+    x: M,
+    y: fy,
     size: 9,
-    font: helveticaFont,
+    font: helv,
     color: black,
   });
 
-  // Generate PDF bytes
-  const pdfBytes = await pdfDoc.save();
-  return pdfBytes;
+  return pdfDoc.save();
 }

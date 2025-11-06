@@ -7,6 +7,7 @@ import { devLog, devError } from "@/lib/security";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const PRICE_ANNUAL = process.env.STRIPE_PRICE_ANNUAL; // price_... (one-time $360)
 const PRICE_MONTHLY = process.env.STRIPE_PRICE_MONTHLY; // price_... (recurring $30/mo)
+const PRICE_QUARTERLY = process.env.STRIPE_PRICE_QUARTERLY; // price_... (quarterly payment)
 
 // Determine base URL for Vercel vs localhost
 function getBaseUrl(): string {
@@ -50,6 +51,10 @@ function ensurePriceId(name: string, val?: string | null) {
 
 ensurePriceId("STRIPE_PRICE_ANNUAL", PRICE_ANNUAL!);
 ensurePriceId("STRIPE_PRICE_MONTHLY", PRICE_MONTHLY!);
+// Quarterly price is optional - only validate if provided
+if (PRICE_QUARTERLY) {
+  ensurePriceId("STRIPE_PRICE_QUARTERLY", PRICE_QUARTERLY);
+}
 
 // ---- POST: Create Checkout Session ----
 export async function POST(req: Request) {
@@ -123,6 +128,29 @@ export async function POST(req: Request) {
         success_url: successUrl,
         cancel_url: cancelUrl,
       });
+    } else if (payment_type === "quarterly") {
+      // Quarterly payment - check if price is configured
+      if (!PRICE_QUARTERLY) {
+        return NextResponse.json(
+          { error: "Quarterly payment option is not configured" },
+          { status: 400 }
+        );
+      }
+      // Check if quarterly is a subscription or one-time payment
+      // We'll fetch the price to determine this
+      const price = await stripe.prices.retrieve(PRICE_QUARTERLY);
+      const isSubscription = price.type === "recurring";
+      
+      session = await stripe.checkout.sessions.create({
+        mode: isSubscription ? "subscription" : "payment",
+        customer: customerId,
+        line_items: [{ price: PRICE_QUARTERLY, quantity: 1 }],
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        payment_intent_data: isSubscription ? undefined : {
+          receipt_email: player.parent_email,
+        },
+      });
     } else if (payment_type === "custom") {
       const cents = Math.round(Number(custom_amount || 0) * 100);
       if (!cents || cents < 50) {
@@ -153,22 +181,40 @@ export async function POST(req: Request) {
       });
     } else {
       return NextResponse.json(
-        { error: "Invalid payment_type. Use 'annual' | 'monthly' | 'custom'." },
+        { error: "Invalid payment_type. Use 'annual' | 'monthly' | 'quarterly' | 'custom'." },
         { status: 400 }
       );
     }
 
     // Record pending payment
+    // For quarterly, fetch the actual amount from Stripe
+    let amount = 0;
+    if (payment_type === "annual") {
+      amount = 360;
+    } else if (payment_type === "monthly") {
+      amount = 30;
+    } else if (payment_type === "quarterly") {
+      // Fetch the actual quarterly price amount from Stripe
+      if (PRICE_QUARTERLY) {
+        try {
+          const price = await stripe.prices.retrieve(PRICE_QUARTERLY);
+          amount = (price.unit_amount || 0) / 100; // Convert from cents to dollars
+        } catch (e) {
+          devError("create-checkout-session: failed to fetch quarterly price", e);
+          amount = 90; // Fallback default
+        }
+      } else {
+        amount = 90; // Fallback default
+      }
+    } else {
+      amount = Number(custom_amount || 0);
+    }
+
     await supabaseAdmin.from("payments").insert([
       {
         player_id,
         stripe_payment_id: session.id, // track Checkout Session id
-        amount:
-          payment_type === "annual"
-            ? 360
-            : payment_type === "monthly"
-            ? 30
-            : Number(custom_amount || 0),
+        amount,
         payment_type,
         status: "pending",
       },

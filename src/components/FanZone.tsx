@@ -193,7 +193,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
   return (
     <section
       ref={ref}
-      className="bg-navy py-12 sm:py-16"
+      className="bg-[#F6F6F6] pt-6 sm:pt-8 pb-12 sm:pb-16 mx-4 sm:mx-6 lg:mx-8"
       aria-label="Fan Zone"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -207,10 +207,11 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
             )}
           </div>
         )}
-        <h2 className="text-3xl sm:text-4xl font-bebas text-center text-white mb-8 sm:mb-12">
+        <h2 className="text-3xl sm:text-4xl font-bebas text-center text-navy mb-6 sm:mb-8">
           Fan Zone
         </h2>
-        <div ref={parentContainerRef} className="relative overflow-hidden group min-h-[250px] sm:min-h-[280px]">
+        <div className="bg-white border border-slate-400 rounded-lg p-6 sm:p-8" style={{ borderWidth: '1px' }}>
+          <div ref={parentContainerRef} className="relative overflow-hidden group min-h-[250px] sm:min-h-[280px]">
           {/* Left Arrow - Always visible when available, hover effect on desktop/tablet */}
           {cards.length > cardsToShow && currentIndex > 0 && (
             <button
@@ -367,6 +368,7 @@ export default function FanZone({ teamsError, coachesError }: FanZoneProps) {
             );
             })}
           </motion.div>
+          </div>
         </div>
       </div>
     </section>

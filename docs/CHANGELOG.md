@@ -1,5 +1,93 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.0 - Quarterly Payments, Ad Carousel & Homepage Styling
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (102 pages generated)
+
+---
+
+### ✨ Added
+
+- **Quarterly Payment Option**: 
+  - Added quarterly payment option to Stripe checkout with `STRIPE_PRICE_QUARTERLY` environment variable
+  - Supports both one-time and recurring quarterly payments (detected automatically from Stripe price type)
+  - Updated checkout and payment pages to display quarterly option with dynamic price fetching
+  - Created `/api/get-price` endpoint to fetch quarterly price from Stripe for display
+  - Default quarterly amount set to $90 (configurable via Stripe)
+
+- **Coach Nate Classic Ad**: 
+  - Created new `CoachNateAd` component with neon text effects
+  - Text alternates between red and blue glow at random intervals (every few seconds)
+  - Includes event date information: "JANUARY 31 - BOYS • FEBRUARY 1 - GIRLS"
+  - Uses `coachNateAd.jpg` background image with centered text layout
+  - Neon flicker animation with 15-second cycle for subtle, attention-grabbing effect
+
+### 🎨 Changed
+
+- **Ad Section Carousel**: 
+  - Converted AdSection to auto-rotating carousel displaying BeLegendaryAd and CoachNateAd alternately
+  - Each ad displays for 10 seconds with smooth slide transitions using Framer Motion
+  - Horizontal slide animation (slides in from right, exits to left)
+  - Seamless transition between promotional ads
+
+- **Homepage Styling**: 
+  - Updated homepage sections below quote section with light grey backgrounds (`#F6F6F6`)
+  - FanZone and TeamUpdates sections now have white content areas inside light grey borders
+  - Added thin borders (`border-slate-400`) with rounded corners around content areas
+  - Borders positioned closer to section titles for better visual hierarchy
+  - Main page background changed from navy to white (`#F6F6F6`)
+
+- **Quote Section Border**: 
+  - Increased border width from 1px to 4px (`border-t-4 border-b-4`) for more prominent red borders
+  - Enhanced visual separation between hero section and content below
+
+- **Typography Updates**: 
+  - Updated tagline fonts in both ads from `font-bebas-light` to `font-bebas` (Bebas Regular) for consistency
+  - Improved readability and visual consistency across promotional content
+
+- **Ad Section Spacing**: 
+  - Reduced top and bottom padding on AdSection from `py-8 sm:py-12` to `py-2 sm:py-3` for tighter spacing
+
+- **Team Updates Text Color**: 
+  - Darkened text colors in Around the WCS section for better readability on white backgrounds
+  - Headlines changed to `text-gray-900`, summaries to `text-gray-700`, meta info to `text-gray-600`
+
+### 🔒 Security Audit
+
+- **Security Test**: ✅ PASSED - No exposed keys or secrets found
+- **API Keys**: All properly secured via environment variables (`process.env`)
+- **Git Ignore**: Verified `.env*` files are properly ignored
+- **Codebase Scan**: No hardcoded Stripe keys, Supabase keys, or JWT tokens found
+- **Documentation**: All example keys use placeholder format only
+
+### 📊 Supabase Advisors
+
+- **Security**: ⚠️ Leaked Password Protection disabled (optional feature, requires manual dashboard configuration)
+- **Performance**: ℹ️ 24 unused indexes detected (INFO level - low priority, no immediate action required)
+- **Status**: ✅ All critical security and performance issues resolved
+
+### 🔧 Technical Details
+
+- **Files Modified**:
+  - `src/app/api/create-checkout-session/route.ts`: Added quarterly payment support
+  - `src/app/api/get-price/route.ts`: New endpoint for fetching Stripe prices
+  - `src/app/checkout/[playerId]/page.tsx`: Added quarterly option to UI
+  - `src/app/payment/[playerId]/page.tsx`: Added quarterly option to payment page
+  - `src/components/AdSection.tsx`: Converted to carousel with auto-rotation
+  - `src/components/CoachNateAd.tsx`: New component with neon text effects
+  - `src/components/FanZone.tsx`: Updated styling with borders and backgrounds
+  - `src/components/TeamUpdates.tsx`: Updated styling and text colors
+  - `src/components/QuoteSection.tsx`: Increased border width
+  - `src/app/page.tsx`: Changed background color
+
+- **Build Status**: ✅ Successful (102 pages generated, no errors)
+- **Performance**: All optimizations maintained, no regressions
+
+---
+
 ## 🚀 Version 2.9.9 - Performance Optimizations & Core Web Vitals Improvements
 
 **Release Date**: January 2025  

@@ -63,13 +63,33 @@ export default function CheckoutPage() {
   const [needsPassword, setNeedsPassword] = useState(true); // Track if user needs to set password
 
   // Payment options
-  const [paymentType, setPaymentType] = useState<"annual" | "monthly" | "custom">("annual");
+  const [paymentType, setPaymentType] = useState<"annual" | "monthly" | "quarterly" | "custom">("annual");
   const [customAmount, setCustomAmount] = useState("");
   const annualFee = Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360);
+  const [quarterlyFee, setQuarterlyFee] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // Fetch quarterly price on component mount
+  useEffect(() => {
+    const fetchQuarterlyPrice = async () => {
+      try {
+        const response = await fetch("/api/get-price?type=quarterly");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.amount) {
+            setQuarterlyFee(data.amount);
+          }
+        }
+      } catch (error) {
+        // If endpoint doesn't exist or fails, use default
+        devError("Failed to fetch quarterly price", error);
+      }
+    };
+    fetchQuarterlyPrice();
+  }, []);
 
   // Authentication check
   useEffect(() => {
@@ -924,6 +944,18 @@ export default function CheckoutPage() {
                       />
                       <span>Monthly – $30.00</span>
                     </label>
+                    {quarterlyFee !== null && (
+                      <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="paymentPlan"
+                          checked={paymentType === "quarterly"}
+                          onChange={() => setPaymentType("quarterly")}
+                          className="w-5 h-5 text-red focus:ring-2 focus:ring-blue-500 bg-gray-800 border-gray-700"
+                        />
+                        <span>Quarterly – ${quarterlyFee.toFixed(2)}</span>
+                      </label>
+                    )}
                     <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
                       <input
                         type="radio"

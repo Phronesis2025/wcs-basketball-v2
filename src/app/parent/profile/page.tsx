@@ -307,11 +307,21 @@ function ParentProfilePageInner() {
                   <>
                     {/* Children Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-6 justify-items-center md:justify-items-stretch">
-                      {profile.children.map((child) => (
-                        <div key={child.id} className="w-full max-w-[280px] md:max-w-none">
-                          <ChildDetailsCard child={child} />
-                        </div>
-                      ))}
+                      {[...profile.children]
+                        .sort((a, b) => {
+                          // Sort by birthdate: youngest to oldest
+                          // If no birthdate, put at the end
+                          if (!a.date_of_birth && !b.date_of_birth) return 0;
+                          if (!a.date_of_birth) return 1;
+                          if (!b.date_of_birth) return -1;
+                          // Compare dates (newer dates = younger = first)
+                          return b.date_of_birth.localeCompare(a.date_of_birth);
+                        })
+                        .map((child) => (
+                          <div key={child.id} className="w-full max-w-[280px] md:max-w-none">
+                            <ChildDetailsCard child={child} />
+                          </div>
+                        ))}
                     </div>
                   </>
                 ) : (

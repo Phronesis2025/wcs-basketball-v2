@@ -13,7 +13,7 @@ export default function PaymentPage() {
   const search = useSearchParams();
   const source = search?.get("from") || undefined;
   const [paymentType, setPaymentType] = useState<
-    "annual" | "monthly" | "custom"
+    "annual" | "monthly" | "quarterly" | "custom"
   >("annual");
   const [customAmount, setCustomAmount] = useState("");
   const [remainingHint, setRemainingHint] = useState<number | null>(null);
@@ -23,10 +23,30 @@ export default function PaymentPage() {
   const [teamLogoUrl, setTeamLogoUrl] = useState<string | null>(null);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [parent, setParent] = useState<Parent | null>(null);
+  const [quarterlyFee, setQuarterlyFee] = useState<number | null>(null);
   const annualFee = useMemo(
     () => Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360),
     []
   );
+
+  // Fetch quarterly price on component mount
+  useEffect(() => {
+    const fetchQuarterlyPrice = async () => {
+      try {
+        const response = await fetch("/api/get-price?type=quarterly");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.amount) {
+            setQuarterlyFee(data.amount);
+          }
+        }
+      } catch (error) {
+        // If endpoint doesn't exist or fails, silently fail
+        devError("Failed to fetch quarterly price", error);
+      }
+    };
+    fetchQuarterlyPrice();
+  }, []);
 
   // Prefill custom amount from query (?custom=123.45)
   useEffect(() => {
@@ -235,20 +255,37 @@ export default function PaymentPage() {
       const paymentDate = new Date(p.created_at);
       const paymentType = (p.payment_type || "annual").toLowerCase();
       const isAnnual = paymentType === "annual";
+      const isMonthly = paymentType === "monthly";
+      const isQuarterly = paymentType === "quarterly";
       const monthlyFee = 30; // Monthly payment amount
+      const quarterlyFeeAmount = quarterlyFee || 90; // Quarterly amount (fallback to 90 if not loaded)
       
-      // Format description: "Player Name - Annual/Monthly - Year/Month"
+      // Format description: "Player Name - Annual/Monthly/Quarterly - Year/Month"
       const year = paymentDate.getFullYear();
       const month = paymentDate.toLocaleDateString("en-US", { month: "long" });
-      const typeLabel = isAnnual ? "Annual" : "Monthly";
-      const periodLabel = isAnnual ? year.toString() : `${month} ${year}`;
+      let typeLabel = "Annual";
+      let periodLabel = year.toString();
+      if (isMonthly) {
+        typeLabel = "Monthly";
+        periodLabel = `${month} ${year}`;
+      } else if (isQuarterly) {
+        typeLabel = "Quarterly";
+        periodLabel = `${month} ${year}`;
+      }
       const description = `${player?.name || "Player"} - ${typeLabel} - ${periodLabel}`;
       
-      // Price: show Monthly or Annual amount with label
-      const priceAmount = isAnnual ? annualFee : monthlyFee;
-      const priceLabel = isAnnual ? `Annual (${formatCurrency(annualFee)})` : `Monthly (${formatCurrency(monthlyFee)})`;
+      // Price: show Annual, Monthly, or Quarterly amount with label
+      let priceAmount = annualFee;
+      let priceLabel = `Annual (${formatCurrency(annualFee)})`;
+      if (isMonthly) {
+        priceAmount = monthlyFee;
+        priceLabel = `Monthly (${formatCurrency(monthlyFee)})`;
+      } else if (isQuarterly) {
+        priceAmount = quarterlyFeeAmount;
+        priceLabel = `Quarterly (${formatCurrency(quarterlyFeeAmount)})`;
+      }
       
-      // Qty: 12 for annual, 1 for monthly
+      // Qty: 12 for annual, 1 for monthly/quarterly
       const quantity = isAnnual ? 12 : 1;
       
       // Amount: how much was actually paid
@@ -264,7 +301,7 @@ export default function PaymentPage() {
         paymentType,
       };
     });
-  }, [payments, player, annualFee]);
+  }, [payments, player, annualFee, quarterlyFee]);
 
   const ensureHtml2Pdf = async (): Promise<any> => {
     const w = window as any;
@@ -641,6 +678,17 @@ export default function PaymentPage() {
                       />
                       Monthly – $30
                     </label>
+                    {quarterlyFee !== null && (
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="plan"
+                          checked={paymentType === "quarterly"}
+                          onChange={() => setPaymentType("quarterly")}
+                        />
+                        Quarterly – {formatCurrency(quarterlyFee)}
+                      </label>
+                    )}
                     <label className="flex items-center gap-2">
                       <input
                         type="radio"

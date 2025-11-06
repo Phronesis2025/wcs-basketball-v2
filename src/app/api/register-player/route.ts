@@ -145,66 +145,69 @@ export async function POST(req: Request) {
     }
 
     // Email behavior:
-    // - New parent signups receive Supabase's confirmation email (handled by auth flow) - this is now our welcome email
-    // - Existing parents adding another child: parent email commented out per plan to use Supabase confirmation email
-    // - All welcome pending emails commented out - Supabase confirmation email serves as welcome email
+    // - New parent signups: Supabase sends confirmation email (handled by auth flow)
+    // - We also send a registration confirmation email to the parent for all registrations
+    // - Admin notifications are sent to all configured admin emails
     
-    // Comment out parent email for existing parents - now handled by Supabase confirmation email
-    // if (isExistingParent) {
-    //   const parentEmailData = getPlayerRegistrationEmail({
-    //     playerFirstName: first_name,
-    //     playerLastName: last_name,
-    //     parentFirstName: body.parent_first_name,
-    //     parentLastName: body.parent_last_name,
-    //     grade,
-    //     gender,
-    //   });
+    // Send parent confirmation email for all registrations
+    // Note: New parents will also receive Supabase's confirmation email via the auth flow
+    const parentEmailData = getPlayerRegistrationEmail({
+      playerFirstName: first_name,
+      playerLastName: last_name,
+      parentFirstName: body.parent_first_name,
+      parentLastName: body.parent_last_name,
+      grade,
+      gender,
+    });
 
-    //   await sendEmail(
-    //     parent_email,
-    //     parentEmailData.subject,
-    //     parentEmailData.html
-    //   );
+    await sendEmail(
+      parent_email,
+      parentEmailData.subject,
+      parentEmailData.html
+    );
 
-    //   devLog("register-player: parent confirmation sent for existing parent", {
-    //     to: parent_email,
-    //   });
-    // }
-
-    // Comment out welcome pending email - now handled by Supabase confirmation email
-    // const welcomePendingEmailData = getWelcomePendingEmail({
-    //   playerFirstName: first_name,
-    //   playerLastName: last_name,
-    //   parentFirstName: parentRecord.first_name || body.parent_first_name,
-    // });
-
-    // await sendEmail(
-    //   parent_email,
-    //   welcomePendingEmailData.subject,
-    //   welcomePendingEmailData.html
-    // );
-
-    // devLog("register-player: welcome pending email sent", {
-    //   to: parent_email,
-    // });
+    devLog("register-player: parent confirmation sent", {
+      to: parent_email,
+      isExistingParent,
+    });
 
     // Notify admin(s) about new registration
-    const adminEmail = process.env.ADMIN_NOTIFICATIONS_TO;
-    if (adminEmail) {
-      const adminEmailData = getAdminPlayerRegistrationEmail({
-        playerFirstName: first_name,
-        playerLastName: last_name,
-        parentName: `${parentRecord.first_name} ${parentRecord.last_name}`.trim(),
-        parentEmail: parent_email,
-        parentPhone: parent_phone || "",
-        grade,
-        gender,
-        playerId: player.id,
-      });
+    // Supports single email (for testing) or multiple emails (comma-separated)
+    // For testing: ADMIN_NOTIFICATIONS_TO=your-email@example.com
+    // For production: ADMIN_NOTIFICATIONS_TO=admin1@example.com,admin2@example.com,admin3@example.com
+    const adminEmailString = process.env.ADMIN_NOTIFICATIONS_TO;
+    if (adminEmailString) {
+      // Split comma-separated emails and filter out empty strings
+      const adminEmails = adminEmailString
+        .split(",")
+        .map((email) => email.trim())
+        .filter((email) => email.length > 0);
 
-      await sendEmail(adminEmail, adminEmailData.subject, adminEmailData.html);
+      if (adminEmails.length > 0) {
+        const adminEmailData = getAdminPlayerRegistrationEmail({
+          playerFirstName: first_name,
+          playerLastName: last_name,
+          parentName: `${parentRecord.first_name} ${parentRecord.last_name}`.trim(),
+          parentEmail: parent_email,
+          parentPhone: parent_phone || "",
+          grade,
+          gender,
+          playerId: player.id,
+        });
 
-      devLog("register-player: admin notification sent", { to: adminEmail });
+        // Send email to admin(s)
+        // If only one admin: sends directly to that email
+        // If multiple admins: sends to first email, BCC to others (so they don't see each other's emails)
+        await sendEmail(adminEmails[0], adminEmailData.subject, adminEmailData.html, {
+          bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
+        });
+
+        devLog("register-player: admin notification sent", {
+          to: adminEmails[0],
+          bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
+          totalAdmins: adminEmails.length,
+        });
+      }
     }
 
     // Calculate player age for SMS notification

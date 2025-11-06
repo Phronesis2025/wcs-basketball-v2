@@ -1,7 +1,10 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import CoachNateAd from "./CoachNateAd";
 
 // Special BE LEGENDARY ad component matching the exact design
 const BeLegendaryAd = () => {
@@ -56,7 +59,7 @@ const BeLegendaryAd = () => {
               <h2 className="font-bebas-bold-italic text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl text-white mb-0 drop-shadow-2xl leading-tight">
                 BE LEGENDARY
               </h2>
-              <p className="font-bebas-light text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-white drop-shadow-lg text-right -mt-1 sm:-mt-2 md:-mt-3 lg:-mt-4">
+              <p className="font-bebas text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg text-white drop-shadow-lg text-right -mt-1 sm:-mt-2 md:-mt-3 lg:-mt-4">
                 Train. Compete. Rise above.
               </p>
             </div>
@@ -83,15 +86,39 @@ const BeLegendaryAd = () => {
 };
 
 export default function AdSection() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const ads = [
+    { id: "be-legendary", component: <BeLegendaryAd key="be-legendary" /> },
+    { id: "coach-nate", component: <CoachNateAd key="coach-nate" /> },
+  ];
+
+  // Auto-rotate carousel every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [ads.length]);
+
   return (
     <section
-      className="bg-white py-8 sm:py-12"
+      className="bg-[#F6F6F6] py-2 sm:py-3"
       aria-label="Promotional advertisements"
     >
       <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="space-y-4 sm:space-y-6">
-          {/* Special BE LEGENDARY ad with exact design match */}
-          <BeLegendaryAd />
+        <div className="relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={ads[currentIndex].id}
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              transition={{ duration: 0.5 }}
+            >
+              {ads[currentIndex].component}
+            </motion.div>
+          </AnimatePresence>
         </div>
       </div>
     </section>

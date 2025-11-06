@@ -28,7 +28,7 @@ export default async function Home() {
   const coachesError = null;
 
   return (
-    <div className="bg-navy min-h-screen text-white">
+    <div className="bg-[#F6F6F6] min-h-screen">
       <Hero />
       <QuoteSection />
       <FanZone teamsError={teamsError} coachesError={coachesError} />

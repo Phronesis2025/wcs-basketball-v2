@@ -52,7 +52,7 @@ export default function QuoteSection() {
 
   return (
     <section
-      className="w-full bg-black py-2 text-white overflow-hidden border-t border-b border-red"
+      className="w-full bg-black py-2 text-white overflow-hidden border-t-4 border-b-4 border-red"
       aria-label="Motivational quotes"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

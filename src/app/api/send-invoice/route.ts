@@ -214,6 +214,15 @@ export async function POST(request: NextRequest) {
 
     // Convert PDF to base64 for email attachment
     const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
+    
+    // Log PDF size for debugging
+    const pdfSizeKB = (pdfBytes.length / 1024).toFixed(2);
+    const base64SizeKB = (pdfBase64.length / 1024).toFixed(2);
+    devLog(`send-invoice: PDF generated`, {
+      pdfSize: `${pdfSizeKB} KB`,
+      base64Size: `${base64SizeKB} KB`,
+      playerId,
+    });
 
     const emailSubject = `Invoice ${invoiceNumber} - WCS Basketball`;
     const logoUrl = getLogoUrl();
@@ -457,31 +466,84 @@ export async function POST(request: NextRequest) {
       </html>
     `;
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: RESEND_FROM,
-        to: [recipientEmail],
-        subject: emailSubject,
-        html: emailHtml,
-        attachments: [
-          {
-            filename: `invoice-${invoiceNumber}.pdf`,
-            content: pdfBase64,
-          },
-        ],
-      }),
-    });
+    // Helper function to send email with retry logic
+    const sendEmailWithRetry = async (maxRetries = 3, retryDelay = 2000) => {
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          // Create AbortController for timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
+          const emailResponse = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${RESEND_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              from: RESEND_FROM,
+              to: [recipientEmail],
+              subject: emailSubject,
+              html: emailHtml,
+              attachments: [
+                {
+                  filename: `invoice-${invoiceNumber}.pdf`,
+                  content: pdfBase64,
+                },
+              ],
+            }),
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!emailResponse.ok) {
+            const errorText = await emailResponse.text();
+            devError(`send-invoice: Failed to send email (attempt ${attempt}/${maxRetries})`, errorText);
+            
+            // If it's a server error (5xx) and we have retries left, retry
+            if (emailResponse.status >= 500 && attempt < maxRetries) {
+              devLog(`send-invoice: Retrying in ${retryDelay}ms...`);
+              await new Promise(resolve => setTimeout(resolve, retryDelay));
+              continue;
+            }
+            
+            throw new Error(`Resend API error: ${emailResponse.status} - ${errorText}`);
+          }
+
+          return emailResponse;
+        } catch (error: any) {
+          // Handle timeout or connection errors
+          if (error.name === 'AbortError') {
+            devError(`send-invoice: Request timeout (attempt ${attempt}/${maxRetries})`);
+          } else if (error.code === 'UND_ERR_SOCKET' || error.message?.includes('fetch failed')) {
+            devError(`send-invoice: Connection error (attempt ${attempt}/${maxRetries})`, error.message);
+          } else {
+            devError(`send-invoice: Error (attempt ${attempt}/${maxRetries})`, error);
+          }
+
+          // If this is the last attempt, throw the error
+          if (attempt === maxRetries) {
+            throw error;
+          }
+
+          // Wait before retrying
+          devLog(`send-invoice: Retrying in ${retryDelay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+          
+          // Exponential backoff: increase delay for subsequent retries
+          retryDelay *= 1.5;
+        }
+      }
+    };
+
+    const emailResponse = await sendEmailWithRetry();
 
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
-      devError("send-invoice: Failed to send email", errorText);
+      devError("send-invoice: Failed to send email after retries", errorText);
       return NextResponse.json(
-        { error: "Failed to send email" },
+        { error: "Failed to send email. Please try again later." },
         { status: 500 }
       );
     }
@@ -498,10 +560,21 @@ export async function POST(request: NextRequest) {
       message: "Invoice sent successfully",
       email: recipientEmail,
     });
-  } catch (error) {
+  } catch (error: any) {
     devError("send-invoice: Exception", error);
+    
+    // Provide more specific error messages based on error type
+    let errorMessage = "Failed to send invoice";
+    if (error.name === 'AbortError' || error.message?.includes('timeout')) {
+      errorMessage = "Request timed out. The email service may be experiencing delays. Please try again later.";
+    } else if (error.code === 'UND_ERR_SOCKET' || error.message?.includes('fetch failed')) {
+      errorMessage = "Connection error. Please check your internet connection and try again.";
+    } else if (error.message?.includes('Resend API error')) {
+      errorMessage = "Email service error. Please try again later.";
+    }
+    
     return NextResponse.json(
-      { error: "Failed to send invoice" },
+      { error: errorMessage },
       { status: 500 }
     );
   }
