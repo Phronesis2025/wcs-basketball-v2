@@ -42,14 +42,16 @@
 
 2. **Access Domain List**
 
-   - Click **"Domain List"** in the left sidebar
+   - Click **"Domain List"** in the left sidebar (or top menu)
    - Find `wcsbasketball.site` in your list
-   - Click **"Manage"** next to it
+   - Click **"Manage"** button next to it (or click the domain name)
 
 3. **Go to Advanced DNS**
 
+   - Look for tabs at the top: **"Domain"**, **"Advanced DNS"**, **"WhoisGuard"**, etc.
    - Click on the **"Advanced DNS"** tab
-   - You'll see a section for "Host Records"
+   - Scroll down to find the **"Host Records"** section
+   - You'll see a table with existing records (if any) and an **"Add New Record"** button
 
 4. **Add SPF Record (TXT)**
 
@@ -81,7 +83,7 @@
    - **TTL**: Leave as default
    - Click **"Save"**
 
-8. **Verify All Records Added**
+7. **Verify All Records Added**
    - You should now see in Namecheap:
      - 1 DKIM record (TXT for `resend._domainkey`) - for Domain Verification
      - 1 MX record (for `send` with priority 10) - for Enable Sending
