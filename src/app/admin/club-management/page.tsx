@@ -38,6 +38,7 @@ import ChangelogTable from "@/components/ChangelogTable";
 import ChangelogModal from "@/components/ChangelogModal";
 import OnHoldModal from "@/components/dashboard/OnHoldModal";
 import PlayerPaymentModal from "@/components/dashboard/PlayerPaymentModal";
+import VolunteerDetailModal from "@/components/dashboard/VolunteerDetailModal";
 import WebVitalsDiagnostic from "@/components/WebVitalsDiagnostics";
 import toast from "react-hot-toast";
 import {
@@ -179,6 +180,11 @@ function ClubManagementContent() {
     useState<Player | null>(null);
   const [selectedPlayerPaymentStatus, setSelectedPlayerPaymentStatus] =
     useState<"approved" | "pending" | "on_hold" | "rejected">("pending");
+
+  // Volunteer states
+  const [volunteers, setVolunteers] = useState<any[]>([]);
+  const [selectedVolunteer, setSelectedVolunteer] = useState<any | null>(null);
+  const [showVolunteerModal, setShowVolunteerModal] = useState(false);
 
   // View modal states
   const [viewingItem, setViewingItem] = useState<
@@ -625,6 +631,29 @@ function ClubManagementContent() {
     }
   };
 
+  // Fetch volunteers
+  const fetchVolunteers = async () => {
+    if (!userId || userRole !== "admin") {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/admin/volunteers", {
+        headers: { "x-user-id": userId },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch volunteers");
+      }
+
+      const data = await response.json();
+      setVolunteers(Array.isArray(data) ? data : []);
+    } catch (error) {
+      devError("Error fetching volunteers:", error);
+      toast.error("Failed to load volunteers");
+    }
+  };
+
   // Load analytics data
   const fetchAnalyticsData = async () => {
     setAnalyticsLoading(true);
@@ -670,6 +699,8 @@ function ClubManagementContent() {
       if (teams.length === 0 || players.length === 0) {
         fetchManagementData();
       }
+      // Fetch volunteers
+      fetchVolunteers();
       // Fetch Stripe-backed metrics
       (async () => {
         try {
@@ -3444,6 +3475,70 @@ function ClubManagementContent() {
                 </div>
               </div>
             </div>
+
+            {/* Volunteer Submissions Section */}
+            <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mt-8">
+              <h2 className="text-2xl font-bebas text-white mb-6">
+                Volunteer Submissions
+              </h2>
+              {volunteers.length > 0 ? (
+                <div className="overflow-x-auto block">
+                  <div className="inline-block min-w-full align-middle">
+                    <table className="min-w-full text-sm">
+                      <thead>
+                        <tr className="text-left border-b border-gray-600">
+                          <th className="py-2 pr-4 text-gray-300">Full Name</th>
+                          <th className="py-2 pr-4 text-gray-300">Role</th>
+                          <th className="py-2 text-gray-300 hidden md:table-cell">
+                            Has Child
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {volunteers.map((volunteer: any) => {
+                          const fullName = `${volunteer.first_name} ${volunteer.last_name}`;
+                          const roleDisplay =
+                            volunteer.role === "coach" ? "Coach" : "Volunteer";
+                          const hasChild = volunteer.has_child_on_team
+                            ? "Yes"
+                            : "No";
+
+                          return (
+                            <tr
+                              key={volunteer.id}
+                              className="border-b border-gray-600 cursor-pointer hover:bg-gray-700/50 transition-colors"
+                              onClick={() => {
+                                setSelectedVolunteer(volunteer);
+                                setShowVolunteerModal(true);
+                              }}
+                            >
+                              <td className="py-2 pr-4">
+                                <div className="text-white font-medium">
+                                  {fullName}
+                                </div>
+                                <div className="text-gray-400 text-xs mt-1">
+                                  {volunteer.email}
+                                </div>
+                              </td>
+                              <td className="py-2 pr-4">
+                                <span className="text-white">{roleDisplay}</span>
+                              </td>
+                              <td className="py-2 hidden md:table-cell">
+                                <span className="text-white">{hasChild}</span>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-400 text-sm">
+                  No pending volunteer submissions
+                </p>
+              )}
+            </div>
           </div>
         )}
 
@@ -3759,6 +3854,52 @@ function ClubManagementContent() {
               }
             }}
             fetchManagementData={fetchManagementData}
+          />
+        )}
+
+        {/* Volunteer Detail Modal */}
+        {selectedVolunteer && (
+          <VolunteerDetailModal
+            isOpen={showVolunteerModal}
+            onClose={() => {
+              setShowVolunteerModal(false);
+              setSelectedVolunteer(null);
+            }}
+            volunteer={selectedVolunteer}
+            userId={userId}
+            onDelete={async (volunteerId: string) => {
+              const loadingToast = toast.loading("Rejecting volunteer...");
+              try {
+                const response = await fetch(
+                  `/api/admin/volunteers/${volunteerId}`,
+                  {
+                    method: "DELETE",
+                    headers: {
+                      "x-user-id": userId || "",
+                      "Content-Type": "application/json",
+                    },
+                  }
+                );
+
+                if (!response.ok) {
+                  const error = await response.json().catch(() => ({}));
+                  throw new Error(error.error || "Failed to reject volunteer");
+                }
+
+                toast.dismiss(loadingToast);
+                toast.success("Volunteer rejected successfully");
+                await fetchVolunteers();
+              } catch (error) {
+                toast.dismiss(loadingToast);
+                toast.error(
+                  error instanceof Error
+                    ? error.message
+                    : "Failed to reject volunteer"
+                );
+                throw error;
+              }
+            }}
+            onNotesUpdate={fetchVolunteers}
           />
         )}
 

@@ -266,6 +266,17 @@ export default function AdminOverviewContent({
               const lastActive = (loginStats?.last_active_at || loginStats?.last_login_at)
                 ? new Date(loginStats.last_active_at || loginStats.last_login_at)
                 : null;
+              
+              // Check if coach is online (last_active_at within last 10 minutes)
+              const isOnline = loginStats?.last_active_at
+                ? (() => {
+                    const lastActiveTime = new Date(loginStats.last_active_at);
+                    const now = new Date();
+                    const diffMs = now.getTime() - lastActiveTime.getTime();
+                    const diffMinutes = diffMs / (1000 * 60);
+                    return diffMinutes <= 10; // Online if active within last 10 minutes
+                  })()
+                : false;
 
               // Get teams assigned to this coach
               const assignedTeams = teams.filter((team: any) =>
@@ -363,11 +374,17 @@ export default function AdminOverviewContent({
                         Last Active
                       </div>
                       <div>
-                        {lastActive
-                          ? lastActive.toLocaleDateString() +
-                            " " +
-                            lastActive.toLocaleTimeString()
-                          : "Never"}
+                        {isOnline ? (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-900 text-green-300 border border-green-700">
+                            LIVE
+                          </span>
+                        ) : lastActive ? (
+                          lastActive.toLocaleDateString() +
+                          " " +
+                          lastActive.toLocaleTimeString()
+                        ) : (
+                          "Never"
+                        )}
                       </div>
                     </div>
 
@@ -439,11 +456,17 @@ export default function AdminOverviewContent({
                             Last Active:
                           </div>
                           <div className="text-gray-400">
-                            {lastActive
-                              ? lastActive.toLocaleDateString() +
-                                " " +
-                                lastActive.toLocaleTimeString()
-                              : "Never"}
+                            {isOnline ? (
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-900 text-green-300 border border-green-700">
+                                LIVE
+                              </span>
+                            ) : lastActive ? (
+                              lastActive.toLocaleDateString() +
+                              " " +
+                              lastActive.toLocaleTimeString()
+                            ) : (
+                              "Never"
+                            )}
                           </div>
                         </div>
                       </div>

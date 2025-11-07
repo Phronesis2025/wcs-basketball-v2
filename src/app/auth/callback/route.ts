@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { sendEmail } from "@/lib/email";
+import { getPlayerRegistrationEmail, getAdminPlayerRegistrationEmail } from "@/lib/emailTemplates";
 
 export async function GET(request: NextRequest) {
   try {
@@ -50,17 +52,169 @@ export async function GET(request: NextRequest) {
         return NextResponse.redirect(redirectUrl);
       }
       
-      // Standard Supabase confirmation (signup/invite) - redirect to registration success if we have player name
-      if (playerNameParam && (type === "signup" || type === "invite" || type === "email")) {
+      // For invite/email type from registration flow, check for pending registration and merge
+      if ((type === "invite" || type === "email") && playerNameParam) {
+        // Get user from session (Supabase should have set it)
+        const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser();
+        
+        if (!userError && user?.email) {
+          // Check for pending registration
+          const { data: pendingReg } = await supabaseAdmin
+            .from("pending_registrations")
+            .select("*")
+            .eq("email", user.email)
+            .is("merged_at", null)
+            .maybeSingle();
+          
+          if (pendingReg && !pendingReg.merged_at) {
+            devLog("Auth callback: Found pending registration, merging after Supabase confirmation");
+            
+            try {
+              // Create or get parent record
+              const { data: existingParent } = await supabaseAdmin
+                .from("parents")
+                .select("*")
+                .eq("email", user.email)
+                .maybeSingle();
+              
+              let parentId: string;
+              
+              if (existingParent) {
+                parentId = existingParent.id;
+                if (!existingParent.user_id) {
+                  await supabaseAdmin
+                    .from("parents")
+                    .update({ user_id: user.id })
+                    .eq("id", parentId);
+                }
+              } else {
+                const { data: newParent, error: parentError } = await supabaseAdmin
+                  .from("parents")
+                  .insert([{
+                    user_id: user.id,
+                    first_name: pendingReg.parent_first_name,
+                    last_name: pendingReg.parent_last_name,
+                    email: pendingReg.email,
+                    checkout_completed: false,
+                  }])
+                  .select("*")
+                  .single();
+                
+                if (parentError || !newParent) {
+                  devError("Auth callback: Failed to create parent", parentError);
+                  throw parentError;
+                }
+                parentId = newParent.id;
+              }
+              
+              // Create player record
+              const { data: player, error: playerError } = await supabaseAdmin
+                .from("players")
+                .insert([{
+                  parent_id: parentId,
+                  name: `${pendingReg.player_first_name} ${pendingReg.player_last_name}`,
+                  date_of_birth: pendingReg.player_birthdate,
+                  grade: pendingReg.player_grade,
+                  gender: pendingReg.player_gender,
+                  previous_experience: pendingReg.player_experience,
+                  status: "pending",
+                  waiver_signed: false,
+                  parent_email: pendingReg.email, // Required for Stripe checkout
+                }])
+                .select("*")
+                .single();
+              
+              if (playerError) {
+                devError("Auth callback: Failed to create player", playerError);
+                throw playerError;
+              }
+              
+              // Mark pending registration as merged
+              await supabaseAdmin
+                .from("pending_registrations")
+                .update({ merged_at: new Date().toISOString() })
+                .eq("id", pendingReg.id);
+              
+              devLog("Auth callback: Successfully merged pending registration", {
+                parentId,
+                playerId: player.id,
+              });
+              
+              // Send parent confirmation email
+              try {
+                const parentEmailData = getPlayerRegistrationEmail({
+                  playerFirstName: pendingReg.player_first_name,
+                  playerLastName: pendingReg.player_last_name,
+                  parentFirstName: pendingReg.parent_first_name,
+                  parentLastName: pendingReg.parent_last_name,
+                  grade: pendingReg.player_grade || "",
+                  gender: pendingReg.player_gender || "",
+                });
+                
+                await sendEmail(
+                  pendingReg.email,
+                  parentEmailData.subject,
+                  parentEmailData.html
+                );
+                
+                devLog("Auth callback: Parent confirmation email sent", {
+                  to: pendingReg.email,
+                });
+              } catch (emailError) {
+                devError("Auth callback: Failed to send parent confirmation email", emailError);
+              }
+              
+              // Send admin notification
+              const adminEmailString = process.env.ADMIN_NOTIFICATIONS_TO;
+              if (adminEmailString) {
+                try {
+                  const adminEmails = adminEmailString
+                    .split(",")
+                    .map((email) => email.trim())
+                    .filter((email) => email.length > 0);
+                  
+                  if (adminEmails.length > 0) {
+                    const adminEmailData = getAdminPlayerRegistrationEmail({
+                      playerFirstName: pendingReg.player_first_name,
+                      playerLastName: pendingReg.player_last_name,
+                      parentName: `${pendingReg.parent_first_name} ${pendingReg.parent_last_name}`.trim(),
+                      parentEmail: pendingReg.email,
+                      parentPhone: "",
+                      grade: pendingReg.player_grade || "",
+                      gender: pendingReg.player_gender || "",
+                      playerId: player.id,
+                    });
+                    
+                    await sendEmail(adminEmails[0], adminEmailData.subject, adminEmailData.html, {
+                      bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
+                    });
+                    
+                    devLog("Auth callback: Admin notification sent", {
+                      to: adminEmails[0],
+                      totalAdmins: adminEmails.length,
+                    });
+                  }
+                } catch (adminEmailError) {
+                  devError("Auth callback: Failed to send admin notification", adminEmailError);
+                }
+              }
+            } catch (mergeError) {
+              devError("Auth callback: Error merging pending registration", mergeError);
+              // Continue with redirect even if merge fails
+            }
+          }
+        }
+        
+        // Redirect to registration success
         const redirectUrl = new URL("/registration-success", requestUrl.origin);
         redirectUrl.searchParams.set("player", playerNameParam);
         return NextResponse.redirect(redirectUrl);
       }
       
       // Fallback: redirect to profile for other confirmation types
-      return NextResponse.redirect(
-        new URL("/parent/profile?registered=true", requestUrl.origin)
-      );
+      // Remove hash fragment if present
+      const profileUrl = new URL("/parent/profile?registered=true", requestUrl.origin);
+      return NextResponse.redirect(profileUrl);
     }
 
     // Handle custom magic link token (guest signup flow - fallback)
@@ -182,6 +336,7 @@ export async function GET(request: NextRequest) {
             previous_experience: pendingReg.player_experience,
             status: "pending",
             waiver_signed: false,
+            parent_email: pendingReg.email, // Required for Stripe checkout
           }])
           .select("*")
           .single();
@@ -202,6 +357,65 @@ export async function GET(request: NextRequest) {
           playerId: player.id,
         });
 
+        // Send parent confirmation email
+        try {
+          const parentEmailData = getPlayerRegistrationEmail({
+            playerFirstName: pendingReg.player_first_name,
+            playerLastName: pendingReg.player_last_name,
+            parentFirstName: pendingReg.parent_first_name,
+            parentLastName: pendingReg.parent_last_name,
+            grade: pendingReg.player_grade || "",
+            gender: pendingReg.player_gender || "",
+          });
+          
+          await sendEmail(
+            pendingReg.email,
+            parentEmailData.subject,
+            parentEmailData.html
+          );
+          
+          devLog("Auth callback: Parent confirmation email sent", {
+            to: pendingReg.email,
+          });
+        } catch (emailError) {
+          devError("Auth callback: Failed to send parent confirmation email", emailError);
+        }
+        
+        // Send admin notification
+        const adminEmailString = process.env.ADMIN_NOTIFICATIONS_TO;
+        if (adminEmailString) {
+          try {
+            const adminEmails = adminEmailString
+              .split(",")
+              .map((email) => email.trim())
+              .filter((email) => email.length > 0);
+            
+            if (adminEmails.length > 0) {
+              const adminEmailData = getAdminPlayerRegistrationEmail({
+                playerFirstName: pendingReg.player_first_name,
+                playerLastName: pendingReg.player_last_name,
+                parentName: `${pendingReg.parent_first_name} ${pendingReg.parent_last_name}`.trim(),
+                parentEmail: pendingReg.email,
+                parentPhone: "",
+                grade: pendingReg.player_grade || "",
+                gender: pendingReg.player_gender || "",
+                playerId: player.id,
+              });
+              
+              await sendEmail(adminEmails[0], adminEmailData.subject, adminEmailData.html, {
+                bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
+              });
+              
+              devLog("Auth callback: Admin notification sent", {
+                to: adminEmails[0],
+                totalAdmins: adminEmails.length,
+              });
+            }
+          } catch (adminEmailError) {
+            devError("Auth callback: Failed to send admin notification", adminEmailError);
+          }
+        }
+
         // Set guest flag in user metadata
         await supabaseAdmin.auth.admin.updateUserById(user.id, {
           user_metadata: { guest: false }, // No longer a guest after merge
@@ -209,33 +423,37 @@ export async function GET(request: NextRequest) {
 
         // Generate a Supabase magic link that will establish a session
         // This uses Supabase's proper auth flow
+        // Use registration-success instead of profile to avoid hash issues
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
           type: "magiclink",
           email: pendingReg.email,
           options: {
-            redirectTo: `${requestUrl.origin}/parent/profile?registered=true`,
+            redirectTo: `${requestUrl.origin}/registration-success?player=${encodeURIComponent(pendingReg.player_first_name)}`,
           },
         });
 
         if (linkError) {
           devError("Auth callback: Failed to generate session link", linkError);
-          // Fallback: Redirect to setup session page
+          // Fallback: Redirect to registration success directly
           return NextResponse.redirect(
-            new URL(`/auth/setup-session?email=${encodeURIComponent(pendingReg.email)}&registered=true`, requestUrl.origin)
+            new URL(`/registration-success?player=${encodeURIComponent(pendingReg.player_first_name)}`, requestUrl.origin)
           );
         }
 
         if (linkData?.properties?.action_link) {
           // Redirect to Supabase's generated link which will establish session automatically
+          // Remove hash fragment if present
+          const actionLink = new URL(linkData.properties.action_link);
+          actionLink.hash = ""; // Remove hash fragment
           devLog("Auth callback: Redirecting to Supabase magic link for session", {
             hasActionLink: !!linkData.properties.action_link,
           });
-          return NextResponse.redirect(linkData.properties.action_link);
+          return NextResponse.redirect(actionLink.toString());
         }
 
-        // Final fallback
+        // Final fallback: redirect to registration success
         return NextResponse.redirect(
-          new URL(`/auth/setup-session?email=${encodeURIComponent(pendingReg.email)}&registered=true`, requestUrl.origin)
+          new URL(`/registration-success?player=${encodeURIComponent(pendingReg.player_first_name)}`, requestUrl.origin)
         );
       } catch (mergeError) {
         devError("Auth callback: Error merging pending registration", mergeError);
@@ -332,6 +550,94 @@ export async function GET(request: NextRequest) {
               .eq("id", pendingReg.id);
 
             devLog("Auth callback: Successfully merged pending registration for Google user");
+
+            // Send welcome email to parent (use Google OAuth email - the actual Gmail account they signed up with)
+            // Use user.email (from Google OAuth) as primary, fallback to pendingReg.email if needed
+            const parentEmailAddress = user.email || pendingReg.email;
+            
+            if (!parentEmailAddress) {
+              devError("Auth callback: No email address available for welcome email", {
+                userEmail: user.email,
+                pendingRegEmail: pendingReg.email,
+              });
+            } else {
+              try {
+                const parentEmailData = getPlayerRegistrationEmail({
+                  playerFirstName: pendingReg.player_first_name,
+                  playerLastName: pendingReg.player_last_name,
+                  parentFirstName: pendingReg.parent_first_name,
+                  parentLastName: pendingReg.parent_last_name,
+                  grade: pendingReg.player_grade || undefined,
+                  gender: pendingReg.player_gender || undefined,
+                });
+
+                devLog("Auth callback: Sending welcome email", {
+                  to: parentEmailAddress,
+                  userEmail: user.email,
+                  pendingRegEmail: pendingReg.email,
+                });
+
+                await sendEmail(
+                  parentEmailAddress,
+                  parentEmailData.subject,
+                  parentEmailData.html
+                );
+
+                devLog("Auth callback: Welcome email sent to parent", {
+                  to: parentEmailAddress,
+                });
+              } catch (emailError) {
+                // Log but don't block the redirect
+                devError("Auth callback: Failed to send welcome email", {
+                  error: emailError,
+                  attemptedEmail: parentEmailAddress,
+                });
+              }
+            }
+
+            // Send admin notification email
+            const adminEmailString = process.env.ADMIN_NOTIFICATIONS_TO;
+            if (adminEmailString) {
+              try {
+                const adminEmails = adminEmailString
+                  .split(",")
+                  .map((email) => email.trim())
+                  .filter((email) => email.length > 0);
+
+                if (adminEmails.length > 0) {
+                  // Use Google OAuth email (user.email) for admin notification - the actual Gmail account
+                  const parentEmailForAdmin = user.email || pendingReg.email;
+                  
+                  const adminEmailData = getAdminPlayerRegistrationEmail({
+                    playerFirstName: pendingReg.player_first_name,
+                    playerLastName: pendingReg.player_last_name,
+                    parentName: `${pendingReg.parent_first_name} ${pendingReg.parent_last_name}`.trim(),
+                    parentEmail: parentEmailForAdmin,
+                    parentPhone: "", // Pending registration doesn't store phone
+                    grade: pendingReg.player_grade || "",
+                    gender: pendingReg.player_gender || "",
+                    playerId: player.id,
+                  });
+
+                  // Send email to admin(s)
+                  // If only one admin: sends directly to that email
+                  // If multiple admins: sends to first email, BCC to others
+                  await sendEmail(adminEmails[0], adminEmailData.subject, adminEmailData.html, {
+                    bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
+                  });
+
+                  devLog("Auth callback: Admin notification sent", {
+                    to: adminEmails[0],
+                    bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
+                    totalAdmins: adminEmails.length,
+                  });
+                }
+              } catch (adminEmailError) {
+                // Log but don't block the redirect
+                devError("Auth callback: Failed to send admin notification", adminEmailError);
+              }
+            }
+
             return NextResponse.redirect(
               new URL("/parent/profile?registered=true", requestUrl.origin)
             );

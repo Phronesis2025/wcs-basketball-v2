@@ -1,11 +1,58 @@
 # Registration Flow Changelog
 
-**Date**: November 2, 2025  
-**Change**: Detailed form collection before payment
+**Last Updated**: January 2025  
+**Status**: Production Ready ✅
 
 ---
 
-## ✅ Changes Applied Today
+## 🚀 Version 2.10.3 - Registration Flow Fixes (January 2025)
+
+### ✅ Critical Fixes Applied
+
+1. **Email Routing Fixed** ✅
+   - **Issue**: Resend sandbox only allows sending to account owner email
+   - **Fix**: Updated email routing to send ALL emails to `phronesis700@gmail.com` in dev mode
+   - **File**: `src/lib/email.ts`
+   - **Impact**: Emails now work correctly in development testing
+
+2. **Missing Emails After Registration** ✅
+   - **Issue**: Parent and admin emails not sent after Supabase confirmation
+   - **Fix**: Added merge logic and email sending to `token_hash` handler
+   - **File**: `src/app/auth/callback/route.ts`
+   - **Impact**: Both parent confirmation and admin notification emails now sent
+
+3. **Redirect Issues Fixed** ✅
+   - **Issue**: Redirected to `/registration-ending` instead of `/registration-pending`
+   - **Issue**: Hash fragments (`#`) appearing in redirect URLs
+   - **Fix**: Changed redirects to `/registration-success?player=[name]` and removed hash fragments
+   - **File**: `src/app/auth/callback/route.ts`
+   - **Impact**: Clean redirects without hash fragments
+
+4. **Missing parent_email on Player Records** ✅
+   - **Issue**: Player records created without `parent_email` (required for Stripe)
+   - **Fix**: Added `parent_email: pendingReg.email` to player creation in both handlers
+   - **File**: `src/app/auth/callback/route.ts`
+   - **Impact**: Stripe checkout sessions can now be created successfully
+
+### 🗑️ Removed Components
+
+1. **GuestSignupForm Removed** ✅
+   - Removed `src/components/registration/GuestSignupForm.tsx`
+   - Removed all references from `src/app/register/page.tsx`
+   - Simplified registration flow
+
+2. **Twilio SMS Removed** ✅
+   - Removed Twilio imports and SMS code from `approve-player` API
+   - Removed Twilio imports and SMS code from `register-player` API
+   - No longer needed for notifications
+
+3. **Quick Sign Up Section Removed** ✅
+   - Removed Google OAuth button and sign-in link from registration page
+   - Cleaner, more focused registration experience
+
+---
+
+## 📋 Previous Changes (November 2025)
 
 ### 1. Updated Approval Email Link ✅
 - **File**: `src/app/api/approve-player/route.ts`

@@ -7,7 +7,6 @@ import {
   getAdminPlayerRegistrationEmail,
   getWelcomePendingEmail,
 } from "@/lib/emailTemplates";
-import twilio from "twilio";
 
 export async function POST(req: Request) {
   try {
@@ -210,45 +209,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // Calculate player age for SMS notification
-    let calculatedAge: number | null = null;
-    if (birthdate) {
-      const birthDate = new Date(birthdate);
-      const today = new Date();
-      calculatedAge = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        calculatedAge--;
-      }
-    }
-
-    // Send SMS notification to admin
-    if (
-      process.env.TWILIO_SID &&
-      process.env.TWILIO_AUTH_TOKEN &&
-      process.env.TWILIO_PHONE &&
-      process.env.ADMIN_PHONE
-    ) {
-      try {
-        const twilioClient = twilio(
-          process.env.TWILIO_SID,
-          process.env.TWILIO_AUTH_TOKEN
-        );
-
-        await twilioClient.messages.create({
-          body: `New player pending: ${first_name} ${last_name}${calculatedAge ? ` (Age: ${calculatedAge})` : ""} - Assign team.`,
-          from: process.env.TWILIO_PHONE,
-          to: process.env.ADMIN_PHONE,
-        });
-
-        devLog("register-player: SMS notification sent", {
-          to: process.env.ADMIN_PHONE,
-        });
-      } catch (smsError) {
-        // Log SMS failure but don't block the registration
-        devError("register-player: SMS notification failed", smsError);
-      }
-    }
 
     devLog("register-player OK", { player_id: player.id });
     return NextResponse.json({ success: true, player });

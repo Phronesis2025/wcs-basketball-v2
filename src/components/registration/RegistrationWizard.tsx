@@ -172,6 +172,8 @@ export default function RegistrationWizard({
       setCurrentStep((prev) => (prev + 1) as Step);
       // Re-validate with new schema
       methods.clearErrors();
+      // Scroll to top of page
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -179,6 +181,8 @@ export default function RegistrationWizard({
     if (currentStep > 1) {
       setCurrentStep((prev) => (prev - 1) as Step);
       methods.clearErrors();
+      // Scroll to top of page
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -320,6 +324,11 @@ export default function RegistrationWizard({
 
   const playerBirthdate = watch("player_birthdate");
   const calculatedAge = calculateAge(playerBirthdate || "");
+  
+  // Watch checkbox values for submit button state
+  const coppaConsent = watch("coppa_consent");
+  const waiverSigned = watch("waiver_signed");
+  const bothCheckboxesChecked = coppaConsent && waiverSigned;
 
   return (
     <TooltipProvider>
@@ -611,8 +620,12 @@ export default function RegistrationWizard({
                     <span className="text-white font-semibold">$360</span>
                   </div>
                   <div className="flex justify-between">
+                    <span>Quarterly:</span>
+                    <span className="text-white font-semibold">$90</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span>Monthly:</span>
-                    <span className="text-white font-semibold">$60</span>
+                    <span className="text-white font-semibold">$30</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Other:</span>
@@ -734,7 +747,7 @@ export default function RegistrationWizard({
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || submitted || !isValid}
+                  disabled={loading || submitted || !isValid || !bothCheckboxesChecked}
                   className="flex-1 bg-red text-white font-bold py-3 rounded disabled:opacity-50 hover:bg-red/90 transition-colors min-h-[48px]"
                 >
                   {loading ? "Submitting..." : submitted ? "Submitted!" : "Submit Registration"}

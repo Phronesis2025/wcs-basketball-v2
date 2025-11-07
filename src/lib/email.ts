@@ -29,17 +29,19 @@ export async function sendEmail(
   // Normalize 'to' to an array
   const toArray = Array.isArray(to) ? to : [to];
 
-  // In dev with resend.dev sender → force to your inbox
+  // In dev with resend.dev sender → ALL emails must go to dev inbox (Resend sandbox limitation)
+  // Resend sandbox only allows sending to the account owner's email (phronesis700@gmail.com)
   const isDev = process.env.NODE_ENV !== "production";
   const useSandboxSender = RESEND_FROM.includes("@resend.dev");
   
-  // For dev mode with sandbox, override recipients but keep track of originals
+  // For dev mode with sandbox sender, redirect ALL emails to dev inbox
+  // This is required because Resend sandbox only allows sending to verified account email
   let finalRecipients: string[];
   let finalCc: string[] | undefined;
   let finalBcc: string[] | undefined;
   
   if (isDev && useSandboxSender) {
-    // In dev mode, send to dev email but note original recipients
+    // In dev mode with sandbox, ALL emails go to dev email (Resend requirement)
     finalRecipients = [RESEND_DEV_TO];
     const originalRecipients = [
       ...toArray,
@@ -48,7 +50,7 @@ export async function sendEmail(
     ].join(", ");
     
     // Include the original intended recipients in the body for context (dev only)
-    const wrappedHtml = `<p style="font-size:12px;color:#666">[DEV] Intended recipients: ${originalRecipients}</p>${html}`;
+    const wrappedHtml = `<p style="font-size:12px;color:#666;background:#fff3cd;padding:8px;border-left:3px solid #ffc107;margin-bottom:16px;"><strong>[DEV MODE]</strong> Intended recipients: ${originalRecipients}</p>${html}`;
     html = wrappedHtml;
   } else {
     // Production mode - use actual recipients

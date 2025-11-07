@@ -10,6 +10,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "react-hot-toast";
 import ConditionalFooter from "../components/ConditionalFooter";
 import WebVitalsTracker from "../components/WebVitalsTracker";
+import SignOutLoader from "../components/SignOutLoader";
 
 export const metadata: Metadata = {
   title: "WCS Basketball - Where Champions Start",
@@ -153,10 +154,12 @@ export default function RootLayout({
       </head>
       <body>
         <QueryProvider>
-          <ScrollToTop />
-          <HomepageLayout />
-          {children}
-          <ConditionalFooter />
+          <SignOutLoader>
+            <ScrollToTop />
+            <HomepageLayout />
+            {children}
+            <ConditionalFooter />
+          </SignOutLoader>
           {/* Vercel Analytics for user behavior tracking */}
           <Analytics />
 

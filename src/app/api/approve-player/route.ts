@@ -7,7 +7,6 @@ import {
   getPlayerOnHoldEmail,
   getPlayerRejectedEmail,
 } from "@/lib/emailTemplates";
-import twilio from "twilio";
 
 export async function POST(req: Request) {
   try {
@@ -80,31 +79,71 @@ export async function POST(req: Request) {
       teamName = team?.name || null;
     }
 
-    // Fix: If parent_email is missing, fetch it from parents table
-    if (!updated.parent_email && updated.parent_id) {
+    // Fix: Get the correct parent email address
+    // Priority: 1) users.email (Gmail account), 2) parents.email, 3) players.parent_email
+    let parentEmailAddress: string | null = null;
+    
+    if (updated.parent_id) {
+      // Fetch parent record with user_id
       const { data: parent } = await supabaseAdmin!
         .from("parents")
-        .select("email")
+        .select("email, user_id")
         .eq("id", updated.parent_id)
         .single();
       
-      if (parent?.email) {
-        // Update player record with parent_email
-        await supabaseAdmin!
-          .from("players")
-          .update({ parent_email: parent.email })
-          .eq("id", player_id);
+      if (parent) {
+        // If parent has user_id (Gmail sign-up), get email from users table (the actual Gmail account)
+        if (parent.user_id) {
+          const { data: userData } = await supabaseAdmin!.auth.admin.getUserById(parent.user_id);
+          if (userData?.user?.email) {
+            parentEmailAddress = userData.user.email;
+            devLog("approve-player: Using Gmail account email from users table", {
+              player_id,
+              parent_email: parentEmailAddress,
+              user_id: parent.user_id,
+            });
+          }
+        }
         
-        updated.parent_email = parent.email;
-        devLog("approve-player: Fixed missing parent_email", { 
-          player_id, 
-          parent_email: parent.email 
-        });
+        // Fallback to parents.email if user email not available
+        if (!parentEmailAddress && parent.email) {
+          parentEmailAddress = parent.email;
+          devLog("approve-player: Using email from parents table", {
+            player_id,
+            parent_email: parentEmailAddress,
+          });
+        }
       }
+    }
+    
+    // Fallback to players.parent_email if still not found
+    if (!parentEmailAddress && updated.parent_email) {
+      parentEmailAddress = updated.parent_email;
+      devLog("approve-player: Using email from players table", {
+        player_id,
+        parent_email: parentEmailAddress,
+      });
+    }
+    
+    // Update player record with the correct parent_email if we found one
+    if (parentEmailAddress && parentEmailAddress !== updated.parent_email) {
+      await supabaseAdmin!
+        .from("players")
+        .update({ parent_email: parentEmailAddress })
+        .eq("id", player_id);
+      
+      updated.parent_email = parentEmailAddress;
+      devLog("approve-player: Updated player.parent_email", {
+        player_id,
+        parent_email: parentEmailAddress,
+      });
     }
 
     // Send appropriate email based on status
-    if (updated.parent_email) {
+    // Use the resolved parentEmailAddress (Gmail account email for Gmail sign-ups)
+    const emailToUse = parentEmailAddress || updated.parent_email;
+    
+    if (emailToUse) {
       if (status === "approved") {
         // Generate a magic link that redirects to checkout page
         // This ensures the parent is authenticated when they click the link
@@ -128,9 +167,10 @@ export async function POST(req: Request) {
         const checkoutUrl = `${baseUrl}/checkout/${updated.id}`;
         
         // Generate magic link with redirect to checkout
+        // Use the resolved email address (Gmail account for Gmail sign-ups)
         const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'magiclink',
-          email: updated.parent_email,
+          email: emailToUse,
           options: {
             redirectTo: checkoutUrl,
           },
@@ -147,7 +187,7 @@ export async function POST(req: Request) {
           });
 
           await sendEmail(
-            updated.parent_email,
+            emailToUse,
             approvalEmailData.subject,
             approvalEmailData.html
           );
@@ -162,13 +202,13 @@ export async function POST(req: Request) {
           });
 
           await sendEmail(
-            updated.parent_email,
+            emailToUse,
             approvalEmailData.subject,
             approvalEmailData.html
           );
           
           devLog("approve-player: Magic link generated and sent", {
-            email: updated.parent_email,
+            email: emailToUse,
             redirectTo: checkoutUrl,
           });
         }
@@ -179,7 +219,7 @@ export async function POST(req: Request) {
         });
 
         await sendEmail(
-          updated.parent_email,
+          emailToUse,
           onHoldEmailData.subject,
           onHoldEmailData.html
         );
@@ -190,49 +230,13 @@ export async function POST(req: Request) {
         });
 
         await sendEmail(
-          updated.parent_email,
+          emailToUse,
           rejectedEmailData.subject,
           rejectedEmailData.html
         );
       }
     }
 
-    // Send SMS notification to admin
-    if (
-      process.env.TWILIO_SID &&
-      process.env.TWILIO_AUTH_TOKEN &&
-      process.env.TWILIO_PHONE &&
-      process.env.ADMIN_PHONE
-    ) {
-      try {
-        const twilioClient = twilio(
-          process.env.TWILIO_SID,
-          process.env.TWILIO_AUTH_TOKEN
-        );
-
-        const statusMessage =
-          status === "approved"
-            ? "approved"
-            : status === "on_hold"
-            ? `on hold: ${on_hold_reason || "pending review"}`
-            : status === "rejected"
-            ? `rejected: ${rejection_reason || "not specified"}`
-            : status;
-
-        await twilioClient.messages.create({
-          body: `Player ${statusMessage}: ${updated.name} - ${teamName ? `Team: ${teamName}` : "Action needed"}`,
-          from: process.env.TWILIO_PHONE,
-          to: process.env.ADMIN_PHONE,
-        });
-
-        devLog("approve-player: SMS notification sent", {
-          to: process.env.ADMIN_PHONE,
-          status,
-        });
-      } catch (smsError) {
-        devError("approve-player: SMS notification failed", smsError);
-      }
-    }
 
     devLog("approve-player OK", { player_id, status });
     return NextResponse.json({
