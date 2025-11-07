@@ -2,6 +2,8 @@
 
 **Purpose**: Enable sending emails to real recipients in production (not just sandbox)
 
+**Quick Start**: If you purchased `wcsbasketball.site` from Namecheap, see `docs/SETUP_WCSBASKETBALL_SITE.md` for step-by-step instructions specific to your setup.
+
 ---
 
 ## 🎯 The Problem
