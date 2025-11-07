@@ -15,6 +15,10 @@
 2. **Add Your Domain**
    - Click **"Add Domain"** button
    - Enter: `wcsbasketball.site`
+     - ⚠️ **Important**: Enter ONLY the domain name
+     - ❌ **Don't include: `http://`, `www.`, or trailing `/`**
+     - ✅ **Correct**: `wcsbasketball.site`
+     - ❌ **Wrong**: `http://www.wcsbasketball.site/` or `www.wcsbasketball.site`
    - Click **"Add"**
 
 3. **Get DNS Records**
