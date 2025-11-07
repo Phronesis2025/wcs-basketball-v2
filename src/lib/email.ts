@@ -29,19 +29,20 @@ export async function sendEmail(
   // Normalize 'to' to an array
   const toArray = Array.isArray(to) ? to : [to];
 
-  // In dev with resend.dev sender → ALL emails must go to dev inbox (Resend sandbox limitation)
-  // Resend sandbox only allows sending to the account owner's email (phronesis700@gmail.com)
-  const isDev = process.env.NODE_ENV !== "production";
+  // Resend sandbox limitation: @resend.dev sender only allows sending to account owner email
+  // Solution: Verify a domain in Resend and use that domain in RESEND_FROM
   const useSandboxSender = RESEND_FROM.includes("@resend.dev");
+  const isDev = process.env.NODE_ENV !== "production";
   
-  // For dev mode with sandbox sender, redirect ALL emails to dev inbox
-  // This is required because Resend sandbox only allows sending to verified account email
+  // If using sandbox sender (@resend.dev), ALL emails must go to dev inbox
+  // This applies to both dev and production until domain is verified
   let finalRecipients: string[];
   let finalCc: string[] | undefined;
   let finalBcc: string[] | undefined;
   
-  if (isDev && useSandboxSender) {
-    // In dev mode with sandbox, ALL emails go to dev email (Resend requirement)
+  if (useSandboxSender) {
+    // Sandbox mode: ALL emails go to dev email (Resend requirement)
+    // This applies in both dev and production until domain is verified
     finalRecipients = [RESEND_DEV_TO];
     const originalRecipients = [
       ...toArray,
@@ -49,11 +50,12 @@ export async function sendEmail(
       ...(options?.bcc ? (Array.isArray(options.bcc) ? options.bcc : [options.bcc]) : []),
     ].join(", ");
     
-    // Include the original intended recipients in the body for context (dev only)
-    const wrappedHtml = `<p style="font-size:12px;color:#666;background:#fff3cd;padding:8px;border-left:3px solid #ffc107;margin-bottom:16px;"><strong>[DEV MODE]</strong> Intended recipients: ${originalRecipients}</p>${html}`;
+    // Include the original intended recipients in the body for context
+    const wrappedHtml = `<p style="font-size:12px;color:#666;background:#fff3cd;padding:8px;border-left:3px solid #ffc107;margin-bottom:16px;"><strong>[SANDBOX MODE]</strong> Domain not verified. Intended recipients: ${originalRecipients}<br>To send to real recipients, verify a domain in Resend and update RESEND_FROM. See docs/RESEND_DOMAIN_VERIFICATION_GUIDE.md</p>${html}`;
     html = wrappedHtml;
   } else {
-    // Production mode - use actual recipients
+    // Verified domain mode: use actual recipients
+    // This works in both dev and production once domain is verified
     finalRecipients = toArray;
     finalCc = options?.cc ? (Array.isArray(options.cc) ? options.cc : [options.cc]) : undefined;
     finalBcc = options?.bcc ? (Array.isArray(options.bcc) ? options.bcc : [options.bcc]) : undefined;
@@ -87,13 +89,28 @@ export async function sendEmail(
 
     if (!resp.ok) {
       const text = await resp.text();
-      devError("sendEmail failed", text);
+      const errorData = JSON.parse(text || "{}");
+      
+      // If it's a validation error about sandbox, log it but don't fail completely
+      // The email routing should have already handled this, but just in case
+      if (errorData.name === "validation_error" && errorData.message?.includes("testing emails")) {
+        devError("sendEmail: Resend sandbox limitation - emails must go to account owner", {
+          error: errorData.message,
+          attemptedRecipients: toArray,
+          routedTo: finalRecipients,
+          suggestion: "Verify a domain in Resend and update RESEND_FROM to use verified domain",
+        });
+        // Don't throw - email routing should have already redirected to dev inbox
+      } else {
+        devError("sendEmail failed", text);
+      }
     } else {
       devLog("sendEmail OK", {
         to: finalRecipients,
         cc: finalCc,
         bcc: finalBcc,
         subject,
+        sandboxMode: useSandboxSender,
       });
     }
   } catch (e) {
