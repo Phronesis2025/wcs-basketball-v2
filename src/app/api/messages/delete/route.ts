@@ -44,6 +44,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    // Check if message has replies (for non-admin users)
+    if (!isAdmin && isAuthor) {
+      const { count, error: replyError } = await (adminClient ?? supabase)
+        .from("coach_message_replies")
+        .select("*", { count: "exact", head: true })
+        .eq("message_id", messageId)
+        .is("deleted_at", null);
+
+      if (!replyError && count && count > 0) {
+        return NextResponse.json(
+          { 
+            error: `Cannot delete message with ${count} ${count === 1 ? "reply" : "replies"}. Only admins can delete messages that have replies.`,
+            replyCount: count 
+          },
+          { status: 400 }
+        );
+      }
+    }
+
     // Attempt admin delete first if admin client is available and user is admin
     if (adminClient && isAdmin) {
       const { error: adminErr } = await adminClient

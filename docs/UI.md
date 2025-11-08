@@ -1,6 +1,6 @@
 # WCSv2.0 UI Components
 
-**Version**: v2.10.5  
+**Version**: v2.10.6  
 **Last Updated**: January 2025  
 **Security Score**: 9/10 (Excellent) 🔒  
 **Live URL**: https://wcs-basketball-v2.vercel.app
@@ -136,7 +136,18 @@
     - Circle automatically hides when all mentions are marked as read
     - Real-time updates when mentions are marked as read in message board
     - Removed previous badge from Messages section for cleaner UI
+    - Unread mentions display shows actual reply/message content with parent message context (v2.10.6)
+  - **Message Deletion Protection** (v2.10.6):
+    - Regular users cannot delete messages that have replies
+    - Delete button disabled and grayed out for messages with replies
+    - Tooltip explains restriction
+    - Admins can delete any message, even with replies (warning shown in confirmation)
+    - Server-side validation prevents unauthorized deletions
 - **Message Features**: Create, edit, delete, pin messages and replies
+- **Refresh Button** (v2.10.6):
+  - Refresh icon button next to "Club Management" page title
+  - Refreshes all data including messages and unread mentions
+  - Message board automatically updates when refresh is clicked
 - **Input Sanitization**: Enhanced security with XSS protection
 - **Mobile Optimized**: Fully responsive interface for all devices
 - **Visual Indicators**: Pinned messages, edited status, real-time connection status

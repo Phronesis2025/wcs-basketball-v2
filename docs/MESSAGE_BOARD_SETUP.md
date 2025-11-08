@@ -31,7 +31,7 @@ After running the migration, you should see these new tables in your Supabase da
 - ✅ Create new messages (1000 character limit)
 - ✅ Reply to messages (500 character limit)
 - ✅ Edit your own messages and replies
-- ✅ Delete your own messages and replies
+- ✅ Delete your own messages and replies (with restrictions - v2.10.6)
 - ✅ Real-time updates across all users
 - ✅ Admin pin/unpin functionality
 - ✅ Soft delete (messages are hidden, not permanently deleted)
@@ -43,6 +43,15 @@ After running the migration, you should see these new tables in your Supabase da
   - Clickable circle navigates to Messages section and scrolls to message board
   - Circle automatically hides when all mentions are marked as read
   - Real-time count updates when mentions are marked as read
+- ✅ **Message Deletion Protection** (v2.10.6):
+  - Regular users cannot delete messages that have replies
+  - Prevents accidental loss of conversation context
+  - Admins can delete any message, even with replies
+  - Clear visual feedback (disabled button, tooltips, warnings)
+- ✅ **Refresh Functionality** (v2.10.6):
+  - Refresh button in Club Management page header
+  - Refreshes all data including messages and unread mentions
+  - Message board automatically updates when refresh is clicked
 
 ## Troubleshooting
 

@@ -92,6 +92,7 @@ function ClubManagementContent() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [unreadMentions, setUnreadMentions] = useState(0);
   const [initialProfileSection, setInitialProfileSection] = useState<string | null>(null);
+  const [messageBoardRefreshTrigger, setMessageBoardRefreshTrigger] = useState(0);
   // Stripe/Payments metrics
   const [membershipFees, setMembershipFees] = useState<number>(0);
   const [pendingDues, setPendingDues] = useState<number>(0);
@@ -229,6 +230,7 @@ function ClubManagementContent() {
   const [errorLogs, setErrorLogs] = useState<ErrorLog[]>([]);
   const [errorStats, setErrorStats] = useState<ErrorStatistics | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Set up auth state listener
   useEffect(() => {
@@ -1751,9 +1753,69 @@ function ClubManagementContent() {
       <div className="container mx-auto px-4 py-8">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-2 text-center uppercase">
-            Club Management
-          </h1>
+          <div className="flex items-center justify-center mb-2">
+            <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold uppercase">
+              Club Management
+            </h1>
+            <button
+              onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  // Load user data first to ensure userId is available
+                  await loadUserData();
+                  // Get userId after loadUserData completes
+                  const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+                  
+                  // Then refresh management data, messages, and unread mentions in parallel
+                  await Promise.all([
+                    fetchManagementData(),
+                    (async () => {
+                      try {
+                        const messagesData = await getMessages();
+                        setMessages(messagesData || []);
+                      } catch (error) {
+                        devError("Error refreshing messages:", error);
+                      }
+                    })(),
+                    (async () => {
+                      if (currentUserId) {
+                        try {
+                          const { getUnreadMentionCount } = await import("@/lib/messageActions");
+                          const count = await getUnreadMentionCount(currentUserId);
+                          setUnreadMentions(count);
+                        } catch (error) {
+                          devError("Error refreshing unread mentions count:", error);
+                        }
+                      }
+                    })(),
+                  ]);
+                  // Trigger MessageBoard refresh
+                  setMessageBoardRefreshTrigger(prev => prev + 1);
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }}
+              disabled={isRefreshing}
+              className="ml-4 p-2 hover:bg-gray-700 disabled:opacity-50 rounded-lg transition-colors duration-200"
+              title="Refresh data"
+            >
+              <svg
+                className={`w-5 h-5 text-white ${
+                  isRefreshing ? "animate-spin" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+          </div>
           {userFirstName && userLastName && (
             <p className="text-white text-xl font-bebas font-bold mb-2 text-center">
               <span className="relative inline-block">
@@ -2717,6 +2779,7 @@ function ClubManagementContent() {
             userName={userName}
             isAdmin={isAdmin}
             initialSection={initialProfileSection}
+            messageBoardRefreshTrigger={messageBoardRefreshTrigger}
             onMentionRead={() => {
               // Refresh unread mentions count when a mention is marked as read
               if (userId) {

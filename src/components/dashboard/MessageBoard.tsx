@@ -25,6 +25,7 @@ interface MessageBoardProps {
   userName: string;
   isAdmin: boolean;
   onMentionRead?: () => void;
+  refreshTrigger?: number;
 }
 
 export default function MessageBoard({
@@ -32,6 +33,7 @@ export default function MessageBoard({
   userName,
   isAdmin,
   onMentionRead,
+  refreshTrigger,
 }: MessageBoardProps) {
   // Debug: Log isAdmin value
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function MessageBoard({
     id: string;
     type: "message" | "reply";
   } | null>(null);
+  const [deleteTargetReplyCount, setDeleteTargetReplyCount] = useState<number>(0);
   const [showProfanityModal, setShowProfanityModal] = useState(false);
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
   const [unreadMentions, setUnreadMentions] = useState<any[]>([]);
@@ -167,6 +170,14 @@ export default function MessageBoard({
       loadUnreadMentions();
     }
   }, [userId, loadMessages, loadUnreadMentions]);
+
+  // Refresh when refreshTrigger changes
+  useEffect(() => {
+    if (userId && refreshTrigger !== undefined && refreshTrigger > 0) {
+      loadMessages();
+      loadUnreadMentions();
+    }
+  }, [refreshTrigger, userId, loadMessages, loadUnreadMentions]);
 
   // Debug logging for message data
   useEffect(() => {
@@ -494,7 +505,10 @@ export default function MessageBoard({
   };
 
   const handleDeleteMessage = (messageId: string) => {
+    const messageReplies = replies[messageId] || [];
+    const replyCount = messageReplies.length;
     setDeleteTarget({ id: messageId, type: "message" });
+    setDeleteTargetReplyCount(replyCount);
     setShowDeleteConfirm(true);
   };
 
@@ -506,11 +520,26 @@ export default function MessageBoard({
       devLog("Attempting to delete:", { deleteTarget, userId, isAdmin });
 
       if (deleteTarget.type === "message") {
-        await deleteMessage(deleteTarget.id, userId, isAdmin);
-        toast.success("Message deleted successfully", {
-          duration: 3000,
-          position: "top-right",
-        });
+        try {
+          await deleteMessage(deleteTarget.id, userId, isAdmin);
+          toast.success("Message deleted successfully", {
+            duration: 3000,
+            position: "top-right",
+          });
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : "Failed to delete message";
+          // Check if error is about replies
+          if (errorMessage.includes("replies") || errorMessage.includes("reply")) {
+            toast.error(errorMessage, {
+              duration: 5000,
+              position: "top-right",
+            });
+            // Don't close modal, let user see the error
+            setSubmitting(false);
+            return;
+          }
+          throw error; // Re-throw other errors
+        }
       } else {
         await deleteReply(deleteTarget.id, userId, isAdmin);
         toast.success("Reply deleted successfully", {
@@ -522,21 +551,24 @@ export default function MessageBoard({
       devLog("Deleted successfully, refreshing messages...");
       await loadMessages();
       devLog("Messages refreshed after deletion");
+      setShowDeleteConfirm(false);
+      setDeleteTarget(null);
+      setDeleteTargetReplyCount(0);
     } catch (error) {
       devError("Error deleting:", error);
-      toast.error(`Failed to delete ${deleteTarget.type}. Please try again.`, {
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete";
+      toast.error(errorMessage, {
         duration: 4000,
         position: "top-right",
       });
     } finally {
       setSubmitting(false);
-      setShowDeleteConfirm(false);
-      setDeleteTarget(null);
     }
   };
 
   const handleDeleteReply = (replyId: string) => {
     setDeleteTarget({ id: replyId, type: "reply" });
+    setDeleteTargetReplyCount(0);
     setShowDeleteConfirm(true);
   };
 
@@ -880,9 +912,20 @@ export default function MessageBoard({
 
                 <div className="space-y-3">
                   {userMentions.map((mention) => {
-                    const messageData =
-                      mention.coach_messages || mention.coach_message_replies;
                     const isReply = !!mention.reply_id;
+                    // For replies, get the reply data; for messages, get the message data
+                    const replyData = mention.coach_message_replies;
+                    const messageData = mention.coach_messages;
+                    const parentMessage = replyData?.coach_messages;
+                    
+                    // Get the actual content that mentions the user
+                    // If it's a reply, use the reply content; if it's a message, use the message content
+                    const actualContent = isReply 
+                      ? (replyData?.content || "")
+                      : (messageData?.content || "");
+                    const authorName = isReply
+                      ? (replyData?.author_name || "")
+                      : (messageData?.author_name || "");
 
                     return (
                       <div
@@ -896,22 +939,37 @@ export default function MessageBoard({
                             className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
                           />
                           <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-2">
                               <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                                {messageData?.author_name}
+                                {authorName}
                               </span>
                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {isReply ? "replied" : "posted"}
+                                {isReply ? "replied to you" : "mentioned you in a post"}
                               </span>
                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {new Date(
+                                • {new Date(
                                   mention.mentioned_at
                                 ).toLocaleDateString()}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                              {renderMessageContent(messageData?.content || "")}
-                            </p>
+                            {/* Show parent message context if it's a reply */}
+                            {isReply && parentMessage && (
+                              <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-900 rounded text-xs border-l-2 border-gray-300 dark:border-gray-600">
+                                <div className="text-gray-600 dark:text-gray-400 mb-1">
+                                  <span className="font-semibold">{parentMessage.author_name}</span>
+                                  {" "}posted:
+                                </div>
+                                <p className="text-gray-700 dark:text-gray-300 italic">
+                                  {renderMessageContent(parentMessage.content || "")}
+                                </p>
+                              </div>
+                            )}
+                            {/* Show the actual reply/message that mentions the user */}
+                            <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border-l-2 border-blue-400 dark:border-blue-500">
+                              <p className="text-sm text-gray-900 dark:text-white font-medium">
+                                {renderMessageContent(actualContent)}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1051,9 +1109,18 @@ export default function MessageBoard({
                           <button
                             type="button"
                             onClick={() => handleDeleteMessage(message.id)}
-                            className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
+                            className={`p-2 sm:p-1 rounded-md transition-colors ${
+                              !isAdmin && messageReplies.length > 0
+                                ? "text-gray-300 cursor-not-allowed"
+                                : "text-gray-400 hover:text-red-600 hover:bg-red-50"
+                            }`}
                             aria-label="Delete message"
-                            disabled={submitting}
+                            disabled={submitting || (!isAdmin && messageReplies.length > 0)}
+                            title={
+                              !isAdmin && messageReplies.length > 0
+                                ? "Cannot delete message with replies. Only admins can delete messages that have replies."
+                                : "Delete message"
+                            }
                           >
                             <svg
                               className="w-5 h-5 sm:w-4 sm:h-4"
@@ -1292,6 +1359,18 @@ export default function MessageBoard({
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Delete {deleteTarget?.type === "message" ? "Message" : "Reply"}
               </h3>
+              {deleteTarget?.type === "message" && deleteTargetReplyCount > 0 && (
+                <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-sm text-yellow-800 font-semibold">
+                    ⚠️ This message has {deleteTargetReplyCount} {deleteTargetReplyCount === 1 ? "reply" : "replies"}
+                  </p>
+                  {!isAdmin && (
+                    <p className="text-xs text-yellow-700 mt-1">
+                      Only admins can delete messages with replies.
+                    </p>
+                  )}
+                </div>
+              )}
               <p className="text-sm text-gray-500 mb-6">
                 This action cannot be undone. The {deleteTarget?.type} will be
                 permanently removed from the message board.

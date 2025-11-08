@@ -639,7 +639,14 @@ export async function getUnreadMentionsForUser(userId: string) {
           author_id,
           author_name,
           created_at,
-          message_id
+          message_id,
+          coach_messages!message_id (
+            id,
+            content,
+            author_id,
+            author_name,
+            created_at
+          )
         )
       `
       )

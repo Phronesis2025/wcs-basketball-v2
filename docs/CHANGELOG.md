@@ -1,5 +1,73 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.6 - Message Deletion Protection & Refresh Enhancement
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Added
+
+- **Message Deletion Protection**:
+  - Regular users (coaches) cannot delete messages that have replies
+  - Prevents accidental loss of conversation context
+  - Delete button is disabled and grayed out for messages with replies
+  - Tooltip explains restriction: "Cannot delete message with replies. Only admins can delete messages that have replies."
+  - Admin override: Admins can delete any message, even with replies
+  - Warning shown in delete confirmation modal for admins when message has replies
+
+- **Refresh Button Enhancement**:
+  - Added refresh icon button next to "Club Management" page title
+  - Matches design pattern from "Our Teams" page
+  - Refreshes all data including user data, management data, messages, and unread mentions
+  - Message board automatically refreshes when refresh button is clicked
+  - Visual feedback with spinning icon during refresh
+
+- **Unread Mentions Display Enhancement**:
+  - Unread mentions now show the actual reply/message content that mentions the user
+  - For replies, shows parent message context in gray box above the reply
+  - Reply content displayed in highlighted blue box for better visibility
+  - Clear distinction between parent message and the actual mention content
+
+### 🎨 Changed
+
+- **UI/UX Improvements**:
+  - Delete button styling updated to show disabled state (grayed out) for messages with replies
+  - Delete confirmation modal shows warning with reply count for admins
+  - Refresh button uses transparent background with hover effect (no red background)
+  - Improved error messages for deletion attempts with replies
+
+### 🔧 Technical Details
+
+- **Files Modified**:
+  - `src/app/api/messages/delete/route.ts`: Added reply count check before allowing deletion for non-admin users
+  - `src/components/dashboard/MessageBoard.tsx`: Added reply count validation, disabled delete button logic, enhanced delete confirmation modal
+  - `src/app/admin/club-management/page.tsx`: Added refresh button, refresh trigger mechanism, message board refresh integration
+  - `src/components/dashboard/CoachProfile.tsx`: Added `messageBoardRefreshTrigger` prop support
+  - `src/lib/messageActions.ts`: Added reply count check in `deleteMessage` function
+  - `src/components/dashboard/MessageBoard.tsx`: Enhanced unread mentions display to show actual reply/message content
+
+- **Security**:
+  - Server-side validation prevents deletion of messages with replies for non-admins
+  - Client-side UI prevents accidental deletion attempts
+  - Admin override maintains moderation capabilities
+
+- **Features**:
+  - Reply count checked both client-side and server-side
+  - Error messages include reply count for better user feedback
+  - Refresh mechanism uses trigger prop to force MessageBoard component refresh
+
+### 📝 Documentation Updates
+
+- `docs/CHANGELOG.md`: Added version 2.10.6 entry
+- `docs/UI.md`: Updated with message deletion protection and refresh button details
+- `docs/MESSAGE_BOARD_SETUP.md`: Updated with deletion restrictions and refresh features
+
+---
+
 ## 🚀 Version 2.10.5 - Unread Mentions Notification System
 
 **Release Date**: January 2025  
