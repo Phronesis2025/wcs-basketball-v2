@@ -34,6 +34,15 @@ export async function sendEmail(
   const useSandboxSender = RESEND_FROM.includes("@resend.dev");
   const isDev = process.env.NODE_ENV !== "production";
   
+  // Log the RESEND_FROM value for debugging (only in production to help troubleshoot)
+  if (!isDev) {
+    devLog("sendEmail: RESEND_FROM value", { 
+      RESEND_FROM, 
+      useSandboxSender,
+      isProduction: !isDev 
+    });
+  }
+  
   // If using sandbox sender (@resend.dev), ALL emails must go to dev inbox
   // This applies to both dev and production until domain is verified
   let finalRecipients: string[];
