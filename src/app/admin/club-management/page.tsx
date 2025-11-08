@@ -91,6 +91,7 @@ function ClubManagementContent() {
   const [userId, setUserId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [unreadMentions, setUnreadMentions] = useState(0);
+  const [initialProfileSection, setInitialProfileSection] = useState<string | null>(null);
   // Stripe/Payments metrics
   const [membershipFees, setMembershipFees] = useState<number>(0);
   const [pendingDues, setPendingDues] = useState<number>(0);
@@ -787,6 +788,17 @@ function ClubManagementContent() {
 
     fetchUnreadMentions();
   }, [userId, messages]); // Refresh when messages change
+
+  // Reset initialProfileSection after profile tab is opened
+  useEffect(() => {
+    if (activeTab === "profile" && initialProfileSection) {
+      // Small delay to ensure CoachProfile has processed the prop
+      const timer = setTimeout(() => {
+        setInitialProfileSection(null);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activeTab, initialProfileSection]);
 
   // Handlers
   const toggleSection = (section: string) => {
@@ -1744,7 +1756,50 @@ function ClubManagementContent() {
           </h1>
           {userFirstName && userLastName && (
             <p className="text-white text-xl font-bebas font-bold mb-2 text-center">
-              {userFirstName} {userLastName}
+              <span className="relative inline-block">
+                {userFirstName} {userLastName}
+                {unreadMentions > 0 && (
+                  <span
+                    className="absolute top-[40%] -translate-y-1/2 left-full ml-3 h-[1.5em] w-[1.5em] bg-[red] rounded-full cursor-pointer z-10 flex items-center justify-center text-white text-xs font-bold"
+                    onClick={() => {
+                      setInitialProfileSection("messages");
+                      handleTabChange("profile");
+                      // Scroll to message board after messages section is rendered
+                      // Use multiple attempts to ensure the section is open
+                      const scrollToMessages = () => {
+                        const messagesSection = document.getElementById("messages-section");
+                        const messageBoard = document.getElementById("message-board-container");
+                        const target = messageBoard || messagesSection;
+                        
+                        if (target) {
+                          // Scroll to the top of the message board
+                          target.scrollIntoView({ behavior: "smooth", block: "start" });
+                          // Also scroll window to top with offset
+                          const rect = target.getBoundingClientRect();
+                          window.scrollTo({
+                            top: window.scrollY + rect.top - 20,
+                            behavior: "smooth"
+                          });
+                        } else {
+                          // Retry if section not found yet (max 10 attempts = 1 second)
+                          if (scrollToMessages.attempts === undefined) {
+                            scrollToMessages.attempts = 0;
+                          }
+                          scrollToMessages.attempts++;
+                          if (scrollToMessages.attempts < 10) {
+                            setTimeout(scrollToMessages, 100);
+                          }
+                        }
+                      };
+                      // Start scrolling after a delay to allow tab and section to render
+                      setTimeout(scrollToMessages, 300);
+                    }}
+                    title={`${unreadMentions} unread mention${unreadMentions !== 1 ? "s" : ""}`}
+                  >
+                    {unreadMentions}
+                  </span>
+                )}
+              </span>
             </p>
           )}
           <p className="text-blue-400 text-xl font-bebas mb-8 text-center italic">
@@ -2661,6 +2716,15 @@ function ClubManagementContent() {
             userEmail={userEmail}
             userName={userName}
             isAdmin={isAdmin}
+            initialSection={initialProfileSection}
+            onMentionRead={() => {
+              // Refresh unread mentions count when a mention is marked as read
+              if (userId) {
+                getUnreadMentionCount(userId).then((count) => {
+                  setUnreadMentions(count);
+                });
+              }
+            }}
           />
         )}
 

@@ -44,23 +44,39 @@ export async function POST(request: NextRequest) {
     }
 
     // Attempt admin delete first if admin client is available and user is admin
-    if (supabaseAdmin && isAdmin) {
-      const { error: adminError } = await supabaseAdmin
+    if (isAdmin) {
+      if (!supabaseAdmin) {
+        devError("[API] Admin delete attempted but admin client not configured");
+        return NextResponse.json(
+          { error: "Admin delete failed - admin client not configured" },
+          { status: 500 }
+        );
+      }
+
+      // Use admin client to bypass RLS for admin deletes
+      const { data: adminData, error: adminError } = await supabaseAdmin
         .from("coach_message_replies")
         .update({ deleted_at: new Date().toISOString() })
-        .eq("id", replyId);
+        .eq("id", replyId)
+        .select();
       
       if (!adminError) {
-        // Admin delete succeeded
+        devLog("[API] Admin delete succeeded:", { replyId, updated: adminData });
         return NextResponse.json({ success: true });
       }
       
       devError("[API] Admin delete failed:", adminError);
-      // Fall through to check if we can use fallback
+      return NextResponse.json(
+        { 
+          error: "Failed to delete reply", 
+          details: adminError.message 
+        },
+        { status: 500 }
+      );
     }
 
     // Fallback: RLS-safe author-owned update via anon client (only for authors)
-    if (isAuthor && !isAdmin) {
+    if (isAuthor) {
       const { error: rlsError } = await supabase
         .from("coach_message_replies")
         .update({ deleted_at: new Date().toISOString() })
@@ -73,21 +89,6 @@ export async function POST(request: NextRequest) {
 
       devError("[API] Fallback delete reply failed:", rlsError);
       return NextResponse.json({ error: rlsError.message }, { status: 500 });
-    }
-
-    // If we reach here and isAdmin is true but admin client failed or doesn't exist
-    if (isAdmin) {
-      if (!supabaseAdmin) {
-        return NextResponse.json(
-          { error: "Admin delete failed - admin client not configured" },
-          { status: 500 }
-        );
-      }
-      // Admin client exists but delete failed
-      return NextResponse.json(
-        { error: "Admin delete failed - please try again" },
-        { status: 500 }
-      );
     }
 
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

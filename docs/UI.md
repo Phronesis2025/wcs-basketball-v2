@@ -1,6 +1,6 @@
 # WCSv2.0 UI Components
 
-**Version**: v2.10.1  
+**Version**: v2.10.5  
 **Last Updated**: January 2025  
 **Security Score**: 9/10 (Excellent) 🔒  
 **Live URL**: https://wcs-basketball-v2.vercel.app
@@ -127,8 +127,15 @@
   - Resolved TypeScript build errors with proper JSX compatibility
   - Enhanced user experience by maintaining scroll position during interactions
 - **Mobile UI Improvements (v2.9.6)**:
-  - Unread badge text now responsive: shows `"{count} unread"` on mobile, `"{count} unread mention(s)"` on desktop/tablet
-  - Badge size optimized for mobile view with better visual balance
+  - **Unread Mentions Notification System** (v2.10.5):
+    - Toast notification appears when admin/coach logs in or opens club management page with unread mentions
+    - Red circle indicator with unread count displayed next to user's name in club management header
+    - Circle positioned in upper right of user name, horizontally aligned
+    - Circle shows unread mention count in white text, centered inside (size: 1.5em)
+    - Circle is clickable and navigates to Profile tab, opens Messages section, and scrolls to message board
+    - Circle automatically hides when all mentions are marked as read
+    - Real-time updates when mentions are marked as read in message board
+    - Removed previous badge from Messages section for cleaner UI
 - **Message Features**: Create, edit, delete, pin messages and replies
 - **Input Sanitization**: Enhanced security with XSS protection
 - **Mobile Optimized**: Fully responsive interface for all devices

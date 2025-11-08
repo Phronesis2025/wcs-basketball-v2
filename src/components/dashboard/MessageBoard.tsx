@@ -24,12 +24,14 @@ interface MessageBoardProps {
   userId: string;
   userName: string;
   isAdmin: boolean;
+  onMentionRead?: () => void;
 }
 
 export default function MessageBoard({
   userId,
   userName,
   isAdmin,
+  onMentionRead,
 }: MessageBoardProps) {
   // Debug: Log isAdmin value
   useEffect(() => {
@@ -139,6 +141,11 @@ export default function MessageBoard({
 
         // Reload messages to update parent component count
         loadMessages();
+        
+        // Notify parent component to refresh unread mentions count
+        if (onMentionRead) {
+          onMentionRead();
+        }
       } else {
         toast.error("Failed to mark mention as read", {
           duration: 3000,

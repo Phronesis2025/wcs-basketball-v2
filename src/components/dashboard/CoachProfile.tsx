@@ -56,6 +56,8 @@ interface CoachProfileProps {
   userEmail: string | null;
   userName: string | null;
   isAdmin: boolean;
+  initialSection?: string | null;
+  onMentionRead?: () => void;
 }
 
 export default function CoachProfile({
@@ -63,6 +65,8 @@ export default function CoachProfile({
   userEmail,
   userName,
   isAdmin,
+  initialSection,
+  onMentionRead,
 }: CoachProfileProps) {
   // Debug: Log isAdmin prop received
   useEffect(() => {
@@ -174,6 +178,13 @@ export default function CoachProfile({
 
     fetchMessages();
   }, [userId]);
+
+  // Handle initialSection prop to navigate to specific section
+  useEffect(() => {
+    if (initialSection && initialSection !== activeSection) {
+      setActiveSection(initialSection);
+    }
+  }, [initialSection, activeSection]);
 
   // Fetch resources when resources section is active
   useEffect(() => {
@@ -990,7 +1001,7 @@ export default function CoachProfile({
 
             {/* Messages Section */}
             {activeSection === "messages" && (
-              <div>
+              <div id="messages-section">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-2xl font-bebas text-white uppercase">
                     Coach Message Board
@@ -1005,15 +1016,29 @@ export default function CoachProfile({
                   )}
                 </div>
 
-                <MessageBoard
-                  userId={userId || ""}
-                  userName={
-                    (profileData && `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim()) ||
-                    userName ||
-                    "Coach"
-                  }
-                  isAdmin={isAdmin}
-                />
+                <div id="message-board-container">
+                  <MessageBoard
+                    userId={userId || ""}
+                    userName={
+                      (profileData && `${profileData.first_name || ""} ${profileData.last_name || ""}`.trim()) ||
+                      userName ||
+                      "Coach"
+                    }
+                    isAdmin={isAdmin}
+                    onMentionRead={() => {
+                      // Refresh local unread mentions count
+                      if (userId) {
+                        getUnreadMentionCount(userId).then((count) => {
+                          setUnreadMentions(count);
+                        });
+                      }
+                      // Notify parent component
+                      if (onMentionRead) {
+                        onMentionRead();
+                      }
+                    }}
+                  />
+                </div>
               </div>
             )}
 

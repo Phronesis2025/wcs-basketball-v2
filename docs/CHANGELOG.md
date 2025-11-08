@@ -1,5 +1,68 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.5 - Unread Mentions Notification System
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Added
+
+- **Unread Mentions Notification System**:
+  - Added toast notification when admin/coach logs in or opens club management page with unread mentions
+  - Toast shows count of unread mentions (e.g., "You have 2 unread mention(s)")
+  - Toast appears once per session to avoid duplicate notifications
+  - Red circle indicator with unread count displayed next to user's name in club management header
+  - Circle positioned in upper right of user name, horizontally aligned
+  - Circle shows unread mention count in white text, centered inside
+  - Circle is clickable and navigates to Profile tab, opens Messages section, and scrolls to message board
+  - Circle automatically hides when all mentions are marked as read
+  - Real-time updates when mentions are marked as read in message board
+
+- **Navigation Enhancements**:
+  - Clicking red circle navigates from any tab to Profile tab
+  - Automatically opens Messages section in Profile tab
+  - Smooth scroll to top of message board
+  - Retry mechanism ensures messages section is loaded before scrolling
+
+### 🎨 Changed
+
+- **UI/UX Improvements**:
+  - Removed existing "unread mention" badge from Messages section in CoachProfile
+  - Replaced with red circle indicator in page header for better visibility
+  - Increased user name text size to `text-2xl` for better readability
+  - Red circle size set to `1.5em` to match text height
+  - Circle uses `bg-[red]` color format for consistency
+
+### 🔧 Technical Details
+
+- **Files Modified**:
+  - `src/app/admin/club-management/page.tsx`: Added toast notification, red circle indicator, navigation logic, and callback for mention read events
+  - `src/components/dashboard/CoachProfile.tsx`: Removed badge, added `initialSection` prop support, added `onMentionRead` callback prop
+  - `src/components/dashboard/MessageBoard.tsx`: Added `onMentionRead` callback prop to notify parent when mentions are marked as read
+
+- **State Management**:
+  - Added `initialProfileSection` state to track which section to open
+  - Added `hasShownToastRef` to prevent duplicate toast notifications
+  - Added callback chain: MessageBoard → CoachProfile → ClubManagement to refresh unread count
+
+- **Features**:
+  - Toast notification uses `sessionStorage` to track if shown in current session
+  - Red circle visibility controlled by `unreadMentions > 0` condition
+  - Smooth scroll with retry mechanism (up to 10 attempts) to ensure section is loaded
+  - Automatic count refresh when mentions are marked as read
+
+### 📝 Documentation Updates
+
+- `docs/CHANGELOG.md`: Added version 2.10.5 entry
+- `docs/UI.md`: Updated with unread mentions notification system details
+- `docs/MESSAGE_BOARD_SETUP.md`: Updated with notification features
+
+---
+
 ## 🚀 Version 2.10.4 - Resources Management Enhancements
 
 **Release Date**: January 2025  

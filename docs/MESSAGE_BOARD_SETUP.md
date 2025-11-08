@@ -37,6 +37,12 @@ After running the migration, you should see these new tables in your Supabase da
 - ✅ Soft delete (messages are hidden, not permanently deleted)
 - ✅ Character counters and validation
 - ✅ Mobile-responsive design
+- ✅ **Unread Mentions Notification System** (v2.10.5):
+  - Toast notification on login/page load when unread mentions exist
+  - Red circle indicator with count next to user name in club management header
+  - Clickable circle navigates to Messages section and scrolls to message board
+  - Circle automatically hides when all mentions are marked as read
+  - Real-time count updates when mentions are marked as read
 
 ## Troubleshooting
 
