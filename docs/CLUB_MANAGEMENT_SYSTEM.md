@@ -57,6 +57,11 @@ The Club Management System is a comprehensive administrative interface for manag
 - **Team Updates**: News and announcements
 - **Practice Drills**: Drill library and management
 - **Message Board**: Real-time communication
+- **Resources Section**: Download documents, team logos, and club logos (Profile tab)
+  - Admins can upload and delete resources
+  - Coaches can download resources
+  - Categorized display: Documents, Team Logos, Club Logos
+  - Card-based grid layout with image previews
 
 ### 3. Player Management
 
@@ -95,6 +100,15 @@ The Club Management System is a comprehensive administrative interface for manag
 - `/api/admin/players` - Player management
 - `/api/admin/analytics` - Analytics data
 - `/api/admin/errors` - Error monitoring
+
+#### Resource Management Routes
+
+- `/api/resources/list` - List all resources (documents, team logos, club logos)
+- `/api/resources/upload` - Upload documents (admin-only)
+- `/api/resources/upload-logo` - Upload team/club logos (admin-only)
+- `/api/resources/download` - Generate download URLs
+- `/api/resources/delete` - Delete resources (admin-only)
+- `/api/resources/check-exists` - Check if file exists
 
 #### Coach Routes
 

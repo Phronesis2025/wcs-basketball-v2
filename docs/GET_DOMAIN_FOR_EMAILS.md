@@ -12,12 +12,14 @@
 **Best for**: Quick setup, low cost
 
 1. **Namecheap** - Often has $0.99-$1.99/year deals
+
    - Go to [namecheap.com](https://www.namecheap.com)
    - Search for domains (try `.xyz`, `.site`, `.online` for cheapest options)
    - Can get domains for $1-2/year
    - Example: `wcsbasketball.xyz` or `wcsbasketball.site`
 
 2. **Google Domains** (now Squarespace Domains)
+
    - Simple interface
    - Usually $12-15/year for `.com` domains
    - Example: `wcsbasketball.com`
@@ -76,6 +78,7 @@
 4. ✅ **Once domain is verified**, just update `RESEND_FROM` and emails will automatically go to real recipients
 
 **Current Behavior**:
+
 - Parent registration emails → `phronesis700@gmail.com`
 - Admin notification emails → `phronesis700@gmail.com`
 - Approval emails → `phronesis700@gmail.com`
@@ -98,12 +101,14 @@
 ## 📝 Domain Suggestions
 
 **Cheap Options** ($1-5/year):
+
 - `wcsbasketball.xyz`
 - `wcsbasketball.site`
 - `wcsbasketball.online`
 - `wcsbasketball.tech`
 
 **Professional Options** ($10-15/year):
+
 - `wcsbasketball.com`
 - `wcsbasketball.org`
 - `westcoastsports.com`
@@ -118,4 +123,3 @@
 2. Update `RESEND_FROM` in Vercel
 3. Redeploy
 4. Emails will automatically work! 🎉
-

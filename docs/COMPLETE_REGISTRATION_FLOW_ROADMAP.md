@@ -36,11 +36,13 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 **Current Issue**: Using Resend sandbox (`@resend.dev`) - **only allows sending to account owner** (`phronesis700@gmail.com`)
 
 **To Fix Production Emails**:
+
 1. Verify a domain in Resend (see `docs/RESEND_DOMAIN_VERIFICATION_GUIDE.md`)
 2. Update `RESEND_FROM` in Vercel to use verified domain (e.g., `noreply@yourdomain.com`)
 3. Redeploy application
 
 **Email Routing**:
+
 - **Sandbox Mode** (`@resend.dev`): ALL emails → `phronesis700@gmail.com` (current - production blocked)
 - **Verified Domain Mode**: Emails → actual recipients (after domain verification)
 
@@ -125,10 +127,10 @@ STRIPE_WEBHOOK_SECRET=whsec_...
    - ✅ `pending_registrations` record marked as merged
 
 4. **Check Email Notifications**
-   - ⚠️ **Parent Email**: 
+   - ⚠️ **Parent Email**:
      - If using sandbox (`@resend.dev`): Goes to `phronesis700@gmail.com` (see intended recipient in email body)
      - If using verified domain: Goes to actual parent email (`testparent@example.com`)
-   - ⚠️ **Admin Email**: 
+   - ⚠️ **Admin Email**:
      - If using sandbox: Goes to `phronesis700@gmail.com`
      - If using verified domain: Goes to admin email(s) in `ADMIN_NOTIFICATIONS_TO`
    - **Note**: Until domain is verified, ALL emails go to `phronesis700@gmail.com` (Resend requirement)

@@ -10,6 +10,16 @@ import MessageBoard from "./MessageBoard";
 import { getMessages, getUnreadMentionCount } from "@/lib/messageActions";
 import { CoachMessage } from "@/types/supabase";
 import BasketballLoader from "../BasketballLoader";
+import {
+  listResources,
+  uploadResourceDocument,
+  downloadResourceFile,
+} from "@/lib/actions";
+import ResourceCard from "./ResourceCard";
+import UploadDocumentModal from "./UploadDocumentModal";
+import UploadLogoModal from "./UploadLogoModal";
+import DownloadConfirmModal from "./DownloadConfirmModal";
+import toast from "react-hot-toast";
 
 interface CoachProfileData {
   id: string;
@@ -71,6 +81,47 @@ export default function CoachProfile({
   const [messages, setMessages] = useState<CoachMessage[]>([]);
   const [unreadMentions, setUnreadMentions] = useState(0);
 
+  // Resources state
+  const [resourcesData, setResourcesData] = useState<{
+    documents: Array<{
+      name: string;
+      path: string;
+      size: number;
+      created_at: string;
+      url: string;
+    }>;
+    teamLogos: Array<{
+      name: string;
+      path: string;
+      size: number;
+      created_at: string;
+      url: string;
+      teamName?: string;
+    }>;
+    clubLogos: Array<{
+      name: string;
+      path: string;
+      size: number;
+      created_at: string;
+      url: string;
+    }>;
+  } | null>(null);
+  const [resourcesLoading, setResourcesLoading] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showTeamLogoModal, setShowTeamLogoModal] = useState(false);
+  const [showClubLogoModal, setShowClubLogoModal] = useState(false);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadItem, setDownloadItem] = useState<{
+    url: string;
+    name: string;
+    fileName: string;
+    type: "image" | "document";
+    size?: number;
+    displayName?: string;
+    bucket?: string;
+    path?: string;
+  } | null>(null);
+
   // Edit form state
   const [editForm, setEditForm] = useState({
     first_name: "",
@@ -123,6 +174,31 @@ export default function CoachProfile({
 
     fetchMessages();
   }, [userId]);
+
+  // Fetch resources when resources section is active
+  useEffect(() => {
+    const fetchResources = async () => {
+      if (activeSection === "resources" && userId) {
+        setResourcesLoading(true);
+        try {
+          const data = await listResources();
+          setResourcesData(data);
+        } catch (error) {
+          devError("Error fetching resources:", error);
+          toast.error("Failed to load resources");
+          setResourcesData({
+            documents: [],
+            teamLogos: [],
+            clubLogos: [],
+          });
+        } finally {
+          setResourcesLoading(false);
+        }
+      }
+    };
+
+    fetchResources();
+  }, [activeSection, userId]);
 
   // Fetch unread mention count
   useEffect(() => {
@@ -233,6 +309,91 @@ export default function CoachProfile({
       });
     }
     setIsEditing(false);
+  };
+
+  // Resources handlers
+  const handleResourceClick = (
+    url: string,
+    name: string,
+    fileName: string,
+    type: "image" | "document",
+    size?: number,
+    displayName?: string,
+    bucket?: string,
+    path?: string
+  ) => {
+    setDownloadItem({ url, name, fileName, type, size, displayName, bucket, path });
+    setShowDownloadModal(true);
+  };
+
+  const handleDeleteResource = async () => {
+    if (!downloadItem || !downloadItem.bucket || !downloadItem.path || !userId) {
+      toast.error("Missing information to delete file");
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/resources/delete?bucket=${encodeURIComponent(downloadItem.bucket)}&path=${encodeURIComponent(downloadItem.path)}`,
+        {
+          method: "DELETE",
+          headers: {
+            "x-user-id": userId,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete file");
+      }
+
+      toast.success("File deleted successfully!");
+      setShowDownloadModal(false);
+      setDownloadItem(null);
+      
+      // Refresh resources list
+      if (activeSection === "resources" && userId) {
+        await handleUploadSuccess();
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete file"
+      );
+    }
+  };
+
+  const handleDownloadConfirm = async () => {
+    if (!downloadItem) return;
+
+    try {
+      // Create a temporary anchor element to trigger download
+      const link = document.createElement("a");
+      link.href = downloadItem.url;
+      link.download = downloadItem.fileName;
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success(`Downloading ${downloadItem.fileName}...`);
+      setShowDownloadModal(false);
+      setDownloadItem(null);
+    } catch (error) {
+      devError("Error downloading file:", error);
+      toast.error("Failed to download file");
+    }
+  };
+
+  const handleUploadSuccess = async () => {
+    // Refresh resources list after successful upload
+    if (activeSection === "resources" && userId) {
+      try {
+        const data = await listResources();
+        setResourcesData(data);
+      } catch (error) {
+        devError("Error refreshing resources:", error);
+      }
+    }
   };
 
   const formatDate = (dateString: string | null) => {
@@ -859,19 +1020,131 @@ export default function CoachProfile({
             {/* Resources Section */}
             {activeSection === "resources" && (
               <div>
-                <h3 className="text-2xl font-bebas text-white mb-6 uppercase">
-                  Resources & Tools
-                </h3>
-                <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
-                  <div className="text-4xl mb-4">📚</div>
-                  <h4 className="text-lg font-bebas text-white mb-2">
-                    Coming Soon
-                  </h4>
-                  <p className="text-gray-400 font-inter">
-                    Resource management and drill library features are in
-                    development.
-                  </p>
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bebas text-white uppercase">
+                    Resources & Tools
+                  </h3>
                 </div>
+
+                {resourcesLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <BasketballLoader size={60} />
+                  </div>
+                ) : (
+                  <div className="space-y-8">
+                    {/* Documents Section */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-xl font-bebas text-white uppercase">
+                          Documents
+                        </h4>
+                        {isAdmin && (
+                          <button
+                            onClick={() => setShowUploadModal(true)}
+                            className="px-3 py-1.5 bg-[red] text-white font-bebas uppercase text-sm rounded-md hover:bg-[#b80000] transition-colors"
+                          >
+                            + Upload
+                          </button>
+                        )}
+                      </div>
+                      {resourcesData?.documents && resourcesData.documents.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          {resourcesData.documents.map((doc) => (
+                            <ResourceCard
+                              key={doc.path}
+                              name={doc.name}
+                              url={doc.url}
+                              size={doc.size}
+                              type="document"
+                              onClick={() => handleResourceClick(doc.url, doc.name, doc.name, "document", doc.size, undefined, "resources", doc.path)}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
+                          <p className="text-gray-400 font-inter">
+                            No documents available
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Team Logos Section */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-xl font-bebas text-white uppercase">
+                          Team Logos
+                        </h4>
+                        {isAdmin && (
+                          <button
+                            onClick={() => setShowTeamLogoModal(true)}
+                            className="px-3 py-1.5 bg-[red] text-white font-bebas uppercase text-sm rounded-md hover:bg-[#b80000] transition-colors"
+                          >
+                            + Upload
+                          </button>
+                        )}
+                      </div>
+                      {resourcesData?.teamLogos && resourcesData.teamLogos.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          {resourcesData.teamLogos.map((logo) => (
+                            <ResourceCard
+                              key={logo.path}
+                              name={logo.name}
+                              url={logo.url}
+                              size={logo.size}
+                              teamName={logo.teamName}
+                              type="image"
+                              onClick={() => handleResourceClick(logo.url, logo.teamName || logo.name, logo.name, "image", logo.size, logo.teamName, "images", logo.path)}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
+                          <p className="text-gray-400 font-inter">
+                            No team logos available
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Club Logos Section */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-xl font-bebas text-white uppercase">
+                          Club Logos
+                        </h4>
+                        {isAdmin && (
+                          <button
+                            onClick={() => setShowClubLogoModal(true)}
+                            className="px-3 py-1.5 bg-[red] text-white font-bebas uppercase text-sm rounded-md hover:bg-[#b80000] transition-colors"
+                          >
+                            + Upload
+                          </button>
+                        )}
+                      </div>
+                      {resourcesData?.clubLogos && resourcesData.clubLogos.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          {resourcesData.clubLogos.map((logo) => (
+                            <ResourceCard
+                              key={logo.path}
+                              name={logo.name}
+                              url={logo.url}
+                              size={logo.size}
+                              type="image"
+                              onClick={() => handleResourceClick(logo.url, logo.name, logo.name, "image", logo.size, undefined, "images", logo.path)}
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
+                          <p className="text-gray-400 font-inter">
+                            No club logos available
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -884,6 +1157,57 @@ export default function CoachProfile({
           isOpen={showPasswordModal}
           onClose={() => setShowPasswordModal(false)}
           userId={userId}
+        />
+      )}
+
+      {/* Upload Document Modal */}
+      {showUploadModal && userId && (
+        <UploadDocumentModal
+          isOpen={showUploadModal}
+          onClose={() => setShowUploadModal(false)}
+          onUploadSuccess={handleUploadSuccess}
+          userId={userId}
+        />
+      )}
+
+      {/* Upload Team Logo Modal */}
+      {showTeamLogoModal && userId && (
+        <UploadLogoModal
+          isOpen={showTeamLogoModal}
+          onClose={() => setShowTeamLogoModal(false)}
+          onUploadSuccess={handleUploadSuccess}
+          userId={userId}
+          logoType="team"
+        />
+      )}
+
+      {/* Upload Club Logo Modal */}
+      {showClubLogoModal && userId && (
+        <UploadLogoModal
+          isOpen={showClubLogoModal}
+          onClose={() => setShowClubLogoModal(false)}
+          onUploadSuccess={handleUploadSuccess}
+          userId={userId}
+          logoType="club"
+        />
+      )}
+
+      {/* Download Confirmation Modal */}
+      {showDownloadModal && downloadItem && (
+        <DownloadConfirmModal
+          isOpen={showDownloadModal}
+          onClose={() => {
+            setShowDownloadModal(false);
+            setDownloadItem(null);
+          }}
+          onConfirm={handleDownloadConfirm}
+          onDelete={handleDeleteResource}
+          fileName={downloadItem.fileName}
+          fileType={downloadItem.type}
+          fileUrl={downloadItem.type === "image" ? downloadItem.url : undefined}
+          fileSize={downloadItem.size}
+          displayName={downloadItem.displayName}
+          isAdmin={isAdmin}
         />
       )}
     </div>

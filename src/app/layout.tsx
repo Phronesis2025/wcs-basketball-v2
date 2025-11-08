@@ -142,15 +142,8 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
 
-        {/* Preload critical hero image for faster LCP */}
-        <link
-          rel="preload"
-          href="/hero-basketball.jpg"
-          as="image"
-          fetchPriority="high"
-        />
-
-        {/* Note: No preload for animated flames to avoid LCP impact */}
+        {/* Note: Hero image is used as CSS background and video poster, 
+             so preloading is not necessary and can cause warnings */}
       </head>
       <body>
         <QueryProvider>
