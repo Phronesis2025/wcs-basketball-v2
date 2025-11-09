@@ -1,4 +1,4 @@
-﻿import React from "react";
+﻿import React, { Suspense } from "react";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import HomepageLayout from "../components/HomepageLayout";
@@ -11,6 +11,7 @@ import { Toaster } from "react-hot-toast";
 import ConditionalFooter from "../components/ConditionalFooter";
 import WebVitalsTracker from "../components/WebVitalsTracker";
 import SignOutLoader from "../components/SignOutLoader";
+import HandleAuthRedirect from "../components/auth/HandleAuthRedirect";
 
 export const metadata: Metadata = {
   title: "WCS Basketball - Where Champions Start",
@@ -148,6 +149,9 @@ export default function RootLayout({
       <body>
         <QueryProvider>
           <SignOutLoader>
+            <Suspense fallback={null}>
+              <HandleAuthRedirect />
+            </Suspense>
             <ScrollToTop />
             <HomepageLayout />
             {children}

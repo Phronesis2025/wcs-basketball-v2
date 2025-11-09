@@ -1,5 +1,76 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.7 - Gmail OAuth Redirect Fix & Vercel MCP Integration
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Added
+
+- **Vercel MCP Integration**:
+  - Added Vercel MCP server configuration to `.cursor/mcp.json`
+  - Enables direct access to Vercel deployment management, logs, and environment variables
+  - Access token configured for Vercel API access
+  - Documentation created: `docs/mcp/VERCEL_MCP_SETUP.md`
+
+- **OAuth Redirect Handler in Root Layout**:
+  - Added `HandleAuthRedirect` component to root layout (`src/app/layout.tsx`)
+  - Now available on all pages to handle OAuth redirects with hash fragments
+  - Ensures OAuth callbacks are processed regardless of landing page
+
+- **Documentation**:
+  - `docs/DEBUG_GMAIL_OAUTH_WELCOME_EMAIL.md` - Troubleshooting guide for Gmail OAuth welcome emails
+  - `docs/ADD_NEW_SITE_URL_SUPABASE.md` - Guide for adding new site URLs to Supabase
+  - `docs/ADD_WCSBASKETBALL_SITE_TO_SUPABASE.md` - Specific guide for wcsbasketball.site domain
+
+### 🔧 Fixed
+
+- **Gmail OAuth Redirect Issue**:
+  - **Issue**: After Gmail OAuth, users were redirected to `/#` instead of registration wizard
+  - **Root Cause**: Supabase OAuth redirects to Site URL with hash fragments (`#access_token=...`), which server-side routes can't read
+  - **Fix**: Updated `HandleAuthRedirect` component to detect root path OAuth redirects and redirect to `/register?oauth=success&email=...`
+  - **Files Modified**:
+    - `src/components/auth/HandleAuthRedirect.tsx`: Added logic to detect root path OAuth redirects and redirect to registration wizard
+    - `src/app/layout.tsx`: Added `HandleAuthRedirect` component to root layout, wrapped in Suspense boundary
+  - **Impact**: Gmail OAuth users now correctly redirected to registration wizard after authentication
+
+- **Build Error - useSearchParams Suspense Boundary**:
+  - **Issue**: Build failing with "useSearchParams() should be wrapped in a suspense boundary" error on privacy page
+  - **Root Cause**: `HandleAuthRedirect` component uses `useSearchParams()` but wasn't wrapped in Suspense boundary
+  - **Fix**: Wrapped `HandleAuthRedirect` in `<Suspense fallback={null}>` in root layout
+  - **Files Modified**: `src/app/layout.tsx`
+  - **Impact**: Build now completes successfully without errors
+
+### 📝 Changed
+
+- **OAuth Flow Enhancement**:
+  - OAuth redirects now properly handled on root path (`/`)
+  - Registration wizard automatically shows with pre-filled Gmail email
+  - Improved user experience for Gmail OAuth sign-ups
+
+### 🔒 Security
+
+- **Security Audit Completed**: ✅ Passed with recommendations
+- **No security issues introduced** in code changes
+- All changes are client-side redirect logic improvements
+- No new API endpoints or authentication changes
+- **Recommendation**: Enable Supabase leaked password protection (see `docs/SECURITY_AUDIT_2025_01_08.md`)
+
+### 📝 Documentation Updates
+
+- `docs/CHANGELOG.md`: Added version 2.10.7 entry
+- `docs/CHANGELOG_REGISTRATION_FLOW.md`: Updated with OAuth redirect fix
+- `docs/DEBUG_GMAIL_OAUTH_WELCOME_EMAIL.md`: Created troubleshooting guide
+- `docs/ADD_NEW_SITE_URL_SUPABASE.md`: Created guide for adding new URLs
+- `docs/ADD_WCSBASKETBALL_SITE_TO_SUPABASE.md`: Created specific guide for custom domain
+- `docs/mcp/VERCEL_MCP_SETUP.md`: Created Vercel MCP setup documentation
+
+---
+
 ## 🚀 Version 2.10.6 - Message Deletion Protection & Refresh Enhancement
 
 **Release Date**: January 2025  

@@ -87,10 +87,18 @@ export default function HandleAuthRedirect() {
               );
             }
 
-            // Small delay to ensure state is updated
-            setTimeout(() => {
-              router.refresh();
-            }, 100);
+            // Check if this is a new user (OAuth signup) and redirect to registration
+            // If we're on the root path with hash fragments, it's likely an OAuth redirect
+            if (window.location.pathname === "/" || window.location.pathname === "") {
+              devLog("HandleAuthRedirect: OAuth redirect detected, redirecting to registration");
+              // Redirect to registration wizard for new users
+              router.push(`/register?oauth=success&email=${encodeURIComponent(session.user.email || "")}`);
+            } else {
+              // Small delay to ensure state is updated
+              setTimeout(() => {
+                router.refresh();
+              }, 100);
+            }
           } else {
             devLog("HandleAuthRedirect: No session found in hash, trying to extract from URL");
             
@@ -130,7 +138,15 @@ export default function HandleAuthRedirect() {
                   window.history.replaceState({}, document.title, currentUrl);
                 }
 
-                router.refresh();
+                // Check if this is a new user (OAuth signup) and redirect to registration
+                // If we're on the root path with hash fragments, it's likely an OAuth redirect
+                if (window.location.pathname === "/" || window.location.pathname === "") {
+                  devLog("HandleAuthRedirect: OAuth redirect detected, redirecting to registration");
+                  // Redirect to registration wizard for new users
+                  router.push(`/register?oauth=success&email=${encodeURIComponent(sessionData.session.user.email || "")}`);
+                } else {
+                  router.refresh();
+                }
               }
             }
           }

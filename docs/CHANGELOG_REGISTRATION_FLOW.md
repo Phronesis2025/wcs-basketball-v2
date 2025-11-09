@@ -5,6 +5,29 @@
 
 ---
 
+## 🚀 Version 2.10.7 - Gmail OAuth Redirect Fix (January 2025)
+
+### ✅ Critical Fixes Applied
+
+1. **Gmail OAuth Redirect Issue Fixed** ✅
+   - **Issue**: After selecting Gmail account, users redirected to `/#` instead of registration wizard
+   - **Root Cause**: Supabase OAuth redirects to Site URL with hash fragments (`#access_token=...`), which server-side routes can't read. `HandleAuthRedirect` component was only on profile page, not root layout.
+   - **Fix**: 
+     - Added `HandleAuthRedirect` component to root layout (`src/app/layout.tsx`)
+     - Updated `HandleAuthRedirect` to detect root path OAuth redirects and redirect to `/register?oauth=success&email=...`
+   - **Files Modified**:
+     - `src/app/layout.tsx`: Added `HandleAuthRedirect` component
+     - `src/components/auth/HandleAuthRedirect.tsx`: Added root path detection and registration redirect logic
+   - **Impact**: Gmail OAuth users now correctly redirected to registration wizard with pre-filled email
+
+### 📝 Documentation Added
+
+- `docs/DEBUG_GMAIL_OAUTH_WELCOME_EMAIL.md`: Troubleshooting guide for Gmail OAuth welcome email issues
+- `docs/ADD_NEW_SITE_URL_SUPABASE.md`: Guide for adding new site URLs to Supabase redirect allowlist
+- `docs/ADD_WCSBASKETBALL_SITE_TO_SUPABASE.md`: Specific guide for wcsbasketball.site domain setup
+
+---
+
 ## 🚀 Version 2.10.3 - Registration Flow Fixes (January 2025)
 
 ### ✅ Critical Fixes Applied

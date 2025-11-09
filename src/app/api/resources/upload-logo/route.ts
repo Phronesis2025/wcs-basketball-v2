@@ -89,12 +89,21 @@ export async function POST(request: NextRequest) {
       filePath = `logos/${fileName}`;
     } else if (logoType === "club") {
       // Generate filename for club logo
+      // Use shorter filename to avoid storage path length issues
       const timestamp = Date.now();
       const fileExt = file.name.split(".").pop()?.toLowerCase() || "png";
-      const sanitizedOriginalName = file.name
-        .replace(/[^a-zA-Z0-9.-]/g, "-")
-        .toLowerCase();
-      fileName = `club-logo-${timestamp}-${sanitizedOriginalName}`;
+      // Extract a short identifier from the original filename (max 30 chars)
+      const baseName = file.name
+        .replace(/\.[^/.]+$/, "") // Remove extension
+        .replace(/[^a-zA-Z0-9]/g, "-") // Replace special chars with hyphens
+        .toLowerCase()
+        .substring(0, 30) // Limit to 30 characters
+        .replace(/-+/g, "-") // Replace multiple hyphens with single
+        .replace(/^-|-$/g, ""); // Remove leading/trailing hyphens
+      
+      fileName = baseName 
+        ? `club-logo-${timestamp}-${baseName}.${fileExt}`
+        : `club-logo-${timestamp}.${fileExt}`;
       filePath = `logos/${fileName}`;
     } else {
       return NextResponse.json(
@@ -123,21 +132,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Convert file to buffer
+    // Convert file to buffer (must be Uint8Array for Supabase Storage)
     const fileBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(fileBuffer);
+
+    devLog("Uploading logo:", {
+      fileName,
+      filePath,
+      fileSize: file.size,
+      contentType: file.type,
+      logoType,
+    });
 
     // Upload to images bucket in logos folder
     const { data, error } = await supabaseAdmin.storage
       .from("images")
-      .upload(filePath, fileBuffer, {
+      .upload(filePath, uint8Array, {
         contentType: file.type,
         upsert: overwrite || logoType === "club", // Allow overwriting if explicitly requested or for club logos
+        cacheControl: "3600",
       });
 
     if (error) {
       devError("Failed to upload logo:", error);
+      devError("Upload error details:", {
+        message: error.message,
+        statusCode: error.statusCode,
+        error: error.error,
+        path: filePath,
+        fileName,
+      });
       return NextResponse.json(
-        { error: "Failed to upload logo" },
+        { 
+          error: "Failed to upload logo",
+          details: error.message || "Storage upload failed",
+        },
         { status: 500 }
       );
     }
