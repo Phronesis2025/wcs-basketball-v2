@@ -59,6 +59,7 @@ interface CoachProfileProps {
   initialSection?: string | null;
   onMentionRead?: () => void;
   messageBoardRefreshTrigger?: number;
+  scrollToMessageId?: string | null;
 }
 
 export default function CoachProfile({
@@ -69,6 +70,7 @@ export default function CoachProfile({
   initialSection,
   onMentionRead,
   messageBoardRefreshTrigger,
+  scrollToMessageId,
 }: CoachProfileProps) {
   // Debug: Log isAdmin prop received
   useEffect(() => {
@@ -1028,6 +1030,7 @@ export default function CoachProfile({
                     }
                     isAdmin={isAdmin}
                     refreshTrigger={messageBoardRefreshTrigger}
+                    scrollToMessageId={scrollToMessageId}
                     onMentionRead={() => {
                       // Refresh local unread mentions count
                       if (userId) {

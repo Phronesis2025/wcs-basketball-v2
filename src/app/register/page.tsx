@@ -35,11 +35,11 @@ function RegisterInner() {
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold uppercase mb-4">
-              {fromProfile ? "Add Another Child" : "Register Your Player"}
+              {fromProfile ? "Add Another Player" : "Register Your Player"}
             </h1>
             <p className="text-gray-300 text-lg">
               {fromProfile
-                ? "Complete the form below to register another child"
+                ? "Complete the form below to register another player"
                 : "Join WCS Basketball and start your player's journey"}
             </p>
           </div>

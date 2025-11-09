@@ -127,21 +127,7 @@ export default function RootLayout({
           href="https://htgkddahhgugesktujds.supabase.co"
         />
 
-        {/* Preload critical fonts for faster FCP */}
-        <link
-          rel="preload"
-          href="/fonts/BebasNeue-Regular.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
-        <link
-          rel="preload"
-          href="/fonts/Inter-Regular.ttf"
-          as="font"
-          type="font/ttf"
-          crossOrigin="anonymous"
-        />
+        {/* Fonts are loaded via @font-face in globals.css */}
 
         {/* Note: Hero image is used as CSS background and video poster, 
              so preloading is not necessary and can cause warnings */}

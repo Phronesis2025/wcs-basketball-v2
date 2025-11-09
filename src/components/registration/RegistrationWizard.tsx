@@ -15,12 +15,19 @@ import { z } from "zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { devLog, devError } from "@/lib/security";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  TooltipProvider,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import toast from "react-hot-toast";
 import * as Sentry from "@sentry/nextjs";
 
 type Step = 1 | 2 | 3;
-type FormData = ParentBasicsFormData & PlayerInfoFormData & ReviewConsentFormData;
+type FormData = ParentBasicsFormData &
+  PlayerInfoFormData &
+  ReviewConsentFormData;
 
 interface RegistrationWizardProps {
   skipParentStep?: boolean; // For add-child flow
@@ -39,6 +46,7 @@ export default function RegistrationWizard({
   const [currentStep, setCurrentStep] = useState<Step>(skipParentStep ? 2 : 1);
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
   // Initialize form with schema for current step
   const getSchemaForStep = (step: Step) => {
@@ -58,30 +66,51 @@ export default function RegistrationWizard({
     resolver: zodResolver(getSchemaForStep(currentStep)),
     mode: "onChange",
     defaultValues: {
-      parent_first_name: prefillData.parent_first_name || user?.user_metadata?.full_name?.split(" ")[0] || user?.user_metadata?.name?.split(" ")[0] || "",
-      parent_last_name: prefillData.parent_last_name || user?.user_metadata?.full_name?.split(" ").slice(1).join(" ") || user?.user_metadata?.name?.split(" ").slice(1).join(" ") || "",
+      parent_first_name:
+        prefillData.parent_first_name ||
+        user?.user_metadata?.full_name?.split(" ")[0] ||
+        user?.user_metadata?.name?.split(" ")[0] ||
+        "",
+      parent_last_name:
+        prefillData.parent_last_name ||
+        user?.user_metadata?.full_name?.split(" ").slice(1).join(" ") ||
+        user?.user_metadata?.name?.split(" ").slice(1).join(" ") ||
+        "",
       parent_email: prefillData.parent_email || user?.email || "",
       parent_phone: prefillData.parent_phone || "",
       player_first_name: prefillData.player_first_name || "",
       player_last_name: prefillData.player_last_name || "",
       player_birthdate: prefillData.player_birthdate || "",
       player_grade: prefillData.player_grade || "",
-      player_gender: (prefillData.player_gender as "Male" | "Female" | "Other") || "Male",
+      player_gender:
+        (prefillData.player_gender as "Male" | "Female" | "Other") || "Male",
       player_experience: prefillData.player_experience || "1",
       coppa_consent: false,
       waiver_signed: false,
     },
   });
 
-  const { handleSubmit, watch, formState: { errors, isValid }, trigger, getValues, setValue } = methods;
+  const {
+    handleSubmit,
+    watch,
+    formState: { errors, isValid },
+    trigger,
+    getValues,
+    setValue,
+  } = methods;
 
   // Pre-fill email and name when user is authenticated (from Google OAuth or existing session)
   // Moved after setValue is destructured from methods
   useEffect(() => {
-    if (isAuthenticated && user?.email && currentStep === 1 && !skipParentStep) {
+    if (
+      isAuthenticated &&
+      user?.email &&
+      currentStep === 1 &&
+      !skipParentStep
+    ) {
       // Pre-fill email from authenticated user
       setValue("parent_email", user.email);
-      
+
       // Pre-fill name if available from Google OAuth metadata
       if (user.user_metadata?.full_name) {
         const nameParts = user.user_metadata.full_name.split(" ");
@@ -137,7 +166,10 @@ export default function RegistrationWizard({
     const today = new Date();
     let age = today.getFullYear() - birth.getFullYear();
     const monthDiff = today.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birth.getDate())
+    ) {
       age--;
     }
     return age;
@@ -145,13 +177,21 @@ export default function RegistrationWizard({
 
   const getMinDate = (): string => {
     const today = new Date();
-    const maxAge = new Date(today.getFullYear() - 8, today.getMonth(), today.getDate());
+    const maxAge = new Date(
+      today.getFullYear() - 8,
+      today.getMonth(),
+      today.getDate()
+    );
     return maxAge.toISOString().split("T")[0];
   };
 
   const getMaxDate = (): string => {
     const today = new Date();
-    const minAge = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+    const minAge = new Date(
+      today.getFullYear() - 18,
+      today.getMonth(),
+      today.getDate()
+    );
     return minAge.toISOString().split("T")[0];
   };
 
@@ -167,6 +207,9 @@ export default function RegistrationWizard({
       level: "info",
       tags: { flow: "registration", step: currentStep },
     });
+
+    // Mark current step as completed
+    setCompletedSteps((prev) => new Set([...prev, currentStep]));
 
     if (currentStep < 3) {
       setCurrentStep((prev) => (prev + 1) as Step);
@@ -214,13 +257,18 @@ export default function RegistrationWizard({
           allFormData = { ...draftData, ...allFormData };
         }
       } catch (err) {
-        devError("RegistrationWizard: Failed to load draft for submission", err);
+        devError(
+          "RegistrationWizard: Failed to load draft for submission",
+          err
+        );
       }
 
       // For unauthenticated users (new parents), use magic-link flow which sends Supabase confirmation email
       if (!isAuthenticated || !parentUserId) {
-        devLog("RegistrationWizard: Unauthenticated user, using magic-link flow");
-        
+        devLog(
+          "RegistrationWizard: Unauthenticated user, using magic-link flow"
+        );
+
         const payload = {
           parent_first_name: allFormData.parent_first_name,
           parent_last_name: allFormData.parent_last_name,
@@ -233,9 +281,9 @@ export default function RegistrationWizard({
           player_experience: allFormData.player_experience || "1",
           coppa_consent: allFormData.coppa_consent,
         };
-        
+
         devLog("RegistrationWizard: Magic-link payload", payload);
-        
+
         const response = await fetch("/api/auth/magic-link", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -251,7 +299,9 @@ export default function RegistrationWizard({
         localStorage.removeItem(STORAGE_KEY);
 
         setSubmitted(true);
-        toast.success("Confirmation email sent! Check your email to complete registration.");
+        toast.success(
+          "Confirmation email sent! Check your email to complete registration."
+        );
 
         Sentry.captureEvent({
           message: "Registration Complete (Magic Link)",
@@ -261,7 +311,11 @@ export default function RegistrationWizard({
 
         // Redirect to registration pending page
         setTimeout(() => {
-          router.push(`/registration-pending?player=${encodeURIComponent(allFormData.player_first_name)}`);
+          router.push(
+            `/registration-pending?player=${encodeURIComponent(
+              allFormData.player_first_name
+            )}`
+          );
         }, 1500);
         return;
       }
@@ -310,8 +364,12 @@ export default function RegistrationWizard({
       }, 1500);
     } catch (error) {
       devError("RegistrationWizard: Submit error", error);
-      toast.error(error instanceof Error ? error.message : "Registration failed. Please try again.");
-      
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Registration failed. Please try again."
+      );
+
       Sentry.captureEvent({
         message: "Form Submission Failed",
         level: "error",
@@ -324,7 +382,7 @@ export default function RegistrationWizard({
 
   const playerBirthdate = watch("player_birthdate");
   const calculatedAge = calculateAge(playerBirthdate || "");
-  
+
   // Watch checkbox values for submit button state
   const coppaConsent = watch("coppa_consent");
   const waiverSigned = watch("waiver_signed");
@@ -340,26 +398,55 @@ export default function RegistrationWizard({
               if (skipParentStep && step === 1) return null;
               const stepNum = skipParentStep ? step - 1 : step;
               const isActive = stepNum === currentStep;
-              const isCompleted = stepNum < currentStep;
-              
+              // Only mark as completed if the step has actually been completed (moved past)
+              const isCompleted = completedSteps.has(stepNum);
+
               return (
                 <div
                   key={step}
                   className={`
                     flex items-center gap-2 flex-1
-                    ${isActive ? "text-red" : isCompleted ? "text-green-500" : "text-gray-400"}
+                    ${
+                      isActive
+                        ? "text-[red]"
+                        : isCompleted
+                        ? "text-green-500"
+                        : "text-gray-400"
+                    }
                   `}
                 >
-                  <div
-                    className={`
-                      w-8 h-8 rounded-full flex items-center justify-center font-bold
-                      ${isActive ? "bg-red text-white" : isCompleted ? "bg-green-500 text-white" : "bg-gray-700 text-gray-400"}
-                    `}
-                  >
-                    {isCompleted ? "✓" : step}
+                  {/* Wrapper for pulsing background effect */}
+                  <div className="relative w-8 h-8 flex items-center justify-center">
+                    {/* Pulsing background behind active step - larger than circle for visibility */}
+                    {isActive && (
+                      <div
+                        className="absolute w-12 h-12 -left-2 -top-2 rounded-full bg-[#FF0000] step-pulse"
+                        style={{ zIndex: 0 }}
+                      ></div>
+                    )}
+                    {/* Step circle */}
+                    <div
+                      className={`
+                        relative w-8 h-8 rounded-full flex items-center justify-center font-bold transition-all duration-300
+                        ${
+                          isActive
+                            ? "bg-[#FF0000] text-white"
+                            : isCompleted
+                            ? "bg-green-500 text-white"
+                            : "bg-gray-700 text-gray-400"
+                        }
+                      `}
+                      style={{ zIndex: 10 }}
+                    >
+                      {isCompleted ? "✓" : stepNum}
+                    </div>
                   </div>
                   <span className="text-sm md:text-base">
-                    {step === 1 ? "Parent Info" : step === 2 ? "Player Info" : "Review"}
+                    {step === 1
+                      ? "Parent Info"
+                      : step === 2
+                      ? "Player Info"
+                      : "Review"}
                   </span>
                 </div>
               );
@@ -369,25 +456,34 @@ export default function RegistrationWizard({
           {/* Step 1: Parent Basics */}
           {currentStep === 1 && !skipParentStep && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-bebas text-white mb-6">Parent Information</h2>
-              
+              <h2 className="text-2xl font-bebas text-white mb-6">
+                Parent Information
+              </h2>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-300 mb-2">
-                    First Name <span className="text-red">*</span>
+                    First Name <span className="text-[#FF0000]">*</span>
                   </label>
                   <input
                     {...methods.register("parent_first_name")}
                     type="text"
-                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red disabled:opacity-70 min-h-[48px]"
+                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] disabled:opacity-70 min-h-[48px]"
                     placeholder="John"
                     aria-invalid={!!errors.parent_first_name}
-                    aria-describedby={errors.parent_first_name ? "parent_first_name_error" : undefined}
+                    aria-describedby={
+                      errors.parent_first_name
+                        ? "parent_first_name_error"
+                        : undefined
+                    }
                     aria-label="Parent first name"
                     autoComplete="given-name"
                   />
                   {errors.parent_first_name && (
-                    <p id="parent_first_name_error" className="text-red text-sm mt-1">
+                    <p
+                      id="parent_first_name_error"
+                      className="text-[#FF0000] text-sm mt-1"
+                    >
                       {errors.parent_first_name.message}
                     </p>
                   )}
@@ -395,28 +491,32 @@ export default function RegistrationWizard({
 
                 <div>
                   <label className="block text-sm text-gray-300 mb-2">
-                    Last Name <span className="text-red">*</span>
+                    Last Name <span className="text-[#FF0000]">*</span>
                   </label>
                   <input
                     {...methods.register("parent_last_name")}
                     type="text"
-                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red disabled:opacity-70 min-h-[48px]"
+                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] disabled:opacity-70 min-h-[48px]"
                     placeholder="Doe"
                     aria-invalid={!!errors.parent_last_name}
                     aria-label="Parent last name"
                     autoComplete="family-name"
                   />
                   {errors.parent_last_name && (
-                    <p className="text-red text-sm mt-1">{errors.parent_last_name.message}</p>
+                    <p className="text-[#FF0000] text-sm mt-1">
+                      {errors.parent_last_name.message}
+                    </p>
                   )}
                 </div>
               </div>
 
               <div>
                 <label className="block text-sm text-gray-300 mb-2">
-                  Email <span className="text-red">*</span>
+                  Email <span className="text-[#FF0000]">*</span>
                   {isAuthenticated && user?.email && (
-                    <span className="ml-2 text-xs text-green-400">(from your Google account)</span>
+                    <span className="ml-2 text-xs text-green-400">
+                      (from your Google account)
+                    </span>
                   )}
                 </label>
                 <Controller
@@ -427,14 +527,22 @@ export default function RegistrationWizard({
                     <input
                       {...field}
                       type="email"
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red min-h-[48px]"
-                      placeholder={isAuthenticated && user?.email ? user.email : "john.doe@example.com"}
+                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] min-h-[48px]"
+                      placeholder={
+                        isAuthenticated && user?.email
+                          ? user.email
+                          : "john.doe@example.com"
+                      }
                       readOnly={isAuthenticated && !!user?.email}
                       aria-invalid={!!errors.parent_email}
                       aria-label="Parent email address"
                       autoComplete="email"
                       inputMode="email"
-                      value={isAuthenticated && user?.email ? user.email : field.value || ""}
+                      value={
+                        isAuthenticated && user?.email
+                          ? user.email
+                          : field.value || ""
+                      }
                       onChange={(e) => {
                         if (!(isAuthenticated && user?.email)) {
                           field.onChange(e);
@@ -444,7 +552,9 @@ export default function RegistrationWizard({
                   )}
                 />
                 {errors.parent_email && (
-                  <p className="text-red text-sm mt-1">{errors.parent_email.message}</p>
+                  <p className="text-[#FF0000] text-sm mt-1">
+                    {errors.parent_email.message}
+                  </p>
                 )}
               </div>
 
@@ -463,7 +573,7 @@ export default function RegistrationWizard({
                 <input
                   {...methods.register("parent_phone")}
                   type="tel"
-                  className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red min-h-[48px]"
+                  className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] min-h-[48px]"
                   placeholder="(555) 123-4567"
                   aria-invalid={!!errors.parent_phone}
                   aria-label="Parent phone number"
@@ -471,7 +581,9 @@ export default function RegistrationWizard({
                   inputMode="tel"
                 />
                 {errors.parent_phone && (
-                  <p className="text-red text-sm mt-1">{errors.parent_phone.message}</p>
+                  <p className="text-[#FF0000] text-sm mt-1">
+                    {errors.parent_phone.message}
+                  </p>
                 )}
               </div>
 
@@ -480,7 +592,7 @@ export default function RegistrationWizard({
                   type="button"
                   onClick={handleNext}
                   disabled={!isValid}
-                  className="flex-1 bg-red text-white font-bold py-3 rounded disabled:opacity-50 hover:bg-red/90 transition-colors min-h-[48px]"
+                  className="flex-1 bg-[#FF0000] text-white font-bold py-3 rounded disabled:opacity-50 hover:bg-[#FF0000]/90 transition-colors min-h-[48px]"
                 >
                   Next: Player Information
                 </button>
@@ -491,38 +603,44 @@ export default function RegistrationWizard({
           {/* Step 2: Player Info */}
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-bebas text-white mb-6">Player Information</h2>
+              <h2 className="text-2xl font-bebas text-white mb-6">
+                Player Information
+              </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-300 mb-2">
-                    First Name <span className="text-red">*</span>
+                    First Name <span className="text-[#FF0000]">*</span>
                   </label>
                   <input
                     {...methods.register("player_first_name")}
                     type="text"
-                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red"
+                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000]"
                     placeholder="Jane"
                     aria-invalid={!!errors.player_first_name}
                   />
                   {errors.player_first_name && (
-                    <p className="text-red text-sm mt-1">{errors.player_first_name.message}</p>
+                    <p className="text-[#FF0000] text-sm mt-1">
+                      {errors.player_first_name.message}
+                    </p>
                   )}
                 </div>
 
                 <div>
                   <label className="block text-sm text-gray-300 mb-2">
-                    Last Name <span className="text-red">*</span>
+                    Last Name <span className="text-[#FF0000]">*</span>
                   </label>
                   <input
                     {...methods.register("player_last_name")}
                     type="text"
-                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red"
+                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000]"
                     placeholder="Doe"
                     aria-invalid={!!errors.player_last_name}
                   />
                   {errors.player_last_name && (
-                    <p className="text-red text-sm mt-1">{errors.player_last_name.message}</p>
+                    <p className="text-[#FF0000] text-sm mt-1">
+                      {errors.player_last_name.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -530,9 +648,11 @@ export default function RegistrationWizard({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-300 mb-2">
-                    Date of Birth <span className="text-red">*</span>
+                    Date of Birth <span className="text-[#FF0000]">*</span>
                     {calculatedAge !== null && (
-                      <span className="ml-2 text-green-500">(Age: {calculatedAge})</span>
+                      <span className="ml-2 text-green-500">
+                        (Age: {calculatedAge})
+                      </span>
                     )}
                   </label>
                   <input
@@ -540,13 +660,15 @@ export default function RegistrationWizard({
                     type="date"
                     min={getMaxDate()}
                     max={getMinDate()}
-                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red min-h-[48px]"
+                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] min-h-[48px]"
                     aria-invalid={!!errors.player_birthdate}
                     aria-label="Player date of birth"
                     autoComplete="bday"
                   />
                   {errors.player_birthdate && (
-                    <p className="text-red text-sm mt-1">{errors.player_birthdate.message}</p>
+                    <p className="text-[#FF0000] text-sm mt-1">
+                      {errors.player_birthdate.message}
+                    </p>
                   )}
                 </div>
 
@@ -565,7 +687,9 @@ export default function RegistrationWizard({
                     <option value="Other">Other</option>
                   </select>
                   {errors.player_gender && (
-                    <p className="text-red text-sm mt-1">{errors.player_gender.message}</p>
+                    <p className="text-red text-sm mt-1">
+                      {errors.player_gender.message}
+                    </p>
                   )}
                 </div>
               </div>
@@ -590,16 +714,19 @@ export default function RegistrationWizard({
                       <span className="ml-2 text-gray-400 cursor-help">ℹ️</span>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Helps with team placement. 1 = No Experience, 5 = Competitive League</p>
+                      <p>
+                        Helps with team placement. 1 = No Experience, 5 =
+                        Competitive League
+                      </p>
                     </TooltipContent>
                   </Tooltip>
                 </label>
-                  <select
-                    {...methods.register("player_experience")}
-                    className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-red min-h-[48px]"
-                    aria-invalid={!!errors.player_experience}
-                    aria-label="Player experience level"
-                  >
+                <select
+                  {...methods.register("player_experience")}
+                  className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-red min-h-[48px]"
+                  aria-invalid={!!errors.player_experience}
+                  aria-label="Player experience level"
+                >
                   <option value="1">1: No Experience</option>
                   <option value="2">2: Some Basics</option>
                   <option value="3">3: Intermediate</option>
@@ -607,13 +734,17 @@ export default function RegistrationWizard({
                   <option value="5">5: Competitive League</option>
                 </select>
                 {errors.player_experience && (
-                  <p className="text-red text-sm mt-1">{errors.player_experience.message}</p>
+                  <p className="text-red text-sm mt-1">
+                    {errors.player_experience.message}
+                  </p>
                 )}
               </div>
 
               {/* Fee Preview */}
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                <h3 className="text-lg font-semibold text-white mb-2">Estimated Fees</h3>
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  Estimated Fees
+                </h3>
                 <div className="space-y-1 text-sm text-gray-300">
                   <div className="flex justify-between">
                     <span>Annual:</span>
@@ -659,46 +790,61 @@ export default function RegistrationWizard({
           {/* Step 3: Review & Consent */}
           {currentStep === 3 && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-bebas text-white mb-6">Review & Consent</h2>
+              <h2 className="text-2xl font-bebas text-white mb-6">
+                Review & Consent
+              </h2>
 
               {/* Review Summary */}
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 space-y-3">
-                <h3 className="text-lg font-semibold text-white mb-3">Registration Summary</h3>
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  Registration Summary
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-400">Parent:</span>
                     <span className="text-white ml-2">
-                      {getValues("parent_first_name")} {getValues("parent_last_name")}
+                      {getValues("parent_first_name")}{" "}
+                      {getValues("parent_last_name")}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Email:</span>
-                    <span className="text-white ml-2">{getValues("parent_email")}</span>
+                    <span className="text-white ml-2">
+                      {getValues("parent_email")}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Player:</span>
                     <span className="text-white ml-2">
-                      {getValues("player_first_name")} {getValues("player_last_name")}
+                      {getValues("player_first_name")}{" "}
+                      {getValues("player_last_name")}
                     </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Birthdate:</span>
-                    <span className="text-white ml-2">{getValues("player_birthdate")}</span>
+                    <span className="text-white ml-2">
+                      {getValues("player_birthdate")}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Gender:</span>
-                    <span className="text-white ml-2">{getValues("player_gender")}</span>
+                    <span className="text-white ml-2">
+                      {getValues("player_gender")}
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-400">Experience:</span>
                     <span className="text-white ml-2">
-                      {getValues("player_experience")} - {
-                        getValues("player_experience") === "1" ? "No Experience" :
-                        getValues("player_experience") === "2" ? "Some Basics" :
-                        getValues("player_experience") === "3" ? "Intermediate" :
-                        getValues("player_experience") === "4" ? "Advanced" :
-                        "Competitive League"
-                      }
+                      {getValues("player_experience")} -{" "}
+                      {getValues("player_experience") === "1"
+                        ? "No Experience"
+                        : getValues("player_experience") === "2"
+                        ? "Some Basics"
+                        : getValues("player_experience") === "3"
+                        ? "Intermediate"
+                        : getValues("player_experience") === "4"
+                        ? "Advanced"
+                        : "Competitive League"}
                     </span>
                   </div>
                 </div>
@@ -712,14 +858,19 @@ export default function RegistrationWizard({
                     type="checkbox"
                     className="mt-1 w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-red min-w-[20px] min-h-[20px]"
                     aria-invalid={!!errors.coppa_consent}
-                    aria-label="COPPA consent - Confirm player is your child/ward"
+                    aria-label="COPPA consent - Confirm player is your player/ward"
                   />
                   <span className="text-sm text-gray-300">
-                    <span className="text-red">*</span> I confirm that {getValues("player_first_name") || "the player"} is my child/ward and I have the authority to register them for this program. (COPPA Compliance)
+                    <span className="text-red">*</span> I confirm that{" "}
+                    {getValues("player_first_name") || "the player"} is my
+                    player/ward and I have the authority to register them for
+                    this program. (COPPA Compliance)
                   </span>
                 </label>
                 {errors.coppa_consent && (
-                  <p className="text-red text-sm mt-2">{errors.coppa_consent.message}</p>
+                  <p className="text-red text-sm mt-2">
+                    {errors.coppa_consent.message}
+                  </p>
                 )}
               </div>
 
@@ -732,7 +883,8 @@ export default function RegistrationWizard({
                     className="mt-1 w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-red"
                   />
                   <span className="text-sm text-gray-300">
-                    I have read and agree to the liability waiver (will be completed during approval process)
+                    I have read and agree to the liability waiver (will be
+                    completed during approval process)
                   </span>
                 </label>
               </div>
@@ -747,10 +899,16 @@ export default function RegistrationWizard({
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || submitted || !isValid || !bothCheckboxesChecked}
+                  disabled={
+                    loading || submitted || !isValid || !bothCheckboxesChecked
+                  }
                   className="flex-1 bg-red text-white font-bold py-3 rounded disabled:opacity-50 hover:bg-red/90 transition-colors min-h-[48px]"
                 >
-                  {loading ? "Submitting..." : submitted ? "Submitted!" : "Submit Registration"}
+                  {loading
+                    ? "Submitting..."
+                    : submitted
+                    ? "Submitted!"
+                    : "Submit Registration"}
                 </button>
               </div>
             </div>
@@ -760,4 +918,3 @@ export default function RegistrationWizard({
     </TooltipProvider>
   );
 }
-

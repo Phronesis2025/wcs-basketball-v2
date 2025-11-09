@@ -26,6 +26,7 @@ interface MessageBoardProps {
   isAdmin: boolean;
   onMentionRead?: () => void;
   refreshTrigger?: number;
+  scrollToMessageId?: string | null;
 }
 
 export default function MessageBoard({
@@ -34,6 +35,7 @@ export default function MessageBoard({
   isAdmin,
   onMentionRead,
   refreshTrigger,
+  scrollToMessageId,
 }: MessageBoardProps) {
   // Debug: Log isAdmin value
   useEffect(() => {
@@ -178,6 +180,29 @@ export default function MessageBoard({
       loadUnreadMentions();
     }
   }, [refreshTrigger, userId, loadMessages, loadUnreadMentions]);
+
+  // Handle scrolling to a specific message and opening reply
+  useEffect(() => {
+    if (scrollToMessageId && messages.length > 0) {
+      // Wait a bit for messages to render
+      setTimeout(() => {
+        const messageElement = document.getElementById(`message-${scrollToMessageId}`);
+        if (messageElement) {
+          // Expand the message to show reply
+          setExpandedMessage(scrollToMessageId);
+          // Scroll to the message
+          messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Focus on the reply textarea if it exists
+          setTimeout(() => {
+            const replyTextarea = messageElement.querySelector('textarea[placeholder*="reply"], textarea[placeholder*="Reply"], textarea[placeholder*="Write a reply"]') as HTMLTextAreaElement;
+            if (replyTextarea) {
+              replyTextarea.focus();
+            }
+          }, 500);
+        }
+      }, 300);
+    }
+  }, [scrollToMessageId, messages]);
 
   // Debug logging for message data
   useEffect(() => {
@@ -812,7 +837,7 @@ export default function MessageBoard({
               value={newMessageText}
               onChange={(e) => setNewMessageText(e.target.value)}
               placeholder="What's on your mind?"
-              className="w-full p-3 border border-gray-300 rounded-md text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+              className="w-full p-3 border border-gray-300 rounded-md text-base sm:text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               rows={4}
               maxLength={1000}
             />
@@ -927,15 +952,50 @@ export default function MessageBoard({
                       ? (replyData?.author_name || "")
                       : (messageData?.author_name || "");
 
+                    // Determine the message_id to scroll to
+                    // If it's a reply, get the parent message_id; otherwise use the message_id
+                    const targetMessageId = isReply 
+                      ? (replyData?.message_id || mention.message_id)
+                      : mention.message_id;
+
+                    const handleMentionClick = () => {
+                      if (!targetMessageId) return;
+                      
+                      // Mark the mention as read
+                      handleMarkMentionRead(mention.id);
+                      
+                      // Scroll to the message and open reply
+                      setTimeout(() => {
+                        const messageElement = document.getElementById(`message-${targetMessageId}`);
+                        if (messageElement) {
+                          // Expand the message to show reply
+                          setExpandedMessage(targetMessageId);
+                          // Scroll to the message
+                          messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+                          // Focus on the reply textarea if it exists
+                          setTimeout(() => {
+                            const replyTextarea = messageElement.querySelector('textarea[placeholder*="reply"], textarea[placeholder*="Reply"], textarea[placeholder*="Write a reply"]') as HTMLTextAreaElement;
+                            if (replyTextarea) {
+                              replyTextarea.focus();
+                            }
+                          }, 500);
+                        }
+                      }, 100);
+                    };
+
                     return (
                       <div
                         key={mention.id}
-                        className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700"
+                        className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        onClick={handleMentionClick}
                       >
                         <div className="flex items-start gap-3">
                           <input
                             type="checkbox"
-                            onChange={() => handleMarkMentionRead(mention.id)}
+                            onChange={(e) => {
+                              e.stopPropagation(); // Prevent triggering the card click
+                              handleMarkMentionRead(mention.id);
+                            }}
                             className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
                           />
                           <div className="flex-1">
@@ -988,6 +1048,7 @@ export default function MessageBoard({
               return (
                 <div
                   key={message.id}
+                  id={`message-${message.id}`}
                   className={`border-b border-gray-100 pb-4 last:border-b-0 ${
                     message.is_pinned
                       ? "bg-yellow-50 border-l-4 border-l-yellow-400 pl-4"
@@ -1022,7 +1083,7 @@ export default function MessageBoard({
                           <textarea
                             value={editText}
                             onChange={(e) => setEditText(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-md text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                            className="w-full p-3 border border-gray-300 rounded-md text-base sm:text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                             rows={3}
                             maxLength={1000}
                           />
@@ -1200,7 +1261,7 @@ export default function MessageBoard({
                                       onChange={(e) =>
                                         setEditText(e.target.value)
                                       }
-                                      className="w-full p-2 border border-gray-300 rounded-md text-xs font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                      className="w-full p-2 border border-gray-300 rounded-md text-base sm:text-xs font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                                       rows={2}
                                       maxLength={500}
                                     />
@@ -1297,7 +1358,7 @@ export default function MessageBoard({
                           value={replyText}
                           onChange={(e) => setReplyText(e.target.value)}
                           placeholder="Write a reply..."
-                          className="w-full p-3 border border-gray-300 rounded-md text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                          className="w-full p-3 border border-gray-300 rounded-md text-base sm:text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                           rows={3}
                           maxLength={500}
                         />

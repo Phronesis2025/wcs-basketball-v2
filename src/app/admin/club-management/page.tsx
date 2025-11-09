@@ -93,6 +93,7 @@ function ClubManagementContent() {
   const [unreadMentions, setUnreadMentions] = useState(0);
   const [initialProfileSection, setInitialProfileSection] = useState<string | null>(null);
   const [messageBoardRefreshTrigger, setMessageBoardRefreshTrigger] = useState(0);
+  const [scrollToMessageId, setScrollToMessageId] = useState<string | null>(null);
   // Stripe/Payments metrics
   const [membershipFees, setMembershipFees] = useState<number>(0);
   const [pendingDues, setPendingDues] = useState<number>(0);
@@ -1819,13 +1820,81 @@ function ClubManagementContent() {
           {userFirstName && userLastName && (
             <p className="text-white text-xl font-bebas font-bold mb-2 text-center">
               <span className="relative inline-block">
+                {/* Pending Players Notification (Left side, Admin only) */}
+                {isAdmin && pendingPlayers.length > 0 && (
+                  <span
+                    className="absolute top-[40%] -translate-y-1/2 right-full mr-3 h-[1.5em] w-[1.5em] bg-blue-500 rounded-full cursor-pointer z-10 flex items-center justify-center text-white text-xs font-bold hover:bg-blue-600 transition-colors"
+                    onClick={() => {
+                      handleTabChange("payments");
+                      // Scroll to registration section after payments tab is rendered
+                      const scrollToRegistrations = () => {
+                        // Look for the "Registrations" heading in the payments tab
+                        const headings = Array.from(document.querySelectorAll('h2, h3'));
+                        const registrationsHeading = headings.find((h) => 
+                          h.textContent?.includes('Registrations')
+                        );
+                        const target = registrationsHeading?.closest('div') || registrationsHeading;
+                        
+                        if (target) {
+                          // Scroll to the registration section
+                          target.scrollIntoView({ behavior: "smooth", block: "start" });
+                          // Also scroll window to top with offset
+                          const rect = target.getBoundingClientRect();
+                          window.scrollTo({
+                            top: window.scrollY + rect.top - 20,
+                            behavior: "smooth"
+                          });
+                        } else {
+                          // Retry if section not found yet (max 10 attempts = 1 second)
+                          if (scrollToRegistrations.attempts === undefined) {
+                            scrollToRegistrations.attempts = 0;
+                          }
+                          scrollToRegistrations.attempts++;
+                          if (scrollToRegistrations.attempts < 10) {
+                            setTimeout(scrollToRegistrations, 100);
+                          }
+                        }
+                      };
+                      // Start scrolling after a delay to allow tab to render
+                      setTimeout(scrollToRegistrations, 300);
+                    }}
+                    title={`${pendingPlayers.length} pending player${pendingPlayers.length !== 1 ? "s" : ""} awaiting approval`}
+                  >
+                    {pendingPlayers.length}
+                  </span>
+                )}
                 {userFirstName} {userLastName}
                 {unreadMentions > 0 && (
                   <span
                     className="absolute top-[40%] -translate-y-1/2 left-full ml-3 h-[1.5em] w-[1.5em] bg-[red] rounded-full cursor-pointer z-10 flex items-center justify-center text-white text-xs font-bold"
-                    onClick={() => {
+                    onClick={async () => {
                       setInitialProfileSection("messages");
                       handleTabChange("profile");
+                      
+                      // Get the first unread mention to scroll to
+                      if (userId) {
+                        try {
+                          const { getUnreadMentionsForUser } = await import("@/lib/messageActions");
+                          const mentions = await getUnreadMentionsForUser(userId);
+                          
+                          if (mentions && mentions.length > 0) {
+                            // Get the first unread mention
+                            const firstMention = mentions[0];
+                            // Determine the message_id (if it's a reply, get the parent message_id)
+                            const messageId = firstMention.reply_id 
+                              ? (firstMention.coach_message_replies?.message_id || firstMention.message_id)
+                              : firstMention.message_id;
+                            
+                            if (messageId) {
+                              // Set the message ID to scroll to
+                              setScrollToMessageId(messageId);
+                            }
+                          }
+                        } catch (error) {
+                          devError("Error fetching unread mentions:", error);
+                        }
+                      }
+                      
                       // Scroll to message board after messages section is rendered
                       // Use multiple attempts to ensure the section is open
                       const scrollToMessages = () => {
@@ -2780,6 +2849,7 @@ function ClubManagementContent() {
             isAdmin={isAdmin}
             initialSection={initialProfileSection}
             messageBoardRefreshTrigger={messageBoardRefreshTrigger}
+            scrollToMessageId={scrollToMessageId}
             onMentionRead={() => {
               // Refresh unread mentions count when a mention is marked as read
               if (userId) {
@@ -2787,6 +2857,8 @@ function ClubManagementContent() {
                   setUnreadMentions(count);
                 });
               }
+              // Clear scrollToMessageId after it's been used
+              setScrollToMessageId(null);
             }}
           />
         )}

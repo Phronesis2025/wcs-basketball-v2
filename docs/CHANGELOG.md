@@ -1,5 +1,104 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.9 - UI Improvements & Mobile Fixes
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### 🔧 Fixed
+
+- **Font Preload Warnings**:
+  - **Issue**: Console warnings about preloaded fonts not being used within a few seconds
+  - **Fix**: Removed font preload links from `src/app/layout.tsx` as fonts are loaded via `@font-face` in CSS
+  - **Files Modified**: `src/app/layout.tsx`
+  - **Impact**: Cleaner console output, no performance impact
+
+- **Registration Wizard Step Numbering**:
+  - **Issue**: Missing step number 2 when parent step is skipped in "Add Another Player" flow
+  - **Fix**: Changed step display to use `stepNum` instead of `step` to show correct numbers (1, 2 instead of 2, 3)
+  - **Files Modified**: `src/components/registration/RegistrationWizard.tsx`
+  - **Impact**: Correct step numbering displayed in registration wizard
+
+- **Registration Wizard Step Completion Logic**:
+  - **Issue**: Player Info step showed green checkmark immediately when parent step was skipped, even though it wasn't completed
+  - **Fix**: Added `completedSteps` state to track actual step completion. Steps only show green checkmark after being submitted
+  - **Files Modified**: `src/components/registration/RegistrationWizard.tsx`
+  - **Impact**: Accurate step completion indicators
+
+- **Mobile Zoom on Message Board**:
+  - **Issue**: Screen zooms in when typing in message board textareas on mobile devices
+  - **Fix**: Changed textarea font-size from `text-sm` (14px) to `text-base sm:text-sm` (16px on mobile, 14px on desktop) to prevent iOS Safari auto-zoom
+  - **Files Modified**: `src/components/dashboard/MessageBoard.tsx`
+  - **Impact**: No more unwanted zoom when typing messages on mobile devices
+
+### ✨ Added
+
+- **Pending Players Notification**:
+  - Added blue notification circle on club management page (left side of user name) showing count of players with pending status
+  - Only visible to admins when there are pending players
+  - Clicking notification navigates to payments tab and scrolls to registration section
+  - **Files Modified**: `src/app/admin/club-management/page.tsx`
+  - **Impact**: Admins can quickly see and navigate to pending player registrations
+
+- **Unread Mentions Click Functionality**:
+  - Clicking unread mentions notification badge now scrolls to the specific message and opens reply function
+  - Clicking unread mention cards in message board also scrolls to message and opens reply
+  - Automatically marks mention as read when clicked
+  - **Files Modified**: 
+    - `src/app/admin/club-management/page.tsx`
+    - `src/components/dashboard/MessageBoard.tsx`
+    - `src/components/dashboard/CoachProfile.tsx`
+  - **Impact**: Improved user experience for responding to mentions
+
+- **Registration Wizard Step Animation**:
+  - Added pulsing animation behind active step circle in registration wizard
+  - Custom CSS animation with opacity and scale changes for better visibility
+  - **Files Modified**: 
+    - `src/components/registration/RegistrationWizard.tsx`
+    - `src/app/globals.css`
+  - **Impact**: Better visual feedback for active step
+
+- **Registration Wizard Step Color Fix**:
+  - Active step now shows red circle (was gray)
+  - Next/inactive steps show gray (was red)
+  - Completed steps show green with checkmark
+  - **Files Modified**: `src/components/registration/RegistrationWizard.tsx`
+  - **Impact**: Clearer visual distinction between step states
+
+- **Registration Form Text Updates**:
+  - Changed "child" to "player" throughout "Add Another Player" form
+  - Updated COPPA consent text to use "player/ward" instead of "child/ward"
+  - **Files Modified**: 
+    - `src/app/add-child/page.tsx`
+    - `src/app/register/page.tsx`
+    - `src/components/registration/RegistrationWizard.tsx`
+  - **Impact**: Consistent terminology throughout registration flow
+
+### 🗑️ Removed
+
+- **Schedule Cleanup**:
+  - Removed all games, practices, and tournaments from schedules table via Supabase MCP
+  - **Impact**: Clean slate for schedule management
+
+### 🔒 Security
+
+- **Security Audit**: ✅ Passed with recommendations
+- **No new security issues introduced** in code changes
+- **Dependency Vulnerability**: xlsx package has known vulnerabilities (no fix available, acceptable risk for admin-only functionality)
+- **Recommendation**: Enable Supabase leaked password protection (see `docs/SECURITY_AUDIT_2025_01_09.md`)
+- All changes are UI/UX improvements with no security implications
+
+### 📝 Documentation Updates
+
+- `docs/CHANGELOG.md`: Added version 2.10.9 entry
+- `docs/CHANGELOG_ENTRIES_FOR_SUPABASE.md`: Updated with new entries
+
+---
+
 ## 🚀 Version 2.10.8 - Coach Password Reset Fix
 
 **Release Date**: January 2025  

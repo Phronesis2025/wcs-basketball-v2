@@ -74,10 +74,10 @@ function AddChildInner() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl md:text-5xl font-bebas font-bold uppercase mb-4">
-            Add Another Child
+            Add Another Player
           </h1>
           <p className="text-gray-300 text-lg">
-            Your parent information has been pre-filled. Just complete your child's details below.
+            Your parent information has been pre-filled. Just complete your player's details below.
           </p>
         </div>
 
