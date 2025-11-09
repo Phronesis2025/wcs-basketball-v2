@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { sendEmail } from "@/lib/email";
+import { getAdminPaymentConfirmationEmail } from "@/lib/emailTemplates";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
+const ADMIN_NOTIFICATIONS_TO = (process.env.ADMIN_NOTIFICATIONS_TO || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 if (!STRIPE_SECRET_KEY) {
   throw new Error("STRIPE_SECRET_KEY is not set");
@@ -12,6 +18,60 @@ if (!STRIPE_SECRET_KEY) {
 const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: "2024-06-20",
 });
+
+// Helper function to split full name into first and last name
+function splitFullName(fullName?: string | null) {
+  if (!fullName) {
+    return { firstName: "", lastName: "" };
+  }
+
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 0) {
+    return { firstName: "", lastName: "" };
+  }
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: "" };
+  }
+
+  const firstName = parts.shift()!;
+  const lastName = parts.join(" ");
+  return { firstName, lastName };
+}
+
+// Helper to notify admins using BCC (maintains privacy)
+// If only one admin: sends directly to that email
+// If multiple admins: sends to first email, BCC to others
+async function notifyAdmins(
+  subject: string,
+  html: string,
+  options?: { bcc?: string[] }
+) {
+  if (ADMIN_NOTIFICATIONS_TO.length === 0) return;
+  try {
+    const firstAdmin = ADMIN_NOTIFICATIONS_TO[0];
+    const otherAdmins =
+      ADMIN_NOTIFICATIONS_TO.length > 1
+        ? ADMIN_NOTIFICATIONS_TO.slice(1)
+        : undefined;
+    
+    // Merge any additional BCC from options
+    const bcc = options?.bcc
+      ? [...(otherAdmins || []), ...options.bcc]
+      : otherAdmins;
+
+    await sendEmail(firstAdmin, subject, html, {
+      bcc: bcc && bcc.length > 0 ? bcc : undefined,
+    });
+
+    devLog("verify-session: admin notification sent", {
+      to: firstAdmin,
+      bcc: bcc,
+      totalAdmins: ADMIN_NOTIFICATIONS_TO.length,
+    });
+  } catch (err) {
+    devError("verify-session: notifyAdmins failed", err);
+  }
+}
 
 /**
  * Verify Stripe checkout session and update payment status
@@ -39,7 +99,7 @@ export async function GET(req: Request) {
     if (playerId && !sessionId) {
       const { data: payment, error: payErr } = await supabaseAdmin!
         .from("payments")
-        .select("id, player_id, stripe_payment_id, status")
+        .select("id, player_id, stripe_payment_id, status, payment_type")
         .eq("player_id", playerId)
         .eq("status", "pending")
         .order("created_at", { ascending: false })
@@ -64,7 +124,7 @@ export async function GET(req: Request) {
       // Find payment by session_id
       const { data: payment, error: payErr } = await supabaseAdmin!
         .from("payments")
-        .select("id, player_id, stripe_payment_id, status")
+        .select("id, player_id, stripe_payment_id, status, payment_type")
         .eq("stripe_payment_id", sessionId)
         .maybeSingle();
 
@@ -141,6 +201,70 @@ export async function GET(req: Request) {
         payment_id: paymentRow.id,
         player_id: paymentRow.player_id,
       });
+
+      // Send admin payment confirmation email (same logic as webhook handler)
+      if (ADMIN_NOTIFICATIONS_TO.length > 0) {
+        try {
+          // Fetch player data for admin email
+          const { data: player, error: playerErr } = await supabaseAdmin!
+            .from("players")
+            .select(
+              "id, name, parent_email, parent_first_name, parent_last_name, parent_id, team_id, teams(name)"
+            )
+            .eq("id", paymentRow.player_id)
+            .single();
+
+          if (!playerErr && player) {
+            const { firstName: playerFirstName, lastName: playerLastName } =
+              splitFullName(player.name);
+
+            // Get parent name for admin email
+            let parentName = "";
+            try {
+              if (player.parent_id) {
+                const { data: parent } = await supabaseAdmin
+                  .from("parents")
+                  .select("first_name, last_name")
+                  .eq("id", player.parent_id)
+                  .single();
+                if (parent) {
+                  parentName = `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || player.parent_email || "Parent";
+                }
+              }
+            } catch (e) {
+              devError("verify-session: error fetching parent name for admin email", e);
+              parentName = player.parent_email || "Parent";
+            }
+
+            const adminEmailData = getAdminPaymentConfirmationEmail({
+              playerFirstName,
+              playerLastName,
+              parentName: parentName || player.parent_email || "Parent",
+              parentEmail: player.parent_email || "",
+              teamName: player.teams?.name || undefined,
+              amount: amount,
+              paymentType: paymentRow.payment_type || "annual",
+              paymentDate: new Date().toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+              playerId: player.id,
+              paymentId: paymentRow.id,
+            });
+
+            await notifyAdmins(
+              adminEmailData.subject,
+              adminEmailData.html
+            );
+            devLog("verify-session: admin payment confirmation email sent");
+          } else if (playerErr) {
+            devError("verify-session: failed to fetch player for admin email", playerErr);
+          }
+        } catch (adminEmailErr) {
+          devError("verify-session: failed to send admin payment notification", adminEmailErr);
+        }
+      }
 
       return NextResponse.json({
         success: true,

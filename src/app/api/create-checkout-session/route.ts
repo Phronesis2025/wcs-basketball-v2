@@ -9,23 +9,17 @@ const PRICE_ANNUAL = process.env.STRIPE_PRICE_ANNUAL; // price_... (one-time $36
 const PRICE_MONTHLY = process.env.STRIPE_PRICE_MONTHLY; // price_... (recurring $30/mo)
 const PRICE_QUARTERLY = process.env.STRIPE_PRICE_QUARTERLY; // price_... (quarterly payment)
 
-// Determine base URL for Vercel vs localhost
+// Determine base URL - always use custom domain in production
 function getBaseUrl(): string {
-  if (process.env.VERCEL) {
-    // Production on Vercel: prioritize NEXT_PUBLIC_BASE_URL, then VERCEL_URL
-    if (process.env.NEXT_PUBLIC_BASE_URL) {
-      const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
-      if (url.startsWith("http://") || url.startsWith("https://")) {
-        return url.replace(/\/+$/, "");
-      }
-      return `https://${url.replace(/\/+$/, "")}`;
-    }
-    if (process.env.VERCEL_URL) {
-      return `https://${process.env.VERCEL_URL}`;
-    }
+  // In production, always use the custom domain (never use Vercel URLs)
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
+  
+  if (isProduction) {
+    // In production, always use the custom domain
     return "https://www.wcsbasketball.site";
   }
-  // Development (local)
+  
+  // Development: use NEXT_PUBLIC_BASE_URL or localhost
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 }
 

@@ -63,7 +63,7 @@ export default function RegistrationWizard({
   };
 
   const methods = useForm<FormData>({
-    resolver: zodResolver(getSchemaForStep(currentStep)),
+    resolver: zodResolver(getSchemaForStep(currentStep)) as any,
     mode: "onChange",
     defaultValues: {
       parent_first_name:

@@ -173,6 +173,12 @@ export async function POST(req: Request) {
             shirt_size: shirt_size || null,
             position_preference: position_preference || null,
             previous_experience: previous_experience || null,
+            // Medical information - save to player record
+            medical_allergies: medical_allergies || null,
+            medical_conditions: medical_conditions || null,
+            medical_medications: medical_medications || null,
+            doctor_name: doctor_name || null,
+            doctor_phone: doctor_phone || null,
             status: "pending",
             is_deleted: false,
             waiver_signed: false, // Will be signed at registration
@@ -198,6 +204,12 @@ export async function POST(req: Request) {
       if (shirt_size !== undefined) updateData.shirt_size = shirt_size || null;
       if (position_preference !== undefined) updateData.position_preference = position_preference || null;
       if (previous_experience !== undefined) updateData.previous_experience = previous_experience || null;
+      // Medical information - save to player record
+      if (medical_allergies !== undefined) updateData.medical_allergies = medical_allergies || null;
+      if (medical_conditions !== undefined) updateData.medical_conditions = medical_conditions || null;
+      if (medical_medications !== undefined) updateData.medical_medications = medical_medications || null;
+      if (doctor_name !== undefined) updateData.doctor_name = doctor_name || null;
+      if (doctor_phone !== undefined) updateData.doctor_phone = doctor_phone || null;
 
       if (Object.keys(updateData).length > 0) {
         const { error: playerUpdateError } = await supabaseAdmin

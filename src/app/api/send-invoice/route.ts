@@ -6,20 +6,33 @@ import { fetchTeamById } from "@/lib/actions";
 
 // Helper functions for email template (matching emailTemplates.ts pattern)
 function getEmailBaseUrl(): string {
+  // In production, always use the custom domain (never use Vercel URLs)
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
+  
+  if (isProduction) {
+    // In production, always use the custom domain
+    return "https://www.wcsbasketball.site";
+  }
+  
+  // Development: Try NEXT_PUBLIC_BASE_URL first
   if (process.env.NEXT_PUBLIC_BASE_URL) {
     const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
     const withProtocol =
       url.startsWith("http://") || url.startsWith("https://")
         ? url
         : `https://${url}`;
-    if (!/localhost|127\.0\.0\.1/i.test(withProtocol)) {
+    // Only use if it's localhost (development)
+    if (/localhost|127\.0\.0\.1/i.test(withProtocol)) {
+      return withProtocol.replace(/\/+$/, "");
+    }
+    // If NEXT_PUBLIC_BASE_URL is set to the custom domain in dev, use it
+    if (withProtocol.includes("wcsbasketball.site")) {
       return withProtocol.replace(/\/+$/, "");
     }
   }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  return "https://www.wcsbasketball.site";
+  
+  // Development fallback
+  return "http://localhost:3000";
 }
 
 function getLogoUrl(): string {

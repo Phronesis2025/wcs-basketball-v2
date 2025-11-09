@@ -8,6 +8,8 @@ import {
   getAdminPaymentConfirmationEmail,
 } from "@/lib/emailTemplates";
 import { fetchTeamDataForEmail } from "@/lib/emailHelpers";
+import { generateInvoicePDF } from "@/lib/pdf/invoice";
+import { fetchTeamById } from "@/lib/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +41,135 @@ function splitFullName(fullName?: string | null) {
   const firstName = parts.shift()!;
   const lastName = parts.join(" ");
   return { firstName, lastName };
+}
+
+/**
+ * Generate invoice data for a single payment
+ * This creates invoice data matching the format at /payment/[playerId] but only includes the current payment
+ */
+async function generateSinglePaymentInvoiceData(data: {
+  payment: {
+    id: string;
+    amount: number;
+    payment_type: string;
+    created_at: string;
+  };
+  player: {
+    id: string;
+    name: string;
+    parent_email?: string | null;
+    parent_id?: string | null;
+  };
+  parent?: {
+    first_name?: string | null;
+    last_name?: string | null;
+    email?: string | null;
+    address_line1?: string | null;
+    address_line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+  } | null;
+  teamName?: string;
+  teamLogoUrl?: string | null;
+  quarterlyFee?: number | null;
+}) {
+  const { payment, player, parent, teamName, teamLogoUrl, quarterlyFee } = data;
+  const annualFee = Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360);
+  const monthlyFee = 30;
+  const quarterlyFeeAmount = quarterlyFee || 90;
+
+  // Format parent address
+  const parentAddressParts = [];
+  if (parent?.address_line1) parentAddressParts.push(parent.address_line1);
+  if (parent?.address_line2) parentAddressParts.push(parent.address_line2);
+  if (parent?.city || parent?.state || parent?.zip) {
+    parentAddressParts.push([parent?.city, parent?.state, parent?.zip].filter(Boolean).join(", "));
+  }
+  const parentAddress = parentAddressParts.join(", ") || "";
+
+  // Format invoice date and number
+  const invoiceDate = new Date().toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+    year: "numeric"
+  });
+  const invoiceNumber = payment.id.toString().slice(0, 8);
+
+  // Format the single payment item
+  const paymentDate = new Date(payment.created_at);
+  const paymentType = (payment.payment_type || "annual").toLowerCase();
+  const isAnnual = paymentType === "annual";
+  const isMonthly = paymentType === "monthly";
+  const isQuarterly = paymentType === "quarterly";
+
+  // Format description: "Player Name - Annual/Monthly/Quarterly - Year/Month"
+  const year = paymentDate.getFullYear();
+  const month = paymentDate.toLocaleDateString("en-US", { month: "long" });
+  let typeLabel = "Annual";
+  let periodLabel = year.toString();
+  if (isMonthly) {
+    typeLabel = "Monthly";
+    periodLabel = `${month} ${year}`;
+  } else if (isQuarterly) {
+    typeLabel = "Quarterly";
+    periodLabel = `${month} ${year}`;
+  }
+  const description = `${player.name || "Player"} - ${typeLabel} - ${periodLabel}`;
+
+  // Price: show Annual, Monthly, or Quarterly amount with label
+  let priceAmount = annualFee;
+  let priceLabel = `Annual ($${annualFee.toFixed(2)})`;
+  if (isMonthly) {
+    priceAmount = monthlyFee;
+    priceLabel = `Monthly ($${monthlyFee.toFixed(2)})`;
+  } else if (isQuarterly) {
+    priceAmount = quarterlyFeeAmount;
+    priceLabel = `Quarterly ($${quarterlyFeeAmount.toFixed(2)})`;
+  }
+
+  // Qty: 12 for annual, 1 for monthly/quarterly
+  const quantity = isAnnual ? 12 : 1;
+
+  // Amount: how much was actually paid
+  const amountPaid = Number(payment.amount) || 0;
+
+  const invoiceItem = {
+    date: paymentDate.toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric"
+    }),
+    description,
+    priceLabel,
+    priceAmount,
+    quantity,
+    amountPaid,
+  };
+
+  // For a single payment invoice, subtotal equals the amount paid
+  const subtotal = amountPaid;
+  // Total is the annual fee (the full amount due for the year)
+  const totalAmount = annualFee;
+  // Remaining is the difference
+  const remaining = Math.max(annualFee - amountPaid, 0);
+  const isPaidInFull = amountPaid >= annualFee && amountPaid > 0;
+
+  return {
+    invoiceDate,
+    invoiceNumber,
+    parentName: parent ? `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || "N/A" : "N/A",
+    parentAddress: parentAddress || "N/A",
+    playerName: player.name || "—",
+    teamName: teamName || "Not Assigned Yet",
+    teamLogoUrl: teamLogoUrl || null,
+    email: player.parent_email || parent?.email || "—",
+    items: [invoiceItem],
+    subtotal,
+    totalAmount,
+    remaining,
+    isPaidInFull,
+  };
 }
 
 // Helper to notify admins using BCC (maintains privacy)
@@ -241,15 +372,111 @@ export async function POST(req: Request) {
               teamInfo: teamInfo || undefined,
             });
 
+            // Generate and attach invoice PDF
+            let pdfAttachment = null;
+            try {
+              // Fetch full parent data for invoice
+              let parentData = null;
+              if (player.parent_id) {
+                const { data: parent } = await supabaseAdmin!
+                  .from("parents")
+                  .select("*")
+                  .eq("id", player.parent_id)
+                  .single();
+                if (parent) {
+                  parentData = parent;
+                }
+              }
+
+              // Fetch team data for invoice
+              let teamName = "Not Assigned Yet";
+              let teamLogoUrl = null;
+              if (player.team_id) {
+                try {
+                  const team = await fetchTeamById(player.team_id);
+                  if (team?.name) teamName = team.name;
+                  if (team?.logo_url) teamLogoUrl = team.logo_url;
+                } catch (err) {
+                  devError("webhook: failed to fetch team for invoice", err);
+                }
+              }
+
+              // Fetch quarterly fee if needed
+              let quarterlyFee = null;
+              if (paymentRow.payment_type === "quarterly") {
+                try {
+                  const PRICE_QUARTERLY = process.env.STRIPE_PRICE_QUARTERLY;
+                  if (PRICE_QUARTERLY) {
+                    const price = await stripe.prices.retrieve(PRICE_QUARTERLY);
+                    quarterlyFee = (price.unit_amount || 0) / 100; // Convert from cents to dollars
+                  } else {
+                    quarterlyFee = 90; // Fallback default
+                  }
+                } catch (err) {
+                  devError("webhook: failed to fetch quarterly price", err);
+                  quarterlyFee = 90; // Fallback default
+                }
+              }
+
+              // Get the updated payment record with created_at
+              const { data: updatedPayment } = await supabaseAdmin!
+                .from("payments")
+                .select("id, amount, payment_type, created_at")
+                .eq("id", paymentRow.id)
+                .single();
+
+              if (updatedPayment) {
+                // Generate invoice data
+                const invoiceData = await generateSinglePaymentInvoiceData({
+                  payment: {
+                    id: updatedPayment.id,
+                    amount: updatedPayment.amount,
+                    payment_type: updatedPayment.payment_type,
+                    created_at: updatedPayment.created_at,
+                  },
+                  player: {
+                    id: player.id,
+                    name: player.name || "",
+                    parent_email: player.parent_email,
+                    parent_id: player.parent_id,
+                  },
+                  parent: parentData,
+                  teamName,
+                  teamLogoUrl,
+                  quarterlyFee,
+                });
+
+                // Generate PDF
+                const pdfBytes = await generateInvoicePDF(invoiceData);
+                const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
+                pdfAttachment = {
+                  filename: `invoice-${invoiceData.invoiceNumber}.pdf`,
+                  content: pdfBase64,
+                };
+
+                devLog("webhook: invoice PDF generated", {
+                  playerId: paymentRow.player_id,
+                  invoiceNumber: invoiceData.invoiceNumber,
+                });
+              }
+            } catch (pdfErr) {
+              // Log error but don't fail the webhook - email will still send without PDF
+              devError("webhook: failed to generate invoice PDF", pdfErr);
+            }
+
             try {
               await sendEmail(
                 parentEmail,
                 parentEmailData.subject,
-                parentEmailData.html
+                parentEmailData.html,
+                {
+                  attachments: pdfAttachment ? [pdfAttachment] : undefined,
+                }
               );
 
               devLog("webhook: parent confirmation email sent", {
                 to: parentEmail,
+                hasAttachment: !!pdfAttachment,
               });
             } catch (emailErr) {
               devError("webhook: failed to send parent email", emailErr);
@@ -443,14 +670,96 @@ export async function POST(req: Request) {
               teamInfo: teamInfo || undefined,
             });
 
+            // Generate and attach invoice PDF
+            let pdfAttachment = null;
+            try {
+              // Fetch full parent data for invoice
+              let parentData = null;
+              if (player.parent_id) {
+                const { data: parent } = await supabaseAdmin!
+                  .from("parents")
+                  .select("*")
+                  .eq("id", player.parent_id)
+                  .single();
+                if (parent) {
+                  parentData = parent;
+                }
+              }
+
+              // Fetch team data for invoice
+              let teamName = "Not Assigned Yet";
+              let teamLogoUrl = null;
+              if (player.team_id) {
+                try {
+                  const team = await fetchTeamById(player.team_id);
+                  if (team?.name) teamName = team.name;
+                  if (team?.logo_url) teamLogoUrl = team.logo_url;
+                } catch (err) {
+                  devError("webhook: failed to fetch team for invoice (renewal)", err);
+                }
+              }
+
+              // Get the payment record that was just inserted
+              const { data: renewalPayment } = await supabaseAdmin!
+                .from("payments")
+                .select("id, amount, payment_type, created_at")
+                .eq("stripe_payment_id", invoice.id)
+                .eq("player_id", player.id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .single();
+
+              if (renewalPayment) {
+                // Generate invoice data
+                const invoiceData = await generateSinglePaymentInvoiceData({
+                  payment: {
+                    id: renewalPayment.id,
+                    amount: renewalPayment.amount,
+                    payment_type: renewalPayment.payment_type,
+                    created_at: renewalPayment.created_at,
+                  },
+                  player: {
+                    id: player.id,
+                    name: player.name || "",
+                    parent_email: player.parent_email,
+                    parent_id: player.parent_id,
+                  },
+                  parent: parentData,
+                  teamName,
+                  teamLogoUrl,
+                  quarterlyFee: null, // Monthly renewals don't need quarterly fee
+                });
+
+                // Generate PDF
+                const pdfBytes = await generateInvoicePDF(invoiceData);
+                const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
+                pdfAttachment = {
+                  filename: `invoice-${invoiceData.invoiceNumber}.pdf`,
+                  content: pdfBase64,
+                };
+
+                devLog("webhook: invoice PDF generated (renewal)", {
+                  playerId: player.id,
+                  invoiceNumber: invoiceData.invoiceNumber,
+                });
+              }
+            } catch (pdfErr) {
+              // Log error but don't fail the webhook - email will still send without PDF
+              devError("webhook: failed to generate invoice PDF (renewal)", pdfErr);
+            }
+
             await sendEmail(
               parentEmail,
               parentEmailData.subject,
-              parentEmailData.html
+              parentEmailData.html,
+              {
+                attachments: pdfAttachment ? [pdfAttachment] : undefined,
+              }
             );
 
             devLog("webhook: parent subscription renewal email sent", {
               to: parentEmail,
+              hasAttachment: !!pdfAttachment,
             });
           } catch (emailErr) {
             devError("webhook: parent renewal email error", emailErr);

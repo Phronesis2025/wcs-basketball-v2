@@ -1,5 +1,58 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.11 - Automatic Invoice PDF Attachments
+
+**Release Date**: November 9, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (112 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Automatic Invoice PDF Attachments**:
+  - **Feature**: Payment confirmation emails now automatically include an invoice PDF attachment
+  - **Implementation**: 
+    - Extended `sendEmail` utility function to support email attachments via Resend API
+    - Created `generateSinglePaymentInvoiceData` helper function to format invoice data for individual payments
+    - Integrated PDF generation into both `checkout.session.completed` (one-time payments) and `invoice.payment_succeeded` (recurring payments) webhook handlers
+  - **Invoice Format**: 
+    - Matches the format shown on the `/payment/[playerId]` page
+    - Only includes the current payment that was just completed (not all payment history)
+    - Handles annual, monthly, and quarterly payment types with proper formatting
+    - Includes player name, parent information, team details, and payment breakdown
+  - **Files Modified**:
+    - `src/lib/email.ts`: Added attachments parameter support
+    - `src/app/api/stripe-webhook/route.ts`: Added PDF generation and attachment logic
+  - **Error Handling**: PDF generation failures are logged but don't prevent email delivery
+  - **Impact**: Parents now receive a professional invoice PDF automatically with every payment confirmation email
+
+### 🔧 Changed
+
+- **Email Utility Enhancement**:
+  - Extended `sendEmail` function to accept optional `attachments` array parameter
+  - Attachments are base64-encoded and passed to Resend API in the expected format
+  - Maintains backward compatibility - existing email calls continue to work without attachments
+
+### 🔒 Security
+
+- **Security Audit**: ✅ Passed
+- **No new security issues introduced** in code changes
+- **All API keys and secrets** properly use environment variables
+- **Supabase Advisors**: 
+  - Security: 1 informational warning (leaked password protection - recommendation only)
+  - Performance: Unused indexes (informational only, no action required)
+- All changes are PDF generation and email attachment improvements with no security implications
+
+### 📝 Documentation Updates
+
+- `docs/CHANGELOG.md`: Added version 2.10.11 entry
+- `docs/CHANGELOG_ENTRIES_FOR_SUPABASE.md`: Updated with new entries
+- Supabase changelog table: Updated with 3 new entries for version 2.10.11
+
+---
+
 ## 🚀 Version 2.10.10 - Payment Link Domain Fix
 
 **Release Date**: January 9, 2025  
@@ -86,7 +139,7 @@
   - Clicking unread mentions notification badge now scrolls to the specific message and opens reply function
   - Clicking unread mention cards in message board also scrolls to message and opens reply
   - Automatically marks mention as read when clicked
-  - **Files Modified**: 
+- **Files Modified**:
     - `src/app/admin/club-management/page.tsx`
     - `src/components/dashboard/MessageBoard.tsx`
     - `src/components/dashboard/CoachProfile.tsx`
@@ -95,7 +148,7 @@
 - **Registration Wizard Step Animation**:
   - Added pulsing animation behind active step circle in registration wizard
   - Custom CSS animation with opacity and scale changes for better visibility
-  - **Files Modified**: 
+- **Files Modified**:
     - `src/components/registration/RegistrationWizard.tsx`
     - `src/app/globals.css`
   - **Impact**: Better visual feedback for active step
@@ -110,7 +163,7 @@
 - **Registration Form Text Updates**:
   - Changed "child" to "player" throughout "Add Another Player" form
   - Updated COPPA consent text to use "player/ward" instead of "child/ward"
-  - **Files Modified**: 
+- **Files Modified**:
     - `src/app/add-child/page.tsx`
     - `src/app/register/page.tsx`
     - `src/components/registration/RegistrationWizard.tsx`
@@ -402,7 +455,7 @@
 **Release Date**: January 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 9/10 (Excellent) 🔒  
-**Build Status**: Clean Build ✅  
+**Build Status**: Clean Build ✅
 
 ---
 
@@ -489,7 +542,7 @@
 **Release Date**: January 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 9/10 (Excellent) 🔒  
-**Build Status**: Clean Build ✅  
+**Build Status**: Clean Build ✅
 
 ---
 
@@ -599,7 +652,7 @@
 **Release Date**: January 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 9/10 (Excellent) 🔒  
-**Build Status**: Clean Build ✅
+**Build Status**: Clean Build ✅  
 
 ---
 

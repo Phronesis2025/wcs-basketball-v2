@@ -9,7 +9,15 @@ import { join } from "path";
  * This works in both client and server contexts
  */
 function getEmailBaseUrl(): string {
-  // Try NEXT_PUBLIC_BASE_URL first (works in both client and server)
+  // In production, always use the custom domain (never use Vercel URLs)
+  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
+  
+  if (isProduction) {
+    // In production, always use the custom domain
+    return "https://www.wcsbasketball.site";
+  }
+  
+  // Development: Try NEXT_PUBLIC_BASE_URL first (works in both client and server)
   if (process.env.NEXT_PUBLIC_BASE_URL) {
     const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
     // Ensure it has protocol
@@ -17,19 +25,18 @@ function getEmailBaseUrl(): string {
       url.startsWith("http://") || url.startsWith("https://")
         ? url
         : `https://${url}`;
-    // Do NOT use localhost for email asset URLs
+    // Only use if it's localhost (development)
     if (/localhost|127\.0\.0\.1/i.test(withProtocol)) {
-      // fall through to VERCEL_URL or hardcoded prod
-    } else {
       return withProtocol.replace(/\/+$/, ""); // Remove trailing slashes
     }
+    // If NEXT_PUBLIC_BASE_URL is set to the custom domain in dev, use it
+    if (withProtocol.includes("wcsbasketball.site")) {
+      return withProtocol.replace(/\/+$/, "");
+    }
   }
-  // Try VERCEL_URL (available in Vercel deployments)
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-  // Fallback to new custom domain (primary production URL)
-  return "https://www.wcsbasketball.site";
+  
+  // Development fallback
+  return "http://localhost:3000";
 }
 
 /**

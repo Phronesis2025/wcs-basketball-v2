@@ -1,5 +1,35 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.11  
+**Release Date**: 2025-11-09
+
+---
+
+## Version 2.10.11 Entries
+
+### Entry 1: Automatic Invoice PDF Attachments
+- **Version**: `2.10.11`
+- **Release Date**: `2025-11-09`
+- **Category**: `added`
+- **Description**: `Added automatic invoice PDF attachment to payment confirmation emails. Invoices are now automatically generated and attached when payments are completed (both one-time and recurring payments). The invoice matches the format shown on the payment page but only includes the current payment.`
+- **Is Published**: `true`
+
+### Entry 2: Email Utility Attachment Support
+- **Version**: `2.10.11`
+- **Release Date**: `2025-11-09`
+- **Category**: `changed`
+- **Description**: `Extended sendEmail utility function to support email attachments. Added optional attachments parameter that accepts base64-encoded file content for PDF attachments via Resend API.`
+- **Is Published**: `true`
+
+### Entry 3: Invoice Data Generation Helper
+- **Version**: `2.10.11`
+- **Release Date**: `2025-11-09`
+- **Category**: `added`
+- **Description**: `Created generateSinglePaymentInvoiceData helper function in Stripe webhook handler to format invoice data for individual payments. Handles annual, monthly, and quarterly payment types with proper formatting.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.10  
 **Release Date**: 2025-01-09
 

@@ -10,7 +10,7 @@ const RESEND_DEV_TO = process.env.RESEND_DEV_TO || "phronesis700@gmail.com"; // 
  * @param to - Single email address or array of email addresses for the primary recipient(s)
  * @param subject - Email subject line
  * @param html - HTML content of the email
- * @param options - Optional parameters for CC, BCC, etc.
+ * @param options - Optional parameters for CC, BCC, attachments, etc.
  */
 export async function sendEmail(
   to: string | string[],
@@ -19,6 +19,10 @@ export async function sendEmail(
   options?: {
     cc?: string | string[];
     bcc?: string | string[];
+    attachments?: Array<{
+      filename: string;
+      content: string; // base64 encoded content
+    }>;
   }
 ) {
   if (!RESEND_API_KEY) {
@@ -84,6 +88,10 @@ export async function sendEmail(
   }
   if (finalBcc && finalBcc.length > 0) {
     emailPayload.bcc = finalBcc;
+  }
+  // Add attachments if provided
+  if (options?.attachments && options.attachments.length > 0) {
+    emailPayload.attachments = options.attachments;
   }
 
   try {
