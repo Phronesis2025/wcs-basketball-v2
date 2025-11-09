@@ -28,8 +28,8 @@ function getEmailBaseUrl(): string {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
-  // Fallback to production URL
-  return "https://wcs-basketball-v2.vercel.app";
+  // Fallback to new custom domain (primary production URL)
+  return "https://www.wcsbasketball.site";
 }
 
 /**
@@ -63,8 +63,8 @@ function getLogoUrl(): string {
   if (!/localhost|127\.0\.0\.1/i.test(baseUrl)) {
     return `${baseUrl}/apple-touch-icon.png`;
   }
-  // Fallback to prod domain
-  return `https://wcs-basketball-v2.vercel.app/apple-touch-icon.png`;
+  // Fallback to new custom domain
+  return `https://www.wcsbasketball.site/apple-touch-icon.png`;
 }
 
 /**
@@ -1518,7 +1518,7 @@ export function getPaymentConfirmationEmail(data: {
         <div class="section" style="text-align: center;">
           <a href="${
             process.env.NEXT_PUBLIC_BASE_URL ||
-            "https://wcs-basketball-v2.vercel.app"
+            "https://www.wcsbasketball.site"
           }/parent-handbook" class="button">View Parent Handbook →</a>
         </div>
         `
@@ -1528,7 +1528,7 @@ export function getPaymentConfirmationEmail(data: {
         <div style="text-align: center; margin: 30px 0;">
           <a href="${
             process.env.NEXT_PUBLIC_BASE_URL ||
-            "https://wcs-basketball-v2.vercel.app"
+            "https://www.wcsbasketball.site"
           }/parent/dashboard" class="button">Go to Parent Dashboard →</a>
         </div>
 

@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
                 } else if (process.env.VERCEL_URL) {
                   baseUrl = `https://${process.env.VERCEL_URL}`;
                 } else {
-                  baseUrl = "https://wcs-basketball-v2.vercel.app";
+                  baseUrl = "https://www.wcsbasketball.site";
                 }
               } else {
                 baseUrl = "http://localhost:3000";

@@ -19,7 +19,7 @@ function getEmailBaseUrl(): string {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`;
   }
-  return "https://wcs-basketball-v2.vercel.app";
+  return "https://www.wcsbasketball.site";
 }
 
 function getLogoUrl(): string {
@@ -27,7 +27,7 @@ function getLogoUrl(): string {
   if (!/localhost|127\.0\.0\.1/i.test(baseUrl)) {
     return `${baseUrl}/apple-touch-icon.png`;
   }
-  return `https://wcs-basketball-v2.vercel.app/apple-touch-icon.png`;
+  return `https://www.wcsbasketball.site/apple-touch-icon.png`;
 }
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;

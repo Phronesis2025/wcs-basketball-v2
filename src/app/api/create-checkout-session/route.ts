@@ -23,7 +23,7 @@ function getBaseUrl(): string {
     if (process.env.VERCEL_URL) {
       return `https://${process.env.VERCEL_URL}`;
     }
-    return "https://wcs-basketball-v2.vercel.app";
+    return "https://www.wcsbasketball.site";
   }
   // Development (local)
   return process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";

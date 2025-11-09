@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
         if (process.env.VERCEL_URL) {
           return `https://${process.env.VERCEL_URL}`;
         }
-        // Final fallback to production domain
-        return "https://wcs-basketball-v2.vercel.app";
+        // Final fallback to new custom domain (primary production URL)
+        return "https://www.wcsbasketball.site";
       }
       
       // Development (local): detect from request or use localhost
