@@ -69,8 +69,8 @@ export async function POST(request: NextRequest) {
     const resetToken = crypto.randomBytes(32).toString("hex");
     const expiresAt = Date.now() + 30 * 60 * 1000; // 30 minutes
 
-    // Store token in shared token store
-    coachResetTokens.set(resetToken, {
+    // Store token in database
+    await coachResetTokens.set(resetToken, {
       userId: userData.id,
       email: userData.email,
       expiresAt: expiresAt,

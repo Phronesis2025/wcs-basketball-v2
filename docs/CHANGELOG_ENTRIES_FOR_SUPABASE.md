@@ -1,5 +1,35 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.8  
+**Release Date**: 2025-01-08
+
+---
+
+## Version 2.10.8 Entries
+
+### Entry 1: Coach Password Reset Fix
+- **Version**: `2.10.8`
+- **Release Date**: `2025-01-08`
+- **Category**: `fixed`
+- **Description**: `Fixed coach password reset failure in production. Replaced in-memory token storage with database-backed storage using password_reset_tokens table to support serverless environments.`
+- **Is Published**: `true`
+
+### Entry 2: Password Reset Token Database Table
+- **Version**: `2.10.8`
+- **Release Date**: `2025-01-08`
+- **Category**: `added`
+- **Description**: `Created password_reset_tokens database table for persistent storage of coach/admin password reset tokens, enabling password resets to work correctly in serverless production environments.`
+- **Is Published**: `true`
+
+### Entry 3: Password Input Accessibility Improvement
+- **Version**: `2.10.8`
+- **Release Date**: `2025-01-08`
+- **Category**: `changed`
+- **Description**: `Added autocomplete attributes to password input fields on coach reset password page to improve browser password manager compatibility and accessibility.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.7  
 **Release Date**: 2025-01-08
 

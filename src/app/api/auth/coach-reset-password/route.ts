@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
 
     devLog("Coach password reset request for token:", token.substring(0, 10) + "...");
 
-    // Verify token
-    const tokenData = coachResetTokens.get(token);
+    // Verify token from database
+    const tokenData = await coachResetTokens.get(token);
     if (!tokenData) {
       devError("Invalid or expired reset token");
       return NextResponse.json(
@@ -100,8 +100,8 @@ export async function POST(request: NextRequest) {
       // Don't fail the request, password was updated successfully
     }
 
-    // Delete used token
-    coachResetTokens.delete(token);
+    // Mark token as used
+    await coachResetTokens.delete(token);
 
     devLog("Password reset successful for user:", tokenData.userId);
 

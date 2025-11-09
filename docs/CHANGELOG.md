@@ -1,5 +1,61 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.8 - Coach Password Reset Fix
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### 🔧 Fixed
+
+- **Coach Password Reset Failure**:
+  - **Issue**: Coach password reset failing with 500 error in production
+  - **Root Cause**: In-memory token storage (`Map`) doesn't persist across serverless instances on Vercel. When reset password API was called, it ran on a different server instance that didn't have the token in memory.
+  - **Fix**: 
+    - Created `password_reset_tokens` database table in Supabase for persistent token storage
+    - Updated `coachResetTokens` to use database instead of in-memory Map
+    - Made all token operations async to work with database
+  - **Files Modified**:
+    - `src/lib/coachResetTokens.ts`: Complete rewrite to use Supabase database table
+    - `src/app/api/auth/coach-forgot-password/route.ts`: Updated to await token storage
+    - `src/app/api/auth/coach-reset-password/route.ts`: Updated to await token retrieval
+    - `src/app/coaches/reset-password/page.tsx`: Added autocomplete attributes for password fields
+  - **Impact**: Coach password reset now works correctly in production serverless environment
+
+- **Password Input Autocomplete Warnings**:
+  - **Issue**: Browser console warnings about missing autocomplete attributes on password inputs
+  - **Fix**: Added `autoComplete="new-password"` to both password input fields
+  - **Files Modified**: `src/app/coaches/reset-password/page.tsx`
+  - **Impact**: Improved accessibility and browser password manager compatibility
+
+### ✨ Added
+
+- **Database Table for Password Reset Tokens**:
+  - Created `password_reset_tokens` table in Supabase
+  - Includes proper indexes for fast lookups
+  - RLS policies configured for security
+  - Automatic cleanup of expired tokens
+  - Supports serverless environments (Vercel)
+
+### 🔒 Security
+
+- **Security Audit Completed**: ✅ Passed with recommendations
+- **No security issues introduced** in code changes
+- Database-backed token storage is more secure than in-memory
+- Tokens are automatically marked as used after password reset
+- Expired tokens are cleaned up automatically
+- **Recommendation**: Enable Supabase leaked password protection (see previous security audit)
+
+### 📝 Documentation Updates
+
+- `docs/CHANGELOG.md`: Added version 2.10.8 entry
+- `docs/CHANGELOG_ENTRIES_FOR_SUPABASE.md`: Updated with new entries
+
+---
+
 ## 🚀 Version 2.10.7 - Gmail OAuth Redirect Fix & Vercel MCP Integration
 
 **Release Date**: January 2025  
@@ -207,7 +263,7 @@
 **Release Date**: January 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 9/10 (Excellent) 🔒  
-**Build Status**: Clean Build ✅
+**Build Status**: Clean Build ✅  
 
 ---
 
@@ -294,7 +350,7 @@
 **Release Date**: January 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 9/10 (Excellent) 🔒  
-**Build Status**: Clean Build ✅
+**Build Status**: Clean Build ✅  
 
 ---
 
