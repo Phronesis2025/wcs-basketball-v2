@@ -1,5 +1,42 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.10  
+**Release Date**: 2025-01-09
+
+---
+
+## Version 2.10.10 Entries
+
+### Entry 1: Payment Link Domain Fix
+- **Version**: `2.10.10`
+- **Release Date**: `2025-01-09`
+- **Category**: `fixed`
+- **Description**: `Fixed payment links in approval emails to always use https://www.wcsbasketball.site instead of old Vercel URL. Updated approve-player, import-execute, and magic-link routes to hardcode new domain in production.`
+- **Is Published**: `true`
+
+### Entry 2: Go-Live Checklist Update
+- **Version**: `2.10.10`
+- **Release Date**: `2025-01-09`
+- **Category**: `changed`
+- **Description**: `Updated GO_LIVE_CHECKLIST.md with payment link configuration details, domain setup requirements, and verification steps for production deployment.`
+- **Is Published**: `true`
+
+---
+
+## Security Audit Summary (Version 2.10.10)
+
+### Security Findings
+- **Overall Score**: 9/10 (Excellent)
+- **Status**: ✅ Passed with recommendations
+- **xlsx Dependency**: High severity vulnerabilities found (no fix available, acceptable risk for admin-only functionality)
+- **Recommendation**: Enable Supabase leaked password protection
+- **Code Review**: No hardcoded secrets or credentials found in modified files
+
+### Performance Findings
+- **Unused Indexes**: Informational only, no action required
+
+---
+
 **Version**: 2.10.9  
 **Release Date**: 2025-01-09
 

@@ -149,16 +149,8 @@ export async function POST(req: Request) {
         // This ensures the parent is authenticated when they click the link
         let baseUrl: string;
         if (process.env.VERCEL) {
-          // Production on Vercel: prioritize NEXT_PUBLIC_BASE_URL, then new domain, then VERCEL_URL
-          if (process.env.NEXT_PUBLIC_BASE_URL) {
-            const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
-            baseUrl = url.startsWith("http://") || url.startsWith("https://") 
-              ? url.replace(/\/+$/, "") 
-              : `https://${url.replace(/\/+$/, "")}`;
-          } else {
-            // Use new custom domain as primary production URL
-            baseUrl = "https://www.wcsbasketball.site";
-          }
+          // Production on Vercel: Always use new custom domain
+          baseUrl = "https://www.wcsbasketball.site";
         } else {
           // Development (local)
           baseUrl = 'http://localhost:3000';

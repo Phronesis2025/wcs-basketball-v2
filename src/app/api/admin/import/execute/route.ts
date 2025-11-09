@@ -279,16 +279,8 @@ export async function POST(request: NextRequest) {
               // Determine base URL for redirect
               let baseUrl: string;
               if (process.env.VERCEL) {
-                if (process.env.NEXT_PUBLIC_BASE_URL) {
-                  const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
-                  baseUrl = url.startsWith("http://") || url.startsWith("https://")
-                    ? url.replace(/\/+$/, "")
-                    : `https://${url.replace(/\/+$/, "")}`;
-                } else if (process.env.VERCEL_URL) {
-                  baseUrl = `https://${process.env.VERCEL_URL}`;
-                } else {
-                  baseUrl = "https://www.wcsbasketball.site";
-                }
+                // Production on Vercel: Always use new custom domain
+                baseUrl = "https://www.wcsbasketball.site";
               } else {
                 baseUrl = "http://localhost:3000";
               }
@@ -367,16 +359,8 @@ export async function POST(request: NextRequest) {
                   try {
                     let baseUrl: string;
                     if (process.env.VERCEL) {
-                      if (process.env.NEXT_PUBLIC_BASE_URL) {
-                        const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
-                        baseUrl = url.startsWith("http://") || url.startsWith("https://")
-                          ? url.replace(/\/+$/, "")
-                          : `https://${url.replace(/\/+$/, "")}`;
-                      } else if (process.env.VERCEL_URL) {
-                        baseUrl = `https://${process.env.VERCEL_URL}`;
-                      } else {
-                        baseUrl = "https://wcs-basketball-v2.vercel.app";
-                      }
+                      // Production on Vercel: Always use new custom domain
+                      baseUrl = "https://www.wcsbasketball.site";
                     } else {
                       baseUrl = "http://localhost:3000";
                     }

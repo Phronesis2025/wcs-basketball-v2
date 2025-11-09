@@ -6,22 +6,8 @@ export async function POST(request: NextRequest) {
   try {
     // Determine base URL - properly handle Vercel vs localhost
     const getBaseUrl = () => {
-      // Production on Vercel: prioritize NEXT_PUBLIC_BASE_URL, then VERCEL_URL
+      // Production on Vercel: Always use new custom domain
       if (process.env.VERCEL) {
-        // Vercel provides VERCEL_URL automatically, but prefer explicit NEXT_PUBLIC_BASE_URL
-        if (process.env.NEXT_PUBLIC_BASE_URL) {
-          const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
-          // Ensure it has protocol
-          if (url.startsWith("http://") || url.startsWith("https://")) {
-            return url.replace(/\/+$/, ""); // Remove trailing slashes
-          }
-          return `https://${url.replace(/\/+$/, "")}`;
-        }
-        // Fallback to VERCEL_URL (provided by Vercel automatically)
-        if (process.env.VERCEL_URL) {
-          return `https://${process.env.VERCEL_URL}`;
-        }
-        // Final fallback to new custom domain (primary production URL)
         return "https://www.wcsbasketball.site";
       }
       

@@ -2,8 +2,9 @@
 
 **Document Purpose**: Complete checklist of tasks and configurations needed before launching the site for the first time in production.
 
-**Last Updated**: January 2025  
-**Status**: Pre-Launch Checklist
+**Last Updated**: January 9, 2025  
+**Status**: Pre-Launch Checklist  
+**Version**: Updated for wcsbasketball.site domain and payment link configuration
 
 ---
 
@@ -37,10 +38,10 @@ NEXT_PUBLIC_SUPABASE_URL=https://htgkddahhgugesktujds.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=[your-production-anon-key]
 SUPABASE_SERVICE_ROLE_KEY=[your-production-service-role-key]
 
-# Base URL
-NEXT_PUBLIC_BASE_URL=https://wcs-basketball-v2.vercel.app
-# OR your custom domain if configured:
-# NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+# Base URL (Note: Payment links now hardcode to https://www.wcsbasketball.site in production)
+NEXT_PUBLIC_BASE_URL=https://www.wcsbasketball.site
+# ⚠️ IMPORTANT: Code has been updated to always use https://www.wcsbasketball.site for payment links
+# This environment variable is still used for other purposes, but payment links ignore it
 ```
 
 **How to get Supabase keys:**
@@ -136,23 +137,18 @@ ADMIN_NOTIFICATIONS_TO=your-email@example.com
 
 1. **Configure Redirect URLs:**
    ```
-   https://wcs-basketball-v2.vercel.app/**
-   https://wcs-basketball-v2.vercel.app/auth/callback
+   https://www.wcsbasketball.site/**
+   https://www.wcsbasketball.site/auth/callback
+   https://wcsbasketball.site/**
+   https://wcsbasketball.site/auth/callback
    ```
-   If using custom domain:
-   ```
-   https://yourdomain.com/**
-   https://yourdomain.com/auth/callback
-   ```
+   ⚠️ **IMPORTANT**: Both www and non-www versions must be added for OAuth redirects to work
 
 2. **Set Site URL:**
    ```
-   https://wcs-basketball-v2.vercel.app
+   https://www.wcsbasketball.site
    ```
-   Or your custom domain:
-   ```
-   https://yourdomain.com
-   ```
+   ⚠️ **Use the www version** as the primary site URL
 
 3. **Enable Email Provider:**
    - Go to **Authentication** → **Providers** → **Email**
@@ -209,7 +205,8 @@ STRIPE_WEBHOOK_SECRET=whsec_[your-webhook-secret]
 
 3. **Configure Webhook:**
    - Go to **Developers** → **Webhooks**
-   - Add endpoint: `https://wcs-basketball-v2.vercel.app/api/stripe-webhook`
+   - Add endpoint: `https://www.wcsbasketball.site/api/stripe-webhook`
+   - ⚠️ **IMPORTANT**: Use the new custom domain, not the old Vercel URL
    - Select events: `payment_intent.succeeded`, `payment_intent.payment_failed`
    - Copy **Signing secret** (starts with `whsec_`)
 
@@ -223,25 +220,44 @@ STRIPE_WEBHOOK_SECRET=whsec_[your-webhook-secret]
 
 ## 🌐 Domain & DNS Setup
 
-### Custom Domain Configuration (Optional)
+### Custom Domain Configuration (Required for Production)
 
-**Action Required**: If using custom domain instead of Vercel domain
+**Action Required**: Configure custom domain `wcsbasketball.site` for production
 
 1. **Add Domain in Vercel:**
    - Go to Vercel Dashboard → Your Project → Settings → Domains
-   - Add your custom domain (e.g., `wcsbasketball.com`)
-   - Follow DNS configuration instructions
+   - Add your custom domain: `www.wcsbasketball.site` and `wcsbasketball.site`
+   - Follow DNS configuration instructions provided by Vercel
 
 2. **Update Environment Variables:**
-   - Update `NEXT_PUBLIC_BASE_URL` to your custom domain
-   - Update Supabase redirect URLs to include custom domain
+   - ⚠️ **IMPORTANT**: The code now hardcodes `https://www.wcsbasketball.site` for production payment links
+   - `NEXT_PUBLIC_BASE_URL` is no longer used for payment links (code always uses new domain)
+   - However, you may still want to set it for other purposes:
+     ```
+     NEXT_PUBLIC_BASE_URL=https://www.wcsbasketball.site
+     ```
 
 3. **DNS Configuration:**
    - Add A record or CNAME as instructed by Vercel
    - Wait for DNS propagation (can take up to 48 hours)
+   - Verify domain is active in Vercel dashboard
+
+4. **Payment Link Configuration:**
+   - ✅ **Code automatically uses `https://www.wcsbasketball.site` in production**
+   - Payment links in approval emails will use the new domain
+   - Magic links will redirect to the new domain
+   - No additional configuration needed - code is already updated
 
 **SSL Certificate:**
 - ✅ Automatically provided by Vercel (no action needed)
+
+**Verification Checklist:**
+- [ ] Domain added to Vercel (both www and non-www)
+- [ ] DNS records configured correctly
+- [ ] Domain shows as "Active" in Vercel dashboard
+- [ ] SSL certificate issued (automatic)
+- [ ] Test payment link in approval email uses `https://www.wcsbasketball.site`
+- [ ] Test magic link redirects to new domain
 
 ---
 
@@ -310,6 +326,8 @@ STRIPE_WEBHOOK_SECRET=whsec_[your-webhook-secret]
   - [ ] Payment processing works
   - [ ] Payment confirmation emails sent
   - [ ] Invoice generation works
+  - [ ] ⚠️ **Payment links in approval emails use `https://www.wcsbasketball.site`** (not old Vercel URL)
+  - [ ] Magic link redirects to new domain correctly
 
 - [ ] **Email Functionality**
   - [ ] Registration emails sent
@@ -497,7 +515,8 @@ ADMIN_PHONE=[your-admin-phone-number]
 
 ### Key URLs
 
-- **Production Site**: https://wcs-basketball-v2.vercel.app
+- **Production Site**: https://www.wcsbasketball.site
+- **Vercel Deployment**: https://wcs-basketball-v2.vercel.app (redirects to custom domain)
 - **Supabase Dashboard**: https://supabase.com/dashboard
 - **Vercel Dashboard**: https://vercel.com/dashboard
 - **Resend Dashboard**: https://resend.com
@@ -514,8 +533,9 @@ Before going live, verify:
 - [ ] Admin email notifications configured correctly
   - [ ] Testing: Single admin email set
   - [ ] Production: All 3 admin emails added (comma-separated)
-- [ ] Supabase redirect URLs configured
-- [ ] Domain configured (if using custom domain)
+- [ ] Supabase redirect URLs configured (both www and non-www versions)
+- [ ] Custom domain configured (`www.wcsbasketball.site`)
+- [ ] Payment links verified to use new domain (not old Vercel URL)
 - [ ] All core functionality tested
 - [ ] Payment flow tested (if applicable)
 - [ ] Error tracking configured

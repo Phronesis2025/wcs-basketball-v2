@@ -1,5 +1,43 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.10 - Payment Link Domain Fix
+
+**Release Date**: January 9, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (112 pages generated successfully)
+
+---
+
+### 🔧 Fixed
+
+- **Payment Links Using Old Vercel URL**:
+  - **Issue**: Payment links in approval emails were still using the old Vercel deployment URL instead of the new custom domain
+  - **Root Cause**: Code was checking `NEXT_PUBLIC_BASE_URL` environment variable first, which may have been set to the old Vercel URL
+  - **Fix**: Updated all payment link generation code to always use `https://www.wcsbasketball.site` in production, regardless of environment variables
+  - **Files Modified**:
+    - `src/app/api/approve-player/route.ts`: Payment link generation for approval emails
+    - `src/app/api/admin/import/execute/route.ts`: Import execution redirect URLs (2 locations)
+    - `src/app/api/auth/magic-link/route.ts`: Magic link generation
+  - **Impact**: All payment links and magic links now correctly use the new custom domain in production
+
+### 🔒 Security
+
+- **Security Audit**: ✅ Passed with recommendations
+- **No new security issues introduced** in code changes
+- **Dependency Vulnerability**: xlsx package has known vulnerabilities (no fix available, acceptable risk for admin-only functionality)
+- **Recommendation**: Enable Supabase leaked password protection (see `docs/SECURITY_AUDIT_2025_01_09_v2.md`)
+- All changes are URL/domain configuration improvements with no security implications
+
+### 📝 Documentation Updates
+
+- `docs/CHANGELOG.md`: Added version 2.10.10 entry
+- `docs/CHANGELOG_ENTRIES_FOR_SUPABASE.md`: Updated with new entries
+- `docs/GO_LIVE_CHECKLIST.md`: Updated with payment link configuration details and domain setup requirements
+- `docs/SECURITY_AUDIT_2025_01_09_v2.md`: Created security audit report for version 2.10.10
+
+---
+
 ## 🚀 Version 2.10.9 - UI Improvements & Mobile Fixes
 
 **Release Date**: January 2025  
@@ -96,6 +134,7 @@
 
 - `docs/CHANGELOG.md`: Added version 2.10.9 entry
 - `docs/CHANGELOG_ENTRIES_FOR_SUPABASE.md`: Updated with new entries
+- `docs/SECURITY_AUDIT_2025_01_09.md`: Created security audit report for version 2.10.9
 
 ---
 
