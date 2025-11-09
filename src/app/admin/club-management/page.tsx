@@ -3212,7 +3212,7 @@ function ClubManagementContent() {
                   onClick={async () => {
                     if (
                       !confirm(
-                        "Are you sure you want to delete ALL players and payment records? This cannot be undone."
+                        "Are you sure you want to delete ALL pending registrations, parents, and players? This will also delete related payments. Note: auth.users must be deleted manually. This cannot be undone."
                       )
                     ) {
                       return;

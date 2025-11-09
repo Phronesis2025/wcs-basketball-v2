@@ -12,44 +12,26 @@ export async function POST(req: Request) {
     }
 
     devLog(
-      "clear-all-test-data: Starting deletion of players, payments, parents, and related auth.users"
+      "clear-all-test-data: Starting deletion of pending_registrations, parents, and players tables"
     );
 
-    // 1) Delete all players (payments will be cascade deleted automatically)
-    const { error: deleteError, count } = await supabaseAdmin
-      .from("players")
+    // 1) Delete all pending_registrations
+    const { error: pendingRegError, count: pendingRegDeleted } = await supabaseAdmin
+      .from("pending_registrations")
       .delete()
       .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all records
 
-    if (deleteError) {
-      devError("clear-all-test-data: Error deleting players", deleteError);
+    if (pendingRegError) {
+      devError("clear-all-test-data: Error deleting pending_registrations", pendingRegError);
       return NextResponse.json(
-        { error: "Failed to delete test data" },
+        { error: "Failed to delete pending registrations" },
         { status: 500 }
       );
     }
 
-    devLog("clear-all-test-data: Deleted players (payments cascade)", { count });
+    devLog("clear-all-test-data: Deleted pending_registrations", { count: pendingRegDeleted });
 
-    // 2) Get all parent user_ids before deleting parents
-    const { data: parentRows, error: parentsFetchErr } = await supabaseAdmin
-      .from("parents")
-      .select("id, user_id, email");
-
-    if (parentsFetchErr) {
-      devError("clear-all-test-data: Error fetching parents prior to delete", parentsFetchErr);
-      return NextResponse.json(
-        { error: "Failed to fetch parents for deletion" },
-        { status: 500 }
-      );
-    }
-
-    const parentUserIds = (parentRows || [])
-      .map((p: any) => p.user_id)
-      .filter((v: string | null) => !!v) as string[];
-    const uniqueUserIds = Array.from(new Set(parentUserIds));
-
-    // 3) Delete all parents
+    // 2) Delete all parents
     const { error: parentsDeleteErr, count: parentsDeleted } = await supabaseAdmin
       .from("parents")
       .delete()
@@ -65,31 +47,29 @@ export async function POST(req: Request) {
 
     devLog("clear-all-test-data: Deleted parents", { parentsDeleted });
 
-    // 4) Delete corresponding auth.users (if any)
-    let authDeleted = 0;
-    if (uniqueUserIds.length > 0) {
-      for (const uid of uniqueUserIds) {
-        try {
-          // Requires service role key
-          const resp = await (supabaseAdmin as any).auth.admin.deleteUser(uid);
-          if ((resp as any)?.error) {
-            devError("clear-all-test-data: auth.admin.deleteUser error", { uid, error: (resp as any).error });
-          } else {
-            authDeleted += 1;
-          }
-        } catch (e) {
-          devError("clear-all-test-data: Exception deleting auth user", { uid, e });
-        }
-      }
+    // 3) Delete all players (payments will be cascade deleted automatically)
+    const { error: deleteError, count: playersDeleted } = await supabaseAdmin
+      .from("players")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all records
+
+    if (deleteError) {
+      devError("clear-all-test-data: Error deleting players", deleteError);
+      return NextResponse.json(
+        { error: "Failed to delete players" },
+        { status: 500 }
+      );
     }
+
+    devLog("clear-all-test-data: Deleted players (payments cascade)", { count: playersDeleted });
 
     return NextResponse.json({
       success: true,
-      message: "All test data cleared successfully",
+      message: "All test data cleared successfully (pending_registrations, parents, and players). Note: auth.users must be deleted manually.",
       details: {
-        playersDeleted: count || 0,
+        pendingRegistrationsDeleted: pendingRegDeleted || 0,
         parentsDeleted: parentsDeleted || 0,
-        authUsersDeleted: authDeleted,
+        playersDeleted: playersDeleted || 0,
       },
     });
   } catch (e) {
