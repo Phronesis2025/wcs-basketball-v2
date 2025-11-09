@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     }
 
     devLog(
-      "clear-all-test-data: Starting deletion of pending_registrations, parents, and players tables"
+      "clear-all-test-data: Starting deletion of pending_registrations, players, and parents tables"
     );
 
     // 1) Delete all pending_registrations
@@ -31,23 +31,8 @@ export async function POST(req: Request) {
 
     devLog("clear-all-test-data: Deleted pending_registrations", { count: pendingRegDeleted });
 
-    // 2) Delete all parents
-    const { error: parentsDeleteErr, count: parentsDeleted } = await supabaseAdmin
-      .from("parents")
-      .delete()
-      .neq("id", "00000000-0000-0000-0000-000000000000");
-
-    if (parentsDeleteErr) {
-      devError("clear-all-test-data: Error deleting parents", parentsDeleteErr);
-      return NextResponse.json(
-        { error: "Failed to delete parents" },
-        { status: 500 }
-      );
-    }
-
-    devLog("clear-all-test-data: Deleted parents", { parentsDeleted });
-
-    // 3) Delete all players (payments will be cascade deleted automatically)
+    // 2) Delete all players FIRST (before parents, since players reference parents)
+    // Payments will be cascade deleted automatically
     const { error: deleteError, count: playersDeleted } = await supabaseAdmin
       .from("players")
       .delete()
@@ -62,6 +47,22 @@ export async function POST(req: Request) {
     }
 
     devLog("clear-all-test-data: Deleted players (payments cascade)", { count: playersDeleted });
+
+    // 3) Delete all parents (after players, since players reference parents via foreign key)
+    const { error: parentsDeleteErr, count: parentsDeleted } = await supabaseAdmin
+      .from("parents")
+      .delete()
+      .neq("id", "00000000-0000-0000-0000-000000000000");
+
+    if (parentsDeleteErr) {
+      devError("clear-all-test-data: Error deleting parents", parentsDeleteErr);
+      return NextResponse.json(
+        { error: "Failed to delete parents" },
+        { status: 500 }
+      );
+    }
+
+    devLog("clear-all-test-data: Deleted parents", { parentsDeleted });
 
     return NextResponse.json({
       success: true,
