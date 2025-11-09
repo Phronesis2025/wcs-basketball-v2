@@ -106,7 +106,14 @@ export async function sendEmail(
 
     if (!resp.ok) {
       const text = await resp.text();
-      const errorData = JSON.parse(text || "{}");
+      let errorData;
+      try {
+        errorData = JSON.parse(text || "{}");
+      } catch {
+        errorData = { message: text };
+      }
+      
+      const errorMessage = errorData.message || errorData.name || text || "Unknown error";
       
       // If it's a validation error about sandbox, log it but don't fail completely
       // The email routing should have already handled this, but just in case
@@ -119,18 +126,35 @@ export async function sendEmail(
         });
         // Don't throw - email routing should have already redirected to dev inbox
       } else {
-        devError("sendEmail failed", text);
+        devError("sendEmail failed", {
+          status: resp.status,
+          statusText: resp.statusText,
+          error: errorMessage,
+          errorData,
+          to: finalRecipients,
+          subject,
+        });
+        // Throw error so caller can handle it
+        throw new Error(`Resend API error: ${errorMessage} (Status: ${resp.status})`);
       }
     } else {
+      const responseData = await resp.json().catch(() => ({}));
       devLog("sendEmail OK", {
         to: finalRecipients,
         cc: finalCc,
         bcc: finalBcc,
         subject,
         sandboxMode: useSandboxSender,
+        emailId: responseData.id,
       });
     }
   } catch (e) {
-    devError("sendEmail exception", e);
+    devError("sendEmail exception", {
+      error: e,
+      to: finalRecipients,
+      subject,
+    });
+    // Re-throw so caller knows email failed
+    throw e;
   }
 }

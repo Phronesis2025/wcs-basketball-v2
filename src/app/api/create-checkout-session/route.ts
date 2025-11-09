@@ -82,10 +82,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create or reuse Stripe Customer (ensures Stripe can send receipts/invoices)
-    const customerId = player.stripe_customer_id
-      ? player.stripe_customer_id
-      : (await stripe.customers.create({ email: player.parent_email })).id;
+    // Create or reuse Stripe Customer
+    // Note: We do NOT use Stripe's receipt/invoice emails - we send via Resend in webhook
+    let customerId = player.stripe_customer_id;
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: player.parent_email,
+      });
+      customerId = customer.id;
+    }
 
     if (!player.stripe_customer_id) {
       await supabaseAdmin
@@ -103,18 +108,21 @@ export async function POST(req: Request) {
 
     if (payment_type === "annual") {
       // One-time payment
+      // Note: We do NOT set receipt_email - we send emails via Resend in the webhook
       session = await stripe.checkout.sessions.create({
         mode: "payment",
         customer: customerId,
         line_items: [{ price: PRICE_ANNUAL!, quantity: 1 }],
         success_url: successUrl,
         cancel_url: cancelUrl,
-        payment_intent_data: {
-          receipt_email: player.parent_email,
-        },
+        // receipt_email removed - we use Resend instead
       });
     } else if (payment_type === "monthly") {
-      // Subscription (Stripe sends invoices per email settings)
+      // Subscription
+      // Note: Stripe will send invoice emails automatically for subscriptions
+      // To disable: Go to Stripe Dashboard → Settings → Billing → Customer emails
+      // OR update subscription after creation to disable emails
+      // We also send our own email via Resend in the webhook
       session = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
@@ -135,15 +143,15 @@ export async function POST(req: Request) {
       const price = await stripe.prices.retrieve(PRICE_QUARTERLY);
       const isSubscription = price.type === "recurring";
       
+      // Note: We do NOT set receipt_email - we send emails via Resend in the webhook
+      // For subscriptions, Stripe will send invoice emails automatically unless disabled in Dashboard
       session = await stripe.checkout.sessions.create({
         mode: isSubscription ? "subscription" : "payment",
         customer: customerId,
         line_items: [{ price: PRICE_QUARTERLY, quantity: 1 }],
         success_url: successUrl,
         cancel_url: cancelUrl,
-        payment_intent_data: isSubscription ? undefined : {
-          receipt_email: player.parent_email,
-        },
+        // receipt_email removed - we use Resend instead
       });
     } else if (payment_type === "custom") {
       const cents = Math.round(Number(custom_amount || 0) * 100);
@@ -154,6 +162,7 @@ export async function POST(req: Request) {
         );
       }
 
+      // Note: We do NOT set receipt_email - we send emails via Resend in the webhook
       session = await stripe.checkout.sessions.create({
         mode: "payment",
         customer: customerId,
@@ -169,9 +178,7 @@ export async function POST(req: Request) {
         ],
         success_url: successUrl,
         cancel_url: cancelUrl,
-        payment_intent_data: {
-          receipt_email: player.parent_email,
-        },
+        // receipt_email removed - we use Resend instead
       });
     } else {
       return NextResponse.json(

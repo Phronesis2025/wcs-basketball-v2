@@ -287,6 +287,12 @@ export async function POST(req: Request) {
         if (playerUpdErr)
           devError("webhook: update player active failed", playerUpdErr);
 
+        // Note: For subscriptions, Stripe will automatically send invoice emails
+        // To disable Stripe's invoice emails:
+        // 1. Go to Stripe Dashboard → Settings → Billing → Customer emails
+        // 2. Disable "Invoice payment succeeded" email
+        // We send our own payment confirmation emails via Resend in this webhook
+
         // Notify both parent and admins
         try {
           const { data: player, error: playerErr } = await supabaseAdmin!
@@ -465,6 +471,12 @@ export async function POST(req: Request) {
             }
 
             try {
+              devLog("webhook: attempting to send parent confirmation email", {
+                to: parentEmail,
+                hasAttachment: !!pdfAttachment,
+                subject: parentEmailData.subject,
+              });
+
               await sendEmail(
                 parentEmail,
                 parentEmailData.subject,
@@ -474,12 +486,21 @@ export async function POST(req: Request) {
                 }
               );
 
-              devLog("webhook: parent confirmation email sent", {
+              devLog("webhook: parent confirmation email sent successfully", {
                 to: parentEmail,
                 hasAttachment: !!pdfAttachment,
+                subject: parentEmailData.subject,
               });
             } catch (emailErr) {
-              devError("webhook: failed to send parent email", emailErr);
+              devError("webhook: failed to send parent email", {
+                error: emailErr,
+                to: parentEmail,
+                subject: parentEmailData.subject,
+                playerId: paymentRow.player_id,
+                errorMessage: emailErr instanceof Error ? emailErr.message : String(emailErr),
+                errorStack: emailErr instanceof Error ? emailErr.stack : undefined,
+              });
+              // Don't re-throw - webhook should still succeed even if email fails
             }
           } else {
             devError("webhook: no parent email available for payment confirmation", {
@@ -748,6 +769,12 @@ export async function POST(req: Request) {
               devError("webhook: failed to generate invoice PDF (renewal)", pdfErr);
             }
 
+            devLog("webhook: attempting to send parent renewal confirmation email", {
+              to: parentEmail,
+              hasAttachment: !!pdfAttachment,
+              subject: parentEmailData.subject,
+            });
+
             await sendEmail(
               parentEmail,
               parentEmailData.subject,
@@ -757,12 +784,20 @@ export async function POST(req: Request) {
               }
             );
 
-            devLog("webhook: parent subscription renewal email sent", {
+            devLog("webhook: parent subscription renewal email sent successfully", {
               to: parentEmail,
               hasAttachment: !!pdfAttachment,
+              subject: parentEmailData.subject,
             });
           } catch (emailErr) {
-            devError("webhook: parent renewal email error", emailErr);
+            devError("webhook: parent renewal email error", {
+              error: emailErr,
+              to: parentEmail,
+              subject: parentEmailData.subject,
+              playerId: player.id,
+              errorMessage: emailErr instanceof Error ? emailErr.message : String(emailErr),
+              errorStack: emailErr instanceof Error ? emailErr.stack : undefined,
+            });
           }
         } else {
           devError("webhook: no parent email available for payment confirmation (renewal)", {

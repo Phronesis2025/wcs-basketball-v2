@@ -18,7 +18,7 @@
 - **Version**: `2.10.11`
 - **Release Date**: `2025-11-09`
 - **Category**: `changed`
-- **Description**: `Extended sendEmail utility function to support email attachments. Added optional attachments parameter that accepts base64-encoded file content for PDF attachments via Resend API.`
+- **Description**: `Extended sendEmail utility function to support email attachments. Added optional attachments parameter that accepts base64-encoded file content for PDF attachments via Resend API. Improved error handling to throw errors for better visibility in webhook logs.`
 - **Is Published**: `true`
 
 ### Entry 3: Invoice Data Generation Helper
@@ -26,6 +26,20 @@
 - **Release Date**: `2025-11-09`
 - **Category**: `added`
 - **Description**: `Created generateSinglePaymentInvoiceData helper function in Stripe webhook handler to format invoice data for individual payments. Handles annual, monthly, and quarterly payment types with proper formatting.`
+- **Is Published**: `true`
+
+### Entry 4: Stripe Receipt Email Removal
+- **Version**: `2.10.11`
+- **Release Date**: `2025-11-09`
+- **Category**: `changed`
+- **Description**: `Removed all receipt_email parameters from Stripe checkout session creation. All payment confirmation emails are now sent exclusively via Resend instead of Stripe's automatic receipt emails. This ensures consistent branding and includes invoice PDF attachments.`
+- **Is Published**: `true`
+
+### Entry 5: Enhanced Webhook Email Logging
+- **Version**: `2.10.11`
+- **Release Date**: `2025-11-09`
+- **Category**: `changed`
+- **Description**: `Added detailed logging in Stripe webhook handlers for email sending attempts and failures. Logs now include recipient email, subject, attachment status, error messages, and stack traces for better debugging of email delivery issues.`
 - **Is Published**: `true`
 
 ---
