@@ -35,6 +35,56 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       devLog("🔐 [SERVER DEBUG] ❌ Supabase auth error:", error.message);
+      
+      // Check if user exists in users table but not in auth.users
+      const { data: userData } = await supabaseAdmin
+        .from("users")
+        .select("id, email, role")
+        .eq("email", email)
+        .maybeSingle();
+
+      if (userData && (userData.role === "admin" || userData.role === "coach")) {
+        // Verify user doesn't exist in auth.users
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userData.id);
+        
+        if (!authUser?.user) {
+          // Check by email as fallback
+          const { data: usersByEmail } = await supabaseAdmin.auth.admin.listUsers();
+          const userByEmail = usersByEmail?.users?.find(
+            (u) => u.email?.toLowerCase() === email.toLowerCase()
+          );
+
+          if (!userByEmail) {
+            devLog("🔐 [SERVER DEBUG] User exists in users table but not in auth.users, creating auth user");
+            // Create auth user with temporary password that requires reset
+            const tempPassword = `WCS${Date.now()}${Math.random().toString(36).substring(7)}`;
+            const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+              id: userData.id,
+              email: userData.email,
+              password: tempPassword,
+              email_confirm: true,
+            });
+
+            if (!createError && newAuthUser?.user) {
+              // Set password_reset flag
+              await supabaseAdmin
+                .from("users")
+                .update({ password_reset: true })
+                .eq("id", userData.id);
+
+              devLog("🔐 [SERVER DEBUG] ✅ Created auth user, user must reset password");
+              return NextResponse.json(
+                { 
+                  error: "Your account needs password setup. Please use 'Forgot Password' to set your password.",
+                  requiresPasswordReset: true 
+                },
+                { status: 401 }
+              );
+            }
+          }
+        }
+      }
+
       devError("Server-side login error:", error);
       return NextResponse.json(
         { error: "Invalid email or password" },

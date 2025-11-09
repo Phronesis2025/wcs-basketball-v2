@@ -70,20 +70,84 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update password using admin client
-    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-      tokenData.userId,
-      {
-        password: newPassword,
-      }
+    // Verify user exists in auth.users before updating password
+    const { data: authUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(
+      tokenData.userId
     );
 
-    if (updateError) {
-      devError("Failed to update password:", updateError);
-      return NextResponse.json(
-        { error: "Failed to reset password. Please try again." },
-        { status: 500 }
+    if (getUserError || !authUser?.user) {
+      devLog("User not found in auth.users by ID, checking by email:", tokenData.email);
+      // Try to find user by email as fallback
+      const { data: usersByEmail } = await supabaseAdmin.auth.admin.listUsers();
+      const userByEmail = usersByEmail?.users?.find(
+        (u) => u.email?.toLowerCase() === tokenData.email.toLowerCase()
       );
+
+      if (userByEmail) {
+        devLog("Found user by email, updating password with correct user ID:", userByEmail.id);
+        // Update password with the correct user ID
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+          userByEmail.id,
+          {
+            password: newPassword,
+          }
+        );
+
+        if (updateError) {
+          devError("Failed to update password:", updateError);
+          return NextResponse.json(
+            { error: "Failed to reset password. Please try again." },
+            { status: 500 }
+          );
+        }
+
+        // Update the users table with the correct ID if it's different
+        if (userByEmail.id !== tokenData.userId) {
+          devLog("Updating users table with correct auth user ID");
+          await supabaseAdmin
+            .from("users")
+            .update({ id: userByEmail.id })
+            .eq("id", tokenData.userId);
+        }
+
+        // Update token data to use correct user ID
+        tokenData.userId = userByEmail.id;
+      } else {
+        // User doesn't exist in auth.users - create them with the new password
+        devLog("User not found in auth.users, creating new auth user with reset password");
+        const { data: newAuthUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          id: tokenData.userId, // Use the same ID from users table
+          email: tokenData.email,
+          password: newPassword,
+          email_confirm: true,
+        });
+
+        if (createError || !newAuthUser?.user) {
+          devError("Failed to create auth user:", createError);
+          return NextResponse.json(
+            { error: "Failed to reset password. Please contact an administrator." },
+            { status: 500 }
+          );
+        }
+
+        devLog("Created new auth user for password reset:", newAuthUser.user.id);
+      }
+    } else {
+      // User exists, update password normally
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        tokenData.userId,
+        {
+          password: newPassword,
+        }
+      );
+
+      if (updateError) {
+        devError("Failed to update password:", updateError);
+        return NextResponse.json(
+          { error: "Failed to reset password. Please try again." },
+          { status: 500 }
+        );
+      }
     }
 
     // Update password_reset flag in users table
