@@ -2,9 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global Responsive Scaling - Viewport-based scaling for fonts and images */
+:root {
+  /* Scale factor: 65% on mobile (375px) to 100% at 1920px+ */
+  /* Formula: clamp(min, preferred, max) where preferred scales with viewport width */
+  --scale-factor: clamp(0.65, 100vw / 1920, 1.0);
+}
+
 /* Smooth scrolling for the entire page */
 html {
   scroll-behavior: smooth;
+  /* Apply font scaling globally - all rem/em units will scale proportionally */
+  font-size: calc(16px * var(--scale-factor));
 }
 
 /* Marquee animation for logo carousel */
@@ -237,4 +246,31 @@ html {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* For Chrome, Safari, and Opera */
+}
+
+/* Global Image Scaling - Scale all images proportionally */
+/* Images scale visually using transform to preserve layout flow */
+/* This applies to both regular img tags and Next.js Image components */
+img,
+picture img,
+svg,
+[class*="Image"] {
+  /* Scale all images proportionally using transform */
+  /* Transform scales visually while the element maintains its layout space */
+  transform: scale(var(--scale-factor));
+  transform-origin: center center;
+}
+
+/* For images in containers with explicit positioning, adjust transform origin */
+[style*="position: relative"] img,
+[style*="position:relative"] img,
+[style*="position: absolute"] img,
+[style*="position:absolute"] img {
+  transform-origin: center center;
+}
+
+/* Preserve aspect ratios and object-fit properties */
+img[style*="object-fit"],
+[class*="Image"][style*="object-fit"] {
+  object-fit: inherit;
 }

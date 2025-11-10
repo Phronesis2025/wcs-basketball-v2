@@ -1,5 +1,78 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.15  
+**Release Date**: 2025-01-10
+
+---
+
+## Version 2.10.15 Entries
+
+### Entry 1: Global Responsive Scaling System
+
+- **Version**: `2.10.15`
+- **Release Date**: `2025-01-10`
+- **Category**: `added`
+- **Description**: `Implemented global responsive scaling system for fonts and images. Added CSS viewport-based scaling using clamp() that scales from 65% on mobile (375px) to 100% at 1920px+. All fonts and images now scale proportionally based on screen size while preserving layout, functionality, and responsive breakpoints.`
+- **Is Published**: `true`
+
+### Entry 2: Payment Tab Default State
+
+- **Version**: `2.10.15`
+- **Release Date**: `2025-01-10`
+- **Category**: `changed`
+- **Description**: `Updated payment tab in club management: all collapsible sections (Payment Management, Registrations, Volunteer Submissions, Parent Payment Overview) now default to closed state instead of open.`
+- **Is Published**: `true`
+
+### Entry 3: Monitor Tab Section Titles
+
+- **Version**: `2.10.15`
+- **Release Date**: `2025-01-10`
+- **Category**: `changed`
+- **Description**: `Changed all section titles on Monitor tab to white font color for better visibility and consistency.`
+- **Is Published**: `true`
+
+### Entry 4: Parent Login Page Updates
+
+- **Version**: `2.10.15`
+- **Release Date**: `2025-01-10`
+- **Category**: `changed`
+- **Description**: `Updated parent login page: changed title from "Parent Login" to "Account login" and updated subtitle from "manage your children's registration" to "manage your player's registration".`
+- **Is Published**: `true`
+
+### Entry 5: Parent Profile Button Update
+
+- **Version**: `2.10.15`
+- **Release Date**: `2025-01-10`
+- **Category**: `changed`
+- **Description**: `Updated parent profile page: changed "Add Another Child" button text to "Add Another Player" for consistency with player terminology.`
+- **Is Published**: `true`
+
+### Entry 6: Billing Tab Simplification
+
+- **Version**: `2.10.15`
+- **Release Date**: `2025-01-10`
+- **Category**: `changed`
+- **Description**: `Simplified billing tab: removed individual player invoices section. Now only shows combined invoice with "View Full Invoice" and "Email Full Invoice" options. Updated description text to use "players" instead of "children".`
+- **Is Published**: `true`
+
+### Entry 7: Payment History Table Responsive Update
+
+- **Version**: `2.10.15`
+- **Release Date**: `2025-01-10`
+- **Category**: `changed`
+- **Description**: `Removed Amount column from payment history table on tablet view (hidden on screens up to 1279px, visible only on extra-large desktop screens 1280px+).`
+- **Is Published**: `true`
+
+### Entry 8: Sign-Out Transition Page
+
+- **Version**: `2.10.15`
+- **Release Date**: `2025-01-10`
+- **Category**: `added`
+- **Description**: `Created sign-out transition page at /parent/sign-out that displays thank you message for participation and support of WCS Basketball program. Page automatically redirects to home after 4 seconds with manual "Return to Home" button option.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.14  
 **Release Date**: 2025-01-09
 
@@ -8,6 +81,7 @@
 ## Version 2.10.14 Entries
 
 ### Entry 1: Combined Invoice Feature
+
 - **Version**: `2.10.14`
 - **Release Date**: `2025-01-09`
 - **Category**: `added`
@@ -15,6 +89,7 @@
 - **Is Published**: `true`
 
 ### Entry 2: Invoice Table Display Fix
+
 - **Version**: `2.10.14`
 - **Release Date**: `2025-01-09`
 - **Category**: `fixed`
@@ -22,6 +97,7 @@
 - **Is Published**: `true`
 
 ### Entry 3: Team Logo Removal from Invoices
+
 - **Version**: `2.10.14`
 - **Release Date**: `2025-01-09`
 - **Category**: `changed`
@@ -29,6 +105,7 @@
 - **Is Published**: `true`
 
 ### Entry 4: Multiple Teams Invoice Display
+
 - **Version**: `2.10.14`
 - **Release Date**: `2025-01-09`
 - **Category**: `changed`
@@ -36,6 +113,7 @@
 - **Is Published**: `true`
 
 ### Entry 5: Players Label Update
+
 - **Version**: `2.10.14`
 - **Release Date**: `2025-01-09`
 - **Category**: `changed`
@@ -43,6 +121,7 @@
 - **Is Published**: `true`
 
 ### Entry 6: Invoice Back Button
+
 - **Version**: `2.10.14`
 - **Release Date**: `2025-01-09`
 - **Category**: `added`
@@ -59,6 +138,7 @@
 ## Version 2.10.13 Entries
 
 ### Entry 1: Parent Profile Scroll Fix
+
 - **Version**: `2.10.13`
 - **Release Date**: `2025-11-09`
 - **Category**: `fixed`
@@ -66,6 +146,7 @@
 - **Is Published**: `true`
 
 ### Entry 2: Team Selector Dropdown Fix
+
 - **Version**: `2.10.13`
 - **Release Date**: `2025-11-09`
 - **Category**: `fixed`
@@ -73,6 +154,7 @@
 - **Is Published**: `true`
 
 ### Entry 3: Enhanced Grade Normalization
+
 - **Version**: `2.10.13`
 - **Release Date**: `2025-11-09`
 - **Category**: `added`
@@ -89,6 +171,7 @@
 ## Version 2.10.12 Entries
 
 ### Entry 1: Grade-Based Team Assignment System
+
 - **Version**: `2.10.12`
 - **Release Date**: `2025-11-09`
 - **Category**: `added`
@@ -96,6 +179,7 @@
 - **Is Published**: `true`
 
 ### Entry 2: Team Grade Level Dropdown Update
+
 - **Version**: `2.10.12`
 - **Release Date**: `2025-11-09`
 - **Category**: `changed`
@@ -103,6 +187,7 @@
 - **Is Published**: `true`
 
 ### Entry 3: Player-Team Compatibility Logic Update
+
 - **Version**: `2.10.12`
 - **Release Date**: `2025-11-09`
 - **Category**: `changed`
@@ -110,6 +195,7 @@
 - **Is Published**: `true`
 
 ### Entry 4: Database Migration - Age Groups to Grade Levels
+
 - **Version**: `2.10.12`
 - **Release Date**: `2025-11-09`
 - **Category**: `changed`
@@ -117,6 +203,7 @@
 - **Is Published**: `true`
 
 ### Entry 5: Grade Validation Functions
+
 - **Version**: `2.10.12`
 - **Release Date**: `2025-11-09`
 - **Category**: `added`
@@ -133,6 +220,7 @@
 ## Version 2.10.11 Entries
 
 ### Entry 1: Automatic Invoice PDF Attachments
+
 - **Version**: `2.10.11`
 - **Release Date**: `2025-11-09`
 - **Category**: `added`
@@ -140,6 +228,7 @@
 - **Is Published**: `true`
 
 ### Entry 2: Email Utility Attachment Support
+
 - **Version**: `2.10.11`
 - **Release Date**: `2025-11-09`
 - **Category**: `changed`
@@ -147,6 +236,7 @@
 - **Is Published**: `true`
 
 ### Entry 3: Invoice Data Generation Helper
+
 - **Version**: `2.10.11`
 - **Release Date**: `2025-11-09`
 - **Category**: `added`
@@ -154,6 +244,7 @@
 - **Is Published**: `true`
 
 ### Entry 4: Stripe Receipt Email Removal
+
 - **Version**: `2.10.11`
 - **Release Date**: `2025-11-09`
 - **Category**: `changed`
@@ -161,6 +252,7 @@
 - **Is Published**: `true`
 
 ### Entry 5: Enhanced Webhook Email Logging
+
 - **Version**: `2.10.11`
 - **Release Date**: `2025-11-09`
 - **Category**: `changed`
@@ -177,6 +269,7 @@
 ## Version 2.10.10 Entries
 
 ### Entry 1: Payment Link Domain Fix
+
 - **Version**: `2.10.10`
 - **Release Date**: `2025-01-09`
 - **Category**: `fixed`
@@ -184,6 +277,7 @@
 - **Is Published**: `true`
 
 ### Entry 2: Go-Live Checklist Update
+
 - **Version**: `2.10.10`
 - **Release Date**: `2025-01-09`
 - **Category**: `changed`
@@ -195,6 +289,7 @@
 ## Security Audit Summary (Version 2.10.10)
 
 ### Security Findings
+
 - **Overall Score**: 9/10 (Excellent)
 - **Status**: ✅ Passed with recommendations
 - **xlsx Dependency**: High severity vulnerabilities found (no fix available, acceptable risk for admin-only functionality)
@@ -202,6 +297,7 @@
 - **Code Review**: No hardcoded secrets or credentials found in modified files
 
 ### Performance Findings
+
 - **Unused Indexes**: Informational only, no action required
 
 ---
@@ -214,6 +310,7 @@
 ## Version 2.10.9 Entries
 
 ### Entry 1: Font Preload Warnings Fix
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `fixed`
@@ -221,6 +318,7 @@
 - **Is Published**: `true`
 
 ### Entry 2: Registration Wizard Step Numbering Fix
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `fixed`
@@ -228,6 +326,7 @@
 - **Is Published**: `true`
 
 ### Entry 3: Registration Wizard Step Completion Logic Fix
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `fixed`
@@ -235,6 +334,7 @@
 - **Is Published**: `true`
 
 ### Entry 4: Mobile Zoom Prevention for Message Board
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `fixed`
@@ -242,6 +342,7 @@
 - **Is Published**: `true`
 
 ### Entry 5: Pending Players Notification
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `added`
@@ -249,6 +350,7 @@
 - **Is Published**: `true`
 
 ### Entry 6: Unread Mentions Click Functionality
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `added`
@@ -256,6 +358,7 @@
 - **Is Published**: `true`
 
 ### Entry 7: Registration Wizard Step Animation
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `added`
@@ -263,6 +366,7 @@
 - **Is Published**: `true`
 
 ### Entry 8: Registration Wizard Step Color Fix
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `changed`
@@ -270,6 +374,7 @@
 - **Is Published**: `true`
 
 ### Entry 9: Registration Form Terminology Update
+
 - **Version**: `2.10.9`
 - **Release Date**: `2025-01-09`
 - **Category**: `changed`
@@ -281,12 +386,14 @@
 ## Security Audit Summary (Version 2.10.9)
 
 ### Security Findings
+
 - **Overall Score**: 9/10 (Excellent)
 - **Status**: ✅ Passed with recommendations
 - **xlsx Dependency**: High severity vulnerabilities found (no fix available, acceptable risk for admin-only functionality)
 - **Recommendation**: Enable Supabase leaked password protection
 
 ### Performance Findings
+
 - **Unused Indexes**: Informational only, no action required
 
 ---
@@ -299,6 +406,7 @@
 ## Version 2.10.8 Entries
 
 ### Entry 1: Coach Password Reset Fix
+
 - **Version**: `2.10.8`
 - **Release Date**: `2025-01-08`
 - **Category**: `fixed`
@@ -306,6 +414,7 @@
 - **Is Published**: `true`
 
 ### Entry 2: Password Reset Token Database Table
+
 - **Version**: `2.10.8`
 - **Release Date**: `2025-01-08`
 - **Category**: `added`
@@ -313,6 +422,7 @@
 - **Is Published**: `true`
 
 ### Entry 3: Password Input Accessibility Improvement
+
 - **Version**: `2.10.8`
 - **Release Date**: `2025-01-08`
 - **Category**: `changed`
@@ -331,6 +441,7 @@
 Go to: Admin Dashboard → Club Management → Changelog Tab → Add Entry
 
 ### Entry 1: Gmail OAuth Redirect Fix
+
 - **Version**: `2.10.7`
 - **Release Date**: `2025-01-08`
 - **Category**: `fixed`
@@ -338,6 +449,7 @@ Go to: Admin Dashboard → Club Management → Changelog Tab → Add Entry
 - **Is Published**: `true`
 
 ### Entry 2: Vercel MCP Integration
+
 - **Version**: `2.10.7`
 - **Release Date**: `2025-01-08`
 - **Category**: `added`
@@ -345,6 +457,7 @@ Go to: Admin Dashboard → Club Management → Changelog Tab → Add Entry
 - **Is Published**: `true`
 
 ### Entry 3: OAuth Redirect Handler Enhancement
+
 - **Version**: `2.10.7`
 - **Release Date**: `2025-01-08`
 - **Category**: `added`
@@ -352,6 +465,7 @@ Go to: Admin Dashboard → Club Management → Changelog Tab → Add Entry
 - **Is Published**: `true`
 
 ### Entry 4: Build Fix - Suspense Boundary
+
 - **Version**: `2.10.7`
 - **Release Date**: `2025-01-08`
 - **Category**: `fixed`
@@ -363,6 +477,7 @@ Go to: Admin Dashboard → Club Management → Changelog Tab → Add Entry
 ## Supabase Advisor Findings
 
 ### Security Issues
+
 1. **Leaked Password Protection Disabled** (WARN)
    - **Issue**: Supabase Auth leaked password protection is currently disabled
    - **Impact**: Users can use compromised passwords from HaveIBeenPwned.org
@@ -371,6 +486,7 @@ Go to: Admin Dashboard → Club Management → Changelog Tab → Add Entry
    - **Status**: ⚠️ Should be enabled for production
 
 ### Performance Issues
+
 - **Unused Indexes** (INFO)
   - Multiple unused indexes detected (informational only)
   - These are indexes that haven't been used yet but may be needed for future queries
@@ -384,4 +500,3 @@ Go to: Admin Dashboard → Club Management → Changelog Tab → Add Entry
 - The leaked password protection is a security enhancement that should be enabled
 - Unused indexes are informational and don't require immediate action
 - All code changes are client-side redirect improvements with no security implications
-

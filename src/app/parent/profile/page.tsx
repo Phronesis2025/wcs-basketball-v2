@@ -346,7 +346,7 @@ function ParentProfilePageInner() {
                     href="/register?fromProfile=true"
                     className="flex-1 px-6 py-3 bg-red text-white text-center rounded hover:bg-red/90 transition min-h-[48px] flex items-center justify-center"
                   >
-                    Add Another Child
+                    Add Another Player
                   </Link>
                   <Link
                     href="/teams"

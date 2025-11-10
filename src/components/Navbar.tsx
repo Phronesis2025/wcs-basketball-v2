@@ -456,7 +456,8 @@ export default function Navbar() {
         // It will be cleared by the new page after 5 seconds
         
         // Use replace to prevent back button navigation to authenticated state
-        window.location.replace("/");
+        // Redirect to sign-out thank you page first, then it will redirect to home
+        window.location.replace("/parent/sign-out");
       }, 500); // Reduced delay since we're doing thorough cleanup
     } catch (error) {
       devError("Error during sign out:", error);

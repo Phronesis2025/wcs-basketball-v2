@@ -1,7 +1,7 @@
 # WCSv2.0 UI Components
 
-**Version**: v2.10.6  
-**Last Updated**: January 2025  
+**Version**: v2.10.15  
+**Last Updated**: January 10, 2025  
 **Security Score**: 9/10 (Excellent) 🔒  
 **Live URL**: https://wcs-basketball-v2.vercel.app
 

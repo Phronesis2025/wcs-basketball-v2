@@ -86,11 +86,11 @@ export default function ParentLogin() {
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl mx-auto">
             <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-6 text-center uppercase">
-              Parent Login
+              Account login
             </h1>
 
             <p className="text-center text-gray-300 mb-8">
-              Sign in to view your profile and manage your children's registration
+              Sign in to view your profile and manage your player's registration
             </p>
 
             <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-8 mb-8">

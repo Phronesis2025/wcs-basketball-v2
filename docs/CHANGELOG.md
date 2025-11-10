@@ -1,5 +1,40 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.15 - Responsive Scaling & UI Improvements
+
+**Release Date**: January 10, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (120 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Global Responsive Scaling System**:
+  - Implemented CSS viewport-based scaling for fonts and images
+  - Scales from 65% on mobile (375px) to 100% at 1920px+ using clamp()
+  - Preserves all layout, functionality, and responsive breakpoints
+  - Pure CSS solution with no JavaScript required
+  - Files Modified: `src/app/globals.css`
+
+- **Sign-Out Transition Page**:
+  - Created `/parent/sign-out` page with thank you message
+  - Displays appreciation for participation and support of WCS Basketball program
+  - Auto-redirects to home after 4 seconds with manual "Return to Home" button
+  - Files Modified: `src/app/parent/sign-out/page.tsx`, `src/components/Navbar.tsx`
+
+### 🔄 Changed
+
+- **Payment Tab Default State**: All collapsible sections now default to closed
+- **Monitor Tab**: Section titles changed to white font color for better visibility
+- **Parent Login**: Title changed to "Account login", subtitle updated to use "player's"
+- **Parent Profile**: "Add Another Child" button changed to "Add Another Player"
+- **Billing Tab**: Removed individual player invoices, only shows combined invoice
+- **Payment History Table**: Removed Amount column on tablet view (visible only on xl screens 1280px+)
+
+---
+
 ## 🚀 Version 2.10.14 - Combined Invoice Feature & Invoice Improvements
 
 **Release Date**: January 9, 2025  

@@ -214,7 +214,7 @@ export default function AdminOverviewContent({
           onClick={() => toggleSection("coaches")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-bebas font-bold text-red">
+            <h2 className="text-2xl font-bebas font-bold text-white">
               Coaches ({coaches.length})
             </h2>
             <svg
@@ -510,7 +510,7 @@ export default function AdminOverviewContent({
           onClick={() => toggleSection("teams")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-bebas font-bold text-red">
+            <h2 className="text-2xl font-bebas font-bold text-white">
               Teams ({teams.length})
             </h2>
             <svg
@@ -735,7 +735,7 @@ export default function AdminOverviewContent({
           onClick={() => toggleSection("players")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-bebas font-bold text-red">
+            <h2 className="text-2xl font-bebas font-bold text-white">
               Players ({filteredPlayers.length})
             </h2>
             <svg

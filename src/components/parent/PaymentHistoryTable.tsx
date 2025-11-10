@@ -310,58 +310,29 @@ export default function PaymentHistoryTable({
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-xl font-bold text-gray-900">Invoices</h3>
             <p className="text-sm text-gray-600 mt-1">
-              View and email invoices for your children
+              View and email your combined invoice
             </p>
           </div>
           <div className="p-6">
-            {/* Combined Invoice Button - Show at top if multiple children */}
-            {uniquePlayers.length > 1 && (
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <p className="font-semibold text-gray-900">Combined Invoice</p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      View or download a single invoice with all payments for all your children
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                    <a
-                      href={`/payment/${uniquePlayers[0].id}`}
-                      className="px-4 py-3 sm:py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium text-center"
-                    >
-                      View Full Invoice
-                    </a>
-                    <CombinedInvoiceButton parentEmail={parentEmail} />
-                  </div>
+            {/* Combined Invoice - Show for all players */}
+            <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <p className="font-semibold text-gray-900">Combined Invoice</p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    View or download a single invoice with all payments for all your players
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                  <a
+                    href={`/payment/${uniquePlayers[0].id}`}
+                    className="px-4 py-3 sm:py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium text-center"
+                  >
+                    View Full Invoice
+                  </a>
+                  <CombinedInvoiceButton parentEmail={parentEmail} />
                 </div>
               </div>
-            )}
-            <div className="space-y-4">
-              {uniquePlayers.map((player) => {
-                const playerPaid = paidByPlayer.get(player.id) || 0;
-                return (
-                  <div
-                    key={player.id}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 gap-4"
-                  >
-                    <div>
-                      <p className="font-semibold text-gray-900">{player.name}</p>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Total Paid: {formatAmount(playerPaid)}
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-                      <a
-                        href={`/payment/${player.id}`}
-                        className="px-4 py-3 sm:py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium text-center"
-                      >
-                        View Invoice
-                      </a>
-                      <InvoiceEmailButton playerId={player.id} playerName={player.name} />
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>
@@ -392,7 +363,7 @@ export default function PaymentHistoryTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                 Type
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
                 Amount
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -423,7 +394,7 @@ export default function PaymentHistoryTable({
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell">
                   {getPaymentTypeLabel(payment.payment_type)}
                 </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 hidden lg:table-cell">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 hidden xl:table-cell">
                   {formatAmount(payment.amount)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
