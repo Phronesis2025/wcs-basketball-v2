@@ -33,7 +33,7 @@ export const HIGH_SCHOOL_GRADES = ["9th", "10th", "11th", "12th"];
 
 /**
  * Normalize player grade to match team grade level format
- * Converts "2nd", "3rd", etc. to "2nd Grade", "3rd Grade", etc.
+ * Converts "2nd", "3rd", "5", "5th", "5th grade", etc. to "2nd Grade", "3rd Grade", "5th Grade", etc.
  * Also handles "9th", "10th", "11th", "12th" -> "U18 (High School)"
  */
 export function normalizePlayerGrade(playerGrade: string | null | undefined): string | null {
@@ -51,8 +51,28 @@ export function normalizePlayerGrade(playerGrade: string | null | undefined): st
     return "U18 (High School)";
   }
   
-  // Convert short format to full format (e.g., "2nd" -> "2nd Grade")
-  const gradeMatch = grade.match(/^(\d+)(st|nd|rd|th)/i);
+  // Handle plain numbers (e.g., "5" -> "5th Grade")
+  const plainNumberMatch = grade.match(/^(\d+)$/);
+  if (plainNumberMatch) {
+    const num = parseInt(plainNumberMatch[1], 10);
+    if (num >= 2 && num <= 8) {
+      // Map numbers to ordinal suffixes
+      const suffixes: Record<number, string> = {
+        2: "nd",
+        3: "rd",
+        4: "th",
+        5: "th",
+        6: "th",
+        7: "th",
+        8: "th",
+      };
+      return `${num}${suffixes[num]} Grade`;
+    }
+  }
+  
+  // Convert short format to full format (e.g., "2nd" -> "2nd Grade", "5th" -> "5th Grade")
+  // This also handles "5th grade" (case-insensitive)
+  const gradeMatch = grade.match(/^(\d+)(st|nd|rd|th)(\s+grade)?$/i);
   if (gradeMatch) {
     const num = gradeMatch[1];
     const suffix = gradeMatch[2].toLowerCase();

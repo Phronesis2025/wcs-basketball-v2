@@ -65,6 +65,12 @@ function ParentProfilePageInner() {
   const [activeTab, setActiveTab] = useState<"players" | "contact" | "billing">("players");
   const [contactSubTab, setContactSubTab] = useState<"contact" | "medical">("contact");
 
+  // Scroll to top on page load/refresh
+  useEffect(() => {
+    // Scroll to top immediately when component mounts (handles page refresh)
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, []);
+
   // Authentication check - give more time for session to be established
   useEffect(() => {
     const checkAuthAndRedirect = async () => {

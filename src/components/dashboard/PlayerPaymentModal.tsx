@@ -93,26 +93,32 @@ export default function PlayerPaymentModal({
   };
 
   // Filter teams based on grade and gender compatibility for pending players
-  const compatibleTeams = playerStatus === "pending" && player.grade && player.gender
-    ? teams.filter((t: Team) => {
-        // Only consider active teams when available
-        if ((t as any).is_active === false) return false;
+  // Always show teams for pending players, but filter by compatibility if grade/gender are available
+  const compatibleTeams = playerStatus === "pending"
+    ? (player.grade && player.gender
+        ? teams.filter((t: Team) => {
+            // Only consider active teams when available
+            if ((t as any).is_active === false) return false;
 
-        // Check grade compatibility
-        const gradeCompatibility = isGradeCompatible(player.grade, t.age_group);
-        if (!gradeCompatibility.compatible) {
-          return false;
-        }
+            // Check grade compatibility
+            const gradeCompatibility = isGradeCompatible(player.grade, t.age_group);
+            if (!gradeCompatibility.compatible) {
+              return false;
+            }
 
-        // Check gender compatibility
-        const playerNorm = normalizeGender(player.gender);
-        const teamNorm = normalizeGender(t.gender);
+            // Check gender compatibility
+            const playerNorm = normalizeGender(player.gender);
+            const teamNorm = normalizeGender(t.gender);
 
-        // Compatibility: team coed accepts all, or genders match; players with "other" can only join coed
-        if (teamNorm === "coed") return true;
-        if (playerNorm === "other") return false;
-        return teamNorm === playerNorm;
-      })
+            // Compatibility: team coed accepts all, or genders match; players with "other" can only join coed
+            if (teamNorm === "coed") return true;
+            if (playerNorm === "other") return false;
+            return teamNorm === playerNorm;
+          })
+        : teams.filter((t: Team) => {
+            // If no grade/gender, show all active teams
+            return (t as any).is_active !== false;
+          }))
     : teams;
 
   // Format registration date
@@ -361,27 +367,36 @@ export default function PlayerPaymentModal({
               <>
                 {!showOnHoldOptions ? (
                   <>
-                    {compatibleTeams.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-medium text-black mb-2">
-                          Assign Team
-                        </label>
-                        <select
-                          value={selectedTeamId}
-                          onChange={(e) => setSelectedTeamId(e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
-                        >
-                          <option value="" disabled>
-                            Select team
-                          </option>
-                          {compatibleTeams.map((t: Team) => (
+                    <div>
+                      <label className="block text-sm font-medium text-black mb-2">
+                        Assign Team {compatibleTeams.length === 0 && player.grade && player.gender && (
+                          <span className="text-red-600 text-xs">(No compatible teams found - showing all teams)</span>
+                        )}
+                      </label>
+                      <select
+                        value={selectedTeamId}
+                        onChange={(e) => setSelectedTeamId(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-black"
+                      >
+                        <option value="" disabled>
+                          Select team
+                        </option>
+                        {compatibleTeams.length > 0 ? (
+                          compatibleTeams.map((t: Team) => (
                             <option key={t.id} value={t.id}>
                               {t.name} ({t.age_group} {t.gender})
                             </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
+                          ))
+                        ) : (
+                          // Fallback: show all active teams if no compatible teams found
+                          teams.filter((t: Team) => (t as any).is_active !== false).map((t: Team) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name} ({t.age_group} {t.gender})
+                            </option>
+                          ))
+                        )}
+                      </select>
+                    </div>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <button
                         onClick={handleApprove}

@@ -1,5 +1,35 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.13  
+**Release Date**: 2025-11-09
+
+---
+
+## Version 2.10.13 Entries
+
+### Entry 1: Parent Profile Scroll Fix
+- **Version**: `2.10.13`
+- **Release Date**: `2025-11-09`
+- **Category**: `fixed`
+- **Description**: `Fixed parent profile page to always scroll to top on page load or refresh. Added useEffect hook that scrolls to top (0, 0) immediately when component mounts, ensuring users always start at the top of the page.`
+- **Is Published**: `true`
+
+### Entry 2: Team Selector Dropdown Fix
+- **Version**: `2.10.13`
+- **Release Date**: `2025-11-09`
+- **Category**: `fixed`
+- **Description**: `Fixed missing team selector dropdown when approving and assigning pending players. Dropdown now always shows for pending players, with fallback to all active teams if no compatible teams are found.`
+- **Is Published**: `true`
+
+### Entry 3: Enhanced Grade Normalization
+- **Version**: `2.10.13`
+- **Release Date**: `2025-11-09`
+- **Category**: `added`
+- **Description**: `Enhanced grade normalization to handle multiple input formats. Now accepts "5", "5th", or "5th grade" and normalizes all to "5th Grade" for consistent team compatibility checking.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.12  
 **Release Date**: 2025-11-09
 
