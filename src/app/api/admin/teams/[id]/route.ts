@@ -47,7 +47,25 @@ export async function PUT(
 
     if (!teamName || !ageGroup || !gender) {
       return NextResponse.json(
-        { error: "Team name, age group, and gender are required" },
+        { error: "Team name, grade level, and gender are required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate grade level (stored in age_group field)
+    const validGradeLevels = [
+      "2nd Grade",
+      "3rd Grade",
+      "4th Grade",
+      "5th Grade",
+      "6th Grade",
+      "7th Grade",
+      "8th Grade",
+      "U18 (High School)",
+    ];
+    if (!validGradeLevels.includes(ageGroup)) {
+      return NextResponse.json(
+        { error: `Invalid grade level. Must be one of: ${validGradeLevels.join(", ")}` },
         { status: 400 }
       );
     }

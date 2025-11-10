@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Player, Team } from "@/types/supabase";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { validateInputForProfanity } from "@/lib/profanityFilter";
+import { isGradeCompatible } from "@/lib/ageValidation";
 
 interface PlayerPaymentModalProps {
   isOpen: boolean;
@@ -91,25 +92,19 @@ export default function PlayerPaymentModal({
     return "other";
   };
 
-  // Filter teams based on age and gender compatibility for pending players
-  const compatibleTeams = playerStatus === "pending" && playerAge && player.gender
+  // Filter teams based on grade and gender compatibility for pending players
+  const compatibleTeams = playerStatus === "pending" && player.grade && player.gender
     ? teams.filter((t: Team) => {
         // Only consider active teams when available
         if ((t as any).is_active === false) return false;
 
-        const ageRanges: Record<string, { min: number; max: number }> = {
-          U8: { min: 6, max: 8 },
-          U10: { min: 8, max: 10 },
-          U12: { min: 10, max: 12 },
-          U14: { min: 12, max: 14 },
-          U16: { min: 14, max: 16 },
-          U18: { min: 15, max: 18 },
-        };
-        const ageRange = ageRanges[t.age_group || ""];
-        if (ageRange && (playerAge < ageRange.min || playerAge > ageRange.max)) {
+        // Check grade compatibility
+        const gradeCompatibility = isGradeCompatible(player.grade, t.age_group);
+        if (!gradeCompatibility.compatible) {
           return false;
         }
 
+        // Check gender compatibility
         const playerNorm = normalizeGender(player.gender);
         const teamNorm = normalizeGender(t.gender);
 

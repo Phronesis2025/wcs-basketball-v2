@@ -1,5 +1,49 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.12  
+**Release Date**: 2025-11-09
+
+---
+
+## Version 2.10.12 Entries
+
+### Entry 1: Grade-Based Team Assignment System
+- **Version**: `2.10.12`
+- **Release Date**: `2025-11-09`
+- **Category**: `added`
+- **Description**: `Teams now use grade levels (2nd Grade through U18 High School) instead of age groups (U8-U18). Updated team creation/editing modal, player assignment logic, and validation functions to use grade-based compatibility. All existing teams migrated from age groups to grade levels.`
+- **Is Published**: `true`
+
+### Entry 2: Team Grade Level Dropdown Update
+- **Version**: `2.10.12`
+- **Release Date**: `2025-11-09`
+- **Category**: `changed`
+- **Description**: `Updated team creation and editing modal to show grade level dropdown (2nd Grade, 3rd Grade, 4th Grade, 5th Grade, 6th Grade, 7th Grade, 8th Grade, U18 High School) instead of age group dropdown (U8-U18).`
+- **Is Published**: `true`
+
+### Entry 3: Player-Team Compatibility Logic Update
+- **Version**: `2.10.12`
+- **Release Date**: `2025-11-09`
+- **Category**: `changed`
+- **Description**: `Changed player-team compatibility from age-based to grade-based. Players are now matched to teams based on their grade level instead of calculated age. U18 (High School) teams accept players in 9th-12th grade.`
+- **Is Published**: `true`
+
+### Entry 4: Database Migration - Age Groups to Grade Levels
+- **Version**: `2.10.12`
+- **Release Date**: `2025-11-09`
+- **Category**: `changed`
+- **Description**: `Database constraint updated to allow grade level values. All existing teams migrated: U8→2nd Grade, U10→3rd Grade, U12→4th Grade, U14→5th Grade, U16→6th Grade, U18→U18 (High School). Migration completed via Supabase MCP.`
+- **Is Published**: `true`
+
+### Entry 5: Grade Validation Functions
+- **Version**: `2.10.12`
+- **Release Date**: `2025-11-09`
+- **Category**: `added`
+- **Description**: `Created new validation functions: isGradeCompatible, getCompatibleTeamsByGrade, normalizePlayerGrade. Deprecated old age-based validation functions. Functions handle grade normalization and team compatibility checking.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.11  
 **Release Date**: 2025-11-09
 

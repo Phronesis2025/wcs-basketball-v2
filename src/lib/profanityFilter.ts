@@ -7,11 +7,12 @@
  */
 
 /**
- * Focused list of explicit curse words and inappropriate content
- * Only blocks truly offensive language, not legitimate words
+ * Focused list of explicit curse words only
+ * Note: Slurs, hate speech, sexual/violent/drug terms are intentionally excluded.
+ * Detection is whole-word only to avoid false positives like "of ages".
  */
 const PROFANITY_WORDS = new Set([
-  // Explicit profanity only - most offensive words
+  // Core profanity
   "fuck",
   "fucking",
   "fucked",
@@ -26,68 +27,13 @@ const PROFANITY_WORDS = new Set([
   "pussy",
   "whore",
   "slut",
-  "fag",
-  "faggot",
-  "nigger",
-  "nigga",
-  "retard",
-  "retarded",
 
-  // Explicit sexual content only
-  "porn",
-  "pornography",
-  "masturbat",
-  "orgasm",
-  "penis",
-  "vagina",
-  "boob",
-  "tits",
-  "nude",
-  "naked",
-  "stripper",
-  "prostitut",
-  "hooker",
-  "escort",
-
-  // Explicit violence and threats only - very specific
-  "murder",
-  "suicide",
-  "bomb",
-  "weapon",
-  "stab",
-  "stabbed",
-  "threat",
-  "threaten",
-
-  // Explicit hate speech only
-  "racist",
-  "racism",
-  "discriminat",
-  "prejudice",
-  "supremacist",
-  "nazi",
-  "hitler",
-  "genocide",
-
-  // Explicit drug references only
-  "cocaine",
-  "heroin",
-  "marijuana",
-  "weed",
-  "cannabis",
-  "meth",
-  "crack",
-  "addict",
-  "overdose",
-  "stoned",
-
-  // Common misspellings and obfuscations
+  // Common obfuscations (limited to curse words only)
   "f*ck",
   "f**k",
   "f***",
   "sh*t",
   "s**t",
-  "a**",
   "a**hole",
   "b*tch",
   "b**ch",
@@ -101,15 +47,6 @@ const PROFANITY_WORDS = new Set([
   "wh**e",
   "sl*t",
   "sl**t",
-  "f*g",
-  "f**g",
-  "f***ot",
-  "n*gger",
-  "n**ger",
-  "n***a",
-  "r*tard",
-  "r**ard",
-  "r***ard",
 ]);
 
 /**
@@ -199,29 +136,13 @@ export function checkProfanity(text: string): {
     }
   }
 
-  // Check for spaced-out profanity (e.g., "f u c k")
-  const spacedNormalized = normalizeForSpacedProfanity(text);
-  for (const profaneWord of PROFANITY_WORDS) {
-    if (spacedNormalized.includes(profaneWord)) {
-      // Only add if we haven't already detected this word
-      if (!detectedWords.includes(profaneWord)) {
-        detectedWords.push(profaneWord);
-      }
-    }
-  }
+  // Disabled spaced-out detection to avoid false positives across word boundaries
+  // (e.g., "of ages" previously triggered on "fag"). Intentional to "turn down" filter.
 
   // Determine severity
   let severity: "low" | "medium" | "high" = "low";
   if (detectedWords.length > 0) {
-    const highSeverityWords = [
-      "fuck",
-      "shit",
-      "bitch",
-      "nigger",
-      "faggot",
-      "kill",
-      "murder",
-    ];
+    const highSeverityWords = ["fuck", "shit", "bitch", "asshole"];
     const hasHighSeverity = detectedWords.some((word) =>
       highSeverityWords.some((highWord) => word.includes(highWord))
     );

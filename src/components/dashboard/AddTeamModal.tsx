@@ -257,7 +257,7 @@ export default function AddTeamModal({
       newErrors.name = "Team name is required";
     }
     if (!formData.ageGroup.trim()) {
-      newErrors.ageGroup = "Age group is required";
+      newErrors.ageGroup = "Grade level is required";
     }
     if (!formData.gender.trim()) {
       newErrors.gender = "Gender is required";
@@ -438,10 +438,10 @@ export default function AddTeamModal({
               )}
             </div>
 
-            {/* Age Group */}
+            {/* Grade Level (stored in age_group field) */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Age Group *
+                Grade Level *
               </label>
               <select
                 name="ageGroup"
@@ -451,13 +451,15 @@ export default function AddTeamModal({
                   errors.ageGroup ? "border-red-500" : "border-gray-300"
                 }`}
               >
-                <option value="">Select age group</option>
-                <option value="U8">U8 (Under 8)</option>
-                <option value="U10">U10 (Under 10)</option>
-                <option value="U12">U12 (Under 12)</option>
-                <option value="U14">U14 (Under 14)</option>
-                <option value="U16">U16 (Under 16)</option>
-                <option value="U18">U18 (Under 18)</option>
+                <option value="">Select grade level</option>
+                <option value="2nd Grade">2nd Grade</option>
+                <option value="3rd Grade">3rd Grade</option>
+                <option value="4th Grade">4th Grade</option>
+                <option value="5th Grade">5th Grade</option>
+                <option value="6th Grade">6th Grade</option>
+                <option value="7th Grade">7th Grade</option>
+                <option value="8th Grade">8th Grade</option>
+                <option value="U18 (High School)">U18 (High School)</option>
               </select>
               {errors.ageGroup && (
                 <p className="text-[red] text-sm mt-1 font-medium">

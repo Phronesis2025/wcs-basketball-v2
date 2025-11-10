@@ -4,10 +4,10 @@ import React, { useState, useEffect } from "react";
 import { Player, Team } from "@/types/supabase";
 import { validateInput } from "@/lib/security";
 import {
-  isAgeCompatible,
+  isGradeCompatible,
   isGenderCompatible,
   validateDateOfBirth,
-  getCompatibleTeams,
+  getCompatibleTeamsByGrade,
 } from "@/lib/ageValidation";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import ManageDeleteConfirmModal from "./ManageDeleteConfirmModal";
@@ -51,7 +51,6 @@ export default function AddPlayerModal({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
-  const [playerAge, setPlayerAge] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [compatibleTeams, setCompatibleTeams] = useState<
@@ -64,7 +63,7 @@ export default function AddPlayerModal({
       message: string;
     }>
   >([]);
-  const [ageValidationWarning, setAgeValidationWarning] = useState<string>("");
+  const [gradeValidationWarning, setGradeValidationWarning] = useState<string>("");
 
   // Lock scroll when modal is open
   useScrollLock(isOpen);
@@ -102,18 +101,14 @@ export default function AddPlayerModal({
         is_active: editingPlayer.is_active ?? true,
       });
 
-      // Initialize age and gender validation for existing player
-      if (editingPlayer.date_of_birth) {
-        const validation = validateDateOfBirth(editingPlayer.date_of_birth);
-        if (validation.valid && validation.age !== undefined) {
-          setPlayerAge(validation.age);
-          const compatible = getCompatibleTeams(
-            validation.age,
-            editingPlayer.gender || "",
-            teams
-          );
-          setCompatibleTeams(compatible);
-        }
+      // Initialize grade and gender validation for existing player
+      if (editingPlayer.grade) {
+        const compatible = getCompatibleTeamsByGrade(
+          editingPlayer.grade,
+          editingPlayer.gender || "",
+          teams
+        );
+        setCompatibleTeams(compatible);
       }
     } else {
       setFormData({
@@ -130,9 +125,8 @@ export default function AddPlayerModal({
         emergencyPhone: "",
         is_active: true,
       });
-      setPlayerAge(null);
       setCompatibleTeams([]);
-      setAgeValidationWarning("");
+      setGradeValidationWarning("");
     }
   }, [editingPlayer, teams]);
 
@@ -143,15 +137,12 @@ export default function AddPlayerModal({
       setErrors((prev) => ({ ...prev, [field]: "" }));
     }
 
-    // Handle age validation when date of birth changes
-    if (field === "dateOfBirth") {
-      const dateOfBirth = value as string;
-      const validation = validateDateOfBirth(dateOfBirth);
-
-      if (validation.valid && validation.age !== undefined) {
-        setPlayerAge(validation.age);
-        const compatible = getCompatibleTeams(
-          validation.age,
+    // Handle grade validation when grade changes
+    if (field === "grade") {
+      const grade = value as string;
+      if (grade.trim()) {
+        const compatible = getCompatibleTeamsByGrade(
+          grade,
           formData.gender,
           teams
         );
@@ -163,27 +154,23 @@ export default function AddPlayerModal({
             (team) => team.id === formData.teamId
           );
           if (selectedTeam && !selectedTeam.compatible) {
-            setAgeValidationWarning(selectedTeam.message);
+            setGradeValidationWarning(selectedTeam.message);
           } else {
-            setAgeValidationWarning("");
+            setGradeValidationWarning("");
           }
         }
       } else {
-        setPlayerAge(null);
         setCompatibleTeams([]);
-        setAgeValidationWarning("");
-        if (!validation.valid) {
-          setErrors((prev) => ({ ...prev, dateOfBirth: validation.message }));
-        }
+        setGradeValidationWarning("");
       }
     }
 
     // Handle gender validation
     if (field === "gender") {
-      // If we have a date of birth, recalculate compatible teams
-      if (playerAge !== null) {
-        const compatible = getCompatibleTeams(
-          playerAge,
+      // If we have a grade, recalculate compatible teams
+      if (formData.grade.trim()) {
+        const compatible = getCompatibleTeamsByGrade(
+          formData.grade,
           value as string,
           teams
         );
@@ -195,24 +182,24 @@ export default function AddPlayerModal({
             (team) => team.id === formData.teamId
           );
           if (selectedTeam && !selectedTeam.compatible) {
-            setAgeValidationWarning(selectedTeam.message);
+            setGradeValidationWarning(selectedTeam.message);
           } else {
-            setAgeValidationWarning("");
+            setGradeValidationWarning("");
           }
         }
       }
     }
 
     // Handle team selection validation
-    if (field === "teamId" && playerAge !== null) {
+    if (field === "teamId" && formData.grade.trim()) {
       if (value === "unassigned") {
-        setAgeValidationWarning("");
+        setGradeValidationWarning("");
       } else {
         const selectedTeam = compatibleTeams.find((team) => team.id === value);
         if (selectedTeam && !selectedTeam.compatible) {
-          setAgeValidationWarning(selectedTeam.message);
+          setGradeValidationWarning(selectedTeam.message);
         } else {
-          setAgeValidationWarning("");
+          setGradeValidationWarning("");
         }
       }
     }
@@ -284,17 +271,16 @@ export default function AddPlayerModal({
       newErrors.emergencyPhone = "Emergency contact phone is required";
     }
 
-    // Validate age-team compatibility (skip if unassigned)
+    // Validate grade-team compatibility (skip if unassigned)
     if (
-      formData.dateOfBirth &&
+      formData.grade.trim() &&
       formData.teamId &&
-      formData.teamId !== "unassigned" &&
-      playerAge !== null
+      formData.teamId !== "unassigned"
     ) {
       const selectedTeam = teams.find((team) => team.id === formData.teamId);
       if (selectedTeam) {
-        const ageCompatibility = isAgeCompatible(
-          playerAge,
+        const gradeCompatibility = isGradeCompatible(
+          formData.grade,
           selectedTeam.age_group
         );
         const genderCompatibility = isGenderCompatible(
@@ -302,8 +288,8 @@ export default function AddPlayerModal({
           selectedTeam.gender
         );
 
-        if (!ageCompatibility.compatible) {
-          newErrors.teamId = ageCompatibility.message;
+        if (!gradeCompatibility.compatible) {
+          newErrors.teamId = gradeCompatibility.message;
         } else if (!genderCompatibility.compatible) {
           newErrors.teamId = genderCompatibility.message;
         }
@@ -532,7 +518,7 @@ export default function AddPlayerModal({
                           className={!team.compatible ? "text-gray-400" : ""}
                         >
                           {team.name} ({team.age_group} - {team.gender})
-                          {!team.compatible ? " - Age incompatible" : ""}
+                          {!team.compatible ? " - Grade incompatible" : ""}
                         </option>
                       ))
                     : teams.map((team) => (
@@ -546,14 +532,9 @@ export default function AddPlayerModal({
                     {errors.teamId}
                   </p>
                 )}
-                {ageValidationWarning && !errors.teamId && (
+                {gradeValidationWarning && !errors.teamId && (
                   <p className="text-[red] text-sm mt-1 font-medium">
-                    {ageValidationWarning}
-                  </p>
-                )}
-                {playerAge !== null && (
-                  <p className="text-blue-600 text-sm mt-1">
-                    Player age: {playerAge} years old
+                    {gradeValidationWarning}
                   </p>
                 )}
               </div>

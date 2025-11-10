@@ -19,7 +19,7 @@
 CREATE TABLE public.teams (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   name text NOT NULL UNIQUE,
-  age_group text CHECK (age_group = ANY (ARRAY['U8'::text, 'U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
+  age_group text CHECK (age_group = ANY (ARRAY['2nd Grade'::text, '3rd Grade'::text, '4th Grade'::text, '5th Grade'::text, '6th Grade'::text, '7th Grade'::text, '8th Grade'::text, 'U18 (High School)'::text])),
   gender text CHECK (gender = ANY (ARRAY['Boys'::text, 'Girls'::text])),
   coach_email text NOT NULL,
   grade_level text,
@@ -29,7 +29,7 @@ CREATE TABLE public.teams (
   is_active boolean DEFAULT true,
   is_deleted boolean DEFAULT false,
   CONSTRAINT teams_pkey PRIMARY KEY (id),
-  CONSTRAINT teams_age_group_check CHECK (age_group = ANY (ARRAY['U8'::text, 'U10'::text, 'U12'::text, 'U14'::text, 'U16'::text, 'U18'::text])),
+  CONSTRAINT teams_age_group_check CHECK (age_group = ANY (ARRAY['2nd Grade'::text, '3rd Grade'::text, '4th Grade'::text, '5th Grade'::text, '6th Grade'::text, '7th Grade'::text, '8th Grade'::text, 'U18 (High School)'::text])),
   CONSTRAINT teams_gender_check CHECK (gender = ANY (ARRAY['Boys'::text, 'Girls'::text]))
 );
 ```
@@ -38,7 +38,7 @@ CREATE TABLE public.teams (
 
 - `id` (uuid, PK) - Auto-generated UUID
 - `name` (text, NOT NULL, UNIQUE) - Team name
-- `age_group` (text) - U8, U10, U12, U14, U16, U18
+- `age_group` (text) - Grade levels: 2nd Grade, 3rd Grade, 4th Grade, 5th Grade, 6th Grade, 7th Grade, 8th Grade, U18 (High School)
 - `gender` (text) - Boys or Girls
 - `coach_email` (text, NOT NULL) - Primary coach email
 - `grade_level` (text) - School grade level

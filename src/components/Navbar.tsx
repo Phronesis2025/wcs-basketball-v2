@@ -498,20 +498,16 @@ export default function Navbar() {
     // On club management page, don't show Coaches/Profile links in navbar
     navLinks = baseNavLinks;
   } else if (user) {
-    // Check user role: admin and coach see "Coaches" link, parents see "Profile" link
+    // Only admin and coach roles see "Coaches" link
+    // Everyone else (parent, null, or any other role) sees "Profile" link
     if (userRole === "admin" || userRole === "coach") {
       navLinks = [
         ...baseNavLinks,
         { name: "Coaches", href: "/admin/club-management?tab=coaches-dashboard" },
       ];
-    } else if (userRole === "parent") {
-      // Parent users see "Profile" link
-      navLinks = [
-        ...baseNavLinks,
-        { name: "Profile", href: "/parent/profile" },
-      ];
     } else {
-      // Users with null role or unknown role - show Profile link
+      // All other users (parent, null role, or unknown role) see Profile link
+      // Coaches link is explicitly NOT shown for non-admin/coach users
       navLinks = [
         ...baseNavLinks,
         { name: "Profile", href: "/parent/profile" },

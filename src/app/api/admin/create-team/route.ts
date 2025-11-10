@@ -67,11 +67,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate age group
-    const validAgeGroups = ["U8", "U10", "U12", "U14", "U16", "U18"];
-    if (!validAgeGroups.includes(ageGroup)) {
+    // Validate grade level (stored in age_group field)
+    const validGradeLevels = [
+      "2nd Grade",
+      "3rd Grade",
+      "4th Grade",
+      "5th Grade",
+      "6th Grade",
+      "7th Grade",
+      "8th Grade",
+      "U18 (High School)",
+    ];
+    if (!validGradeLevels.includes(ageGroup)) {
       return NextResponse.json(
-        { error: "Invalid age group. Must be U8, U10, U12, U14, U16, or U18" },
+        { error: `Invalid grade level. Must be one of: ${validGradeLevels.join(", ")}` },
         { status: 400 }
       );
     }
