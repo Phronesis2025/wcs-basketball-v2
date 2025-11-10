@@ -55,89 +55,100 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { playerId } = await request.json();
+    const { email } = await request.json();
 
-    if (!playerId) {
+    if (!email) {
       return NextResponse.json(
-        { error: "Player ID is required" },
+        { error: "Email is required" },
         { status: 400 }
       );
     }
 
-    devLog("send-invoice: Generating invoice for player", { playerId });
+    devLog("send-parent-invoice: Generating combined invoice for parent", { email });
 
-    // Fetch player data
-    const { data: player, error: playerError } = await supabaseAdmin
-      .from("players")
+    // Fetch parent data
+    const { data: parent, error: parentError } = await supabaseAdmin
+      .from("parents")
       .select("*")
-      .eq("id", playerId)
-      .single();
+      .eq("email", email)
+      .maybeSingle();
 
-    if (playerError || !player) {
-      devError("send-invoice: Failed to fetch player", playerError);
+    if (parentError || !parent) {
+      devError("send-parent-invoice: Failed to fetch parent", parentError);
       return NextResponse.json(
-        { error: "Failed to fetch player data" },
+        { error: "Failed to fetch parent data" },
         { status: 404 }
       );
     }
 
-    // Fetch parent data
-    let parent = null;
-    if (player.parent_id) {
-      const { data: parentData, error: parentError } = await supabaseAdmin
-        .from("parents")
-        .select("*")
-        .eq("id", player.parent_id)
-        .single();
+    // Fetch all children for this parent
+    const { data: children, error: childrenError } = await supabaseAdmin
+      .from("players")
+      .select("*")
+      .eq("parent_id", parent.id)
+      .eq("is_deleted", false)
+      .order("created_at", { ascending: true });
 
-      if (!parentError && parentData) {
-        parent = parentData;
-      }
+    if (childrenError) {
+      devError("send-parent-invoice: Failed to fetch children", childrenError);
+      return NextResponse.json(
+        { error: "Failed to fetch children data" },
+        { status: 500 }
+      );
     }
 
-    // Fetch team data
-    let teamName = "Not Assigned Yet";
-    let teamLogoUrl = null;
-    if (player.team_id) {
-      try {
-        const team = await fetchTeamById(player.team_id);
-        if (team?.name) teamName = team.name;
-        if (team?.logo_url) teamLogoUrl = team.logo_url;
-      } catch (err) {
-        devError("send-invoice: Failed to fetch team", err);
-      }
+    if (!children || children.length === 0) {
+      return NextResponse.json(
+        { error: "No children found for this parent" },
+        { status: 404 }
+      );
     }
 
-    // Fetch payments
+    // Fetch all payments for all children
+    const childIds = children.map((c: any) => c.id);
     const { data: payments, error: paymentsError } = await supabaseAdmin
       .from("payments")
       .select("*")
-      .eq("player_id", playerId)
+      .in("player_id", childIds)
       .order("created_at", { ascending: false });
 
     if (paymentsError) {
-      devError("send-invoice: Failed to fetch payments", paymentsError);
+      devError("send-parent-invoice: Failed to fetch payments", paymentsError);
     }
 
-    // Filter paid payments
+    // Filter paid payments and add player names
     const isPaid = (status: string | null | undefined) => {
       const s = (status || "").toString().toLowerCase();
       return s === "paid" || s === "succeeded" || s.includes("paid");
     };
 
-    const paidPayments = (payments || []).filter((p) => isPaid(p.status));
+    const paidPayments = (payments || [])
+      .filter((p) => isPaid(p.status))
+      .map((p: any) => {
+        // Add player name to payment
+        const child = children.find((c: any) => c.id === p.player_id);
+        return {
+          ...p,
+          player_name: child?.name || "Unknown",
+        };
+      });
+
     const totalPaid = paidPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     const annualFee = Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360);
-    const totalAmount = totalPaid > 0 ? totalPaid : annualFee;
+    const monthlyFee = 30;
+    const quarterlyFeeAmount = 90;
+
+    // Calculate total amount due (sum of annual fees for all children)
+    const totalAmountDue = children.length * annualFee;
 
     // Format parent address
     const parentAddressParts = [];
-    if (parent?.address_line1) parentAddressParts.push(parent.address_line1);
-    if (parent?.address_line2) parentAddressParts.push(parent.address_line2);
-    if (parent?.city || parent?.state || parent?.zip) {
-      parentAddressParts.push([parent?.city, parent?.state, parent?.zip].filter(Boolean).join(", "));
+    if (parent.address_line1) parentAddressParts.push(parent.address_line1);
+    if (parent.address_line2) parentAddressParts.push(parent.address_line2);
+    if (parent.city || parent.state || parent.zip) {
+      parentAddressParts.push([parent.city, parent.state, parent.zip].filter(Boolean).join(", "));
     }
-    const parentAddress = parentAddressParts.join(", ") || "";
+    const parentAddress = parentAddressParts.join(", ") || "N/A";
 
     // Format invoice data
     const invoiceDate = new Date().toLocaleDateString("en-US", {
@@ -145,27 +156,46 @@ export async function POST(request: NextRequest) {
       day: "2-digit",
       year: "numeric"
     });
-    const invoiceNumber = (payments?.[0]?.id || playerId).toString().slice(0, 8);
+    const invoiceNumber = `PARENT-${parent.id.toString().slice(0, 8)}`;
 
-    const monthlyFee = 30;
+    // Build invoice items from all payments
     const invoiceItems = paidPayments.length > 0
-      ? paidPayments.map((p) => {
+      ? paidPayments.map((p: any) => {
           const paymentDate = new Date(p.created_at);
           const paymentType = (p.payment_type || "annual").toLowerCase();
           const isAnnual = paymentType === "annual";
+          const isMonthly = paymentType === "monthly";
+          const isQuarterly = paymentType === "quarterly";
           
-          // Format description: "Player Name - Annual/Monthly - Year/Month"
+          // Get player name from payment
+          const playerName = p.player_name || "Unknown";
+          
+          // Format description: "Player Name - Annual/Monthly/Quarterly - Year/Month"
           const year = paymentDate.getFullYear();
           const month = paymentDate.toLocaleDateString("en-US", { month: "long" });
-          const typeLabel = isAnnual ? "Annual" : "Monthly";
-          const periodLabel = isAnnual ? year.toString() : `${month} ${year}`;
-          const description = `${player.name} - ${typeLabel} - ${periodLabel}`;
+          let typeLabel = "Annual";
+          let periodLabel = year.toString();
+          if (isMonthly) {
+            typeLabel = "Monthly";
+            periodLabel = `${month} ${year}`;
+          } else if (isQuarterly) {
+            typeLabel = "Quarterly";
+            periodLabel = `${month} ${year}`;
+          }
+          const description = `${playerName} - ${typeLabel} - ${periodLabel}`;
           
-          // Price: Monthly or Annual amount
-          const priceAmount = isAnnual ? annualFee : monthlyFee;
-          const priceLabel = isAnnual ? `Annual ($${annualFee.toFixed(2)})` : `Monthly ($${monthlyFee.toFixed(2)})`;
+          // Price: Monthly, Quarterly, or Annual amount
+          let priceAmount = annualFee;
+          let priceLabel = `Annual ($${annualFee.toFixed(2)})`;
+          if (isMonthly) {
+            priceAmount = monthlyFee;
+            priceLabel = `Monthly ($${monthlyFee.toFixed(2)})`;
+          } else if (isQuarterly) {
+            priceAmount = quarterlyFeeAmount;
+            priceLabel = `Quarterly ($${quarterlyFeeAmount.toFixed(2)})`;
+          }
           
-          // Qty: 12 for annual, 1 for monthly
+          // Qty: 12 for annual, 1 for monthly/quarterly
           const quantity = isAnnual ? 12 : 1;
           
           // Amount: how much was actually paid
@@ -177,31 +207,63 @@ export async function POST(request: NextRequest) {
               day: "2-digit",
               year: "numeric"
             }),
-            playerName: player.name || "Player",
+            playerName,
             description,
             priceLabel,
             priceAmount,
             quantity,
             amountPaid,
           };
+        }).sort((a, b) => {
+          // Sort by date, newest first
+          const dateA = new Date(a.date);
+          const dateB = new Date(b.date);
+          return dateB.getTime() - dateA.getTime();
         })
       : [];
 
-    const isPaidInFull = totalPaid >= annualFee && totalPaid > 0;
-    const remaining = Math.max(annualFee - totalPaid, 0);
+    // Calculate remaining balance (total due minus total paid)
+    const remaining = Math.max(totalAmountDue - totalPaid, 0);
+    const isPaidInFull = remaining <= 0 && totalPaid > 0;
+
+    // Build player name display (show all children)
+    const childNames = children.map((c: any) => c.name).join(", ");
+    const playerNameDisplay = children.length > 1 
+      ? `${children.length} Children: ${childNames}`
+      : childNames || "—";
+
+    // Get team info (use first child's team if available, or "Multiple Teams" if different)
+    let teamName = "Not Assigned Yet";
+    let teamLogoUrl = null;
+    if (children.length > 0) {
+      const firstChild = children[0];
+      if (firstChild.team_id) {
+        try {
+          const team = await fetchTeamById(firstChild.team_id);
+          if (team?.name) {
+            // Check if all children are on the same team
+            const allSameTeam = children.every((c: any) => c.team_id === firstChild.team_id);
+            teamName = allSameTeam ? team.name : "Multiple Teams";
+            teamLogoUrl = team.logo_url;
+          }
+        } catch (err) {
+          devError("send-parent-invoice: Failed to fetch team", err);
+        }
+      }
+    }
 
     const invoiceData = {
       invoiceDate,
       invoiceNumber,
       parentName: parent ? `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || "N/A" : "N/A",
       parentAddress: parentAddress || "N/A",
-      playerName: player.name || "—",
+      playerName: playerNameDisplay,
       teamName,
       teamLogoUrl,
-      email: player.parent_email || parent?.email || "—",
+      email: parent.email || "—",
       items: invoiceItems,
       subtotal: totalPaid,
-      totalAmount: annualFee,
+      totalAmount: totalAmountDue,
       remaining,
       isPaidInFull,
     };
@@ -211,14 +273,14 @@ export async function POST(request: NextRequest) {
 
     // Send email via Resend
     if (!RESEND_API_KEY) {
-      devError("send-invoice: RESEND_API_KEY missing");
+      devError("send-parent-invoice: RESEND_API_KEY missing");
       return NextResponse.json(
         { error: "Email service not configured" },
         { status: 500 }
       );
     }
 
-    const recipientEmail = player.parent_email || parent?.email;
+    const recipientEmail = parent.email;
     if (!recipientEmail) {
       return NextResponse.json(
         { error: "No email address found for parent" },
@@ -232,13 +294,15 @@ export async function POST(request: NextRequest) {
     // Log PDF size for debugging
     const pdfSizeKB = (pdfBytes.length / 1024).toFixed(2);
     const base64SizeKB = (pdfBase64.length / 1024).toFixed(2);
-    devLog(`send-invoice: PDF generated`, {
+    devLog(`send-parent-invoice: PDF generated`, {
       pdfSize: `${pdfSizeKB} KB`,
       base64Size: `${base64SizeKB} KB`,
-      playerId,
+      email,
+      childrenCount: children.length,
+      paymentsCount: paidPayments.length,
     });
 
-    const emailSubject = `Invoice ${invoiceNumber} - WCS Basketball`;
+    const emailSubject = `Combined Invoice ${invoiceNumber} - WCS Basketball`;
     const logoUrl = getLogoUrl();
     const parentGreeting = invoiceData.parentName !== "N/A" 
       ? `Hi ${invoiceData.parentName},` 
@@ -400,7 +464,7 @@ export async function POST(request: NextRequest) {
             <div class="logo-container">
               <img src="${logoUrl}" alt="WCS Basketball Logo" class="logo" style="max-width: 80px; height: auto; display: block; margin: 0 auto; width: 80px;">
             </div>
-            <h1>Invoice</h1>
+            <h1>Combined Invoice</h1>
             <p class="header-subtitle">WCS Basketball</p>
           </div>
 
@@ -408,7 +472,7 @@ export async function POST(request: NextRequest) {
             <div class="greeting">${parentGreeting}</div>
             
             <p class="intro-text">
-              Please find attached your invoice for <strong>${player.name}</strong>. 
+              Please find attached your combined invoice for all your children${children.length > 1 ? ` (${children.length} children)` : ''}. 
               ${invoiceData.isPaidInFull 
                 ? 'This invoice has been paid in full.' 
                 : `There is a remaining balance of $${invoiceData.remaining.toFixed(2)}.`}
@@ -424,10 +488,10 @@ export async function POST(request: NextRequest) {
                 <span class="info-value">${invoiceDate}</span>
               </div>
               <div class="info-row">
-                <span class="info-label">Player:</span>
-                <span class="info-value">${player.name}</span>
+                <span class="info-label">${children.length > 1 ? 'Children' : 'Child'}:</span>
+                <span class="info-value">${invoiceData.playerName}</span>
               </div>
-              ${invoiceData.teamName !== "Not Assigned Yet" 
+              ${invoiceData.teamName !== "Not Assigned Yet" && invoiceData.teamName !== "Multiple Teams"
                 ? `<div class="info-row">
                     <span class="info-label">Team:</span>
                     <span class="info-value">${invoiceData.teamName}</span>
@@ -501,7 +565,7 @@ export async function POST(request: NextRequest) {
               html: emailHtml,
               attachments: [
                 {
-                  filename: `invoice-${invoiceNumber}.pdf`,
+                  filename: `combined-invoice-${invoiceNumber}.pdf`,
                   content: pdfBase64,
                 },
               ],
@@ -513,11 +577,11 @@ export async function POST(request: NextRequest) {
 
           if (!emailResponse.ok) {
             const errorText = await emailResponse.text();
-            devError(`send-invoice: Failed to send email (attempt ${attempt}/${maxRetries})`, errorText);
+            devError(`send-parent-invoice: Failed to send email (attempt ${attempt}/${maxRetries})`, errorText);
             
             // If it's a server error (5xx) and we have retries left, retry
             if (emailResponse.status >= 500 && attempt < maxRetries) {
-              devLog(`send-invoice: Retrying in ${retryDelay}ms...`);
+              devLog(`send-parent-invoice: Retrying in ${retryDelay}ms...`);
               await new Promise(resolve => setTimeout(resolve, retryDelay));
               continue;
             }
@@ -529,11 +593,11 @@ export async function POST(request: NextRequest) {
         } catch (error: any) {
           // Handle timeout or connection errors
           if (error.name === 'AbortError') {
-            devError(`send-invoice: Request timeout (attempt ${attempt}/${maxRetries})`);
+            devError(`send-parent-invoice: Request timeout (attempt ${attempt}/${maxRetries})`);
           } else if (error.code === 'UND_ERR_SOCKET' || error.message?.includes('fetch failed')) {
-            devError(`send-invoice: Connection error (attempt ${attempt}/${maxRetries})`, error.message);
+            devError(`send-parent-invoice: Connection error (attempt ${attempt}/${maxRetries})`, error.message);
           } else {
-            devError(`send-invoice: Error (attempt ${attempt}/${maxRetries})`, error);
+            devError(`send-parent-invoice: Error (attempt ${attempt}/${maxRetries})`, error);
           }
 
           // If this is the last attempt, throw the error
@@ -542,7 +606,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Wait before retrying
-          devLog(`send-invoice: Retrying in ${retryDelay}ms...`);
+          devLog(`send-parent-invoice: Retrying in ${retryDelay}ms...`);
           await new Promise(resolve => setTimeout(resolve, retryDelay));
           
           // Exponential backoff: increase delay for subsequent retries
@@ -555,7 +619,7 @@ export async function POST(request: NextRequest) {
 
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
-      devError("send-invoice: Failed to send email after retries", errorText);
+      devError("send-parent-invoice: Failed to send email after retries", errorText);
       return NextResponse.json(
         { error: "Failed to send email. Please try again later." },
         { status: 500 }
@@ -563,19 +627,20 @@ export async function POST(request: NextRequest) {
     }
 
     const emailData = await emailResponse.json();
-    devLog("send-invoice: Invoice sent successfully", {
-      playerId,
-      email: recipientEmail,
+    devLog("send-parent-invoice: Combined invoice sent successfully", {
+      email,
+      childrenCount: children.length,
+      paymentsCount: paidPayments.length,
       resendId: emailData.id,
     });
 
     return NextResponse.json({
       success: true,
-      message: "Invoice sent successfully",
+      message: "Combined invoice sent successfully",
       email: recipientEmail,
     });
   } catch (error: any) {
-    devError("send-invoice: Exception", error);
+    devError("send-parent-invoice: Exception", error);
     
     // Provide more specific error messages based on error type
     let errorMessage = "Failed to send invoice";

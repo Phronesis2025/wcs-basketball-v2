@@ -12,6 +12,7 @@ interface InvoiceData {
   email: string;
   items: Array<{
     date: string;
+    playerName?: string;
     description: string;
     priceLabel: string;
     priceAmount: number;
@@ -73,32 +74,7 @@ export async function generateInvoicePDF(
     devError("WCS logo load fail", e);
   }
 
-  // Team logo directly below WCS logo, right-aligned
-  if (data.teamLogoUrl) {
-    try {
-      const r = await fetch(data.teamLogoUrl);
-      if (r.ok) {
-        const buf = await r.arrayBuffer();
-        let img;
-        try {
-          img = await pdfDoc.embedPng(buf);
-        } catch {
-          img = await pdfDoc.embedJpg(buf);
-        }
-        const dims = img.scale(0.12);
-        // Right align with WCS logo
-        const teamLogoX = rightX + wcsLogoWidth - dims.width;
-        page.drawImage(img, {
-          x: teamLogoX,
-          y: cursorY - dims.height,
-          width: dims.width,
-          height: dims.height,
-        });
-      }
-    } catch (e) {
-      devError("Team logo load fail", e);
-    }
-  }
+  // Team logo removed - no longer displayed on invoices
 
   // --- TITLE - top aligned with WCS logo ---
   page.drawText("INVOICE", {
@@ -192,14 +168,15 @@ export async function generateInvoicePDF(
   const tW = width - M * 2;
   const rowH = 40;
 
-  // Column widths
-  const cw = [80, 240, 90, 50, 72];
+  // Column widths: Date, Player, Description, Price, Qty, Amount
+  const cw = [70, 80, 180, 80, 40, 70];
   const cx = [
     tX,
     tX + cw[0],
     tX + cw[0] + cw[1],
     tX + cw[0] + cw[1] + cw[2],
     tX + cw[0] + cw[1] + cw[2] + cw[3],
+    tX + cw[0] + cw[1] + cw[2] + cw[3] + cw[4],
   ];
 
   // Ensure at least 2 empty rows for clean look
@@ -224,7 +201,7 @@ export async function generateInvoicePDF(
     color: headerGray,
   });
 
-  const headers = ["Date:", "Description", "Price", "Qty", "Amount"];
+  const headers = ["Date:", "Player", "Description", "Price", "Qty", "Amount"];
   headers.forEach((h, i) => {
     const cellW = cw[i];
     const textW = helvB.widthOfTextAtSize(h, 10);
@@ -273,6 +250,7 @@ export async function generateInvoicePDF(
     });
 
     if (item) {
+      // Date
       page.drawText(item.date, {
         x: cx[0] + 8,
         y: ry - 24,
@@ -281,11 +259,11 @@ export async function generateInvoicePDF(
         color: black,
       });
 
-      const desc =
-        item.description.length > 50
-          ? item.description.slice(0, 47) + "..."
-          : item.description;
-      page.drawText(desc, {
+      // Player name
+      const playerName = item.playerName || "";
+      const playerNameText =
+        playerName.length > 15 ? playerName.slice(0, 12) + "..." : playerName;
+      page.drawText(playerNameText, {
         x: cx[1] + 8,
         y: ry - 24,
         size: 10,
@@ -293,33 +271,49 @@ export async function generateInvoicePDF(
         color: black,
       });
 
+      // Description
+      const desc =
+        item.description.length > 40
+          ? item.description.slice(0, 37) + "..."
+          : item.description;
+      page.drawText(desc, {
+        x: cx[2] + 8,
+        y: ry - 24,
+        size: 10,
+        font: helv,
+        color: black,
+      });
+
+      // Price
       const priceLabel =
-        item.priceLabel.length > 20
-          ? item.priceLabel.slice(0, 17) + "..."
+        item.priceLabel.length > 18
+          ? item.priceLabel.slice(0, 15) + "..."
           : item.priceLabel;
       const priceW = helv.widthOfTextAtSize(priceLabel, 10);
       page.drawText(priceLabel, {
-        x: cx[2] + (cw[2] - priceW) / 2,
+        x: cx[3] + (cw[3] - priceW) / 2,
         y: ry - 24,
         size: 10,
         font: helv,
         color: black,
       });
 
+      // Quantity
       const qtyText = String(item.quantity);
       const qtyW = helv.widthOfTextAtSize(qtyText, 10);
       page.drawText(qtyText, {
-        x: cx[3] + (cw[3] - qtyW) / 2,
+        x: cx[4] + (cw[4] - qtyW) / 2,
         y: ry - 24,
         size: 10,
         font: helv,
         color: black,
       });
 
+      // Amount
       const amtText = `$${item.amountPaid.toFixed(2)}`;
       const amtW = helv.widthOfTextAtSize(amtText, 10);
       page.drawText(amtText, {
-        x: cx[4] + cw[4] - amtW - 8,
+        x: cx[5] + cw[5] - amtW - 8,
         y: ry - 24,
         size: 10,
         font: helv,

@@ -69,12 +69,78 @@ interface PaymentHistoryTableProps {
   payments: Payment[];
   children?: Player[];
   annualFeeUsd?: number;
+  parentEmail?: string;
+}
+
+// Combined Invoice Button Component
+function CombinedInvoiceButton({ parentEmail }: { parentEmail?: string }) {
+  const [sendingInvoice, setSendingInvoice] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const sendCombinedInvoice = async () => {
+    if (sendingInvoice || !parentEmail) return;
+    
+    setSendingInvoice(true);
+    setMessage(null);
+    
+    try {
+      const response = await fetch("/api/send-parent-invoice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: parentEmail }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setMessage(`Error: ${data.error || "Failed to send invoice"}`);
+        return;
+      }
+
+      setMessage(`Combined Invoice Sent`);
+      
+      // Clear message after 5 seconds
+      setTimeout(() => {
+        setMessage(null);
+      }, 5000);
+    } catch (error) {
+      setMessage("Failed to send invoice. Please try again.");
+    } finally {
+      setSendingInvoice(false);
+    }
+  };
+
+  if (!parentEmail) return null;
+
+  return (
+    <div className="relative w-full sm:w-auto">
+      <button
+        onClick={sendCombinedInvoice}
+        disabled={sendingInvoice}
+        className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-center"
+      >
+        {sendingInvoice ? "Sending..." : "Email Full Invoice"}
+      </button>
+      {message && (
+        <div className={`absolute top-full mt-2 left-0 right-0 p-2 rounded text-xs whitespace-nowrap z-10 ${
+          message.includes("Error") || message.includes("Failed")
+            ? "bg-red-100 text-red-800 border border-red-300"
+            : "bg-green-100 text-green-800 border border-green-300"
+        }`}>
+          {message}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function PaymentHistoryTable({
   payments,
   children = [],
   annualFeeUsd,
+  parentEmail,
 }: PaymentHistoryTableProps) {
   const annualFee = Number(
     annualFeeUsd ?? Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360)
@@ -248,6 +314,28 @@ export default function PaymentHistoryTable({
             </p>
           </div>
           <div className="p-6">
+            {/* Combined Invoice Button - Show at top if multiple children */}
+            {uniquePlayers.length > 1 && (
+              <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-gray-900">Combined Invoice</p>
+                    <p className="text-sm text-gray-600 mt-1">
+                      View or download a single invoice with all payments for all your children
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+                    <a
+                      href={`/payment/${uniquePlayers[0].id}`}
+                      className="px-4 py-3 sm:py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium text-center"
+                    >
+                      View Full Invoice
+                    </a>
+                    <CombinedInvoiceButton parentEmail={parentEmail} />
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="space-y-4">
               {uniquePlayers.map((player) => {
                 const playerPaid = paidByPlayer.get(player.id) || 0;

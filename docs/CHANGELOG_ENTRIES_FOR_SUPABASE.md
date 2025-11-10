@@ -1,5 +1,56 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.14  
+**Release Date**: 2025-01-09
+
+---
+
+## Version 2.10.14 Entries
+
+### Entry 1: Combined Invoice Feature
+- **Version**: `2.10.14`
+- **Release Date**: `2025-01-09`
+- **Category**: `added`
+- **Description**: `Added combined invoice feature allowing parents to view and download a single invoice with all payments for all their children. Created new API endpoint /api/send-parent-invoice that generates consolidated invoices. Added "View Full Invoice" and "Email Full Invoice" buttons to billing page. Invoice table now includes Player column showing first names, and displays all payments across multiple children and months.`
+- **Is Published**: `true`
+
+### Entry 2: Invoice Table Display Fix
+- **Version**: `2.10.14`
+- **Release Date**: `2025-01-09`
+- **Category**: `fixed`
+- **Description**: `Fixed invoice table not displaying payment information on HTML invoice page. Removed overflow-hidden container that was clipping table content. Added explicit display and visibility styles to ensure table is always visible. Updated payment fetching to use server-side API for reliable data access.`
+- **Is Published**: `true`
+
+### Entry 3: Team Logo Removal from Invoices
+- **Version**: `2.10.14`
+- **Release Date**: `2025-01-09`
+- **Category**: `changed`
+- **Description**: `Removed team logos from all invoice forms (HTML and PDF). Team logos no longer appear on invoices to simplify invoice design. WCS logo remains in header.`
+- **Is Published**: `true`
+
+### Entry 4: Multiple Teams Invoice Display
+- **Version**: `2.10.14`
+- **Release Date**: `2025-01-09`
+- **Category**: `changed`
+- **Description**: `Updated invoice to hide Team line when parent has children on multiple teams. Team information only displays when all children are on the same team.`
+- **Is Published**: `true`
+
+### Entry 5: Players Label Update
+- **Version**: `2.10.14`
+- **Release Date**: `2025-01-09`
+- **Category**: `changed`
+- **Description**: `Changed invoice label from "Children:" to "Players:" and updated display to show only first names (e.g., "7 Players: Teegan, Tatum, Bernie, Amelia, Oakly, Hannah, Stella").`
+- **Is Published**: `true`
+
+### Entry 6: Invoice Back Button
+- **Version**: `2.10.14`
+- **Release Date**: `2025-01-09`
+- **Category**: `added`
+- **Description**: `Added back button to invoice page positioned between invoice content and checkout section. Button styled as standard gray button matching app design, hidden in print mode.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.13  
 **Release Date**: 2025-11-09
 

@@ -430,6 +430,7 @@ function ParentProfilePageInner() {
                 <PaymentHistoryTable
                   payments={profile.payments}
                   children={profile.children}
+                  parentEmail={profile.parent.email}
                 />
               </div>
             )}

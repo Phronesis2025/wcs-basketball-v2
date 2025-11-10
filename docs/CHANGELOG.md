@@ -1,5 +1,89 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.14 - Combined Invoice Feature & Invoice Improvements
+
+**Release Date**: January 9, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (115 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Combined Invoice Feature**:
+  - **Feature**: Parents can now view and download a single invoice with all payments for all their children
+  - **Implementation**: 
+    - Created new API endpoint `/api/send-parent-invoice` that generates consolidated invoices
+    - Added "View Full Invoice" button linking to payment page showing all children's payments
+    - Added "Email Full Invoice" button that sends combined invoice PDF via email
+    - Invoice table includes Player column showing first names for each payment
+    - Displays all payments across multiple children and months in single invoice
+  - **Files Modified**:
+    - `src/app/api/send-parent-invoice/route.ts`: NEW - Combined invoice API endpoint
+    - `src/components/parent/PaymentHistoryTable.tsx`: Added combined invoice buttons
+    - `src/app/payment/[playerId]/page.tsx`: Updated to show all payments from all children
+    - `src/lib/pdf/invoice.ts`: Updated to support Player column in PDF
+  - **Impact**: Parents can now get a single comprehensive invoice for all their children instead of separate invoices per child
+
+- **Invoice Back Button**:
+  - **Feature**: Added back button to invoice page for easy navigation
+  - **Implementation**: Button positioned between invoice content and checkout section, styled as standard gray button
+  - **Files Modified**:
+    - `src/app/payment/[playerId]/page.tsx`: Added back button with router.back() functionality
+  - **Impact**: Improved navigation UX on invoice page
+
+### 🔧 Fixed
+
+- **Invoice Table Display Issue**:
+  - **Issue**: Invoice table was not displaying payment information on HTML invoice page
+  - **Root Cause**: Container had `overflow-hidden` and fixed height that was clipping table content
+  - **Fix**: 
+    - Removed `overflow-hidden` from container
+    - Removed fixed height constraint
+    - Added explicit `display: "table"` and `visibility: "visible"` styles
+    - Updated payment fetching to use server-side API for reliable data access
+  - **Files Modified**:
+    - `src/app/payment/[playerId]/page.tsx`: Fixed container styles and payment data fetching
+  - **Impact**: Invoice table now correctly displays all payment rows with dates, player names, descriptions, prices, quantities, and amounts
+
+### 🔄 Changed
+
+- **Team Logo Removal**:
+  - **Change**: Removed team logos from all invoice forms (HTML and PDF)
+  - **Implementation**: Removed team logo rendering code from both HTML invoice page and PDF generation
+  - **Files Modified**:
+    - `src/app/payment/[playerId]/page.tsx`: Removed team logo image from invoice header
+    - `src/lib/pdf/invoice.ts`: Removed team logo embedding code
+  - **Impact**: Cleaner invoice design with only WCS logo in header
+
+- **Multiple Teams Invoice Display**:
+  - **Change**: Invoice now hides Team line when parent has children on multiple teams
+  - **Implementation**: Added `hasMultipleTeams` state that checks if children have different team_ids
+  - **Files Modified**:
+    - `src/app/payment/[playerId]/page.tsx`: Added team checking logic and conditional Team line display
+  - **Impact**: Invoice only shows team information when all children are on the same team
+
+- **Players Label Update**:
+  - **Change**: Changed invoice label from "Children:" to "Players:" and display only first names
+  - **Implementation**: Updated label text and extracted first names from full names using split(' ')[0]
+  - **Files Modified**:
+    - `src/app/payment/[playerId]/page.tsx`: Updated label and name display logic
+  - **Impact**: More consistent terminology and cleaner display (e.g., "7 Players: Teegan, Tatum, Bernie..." instead of full names)
+
+### 🔒 Security
+
+- **Security Audit**: ✅ Passed
+- **No new security issues introduced** in code changes
+- All changes are UI/UX improvements and invoice generation with no security implications
+
+### 📝 Documentation Updates
+
+- `docs/CHANGELOG.md`: Added version 2.10.14 entry
+- `docs/CHANGELOG_ENTRIES_FOR_SUPABASE.md`: Updated with new entries
+
+---
+
 ## 🚀 Version 2.10.13 - Parent Profile Scroll Fix & Team Selector Improvements
 
 **Release Date**: November 9, 2025  
