@@ -274,3 +274,10 @@ img[style*="object-fit"],
 [class*="Image"][style*="object-fit"] {
   object-fit: inherit;
 }
+
+/* Print styles - Hide footer elements in PDF */
+@media print {
+  .invoice-footer {
+    display: none !important;
+  }
+}

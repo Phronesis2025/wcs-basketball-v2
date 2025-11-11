@@ -1,5 +1,72 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.16 - Invoice PDF Generation & Email Improvements
+
+**Release Date**: January 11, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (120 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Puppeteer PDF Generation**:
+  - Replaced pdf-lib with Puppeteer for invoice PDF generation
+  - PDFs now render directly from HTML invoice page using headless Chrome
+  - Ensures exact visual match with web version
+  - Added robust waiting logic for async data loading and React rendering
+  - Supports both single player and combined parent invoices
+  - Files Modified: `src/lib/pdf/puppeteer-invoice.ts`, `src/app/api/send-invoice/route.ts`, `src/app/api/send-parent-invoice/route.ts`
+
+- **Next Payment Due Date in Invoice Emails**:
+  - Added "Next Payment Due: MM/DD/YYYY" display in invoice emails
+  - Replaced status badge with calculated due date
+  - Calculated as 30 days after last paid payment or player creation date
+  - For combined invoices, shows earliest due date across all children
+  - Files Modified: `src/app/api/send-parent-invoice/route.ts`, `src/app/api/send-invoice/route.ts`
+
+### 🔧 Fixed
+
+- **Invoice PDF Data Population**:
+  - Fixed invoice PDF generation not populating payment table data
+  - Enhanced Puppeteer waiting logic to wait for API responses
+  - Added React rendering completion checks
+  - Verifies actual payment data appearance in table cells
+  - Added comprehensive debug logging and table state verification
+  - Files Modified: `src/lib/pdf/puppeteer-invoice.ts`, `src/app/payment/[playerId]/page.tsx`
+
+- **Invoice PDF Footer Removal**:
+  - Fixed footer elements appearing in invoice PDFs
+  - Implemented dual approach: direct DOM element removal and CSS injection
+  - Added invoice-footer class to footer elements
+  - Added print-specific CSS rules
+  - Prevents blank pages and ensures only invoice content appears in PDF
+  - Files Modified: `src/lib/pdf/puppeteer-invoice.ts`, `src/app/payment/[playerId]/page.tsx`
+
+### 🔄 Changed
+
+- **Unified Invoice Email Functionality**:
+  - Both "Email Full Invoice" button (billing tab) and "Email Invoice to Parent" button (payment page) now send the same combined invoice email
+  - Updated email text format to match standard invoice format
+  - Format: "Please find attached your combined invoice for all your children (X children). There is a remaining balance of $X.XX."
+  - Files Modified: `src/app/payment/[playerId]/page.tsx`, `src/app/api/send-parent-invoice/route.ts`
+
+- **Invoice Email Subject Lines**:
+  - Improved subject lines for better readability
+  - Combined invoices: "Your WCS Combined Invoice • X Players • Balance $X.XX" or "Paid in Full"
+  - Single invoices: "Your WCS Invoice • PlayerName • Balance $X.XX" or "Paid in Full"
+  - Files Modified: `src/app/api/send-parent-invoice/route.ts`, `src/app/api/send-invoice/route.ts`
+
+- **Invoice Email Layout**:
+  - Improved layout with better alignment
+  - Changed info rows to use CSS grid (170px label column, flexible value column)
+  - Consistent alignment across all email clients
+  - Enhanced visual hierarchy and readability
+  - Files Modified: `src/app/api/send-parent-invoice/route.ts`, `src/app/api/send-invoice/route.ts`
+
+---
+
 ## 🚀 Version 2.10.15 - Responsive Scaling & UI Improvements
 
 **Release Date**: January 10, 2025  

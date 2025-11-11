@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
-import { generateInvoicePDF } from "@/lib/pdf/invoice";
+import { generateInvoicePDFFromHTML } from "@/lib/pdf/puppeteer-invoice";
 import { fetchTeamById } from "@/lib/actions";
 
 // Helper functions for email template (matching emailTemplates.ts pattern)
@@ -190,6 +190,31 @@ export async function POST(request: NextRequest) {
     const isPaidInFull = totalPaid >= annualFee && totalPaid > 0;
     const remaining = Math.max(annualFee - totalPaid, 0);
 
+    // Calculate next payment due date
+    // Use last paid payment date or player creation date, then add 30 days
+    let baseDate: Date;
+    if (paidPayments.length > 0) {
+      // Use the most recent paid payment date
+      const lastPaid = paidPayments
+        .map((p: any) => new Date(p.created_at))
+        .sort((a: Date, b: Date) => b.getTime() - a.getTime())[0];
+      baseDate = lastPaid;
+    } else {
+      // Use player creation date
+      baseDate = new Date(player.created_at);
+    }
+    
+    // Add 30 days
+    const nextPaymentDueDate = new Date(baseDate);
+    nextPaymentDueDate.setDate(nextPaymentDueDate.getDate() + 30);
+    
+    const nextPaymentDueDateFormatted = nextPaymentDueDate.toLocaleDateString("en-US", {
+      month: "2-digit",
+      day: "2-digit",
+      year: "numeric"
+    });
+
+    // Invoice data for email template (still needed for email content)
     const invoiceData = {
       invoiceDate,
       invoiceNumber,
@@ -206,8 +231,8 @@ export async function POST(request: NextRequest) {
       isPaidInFull,
     };
 
-    // Generate PDF
-    const pdfBytes = await generateInvoicePDF(invoiceData);
+    // Generate PDF using Puppeteer (renders HTML invoice page)
+    const pdfBytes = await generateInvoicePDFFromHTML(playerId, false);
 
     // Send email via Resend
     if (!RESEND_API_KEY) {
@@ -238,7 +263,12 @@ export async function POST(request: NextRequest) {
       playerId,
     });
 
-    const emailSubject = `Invoice ${invoiceNumber} - WCS Basketball`;
+    // Improved, human‑readable subject
+    const playerFirst = (player.name || "").split(" ")[0] || "Player";
+    const subjectBalancePart = invoiceData.isPaidInFull
+      ? "Paid in Full"
+      : `Balance $${invoiceData.remaining.toFixed(2)}`;
+    const emailSubject = `Your WCS Invoice • ${playerFirst} • ${subjectBalancePart}`;
     const logoUrl = getLogoUrl();
     const parentGreeting = invoiceData.parentName !== "N/A" 
       ? `Hi ${invoiceData.parentName},` 
@@ -335,8 +365,10 @@ export async function POST(request: NextRequest) {
             margin: 25px 0;
           }
           .info-row {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 170px 1fr;
+            column-gap: 12px;
+            align-items: center;
             padding: 10px 0;
             border-bottom: 1px solid #e5e7eb;
           }
@@ -350,10 +382,12 @@ export async function POST(request: NextRequest) {
           .info-label {
             color: #6b7280;
             font-weight: 600;
+            text-align: left;
           }
           .info-value {
             font-weight: 600;
             color: #111827;
+            text-align: right;
           }
           .status-badge {
             display: inline-block;
@@ -406,12 +440,11 @@ export async function POST(request: NextRequest) {
 
           <div class="content">
             <div class="greeting">${parentGreeting}</div>
-            
             <p class="intro-text">
-              Please find attached your invoice for <strong>${player.name}</strong>. 
+              Your invoice for <strong>${player.name}</strong> is attached as a PDF. 
               ${invoiceData.isPaidInFull 
-                ? 'This invoice has been paid in full.' 
-                : `There is a remaining balance of $${invoiceData.remaining.toFixed(2)}.`}
+                ? 'This invoice is paid in full.' 
+                : `Your current remaining balance is <strong>$${invoiceData.remaining.toFixed(2)}</strong>.`}
             </p>
 
             <div class="invoice-info-box">
@@ -434,11 +467,8 @@ export async function POST(request: NextRequest) {
                    </div>`
                 : ''}
               <div class="info-row">
-                <span class="info-label">Status:</span>
-                <span class="info-value">
-                  ${invoiceData.isPaidInFull ? 'Paid in Full' : 'Payment Due'}
-                  <span class="status-badge">${invoiceData.isPaidInFull ? '✓ PAID' : 'DUE'}</span>
-                </span>
+                <span class="info-label">Next Payment Due:</span>
+                <span class="info-value">${nextPaymentDueDateFormatted}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Subtotal:</span>

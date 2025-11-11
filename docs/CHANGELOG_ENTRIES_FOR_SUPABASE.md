@@ -1,5 +1,70 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.16  
+**Release Date**: 2025-01-11
+
+---
+
+## Version 2.10.16 Entries
+
+### Entry 1: Puppeteer PDF Generation Implementation
+
+- **Version**: `2.10.16`
+- **Release Date**: `2025-01-11`
+- **Category**: `added`
+- **Description**: `Implemented Puppeteer-based PDF generation for invoices, replacing pdf-lib. PDFs now render directly from HTML invoice page using headless Chrome, ensuring exact visual match with web version. Added robust waiting logic for async data loading and React rendering. Supports both single player and combined parent invoices.`
+- **Is Published**: `true`
+
+### Entry 2: Invoice Email Improvements
+
+- **Version**: `2.10.16`
+- **Release Date**: `2025-01-11`
+- **Category**: `changed`
+- **Description**: `Unified invoice email functionality: both "Email Full Invoice" button (billing tab) and "Email Invoice to Parent" button (payment page) now send the same combined invoice email. Updated email text format to match standard invoice format: "Please find attached your combined invoice for all your children (X children). There is a remaining balance of $X.XX."`
+- **Is Published**: `true`
+
+### Entry 3: Next Payment Due Date in Invoice Emails
+
+- **Version**: `2.10.16`
+- **Release Date**: `2025-01-11`
+- **Category**: `added`
+- **Description**: `Added next payment due date display in invoice emails. Replaced status badge with "Next Payment Due: MM/DD/YYYY" calculated as 30 days after last paid payment or player creation date. For combined invoices, shows earliest due date across all children.`
+- **Is Published**: `true`
+
+### Entry 4: Invoice PDF Data Population Fix
+
+- **Version**: `2.10.16`
+- **Release Date**: `2025-01-11`
+- **Category**: `fixed`
+- **Description**: `Fixed invoice PDF generation not populating payment table data. Enhanced Puppeteer waiting logic to wait for API responses, React rendering completion, and actual payment data appearance in table cells. Added comprehensive debug logging and table state verification.`
+- **Is Published**: `true`
+
+### Entry 5: Invoice PDF Footer Removal Fix
+
+- **Version**: `2.10.16`
+- **Release Date**: `2025-01-11`
+- **Category**: `fixed`
+- **Description**: `Fixed footer elements appearing in invoice PDFs. Implemented dual approach: direct DOM element removal via page.evaluate() and CSS injection with display: none. Added invoice-footer class to footer elements and print-specific CSS rules. Prevents blank pages and ensures only invoice content appears in PDF.`
+- **Is Published**: `true`
+
+### Entry 6: Invoice Email Subject Line Improvements
+
+- **Version**: `2.10.16`
+- **Release Date**: `2025-01-11`
+- **Category**: `changed`
+- **Description**: `Improved invoice email subject lines for better readability. Combined invoices: "Your WCS Combined Invoice • X Players • Balance $X.XX" or "Paid in Full". Single invoices: "Your WCS Invoice • PlayerName • Balance $X.XX" or "Paid in Full".`
+- **Is Published**: `true`
+
+### Entry 7: Invoice Email Layout Improvements
+
+- **Version**: `2.10.16`
+- **Release Date**: `2025-01-11`
+- **Category**: `changed`
+- **Description**: `Improved invoice email layout with better alignment. Changed info rows to use CSS grid (170px label column, flexible value column) for consistent alignment across all email clients. Enhanced visual hierarchy and readability.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.15  
 **Release Date**: 2025-01-10
 

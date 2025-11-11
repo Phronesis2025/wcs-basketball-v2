@@ -8,7 +8,34 @@ import { devLog, devError } from "@/lib/security";
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Check if request has a body
+    const contentType = request.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      return NextResponse.json(
+        { error: "Invalid content type" },
+        { status: 400 }
+      );
+    }
+
+    // Safely parse JSON body
+    let body;
+    try {
+      const text = await request.text();
+      if (!text || text.trim() === "") {
+        return NextResponse.json(
+          { error: "Empty request body" },
+          { status: 400 }
+        );
+      }
+      body = JSON.parse(text);
+    } catch (parseError) {
+      devError("Web vitals: Failed to parse JSON", parseError);
+      return NextResponse.json(
+        { error: "Invalid JSON" },
+        { status: 400 }
+      );
+    }
+
     const {
       page,
       metric_name,

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
-import { generateInvoicePDF } from "@/lib/pdf/invoice";
+import { generateInvoicePDFFromHTML } from "@/lib/pdf/puppeteer-invoice";
 import { fetchTeamById } from "@/lib/actions";
 
 // Helper functions for email template (matching emailTemplates.ts pattern)
@@ -226,6 +226,45 @@ export async function POST(request: NextRequest) {
     const remaining = Math.max(totalAmountDue - totalPaid, 0);
     const isPaidInFull = remaining <= 0 && totalPaid > 0;
 
+    // Calculate next payment due date
+    // For each child, find the last paid payment date or use creation date
+    // Then add 30 days and take the earliest date across all children
+    const nextDueDates: Date[] = [];
+    children.forEach((child: any) => {
+      const childPayments = (payments || []).filter((p: any) => p.player_id === child.id);
+      const paidChildPayments = childPayments.filter((p: any) => isPaid(p.status));
+      
+      let baseDate: Date;
+      if (paidChildPayments.length > 0) {
+        // Use the most recent paid payment date
+        const lastPaid = paidChildPayments
+          .map((p: any) => new Date(p.created_at))
+          .sort((a: Date, b: Date) => b.getTime() - a.getTime())[0];
+        baseDate = lastPaid;
+      } else {
+        // Use child creation date
+        baseDate = new Date(child.created_at);
+      }
+      
+      // Add 30 days
+      const dueDate = new Date(baseDate);
+      dueDate.setDate(dueDate.getDate() + 30);
+      nextDueDates.push(dueDate);
+    });
+    
+    // Get the earliest due date (next payment due)
+    const nextPaymentDueDate = nextDueDates.length > 0
+      ? nextDueDates.sort((a, b) => a.getTime() - b.getTime())[0]
+      : null;
+    
+    const nextPaymentDueDateFormatted = nextPaymentDueDate
+      ? nextPaymentDueDate.toLocaleDateString("en-US", {
+          month: "2-digit",
+          day: "2-digit",
+          year: "numeric"
+        })
+      : "—";
+
     // Build player name display (show all children)
     const childNames = children.map((c: any) => c.name).join(", ");
     const playerNameDisplay = children.length > 1 
@@ -252,6 +291,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Invoice data for email template (still needed for email content)
     const invoiceData = {
       invoiceDate,
       invoiceNumber,
@@ -268,8 +308,16 @@ export async function POST(request: NextRequest) {
       isPaidInFull,
     };
 
-    // Generate PDF
-    const pdfBytes = await generateInvoicePDF(invoiceData);
+    // Generate PDF using Puppeteer (renders HTML invoice page)
+    // Use the first player's ID for the combined invoice
+    const firstPlayerId = children[0]?.id;
+    if (!firstPlayerId) {
+      return NextResponse.json(
+        { error: "No players found" },
+        { status: 400 }
+      );
+    }
+    const pdfBytes = await generateInvoicePDFFromHTML(firstPlayerId, true);
 
     // Send email via Resend
     if (!RESEND_API_KEY) {
@@ -302,7 +350,12 @@ export async function POST(request: NextRequest) {
       paymentsCount: paidPayments.length,
     });
 
-    const emailSubject = `Combined Invoice ${invoiceNumber} - WCS Basketball`;
+    // Improved, human‑readable subject
+    const childCount = children.length;
+    const subjectBalancePart = invoiceData.isPaidInFull
+      ? "Paid in Full"
+      : `Balance $${invoiceData.remaining.toFixed(2)}`;
+    const emailSubject = `Your WCS Combined Invoice • ${childCount} ${childCount > 1 ? "Players" : "Player"} • ${subjectBalancePart}`;
     const logoUrl = getLogoUrl();
     const parentGreeting = invoiceData.parentName !== "N/A" 
       ? `Hi ${invoiceData.parentName},` 
@@ -399,8 +452,10 @@ export async function POST(request: NextRequest) {
             margin: 25px 0;
           }
           .info-row {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: 170px 1fr;
+            column-gap: 12px;
+            align-items: center;
             padding: 10px 0;
             border-bottom: 1px solid #e5e7eb;
           }
@@ -414,10 +469,12 @@ export async function POST(request: NextRequest) {
           .info-label {
             color: #6b7280;
             font-weight: 600;
+            text-align: left;
           }
           .info-value {
             font-weight: 600;
             color: #111827;
+            text-align: right;
           }
           .status-badge {
             display: inline-block;
@@ -470,12 +527,10 @@ export async function POST(request: NextRequest) {
 
           <div class="content">
             <div class="greeting">${parentGreeting}</div>
-            
             <p class="intro-text">
-              Please find attached your combined invoice for all your children${children.length > 1 ? ` (${children.length} children)` : ''}. 
-              ${invoiceData.isPaidInFull 
-                ? 'This invoice has been paid in full.' 
-                : `There is a remaining balance of $${invoiceData.remaining.toFixed(2)}.`}
+              Please find attached your combined invoice for all your children${childCount > 1 ? ` (${childCount} children)` : ''}.${invoiceData.isPaidInFull 
+                ? ' This invoice has been paid in full.' 
+                : ` There is a remaining balance of $${invoiceData.remaining.toFixed(2)}.`}
             </p>
 
             <div class="invoice-info-box">
@@ -498,11 +553,8 @@ export async function POST(request: NextRequest) {
                    </div>`
                 : ''}
               <div class="info-row">
-                <span class="info-label">Status:</span>
-                <span class="info-value">
-                  ${invoiceData.isPaidInFull ? 'Paid in Full' : 'Payment Due'}
-                  <span class="status-badge">${invoiceData.isPaidInFull ? '✓ PAID' : 'DUE'}</span>
-                </span>
+                <span class="info-label">Next Payment Due:</span>
+                <span class="info-value">${nextPaymentDueDateFormatted}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Subtotal:</span>

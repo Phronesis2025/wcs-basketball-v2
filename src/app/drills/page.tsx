@@ -403,63 +403,57 @@ export default function DrillsPage() {
 
             {/* Key Information */}
             <div className="p-8 bg-gray-50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+              <div className="flex flex-row items-start gap-4 md:gap-6 lg:gap-8">
+                <div className="flex-1 basis-0">
+                  <div className="flex items-center gap-2 mb-1">
                     <Image
                       src="/images/skill.png"
                       alt="Skills icon"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 flex-shrink-0"
                     />
-                  </div>
-                  <div>
-                    <p className="text-lg font-bebas text-gray-600 uppercase mb-1">
+                    <p className="text-sm font-bebas text-gray-600 uppercase whitespace-nowrap">
                       Skills
                     </p>
-                    <p className="text-base font-inter text-gray-900">
-                      {selectedDrill.skills.join(", ")}
-                    </p>
                   </div>
+                  <p className="text-xs font-inter text-gray-900 break-words">
+                    {selectedDrill.skills.join(", ")}
+                  </p>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                <div className="flex-1 basis-0">
+                  <div className="flex items-center gap-2 mb-1">
                     <Image
                       src="/images/equip.png"
                       alt="Equipment icon"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 flex-shrink-0"
                     />
-                  </div>
-                  <div>
-                    <p className="text-lg font-bebas text-gray-600 uppercase mb-1">
+                    <p className="text-sm font-bebas text-gray-600 uppercase whitespace-nowrap">
                       Equipment
                     </p>
-                    <p className="text-base font-inter text-gray-900">
-                      {selectedDrill.equipment.join(", ")}
-                    </p>
                   </div>
+                  <p className="text-xs font-inter text-gray-900 break-words">
+                    {selectedDrill.equipment.join(", ")}
+                  </p>
                 </div>
-                <div className="flex items-start space-x-4">
-                  <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
+                <div className="flex-1 basis-0">
+                  <div className="flex items-center gap-2 mb-1">
                     <Image
                       src="/images/time.png"
                       alt="Duration icon"
-                      width={32}
-                      height={32}
-                      className="w-8 h-8"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 flex-shrink-0"
                     />
-                  </div>
-                  <div>
-                    <p className="text-lg font-bebas text-gray-600 uppercase mb-1">
+                    <p className="text-sm font-bebas text-gray-600 uppercase whitespace-nowrap">
                       Duration
                     </p>
-                    <p className="text-base font-inter text-gray-900">
-                      {selectedDrill.time}
-                    </p>
                   </div>
+                  <p className="text-xs font-inter text-gray-900 break-words">
+                    {selectedDrill.time}
+                  </p>
                 </div>
               </div>
             </div>

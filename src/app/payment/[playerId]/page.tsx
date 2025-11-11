@@ -101,13 +101,13 @@ export default function PaymentPage() {
 
           // Load parent information and all children
           if (playerData.parent_id) {
-            const { data: parentData, error: parentErr } = await supabase
+            const { data: parentRecord, error: parentErr } = await supabase
               .from("parents")
               .select("*")
               .eq("id", playerData.parent_id)
               .single();
-            if (!parentErr && parentData) {
-              setParent(parentData as Parent);
+            if (!parentErr && parentRecord) {
+              setParent(parentRecord as Parent);
             }
 
             // Fetch all children for this parent
@@ -127,13 +127,19 @@ export default function PaymentPage() {
               setHasMultipleTeams(uniqueTeamIds.size > 1);
             }
 
+            // Resolve parent email for server API calls (prefer playerData.parent_email)
+            const parentEmailForProfile =
+              (playerData as any).parent_email ||
+              (parentRecord as any)?.email ||
+              null;
+
             // Check if checkout is completed
             const parentResp = await fetch(
               `/api/parent/checkout-status?parent_id=${playerData.parent_id}`
             );
             if (parentResp.ok) {
-              const parentData = await parentResp.json();
-              if (!parentData.checkout_completed) {
+              const checkoutStatus = await parentResp.json();
+              if (!checkoutStatus.checkout_completed) {
                 router.push(`/checkout/${playerId}`);
                 return;
               }
@@ -141,12 +147,13 @@ export default function PaymentPage() {
 
             // Fetch all payments for this parent via server (uses admin key; avoids RLS limitations)
             try {
-              const profileResp = await fetch(
-                `/api/parent/profile?email=${encodeURIComponent(
-                  parentData.email
-                )}`,
-                { cache: "no-store" }
-              );
+              if (parentEmailForProfile) {
+                const profileResp = await fetch(
+                  `/api/parent/profile?email=${encodeURIComponent(
+                    parentEmailForProfile
+                  )}`,
+                  { cache: "no-store" }
+                );
               if (profileResp.ok) {
                 const profileJson = await profileResp.json();
                 // Prefer server-provided children/payments to ensure completeness
@@ -162,8 +169,9 @@ export default function PaymentPage() {
                 } else {
                   setPayments([]);
                 }
-              } else {
-                // server call failed; keep whatever we already have
+                } else {
+                  // server call failed; keep whatever we already have
+                }
               }
             } catch (err) {
               // Non-fatal; keep page rendering
@@ -455,18 +463,18 @@ export default function PaymentPage() {
   const [invoiceMessage, setInvoiceMessage] = useState<string | null>(null);
 
   const sendInvoice = async () => {
-    if (!playerId || sendingInvoice) return;
+    if (!playerId || sendingInvoice || !parent?.email) return;
 
     setSendingInvoice(true);
     setInvoiceMessage(null);
 
     try {
-      const response = await fetch("/api/send-invoice", {
+      const response = await fetch("/api/send-parent-invoice", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ playerId }),
+        body: JSON.stringify({ email: parent.email }),
       });
 
       const data = await response.json();
@@ -476,14 +484,14 @@ export default function PaymentPage() {
         return;
       }
 
-      setInvoiceMessage(`Invoice Sent`);
+      setInvoiceMessage(`Combined Invoice Sent`);
 
       // Clear message after 5 seconds
       setTimeout(() => {
         setInvoiceMessage(null);
       }, 5000);
     } catch (error) {
-      devError("send-invoice: Exception", error);
+      devError("send-parent-invoice: Exception", error);
       setInvoiceMessage("Failed to send invoice. Please try again.");
     } finally {
       setSendingInvoice(false);
@@ -539,6 +547,26 @@ export default function PaymentPage() {
           header {
             display: none !important;
           }
+          /* Hide everything except the invoice content to ensure only invoice is printed */
+          body * {
+            visibility: hidden !important;
+          }
+          #invoice-root,
+          #invoice-root * {
+            visibility: visible !important;
+          }
+          #invoice-root {
+            position: absolute;
+            left: 0;
+            top: 0;
+          }
+          /* Ensure any footer elements are never printed */
+          .invoice-footer {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            overflow: hidden !important;
+          }
         }
         .print-mode nav,
         .print-mode header nav,
@@ -568,6 +596,7 @@ export default function PaymentPage() {
           >
             {/* Invoice Template - Matches image exactly */}
             <div
+              id="invoice-root"
               ref={invoiceContentRef}
               className="bg-white text-black p-8"
               style={{
@@ -775,8 +804,32 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              {/* Footer: Thank you message (left) and Total/Due boxes (right) */}
-              <div className="flex items-start justify-between mt-8 mb-8">
+              {/* Payment Terms and Contact (included in invoice body) */}
+              <div className="mt-2 space-y-1">
+                <p
+                  className="text-[10px] font-bold mb-0.5"
+                  style={{ fontFamily: "Arial, sans-serif" }}
+                >
+                  Payment Terms:
+                </p>
+                <p
+                  className="text-[10px]"
+                  style={{ fontFamily: "Arial, sans-serif" }}
+                >
+                  {isPaidInFull
+                    ? "This invoice has been paid in full. No further payment is required."
+                    : "Payment is due upon receipt. Payments can be made online via Stripe."}
+                </p>
+                <p
+                  className="text-[10px] mt-1"
+                  style={{ fontFamily: "Arial, sans-serif" }}
+                >
+                  Contact: info@wcsbasketball.com • (785) 123-4567
+                </p>
+              </div>
+
+              {/* Footer: Thank you message (left) and Total/Due boxes (right) - Hidden in print mode */}
+              <div className="flex items-start justify-between mt-8 mb-8 invoice-footer">
                 <div className="flex-1 pr-4">
                   {isPaidInFull ? (
                     <div>
@@ -823,8 +876,8 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              {/* Footer: Payment Terms and Contact Info */}
-              <div className="border-t border-gray-300 pt-3 mt-8 space-y-2">
+              {/* Footer: Payment Terms and Contact Info - Hidden in print mode */}
+              <div className="border-t border-gray-300 pt-3 mt-8 space-y-2 invoice-footer">
                 <div>
                   <p
                     className="text-[10px] font-bold mb-0.5"
