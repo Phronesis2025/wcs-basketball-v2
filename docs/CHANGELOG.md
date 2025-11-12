@@ -48,6 +48,15 @@
   - Fixed missing closing div tag causing compilation error
   - Files Modified: `src/app/coaches/login/page.tsx`
 
+- **Location Verification for Mobile Users**:
+  - Improved handling of mobile IP geolocation inaccuracies
+  - Added authentication bypass for already-logged-in users (admins/coaches)
+  - Made location check more lenient (allows access if within radius OR in Kansas state)
+  - Added bypass button for legitimate users who are incorrectly blocked
+  - Files Modified:
+    - `src/components/LocationGate.tsx`
+    - `src/app/api/verify-location/route.ts`
+
 ### 🔄 Changed
 
 - **Registration Form**:
@@ -66,6 +75,13 @@
     - `src/app/api/auth/magic-link/route.ts`
     - `src/app/api/register-player/route.ts`
     - `src/app/api/coach-volunteer-signup/route.ts`
+
+### 🔒 Security
+
+- **RLS and Function Security Fixes**:
+  - Enabled Row Level Security (RLS) on `basketball_facts` table with public read access policy
+  - Fixed function search_path security issue for `update_updated_at_column` function
+  - Addresses Supabase security advisor recommendations
 
 ---
 

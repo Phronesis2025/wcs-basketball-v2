@@ -89,26 +89,18 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Check if in Kansas first (quick check)
-    if (!isInKansas(location.state)) {
-      return NextResponse.json({
-        allowed: false,
-        reason: `Access is limited to Kansas residents. Your location appears to be in ${location.state || "another state"}.`,
-        location: {
-          city: location.city,
-          state: location.state,
-          zip: location.zip,
-        },
-      });
-    }
-
-    // Check if within 50-mile radius
+    // Check if within 50-mile radius (more accurate than state check)
+    // Mobile IP geolocation can be inaccurate, so we rely on radius check
     const withinRadius = isWithinRadius(location.latitude, location.longitude);
-
-    if (!withinRadius) {
+    
+    // If not in Kansas state but within radius, still allow (mobile IP may be inaccurate)
+    const isKansas = isInKansas(location.state);
+    
+    // If within radius OR in Kansas state, allow access
+    // This handles cases where mobile IP shows different state but user is actually in Kansas
+    if (withinRadius || isKansas) {
       return NextResponse.json({
-        allowed: false,
-        reason: "Access is limited to residents within 50 miles of Salina, Kansas.",
+        allowed: true,
         location: {
           city: location.city,
           state: location.state,
@@ -117,8 +109,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    // If not within radius and not in Kansas, block access
     return NextResponse.json({
-      allowed: true,
+      allowed: false,
+      reason: `Access is limited to residents within 50 miles of Salina, Kansas. Your location appears to be ${location.city ? `in ${location.city}, ` : ""}${location.state || "outside the service area"}.`,
       location: {
         city: location.city,
         state: location.state,

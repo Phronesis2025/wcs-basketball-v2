@@ -116,6 +116,20 @@ The following changelog entries need to be added to the Supabase `changelog` tab
 - **Description**: `Fixed missing closing div tag in coaches login page that was causing build compilation error.`
 - **Is Published**: `true`
 
+### Entry 7: Location Verification Improvements for Mobile Users
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `fixed`
+- **Description**: `Improved location verification system to handle mobile IP geolocation inaccuracies. Added authentication bypass for already-logged-in users (admins/coaches). Made location check more lenient by allowing access if user is within radius OR in Kansas state. Added bypass button for legitimate users who are incorrectly blocked.`
+- **Is Published**: `true`
+
+### Entry 8: Security Fixes - RLS and Function Security
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `security`
+- **Description**: `Enabled Row Level Security (RLS) on basketball_facts table with public read access policy. Fixed function search_path security issue for update_updated_at_column function. These fixes address Supabase security advisor recommendations.`
+- **Is Published**: `true`
+
 **SQL to Execute**:
 ```sql
 INSERT INTO public.changelog (version, release_date, category, description, is_published) VALUES 
@@ -124,23 +138,33 @@ INSERT INTO public.changelog (version, release_date, category, description, is_p
 ('2.10.18', '2025-01-12', 'added', 'Added real-time zip code validation to registration and volunteer forms. Validation occurs as user types (500ms debounce) and displays error messages below field when zip code is outside service area. Submit/Next buttons are disabled when zip code is invalid. Uses server-side API route to avoid CORS issues.', true),
 ('2.10.18', '2025-01-12', 'added', 'Created /api/verify-zip server-side API route for zip code verification. Resolves CORS issues by handling external geocoding API calls on server. Includes fallback to OpenStreetMap Nominatim API if primary service fails. All zip code verifications now go through this route.', true),
 ('2.10.18', '2025-01-12', 'added', 'Created LocationGate component that performs IP-based geolocation check before rendering protected content. Displays loading state during verification and access restricted message for out-of-region users. Used to protect registration, volunteer signup, and coaches login pages.', true),
-('2.10.18', '2025-01-12', 'fixed', 'Fixed missing closing div tag in coaches login page that was causing build compilation error.', true);
+('2.10.18', '2025-01-12', 'fixed', 'Fixed missing closing div tag in coaches login page that was causing build compilation error.', true),
+('2.10.18', '2025-01-12', 'fixed', 'Improved location verification system to handle mobile IP geolocation inaccuracies. Added authentication bypass for already-logged-in users (admins/coaches). Made location check more lenient by allowing access if user is within radius OR in Kansas state. Added bypass button for legitimate users who are incorrectly blocked.', true),
+('2.10.18', '2025-01-12', 'security', 'Enabled Row Level Security (RLS) on basketball_facts table with public read access policy. Fixed function search_path security issue for update_updated_at_column function. These fixes address Supabase security advisor recommendations.', true);
 ```
 
 ---
 
 ## Security & Performance Notes
 
-⚠️ **Supabase MCP Not Connected**: Could not run automated security advisor checks.  
-✅ **Build Verification**: All code compiles successfully with no errors.  
+✅ **Security Advisors Checked**: 
+- Fixed RLS disabled on `basketball_facts` table (ERROR) - Enabled RLS with public read policy
+- Fixed function search_path mutable on `update_updated_at_column` (WARN) - Set search_path to public
+- Leaked password protection still disabled (WARN) - Manual action required in Supabase dashboard
+✅ **Build Verification**: All code compiles successfully with no errors (124 pages generated).  
 ✅ **Code Quality**: No linter errors detected.
 
+**Security Fixes Applied**:
+1. ✅ Enabled RLS on `basketball_facts` table with public read access policy
+2. ✅ Fixed function search_path security issue for `update_updated_at_column`
+3. ⚠️ Leaked password protection still needs manual enable in Supabase dashboard
+
 **Recommended Manual Checks**:
-1. Review Supabase security advisors in dashboard
-2. Test location verification with various zip codes
+1. Enable leaked password protection in Supabase Dashboard → Authentication → Password Security
+2. Test location verification with various zip codes (especially mobile devices)
 3. Verify test site banner appears and dismisses correctly
 4. Test registration flow with in-region and out-of-region zip codes
-5. Verify LocationGate blocks out-of-region access correctly
+5. Verify LocationGate bypass button works for legitimate users
 
 ---
 
@@ -159,6 +183,8 @@ INSERT INTO public.changelog (version, release_date, category, description, is_p
 ---
 
 **Completed**: January 12, 2025  
-**Build Time**: ~2.3 minutes  
-**Pages Generated**: 124
+**Build Time**: ~97 seconds  
+**Pages Generated**: 124  
+**Changelog Entries**: 8 entries added to Supabase database  
+**Security Fixes**: 2 critical issues resolved
 

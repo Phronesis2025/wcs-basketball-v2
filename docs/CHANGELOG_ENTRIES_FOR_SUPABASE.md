@@ -7,6 +7,22 @@
 
 ## Version 2.10.18 Entries
 
+### Entry 7: Location Verification Improvements for Mobile Users
+
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `fixed`
+- **Description**: `Improved location verification system to handle mobile IP geolocation inaccuracies. Added authentication bypass for already-logged-in users (admins/coaches). Made location check more lenient by allowing access if user is within radius OR in Kansas state. Added bypass button for legitimate users who are incorrectly blocked.`
+- **Is Published**: `true`
+
+### Entry 8: Security Fixes - RLS and Function Security
+
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `security`
+- **Description**: `Enabled Row Level Security (RLS) on basketball_facts table with public read access policy. Fixed function search_path security issue for update_updated_at_column function. These fixes address Supabase security advisor recommendations.`
+- **Is Published**: `true`
+
 ### Entry 1: Test Site Banner
 
 - **Version**: `2.10.18`

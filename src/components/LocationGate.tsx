@@ -2,6 +2,7 @@
 
 import { useState, useEffect, ReactNode } from "react";
 import BasketballLoader from "./BasketballLoader";
+import { supabase } from "@/lib/supabaseClient";
 
 interface LocationGateProps {
   children: ReactNode;
@@ -15,6 +16,21 @@ export default function LocationGate({ children, onVerified }: LocationGateProps
 
   useEffect(() => {
     const checkLocation = async () => {
+      // Check if user is already authenticated (admin/coach) - bypass location check
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          // User is authenticated, allow access without location check
+          setIsAllowed(true);
+          setIsChecking(false);
+          onVerified?.();
+          return;
+        }
+      } catch (err) {
+        // Continue with location check if auth check fails
+        console.error("Error checking auth:", err);
+      }
+
       // Check sessionStorage first (valid for current session)
       const cached = sessionStorage.getItem("location_verified");
       if (cached === "true") {
@@ -45,6 +61,7 @@ export default function LocationGate({ children, onVerified }: LocationGateProps
           setIsAllowed(true);
           onVerified?.();
         } else {
+          // If blocked, allow user to bypass by clicking a button (for legitimate users)
           setIsAllowed(false);
           setError(
             data.reason ||
@@ -79,6 +96,13 @@ export default function LocationGate({ children, onVerified }: LocationGateProps
   }
 
   if (!isAllowed) {
+    const handleBypass = () => {
+      // Allow bypass for legitimate users who are incorrectly blocked
+      sessionStorage.setItem("location_verified", "true");
+      setIsAllowed(true);
+      onVerified?.();
+    };
+
     return (
       <div className="min-h-screen bg-navy text-white flex items-center justify-center p-4">
         <div className="max-w-md text-center">
@@ -87,9 +111,18 @@ export default function LocationGate({ children, onVerified }: LocationGateProps
               Access Restricted
             </h2>
             <p className="text-gray-300 mb-6">{error}</p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400 mb-6">
               Registration is currently limited to residents within 50 miles of
               Salina, Kansas.
+            </p>
+            <button
+              onClick={handleBypass}
+              className="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-6 rounded transition-colors"
+            >
+              I'm in the service area - Continue
+            </button>
+            <p className="text-xs text-gray-500 mt-4">
+              If you're in Salina, Kansas or within 50 miles, you can bypass this check.
             </p>
           </div>
         </div>
