@@ -1,19 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Payment, Player } from "@/types/supabase";
+import BasketballProgressModal from "@/components/ui/BasketballProgressModal";
 
 // Invoice Email Button Component
-function InvoiceEmailButton({ playerId, playerName }: { playerId: string; playerName: string }) {
+function InvoiceEmailButton({
+  playerId,
+  playerName,
+}: {
+  playerId: string;
+  playerName: string;
+}) {
   const [sendingInvoice, setSendingInvoice] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   const sendInvoice = async () => {
     if (sendingInvoice) return;
-    
+
     setSendingInvoice(true);
     setMessage(null);
-    
+
     try {
       const response = await fetch("/api/send-invoice", {
         method: "POST",
@@ -31,7 +38,7 @@ function InvoiceEmailButton({ playerId, playerName }: { playerId: string; player
       }
 
       setMessage(`Invoice Sent`);
-      
+
       // Clear message after 5 seconds
       setTimeout(() => {
         setMessage(null);
@@ -53,11 +60,13 @@ function InvoiceEmailButton({ playerId, playerName }: { playerId: string; player
         {sendingInvoice ? "Sending..." : "Email Invoice"}
       </button>
       {message && (
-        <div className={`absolute top-full mt-2 left-0 right-0 p-2 rounded text-xs whitespace-nowrap z-10 ${
-          message.includes("Error") || message.includes("Failed")
-            ? "bg-red-100 text-red-800 border border-red-300"
-            : "bg-green-100 text-green-800 border border-green-300"
-        }`}>
+        <div
+          className={`absolute top-full mt-2 left-0 right-0 p-2 rounded text-xs whitespace-nowrap z-10 ${
+            message.includes("Error") || message.includes("Failed")
+              ? "bg-red-100 text-red-800 border border-red-300"
+              : "bg-green-100 text-green-800 border border-green-300"
+          }`}
+        >
           {message}
         </div>
       )}
@@ -75,14 +84,42 @@ interface PaymentHistoryTableProps {
 // Combined Invoice Button Component
 function CombinedInvoiceButton({ parentEmail }: { parentEmail?: string }) {
   const [sendingInvoice, setSendingInvoice] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalProgress, setModalProgress] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup intervals on unmount
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   const sendCombinedInvoice = async () => {
     if (sendingInvoice || !parentEmail) return;
-    
+
     setSendingInvoice(true);
-    setMessage(null);
-    
+    setShowModal(true);
+    setModalProgress(0);
+    setIsComplete(false);
+    setError(null);
+
+    // Start progress simulation
+    // PDF generation typically takes 15-20 seconds, so we'll simulate progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 2; // Increment by 0-2% each interval
+      if (progress > 95) progress = 95; // Cap at 95% until completion
+      setModalProgress(Math.min(progress, 95));
+    }, 500); // Update every 500ms
+
+    progressIntervalRef.current = progressInterval;
+
     try {
       const response = await fetch("/api/send-parent-invoice", {
         method: "POST",
@@ -94,45 +131,63 @@ function CombinedInvoiceButton({ parentEmail }: { parentEmail?: string }) {
 
       const data = await response.json();
 
+      // Stop progress counter
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+
       if (!response.ok) {
-        setMessage(`Error: ${data.error || "Failed to send invoice"}`);
+        setError(data.error || "Failed to send invoice");
+        setModalProgress(0);
         return;
       }
 
-      setMessage(`Combined Invoice Sent`);
-      
-      // Clear message after 5 seconds
-      setTimeout(() => {
-        setMessage(null);
-      }, 5000);
+      // Complete progress
+      setModalProgress(100);
+      setIsComplete(true);
     } catch (error) {
-      setMessage("Failed to send invoice. Please try again.");
+      setError("Failed to send invoice. Please try again.");
+
+      // Stop progress counter on error
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      setModalProgress(0);
     } finally {
       setSendingInvoice(false);
     }
   };
 
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalProgress(0);
+    setIsComplete(false);
+    setError(null);
+  };
+
   if (!parentEmail) return null;
 
   return (
-    <div className="relative w-full sm:w-auto">
-      <button
-        onClick={sendCombinedInvoice}
-        disabled={sendingInvoice}
-        className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-center"
-      >
-        {sendingInvoice ? "Sending..." : "Email Full Invoice"}
-      </button>
-      {message && (
-        <div className={`absolute top-full mt-2 left-0 right-0 p-2 rounded text-xs whitespace-nowrap z-10 ${
-          message.includes("Error") || message.includes("Failed")
-            ? "bg-red-100 text-red-800 border border-red-300"
-            : "bg-green-100 text-green-800 border border-green-300"
-        }`}>
-          {message}
-        </div>
-      )}
-    </div>
+    <>
+      <div className="relative w-full sm:w-auto">
+        <button
+          onClick={sendCombinedInvoice}
+          disabled={sendingInvoice}
+          className="w-full sm:w-auto px-4 py-3 sm:py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-center"
+        >
+          {sendingInvoice ? "Sending..." : "Email Full Invoice"}
+        </button>
+      </div>
+      <BasketballProgressModal
+        isOpen={showModal}
+        onClose={handleCloseModal}
+        progress={modalProgress}
+        isComplete={isComplete}
+        error={error}
+      />
+    </>
   );
 }
 
@@ -218,7 +273,8 @@ export default function PaymentHistoryTable({
 
   const paymentsByPlayer = new Map<string, Payment[]>();
   (payments || []).forEach((p) => {
-    if (!paymentsByPlayer.has(p.player_id)) paymentsByPlayer.set(p.player_id, []);
+    if (!paymentsByPlayer.has(p.player_id))
+      paymentsByPlayer.set(p.player_id, []);
     paymentsByPlayer.get(p.player_id)!.push(p);
   });
 
@@ -226,17 +282,20 @@ export default function PaymentHistoryTable({
     ...payments,
     ...children
       .filter((c) => !paymentsByPlayer.has(c.id))
-      .map((c) => ({
-        id: `no-pay-${c.id}`,
-        player_id: c.id,
-        stripe_payment_id: null,
-        amount: 0,
-        payment_type: "annual",
-        status: "pending",
-        created_at: c.created_at,
-        updated_at: c.created_at,
-        player_name: c.name,
-      } as Payment)),
+      .map(
+        (c) =>
+          ({
+            id: `no-pay-${c.id}`,
+            player_id: c.id,
+            stripe_payment_id: null,
+            amount: 0,
+            payment_type: "annual",
+            status: "pending",
+            created_at: c.created_at,
+            updated_at: c.created_at,
+            player_name: c.name,
+          } as Payment)
+      ),
   ];
 
   const isApproved = (playerId: string) => {
@@ -246,7 +305,11 @@ export default function PaymentHistoryTable({
   };
 
   const totalPaid = augmentedPayments
-    .filter((p) => (p.status || "").toString().toLowerCase().includes("paid") || (p.status || "").toString().toLowerCase() === "succeeded")
+    .filter(
+      (p) =>
+        (p.status || "").toString().toLowerCase().includes("paid") ||
+        (p.status || "").toString().toLowerCase() === "succeeded"
+    )
     .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
   // Per-player totals for remaining balance and due date
@@ -318,9 +381,12 @@ export default function PaymentHistoryTable({
             <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <p className="font-semibold text-gray-900">Combined Invoice</p>
+                  <p className="font-semibold text-gray-900">
+                    Combined Invoice
+                  </p>
                   <p className="text-sm text-gray-600 mt-1">
-                    View or download a single invoice with all payments for all your players
+                    View or download a single invoice with all payments for all
+                    your players
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
@@ -340,144 +406,153 @@ export default function PaymentHistoryTable({
 
       {/* Payment History Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-xl font-bold text-gray-900">Payment History</h3>
-          {totalPaid > 0 && (
-            <p className="text-sm text-gray-600 mt-1">
-              Total paid:{" "}
-              <span className="font-semibold">{formatAmount(totalPaid)}</span>
-            </p>
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">Payment History</h3>
+            {totalPaid > 0 && (
+              <p className="text-sm text-gray-600 mt-1">
+                Total paid:{" "}
+                <span className="font-semibold">{formatAmount(totalPaid)}</span>
+              </p>
+            )}
+          </div>
+          {(() => {
+            // Find first approved player to seed the selection page
+            const approvedPlayer = Array.from(playersById.values()).find((p) =>
+              isApproved(p.id)
+            );
+            if (!approvedPlayer) return null;
+            const url = `/payment/select?playerId=${approvedPlayer.id}&from=billing`;
+            return (
+              <a
+                href={url}
+                className="inline-block px-4 py-2 bg-red text-white rounded hover:bg-red/90 transition text-sm font-semibold"
+              >
+                Pay
+              </a>
+            );
+          })()}
+        </div>
+
+        <div className="overflow-x-auto hidden md:block">
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                  Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Child
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                  Type
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                  Amount
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Remaining
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                  Due Date
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {augmentedPayments
+                .sort(
+                  (a, b) =>
+                    new Date(b.created_at).getTime() -
+                    new Date(a.created_at).getTime()
+                )
+                .map((payment) => (
+                  <tr key={payment.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
+                      {formatDate(payment.created_at)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {payment.player_name || "Unknown"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell">
+                      {getPaymentTypeLabel(payment.payment_type)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 hidden xl:table-cell">
+                      {formatAmount(payment.amount)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                      {formatAmount(getRemainingForPlayer(payment.player_id))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
+                      {(() => {
+                        const remaining = getRemainingForPlayer(
+                          payment.player_id
+                        );
+                        if (remaining <= 0) return "—";
+                        const due = getDueDateForPlayer(payment.player_id);
+                        return due ? formatDate(due.toISOString()) : "—";
+                      })()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                      {getStatusBadge(payment.status)}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Mobile stacked list - Show one row per player */}
+        <div className="md:hidden divide-y divide-gray-200">
+          {Array.from(new Set(augmentedPayments.map((p) => p.player_id))).map(
+            (playerId) => {
+              const playerPayments = augmentedPayments.filter(
+                (p) => p.player_id === playerId
+              );
+              const latestPayment = playerPayments.sort(
+                (a, b) =>
+                  new Date(b.created_at).getTime() -
+                  new Date(a.created_at).getTime()
+              )[0];
+              const remaining = getRemainingForPlayer(playerId);
+              const approved = isApproved(playerId);
+
+              return (
+                <div key={playerId} className="py-3 px-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {latestPayment.player_name || "Unknown"}
+                    </p>
+                    <span className="text-xs text-gray-600">
+                      {playerPayments.length} payment
+                      {playerPayments.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-xs text-gray-600">
+                      <span className="block">Remaining:</span>
+                      <span className="font-semibold text-gray-900 text-sm">
+                        {formatAmount(remaining)}
+                      </span>
+                    </div>
+                    {/* Row-level Pay button removed */}
+                  </div>
+                </div>
+              );
+            }
           )}
         </div>
 
-      <div className="overflow-x-auto hidden md:block">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Child
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                Type
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
-                Amount
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Remaining
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                Due Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {augmentedPayments
-              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-              .map((payment) => (
-              <tr key={payment.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
-                  {formatDate(payment.created_at)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {payment.player_name || "Unknown"}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell">
-                  {getPaymentTypeLabel(payment.payment_type)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 hidden xl:table-cell">
-                  {formatAmount(payment.amount)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                  {formatAmount(getRemainingForPlayer(payment.player_id))}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden lg:table-cell">
-                  {(() => {
-                    const remaining = getRemainingForPlayer(payment.player_id);
-                    if (remaining <= 0) return "—";
-                    const due = getDueDateForPlayer(payment.player_id);
-                    return due ? formatDate(due.toISOString()) : "—";
-                  })()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                  {getStatusBadge(payment.status)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  {(() => {
-                    const remaining = getRemainingForPlayer(payment.player_id);
-                    const approved = isApproved(payment.player_id);
-                    if (remaining <= 0 || !approved) return null;
-                    // Use the same link format as the approval email (checkout page)
-                    const url = `/checkout/${payment.player_id}?from=billing`;
-                    return (
-                      <a
-                        href={url}
-                        className="inline-block px-3 py-1.5 bg-red text-white rounded hover:bg-red/90 transition"
-                      >
-                        Pay
-                      </a>
-                    );
-                  })()}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile stacked list - Show one row per player */}
-      <div className="md:hidden divide-y divide-gray-200">
-        {Array.from(new Set(augmentedPayments.map(p => p.player_id)))
-          .map(playerId => {
-            const playerPayments = augmentedPayments.filter(p => p.player_id === playerId);
-            const latestPayment = playerPayments.sort((a, b) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )[0];
-            const remaining = getRemainingForPlayer(playerId);
-            const approved = isApproved(playerId);
-            
-            return (
-              <div key={playerId} className="py-3 px-4">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-sm font-semibold text-gray-900">{latestPayment.player_name || "Unknown"}</p>
-                  <span className="text-xs text-gray-600">{playerPayments.length} payment{playerPayments.length !== 1 ? 's' : ''}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-xs text-gray-600">
-                    <span className="block">Remaining:</span>
-                    <span className="font-semibold text-gray-900 text-sm">{formatAmount(remaining)}</span>
-                  </div>
-                  {remaining > 0 && approved && (
-                    <a
-                      href={`/checkout/${playerId}?from=billing`}
-                      className="px-3 py-1.5 bg-red text-white rounded text-sm"
-                    >
-                      Pay
-                    </a>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-      </div>
-
-      {pendingAmount > 0 && (
-        <div className="bg-yellow-50 border-t border-yellow-200 p-4">
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Pending payments:</span>{" "}
-            {formatAmount(pendingAmount)}
-          </p>
-        </div>
-      )}
+        {pendingAmount > 0 && (
+          <div className="bg-yellow-50 border-t border-yellow-200 p-4">
+            <p className="text-sm text-gray-700">
+              <span className="font-semibold">Pending payments:</span>{" "}
+              {formatAmount(pendingAmount)}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -10,13 +10,14 @@ import { join } from "path";
  */
 function getEmailBaseUrl(): string {
   // In production, always use the custom domain (never use Vercel URLs)
-  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
-  
+  const isProduction =
+    process.env.NODE_ENV === "production" || process.env.VERCEL;
+
   if (isProduction) {
     // In production, always use the custom domain
     return "https://www.wcsbasketball.site";
   }
-  
+
   // Development: Try NEXT_PUBLIC_BASE_URL first (works in both client and server)
   if (process.env.NEXT_PUBLIC_BASE_URL) {
     const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
@@ -34,7 +35,7 @@ function getEmailBaseUrl(): string {
       return withProtocol.replace(/\/+$/, "");
     }
   }
-  
+
   // Development fallback
   return "http://localhost:3000";
 }
@@ -808,7 +809,9 @@ export function getPlayerOnHoldEmail(data: {
 
         <div class="warning-box">
           <h3 style="margin: 0 0 10px 0; color: #92400e;">Reason:</h3>
-          <p style="margin: 0; color: #92400e;">${reason || "Pending additional review"}</p>
+          <p style="margin: 0; color: #92400e;">${
+            reason || "Pending additional review"
+          }</p>
         </div>
 
         <h3 style="color: #1e40af;">What This Means</h3>
@@ -1159,6 +1162,9 @@ export function getPaymentConfirmationEmail(data: {
   amount: number;
   paymentType: string;
   paymentDate?: string;
+  isFirstPayment?: boolean;
+  nextDueDate?: string;
+  remainingBalance?: number;
   teamInfo?: {
     teamId: string;
     teamName: string;
@@ -1192,6 +1198,9 @@ export function getPaymentConfirmationEmail(data: {
     amount,
     paymentType,
     paymentDate,
+    isFirstPayment = true,
+    nextDueDate,
+    remainingBalance,
     teamInfo,
   } = data;
 
@@ -1208,7 +1217,9 @@ export function getPaymentConfirmationEmail(data: {
   const baseUrl = getEmailBaseUrl();
   const logoUrl = getLogoUrl();
 
-  const subject = `✅ Payment Received - ${playerFirstName} ${playerLastName} is Now Active!`;
+  const subject = isFirstPayment
+    ? `✅ Payment Received - ${playerFirstName} ${playerLastName} is Now Active!`
+    : `✅ Payment Received - Thank You for Your Support`;
 
   const html = `
     <!DOCTYPE html>
@@ -1359,7 +1370,11 @@ export function getPaymentConfirmationEmail(data: {
       <div class="header">
         <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
         <h1>✅ Payment Received!</h1>
-        <p style="margin: 10px 0 0 0; font-size: 16px;">Your child is now officially enrolled</p>
+        <p style="margin: 10px 0 0 0; font-size: 16px;">${
+          isFirstPayment
+            ? "Your child is now officially enrolled"
+            : "Thank you for your continued support"
+        }</p>
       </div>
 
       <div class="content">
@@ -1367,9 +1382,17 @@ export function getPaymentConfirmationEmail(data: {
 
         <div class="success-box">
           <div class="checkmark">✓</div>
-          <h2>Thank You for Your Payment!</h2>
+          <h2>${
+            isFirstPayment
+              ? "Thank You for Your Payment!"
+              : "Thank You for Your Payment and Support!"
+          }</h2>
           <p style="margin: 10px 0 0 0; font-size: 16px;">
-            <strong>${playerFirstName} ${playerLastName}</strong> is now <strong style="color: #16a34a;">ACTIVE</strong> and ready to start playing!
+            ${
+              isFirstPayment
+                ? `<strong>${playerFirstName} ${playerLastName}</strong> is now <strong style="color: #16a34a;">ACTIVE</strong> and ready to start playing!`
+                : `Thank you for your payment and continued participation in WCS Basketball. Your support helps us provide quality basketball programs for all our players, including <strong>${playerFirstName} ${playerLastName}</strong>.`
+            }
           </p>
         </div>
 
@@ -1407,6 +1430,25 @@ export function getPaymentConfirmationEmail(data: {
             <span class="receipt-label">Amount Paid:</span>
             <span class="receipt-value" style="color: #16a34a;">${formattedAmount}</span>
           </div>
+          ${
+            !isFirstPayment &&
+            nextDueDate &&
+            remainingBalance !== undefined &&
+            remainingBalance > 0
+              ? `
+          <div class="receipt-row" style="border-top: 2px solid #e5e7eb; margin-top: 10px; padding-top: 15px;">
+            <span class="receipt-label">Next Payment Due:</span>
+            <span class="receipt-value" style="color: #dc2626;">${nextDueDate}</span>
+          </div>
+          <div class="receipt-row">
+            <span class="receipt-label">Remaining Balance:</span>
+            <span class="receipt-value" style="color: #dc2626;">$${remainingBalance.toFixed(
+              2
+            )}</span>
+          </div>
+          `
+              : ""
+          }
         </div>
 
         <div style="background: #fef3c7; padding: 15px; border-radius: 8px; border: 1px solid #fbbf24; margin: 20px 0;">
@@ -1415,6 +1457,9 @@ export function getPaymentConfirmationEmail(data: {
           </p>
         </div>
 
+        ${
+          isFirstPayment
+            ? `
         <div class="next-steps">
           <h3>🎉 What Happens Next?</h3>
           <ul>
@@ -1428,9 +1473,34 @@ export function getPaymentConfirmationEmail(data: {
             }
           </ul>
         </div>
+        `
+            : `
+        <div class="next-steps">
+          <h3>💚 Your Continued Support Matters</h3>
+          <p style="margin: 0; color: #1e40af;">
+            Your participation and support of WCS Basketball helps us continue to provide excellent programs, coaching, and opportunities for all our players. We appreciate your commitment to ${playerFirstName}'s growth and development both on and off the court.
+          </p>
+          ${
+            nextDueDate &&
+            remainingBalance !== undefined &&
+            remainingBalance > 0
+              ? `
+          <p style="margin: 15px 0 0 0; color: #1e40af;">
+            <strong>Next Payment Due:</strong> ${nextDueDate} (${
+                  remainingBalance > 0
+                    ? `$${remainingBalance.toFixed(2)} remaining`
+                    : "Paid in full"
+                })
+          </p>
+          `
+              : ""
+          }
+        </div>
+        `
+        }
 
         ${
-          teamInfo
+          teamInfo && isFirstPayment
             ? `
         <div class="section">
           <h3>📅 Practice Schedule (Next 2 Weeks)</h3>
@@ -1524,8 +1594,7 @@ export function getPaymentConfirmationEmail(data: {
 
         <div class="section" style="text-align: center;">
           <a href="${
-            process.env.NEXT_PUBLIC_BASE_URL ||
-            "https://www.wcsbasketball.site"
+            process.env.NEXT_PUBLIC_BASE_URL || "https://www.wcsbasketball.site"
           }/parent-handbook" class="button">View Parent Handbook →</a>
         </div>
         `
@@ -1534,8 +1603,7 @@ export function getPaymentConfirmationEmail(data: {
 
         <div style="text-align: center; margin: 30px 0;">
           <a href="${
-            process.env.NEXT_PUBLIC_BASE_URL ||
-            "https://www.wcsbasketball.site"
+            process.env.NEXT_PUBLIC_BASE_URL || "https://www.wcsbasketball.site"
           }/parent/dashboard" class="button">Go to Parent Dashboard →</a>
         </div>
 
@@ -1548,8 +1616,16 @@ export function getPaymentConfirmationEmail(data: {
         </div>
 
         <p style="margin-top: 30px; font-size: 16px;">
-          <strong>Thank you for choosing WCS Basketball!</strong><br>
-          We're excited to help ${playerFirstName} grow both on and off the court!
+          <strong>${
+            isFirstPayment
+              ? "Thank you for choosing WCS Basketball!"
+              : "Thank you for your continued support of WCS Basketball!"
+          }</strong><br>
+          ${
+            isFirstPayment
+              ? `We're excited to help ${playerFirstName} grow both on and off the court!`
+              : `Your support makes a difference in the lives of all our players, including ${playerFirstName}.`
+          }
         </p>
 
         <p style="margin-top: 20px;">
@@ -1607,7 +1683,9 @@ export function getAdminPaymentConfirmationEmail(data: {
     paymentId,
   } = data;
 
-  const subject = `💰 Payment Received - ${playerFirstName} ${playerLastName} - $${amount.toFixed(2)}`;
+  const subject = `💰 Payment Received - ${playerFirstName} ${playerLastName} - $${amount.toFixed(
+    2
+  )}`;
 
   const baseUrl = getEmailBaseUrl();
   const logoUrl = getLogoUrl();
@@ -1728,12 +1806,16 @@ export function getAdminPaymentConfirmationEmail(data: {
             <div class="info-label">Player Name:</div>
             <div class="info-value"><strong>${playerFirstName} ${playerLastName}</strong></div>
           </div>
-          ${teamName ? `
+          ${
+            teamName
+              ? `
           <div class="info-row">
             <div class="info-label">Team:</div>
             <div class="info-value">${teamName}</div>
           </div>
-          ` : ""}
+          `
+              : ""
+          }
           <div class="info-row">
             <div class="info-label">Player ID:</div>
             <div class="info-value"><code>${playerId}</code></div>
@@ -1772,12 +1854,16 @@ export function getAdminPaymentConfirmationEmail(data: {
             <div class="info-label">Payment Date:</div>
             <div class="info-value">${formattedDate}</div>
           </div>
-          ${paymentId ? `
+          ${
+            paymentId
+              ? `
           <div class="info-row">
             <div class="info-label">Payment ID:</div>
             <div class="info-value"><code>${paymentId}</code></div>
           </div>
-          ` : ""}
+          `
+              : ""
+          }
         </div>
 
         <div style="text-align: center; margin: 30px 0;">

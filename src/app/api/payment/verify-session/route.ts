@@ -103,7 +103,7 @@ async function generateSinglePaymentInvoiceData(data: {
   const isMonthly = paymentType === "monthly";
   const isQuarterly = paymentType === "quarterly";
 
-  // Format description: "Player Name - Annual/Monthly/Quarterly - Year/Month"
+  // Format description: "Annual/Monthly/Quarterly - Year/Month" (player name goes in Player column)
   const year = paymentDate.getFullYear();
   const month = paymentDate.toLocaleDateString("en-US", { month: "long" });
   let typeLabel = "Annual";
@@ -115,7 +115,7 @@ async function generateSinglePaymentInvoiceData(data: {
     typeLabel = "Quarterly";
     periodLabel = `${month} ${year}`;
   }
-  const description = `${player.name || "Player"} - ${typeLabel} - ${periodLabel}`;
+  const description = `${typeLabel} - ${periodLabel}`;
 
   // Price: show Annual, Monthly, or Quarterly amount with label
   let priceAmount = annualFee;
@@ -140,6 +140,7 @@ async function generateSinglePaymentInvoiceData(data: {
       day: "2-digit",
       year: "numeric",
     }),
+    playerName: player.name || "Player",
     description,
     priceLabel,
     priceAmount,
@@ -158,10 +159,9 @@ async function generateSinglePaymentInvoiceData(data: {
   return {
     invoiceDate,
     invoiceNumber,
-    parentName:
-      parent
-        ? `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || "N/A"
-        : "N/A",
+    parentName: parent
+      ? `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || "N/A"
+      : "N/A",
     parentAddress: parentAddress || "N/A",
     playerName: player.name || "—",
     teamName: teamName || "Not Assigned Yet",
@@ -190,7 +190,7 @@ async function notifyAdmins(
       ADMIN_NOTIFICATIONS_TO.length > 1
         ? ADMIN_NOTIFICATIONS_TO.slice(1)
         : undefined;
-    
+
     // Merge any additional BCC from options
     const bcc = options?.bcc
       ? [...(otherAdmins || []), ...options.bcc]
@@ -213,7 +213,7 @@ async function notifyAdmins(
 /**
  * Verify Stripe checkout session and update payment status
  * This allows localhost testing where webhooks don't reach the server
- * 
+ *
  * GET /api/payment/verify-session?session_id=cs_test_xxx&player_id=xxx
  */
 export async function GET(req: Request) {
@@ -376,7 +376,10 @@ export async function GET(req: Request) {
                 }
               );
             } else if (parentLookupErr) {
-              devError("verify-session: parent email lookup failed", parentLookupErr);
+              devError(
+                "verify-session: parent email lookup failed",
+                parentLookupErr
+              );
             }
           }
 
@@ -443,7 +446,9 @@ export async function GET(req: Request) {
 
               // Quarterly fee lookup if needed
               let quarterlyFee: number | null = null;
-              if ((paymentRow.payment_type || "").toLowerCase() === "quarterly") {
+              if (
+                (paymentRow.payment_type || "").toLowerCase() === "quarterly"
+              ) {
                 try {
                   const PRICE_QUARTERLY = process.env.STRIPE_PRICE_QUARTERLY;
                   if (PRICE_QUARTERLY) {
@@ -588,11 +593,19 @@ export async function GET(req: Request) {
                   .eq("id", player.parent_id)
                   .single();
                 if (parent) {
-                  parentName = `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || player.parent_email || "Parent";
+                  parentName =
+                    `${parent.first_name || ""} ${
+                      parent.last_name || ""
+                    }`.trim() ||
+                    player.parent_email ||
+                    "Parent";
                 }
               }
             } catch (e) {
-              devError("verify-session: error fetching parent name for admin email", e);
+              devError(
+                "verify-session: error fetching parent name for admin email",
+                e
+              );
               parentName = player.parent_email || "Parent";
             }
 
@@ -613,16 +626,19 @@ export async function GET(req: Request) {
               paymentId: paymentRow.id,
             });
 
-            await notifyAdmins(
-              adminEmailData.subject,
-              adminEmailData.html
-            );
+            await notifyAdmins(adminEmailData.subject, adminEmailData.html);
             devLog("verify-session: admin payment confirmation email sent");
           } else if (playerErr) {
-            devError("verify-session: failed to fetch player for admin email", playerErr);
+            devError(
+              "verify-session: failed to fetch player for admin email",
+              playerErr
+            );
           }
         } catch (adminEmailErr) {
-          devError("verify-session: failed to send admin payment notification", adminEmailErr);
+          devError(
+            "verify-session: failed to send admin payment notification",
+            adminEmailErr
+          );
         }
       }
 
@@ -650,4 +666,3 @@ export async function GET(req: Request) {
     );
   }
 }
-

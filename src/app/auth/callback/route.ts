@@ -357,7 +357,11 @@ export async function GET(request: NextRequest) {
           playerId: player.id,
         });
 
-        // Send parent confirmation email
+        // DISABLED: Parent confirmation email now sent via Supabase email template
+        // The Supabase "Invite User" email template includes player registration details
+        // from user_metadata (playerName, grade, gender, parentFirstName, etc.)
+        // This Resend email is kept here in case we need to re-enable it
+        /*
         try {
           const parentEmailData = getPlayerRegistrationEmail({
             playerFirstName: pendingReg.player_first_name,
@@ -380,6 +384,7 @@ export async function GET(request: NextRequest) {
         } catch (emailError) {
           devError("Auth callback: Failed to send parent confirmation email", emailError);
         }
+        */
         
         // Send admin notification
         const adminEmailString = process.env.ADMIN_NOTIFICATIONS_TO;
@@ -551,8 +556,11 @@ export async function GET(request: NextRequest) {
 
             devLog("Auth callback: Successfully merged pending registration for Google user");
 
-            // Send welcome email to parent (use Google OAuth email - the actual Gmail account they signed up with)
-            // Use user.email (from Google OAuth) as primary, fallback to pendingReg.email if needed
+            // DISABLED: Parent welcome email now sent via Supabase email template
+            // The Supabase "Invite User" email template includes player registration details
+            // from user_metadata (playerName, grade, gender, parentFirstName, etc.)
+            // This Resend email is kept here in case we need to re-enable it
+            /*
             const parentEmailAddress = user.email || pendingReg.email;
             
             if (!parentEmailAddress) {
@@ -594,6 +602,7 @@ export async function GET(request: NextRequest) {
                 });
               }
             }
+            */
 
             // Send admin notification email
             const adminEmailString = process.env.ADMIN_NOTIFICATIONS_TO;

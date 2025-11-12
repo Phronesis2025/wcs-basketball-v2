@@ -6,17 +6,13 @@ import { supabase } from "@/lib/supabaseClient";
 import { fetchTeamById } from "@/lib/actions";
 import type { Player, Payment, Parent } from "@/types/supabase";
 import { devError } from "@/lib/security";
+import BasketballProgressModal from "@/components/ui/BasketballProgressModal";
 
 export default function PaymentPage() {
   const { playerId } = useParams<{ playerId: string }>();
   const router = useRouter();
   const search = useSearchParams();
   const source = search?.get("from") || undefined;
-  const [paymentType, setPaymentType] = useState<
-    "annual" | "monthly" | "quarterly" | "custom"
-  >("annual");
-  const [customAmount, setCustomAmount] = useState("");
-  const [remainingHint, setRemainingHint] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [player, setPlayer] = useState<Player | null>(null);
   const [teamName, setTeamName] = useState<string>("");
@@ -31,7 +27,7 @@ export default function PaymentPage() {
     []
   );
 
-  // Fetch quarterly price on component mount
+  // Fetch quarterly price on component mount (needed for payment history display)
   useEffect(() => {
     const fetchQuarterlyPrice = async () => {
       try {
@@ -49,19 +45,6 @@ export default function PaymentPage() {
     };
     fetchQuarterlyPrice();
   }, []);
-
-  // Prefill custom amount from query (?custom=123.45)
-  useEffect(() => {
-    const custom = search?.get("custom");
-    if (custom) {
-      const n = Number(custom);
-      if (!Number.isNaN(n)) setRemainingHint(n);
-      setPaymentType("custom");
-      setCustomAmount(String(Number(custom)));
-    } else {
-      setRemainingHint(null);
-    }
-  }, [search]);
 
   // Hide navbar when in print mode
   useEffect(() => {
@@ -154,21 +137,21 @@ export default function PaymentPage() {
                   )}`,
                   { cache: "no-store" }
                 );
-              if (profileResp.ok) {
-                const profileJson = await profileResp.json();
-                // Prefer server-provided children/payments to ensure completeness
-                if (
-                  Array.isArray(profileJson.children) &&
-                  profileJson.children.length > 0
-                ) {
-                  setAllChildren(profileJson.children as Player[]);
-                }
-                if (Array.isArray(profileJson.payments)) {
-                  // payments already include player_name
-                  setPayments(profileJson.payments as Payment[]);
-                } else {
-                  setPayments([]);
-                }
+                if (profileResp.ok) {
+                  const profileJson = await profileResp.json();
+                  // Prefer server-provided children/payments to ensure completeness
+                  if (
+                    Array.isArray(profileJson.children) &&
+                    profileJson.children.length > 0
+                  ) {
+                    setAllChildren(profileJson.children as Player[]);
+                  }
+                  if (Array.isArray(profileJson.payments)) {
+                    // payments already include player_name
+                    setPayments(profileJson.payments as Payment[]);
+                  } else {
+                    setPayments([]);
+                  }
                 } else {
                   // server call failed; keep whatever we already have
                 }
@@ -232,12 +215,6 @@ export default function PaymentPage() {
 
   // Calculate remaining balance (total due minus total paid across all children)
   const remaining = Math.max(totalAmountDue - totalPaid, 0);
-  const remainingDisplay = Number.isFinite(remainingHint as number)
-    ? Math.max(Number(remainingHint), 0)
-    : remaining;
-  const totalPaidDisplay = Number.isFinite(remainingHint as number)
-    ? Math.max(annualFee - (remainingHint as number), totalPaid)
-    : totalPaid;
   const lastPaidAt = useMemo(() => {
     const paid = (payments || []).filter((p) => isPaid(p.status));
     if (paid.length === 0) return null;
@@ -280,22 +257,6 @@ export default function PaymentPage() {
           year: "numeric",
         })
       : "";
-
-  const go = async () => {
-    const resp = await fetch("/api/create-checkout-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        player_id: playerId,
-        payment_type: paymentType,
-        custom_amount:
-          paymentType === "custom" ? Number(customAmount || 0) : undefined,
-        from: source,
-      }),
-    });
-    const j = await resp.json();
-    if (j?.url) window.location.href = j.url;
-  };
 
   const isPrint = (search?.get("print") || "").toLowerCase() === "1";
   const isPaidInFull = remaining <= 0;
@@ -460,13 +421,31 @@ export default function PaymentPage() {
   };
 
   const [sendingInvoice, setSendingInvoice] = useState(false);
-  const [invoiceMessage, setInvoiceMessage] = useState<string | null>(null);
+  const [showModal, setShowModal] = useState(false);
+  const [modalProgress, setModalProgress] = useState(0);
+  const [isComplete, setIsComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const sendInvoice = async () => {
     if (!playerId || sendingInvoice || !parent?.email) return;
 
     setSendingInvoice(true);
-    setInvoiceMessage(null);
+    setShowModal(true);
+    setModalProgress(0);
+    setIsComplete(false);
+    setError(null);
+
+    // Start progress simulation
+    // PDF generation typically takes 15-20 seconds, so we'll simulate progress
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += Math.random() * 2; // Increment by 0-2% each interval
+      if (progress > 95) progress = 95; // Cap at 95% until completion
+      setModalProgress(Math.min(progress, 95));
+    }, 500); // Update every 500ms
+
+    progressIntervalRef.current = progressInterval;
 
     try {
       const response = await fetch("/api/send-parent-invoice", {
@@ -479,24 +458,52 @@ export default function PaymentPage() {
 
       const data = await response.json();
 
+      // Stop progress counter
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+
       if (!response.ok) {
-        setInvoiceMessage(`Error: ${data.error || "Failed to send invoice"}`);
+        setError(data.error || "Failed to send invoice");
+        setModalProgress(0);
         return;
       }
 
-      setInvoiceMessage(`Combined Invoice Sent`);
-
-      // Clear message after 5 seconds
-      setTimeout(() => {
-        setInvoiceMessage(null);
-      }, 5000);
+      // Complete progress
+      setModalProgress(100);
+      setIsComplete(true);
     } catch (error) {
       devError("send-parent-invoice: Exception", error);
-      setInvoiceMessage("Failed to send invoice. Please try again.");
+      setError("Failed to send invoice. Please try again.");
+
+      // Stop progress counter on error
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      setModalProgress(0);
     } finally {
       setSendingInvoice(false);
     }
   };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalProgress(0);
+    setIsComplete(false);
+    setError(null);
+  };
+
+  // Cleanup intervals on unmount
+  useEffect(() => {
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const ap = (search?.get("autoprint") || "").toLowerCase() === "1";
@@ -928,115 +935,51 @@ export default function PaymentPage() {
             </div>
           </div>
 
-          {/* Back Button - Between invoice and checkout section */}
+          {/* Back Button and Send Invoice Button - Side by side */}
           {!isPrint && (
-            <div className="mt-6 flex justify-center">
-              <button
-                onClick={() => router.back()}
-                className="px-6 py-3 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium"
-              >
-                Back
-              </button>
-            </div>
-          )}
-
-          {/* Send invoice button and payment selection (only when not printing) */}
-          {!isPrint && (
-            <>
+            <div className="mt-6 flex flex-col gap-4">
               {hasAnyPaid && (
-                <div className="mt-6 space-y-3">
-                  <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => router.back()}
+                    className="px-6 py-3 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium"
+                  >
+                    Back
+                  </button>
+                  <div className="flex-1 max-w-md">
                     <button
                       onClick={sendInvoice}
                       disabled={sendingInvoice}
-                      className="px-6 py-3 bg-red text-white font-bold rounded hover:bg-red/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-6 py-3 bg-red text-white font-bold rounded hover:bg-red/90 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sendingInvoice
                         ? "Sending Invoice..."
                         : "Email Invoice to Parent"}
                     </button>
                   </div>
-                  {invoiceMessage && (
-                    <div
-                      className={`p-3 rounded text-sm ${
-                        invoiceMessage.includes("Error") ||
-                        invoiceMessage.includes("Failed")
-                          ? "bg-red-900/40 text-red-200 border border-red-500/40"
-                          : "bg-green-900/40 text-green-200 border border-green-500/40"
-                      }`}
-                    >
-                      {invoiceMessage}
-                    </div>
-                  )}
                 </div>
               )}
-
-              {/* Payment selection */}
-              {!isPaidInFull && (
-                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mt-6">
-                  <h2 className="text-lg font-bebas uppercase mb-4">
-                    Choose Payment
-                  </h2>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="plan"
-                        checked={paymentType === "annual"}
-                        onChange={() => setPaymentType("annual")}
-                      />
-                      Annual – {formatCurrency(annualFee)}
-                    </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="plan"
-                        checked={paymentType === "monthly"}
-                        onChange={() => setPaymentType("monthly")}
-                      />
-                      Monthly – $30
-                    </label>
-                    {quarterlyFee !== null && (
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name="plan"
-                          checked={paymentType === "quarterly"}
-                          onChange={() => setPaymentType("quarterly")}
-                        />
-                        Quarterly – {formatCurrency(quarterlyFee)}
-                      </label>
-                    )}
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="plan"
-                        checked={paymentType === "custom"}
-                        onChange={() => setPaymentType("custom")}
-                      />
-                      Custom
-                      <input
-                        className="ml-2 border border-gray-600 bg-gray-800 text-white rounded px-2 py-1 w-28"
-                        type="number"
-                        step="1"
-                        min="1"
-                        value={customAmount}
-                        onChange={(e) => setCustomAmount(e.target.value)}
-                        disabled={paymentType !== "custom"}
-                      />
-                    </label>
-                  </div>
-
+              {!hasAnyPaid && (
+                <div className="flex justify-center">
                   <button
-                    onClick={go}
-                    className="mt-6 w-full bg-red text-white font-bold py-3 rounded hover:bg-red/90"
+                    onClick={() => router.back()}
+                    className="px-6 py-3 bg-gray-800 text-white rounded hover:bg-gray-700 transition text-sm font-medium"
                   >
-                    Proceed to Checkout
+                    Back
                   </button>
                 </div>
               )}
-            </>
+            </div>
           )}
+
+          {/* Basketball Progress Modal */}
+          <BasketballProgressModal
+            isOpen={showModal}
+            onClose={handleCloseModal}
+            progress={modalProgress}
+            isComplete={isComplete}
+            error={error}
+          />
         </div>
       </div>
     </>

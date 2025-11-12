@@ -27,7 +27,7 @@ function ParentProfilePageInner() {
   useEffect(() => {
     const mergePendingRegistration = async () => {
       if (!isAuthenticated || !user?.email || loading || mergingPending) return;
-      
+
       const mergePending = searchParams.get("merge_pending");
       if (!mergePending) return;
 
@@ -62,13 +62,17 @@ function ParentProfilePageInner() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasShownSuccessToast = useRef(false);
-  const [activeTab, setActiveTab] = useState<"players" | "contact" | "billing">("players");
-  const [contactSubTab, setContactSubTab] = useState<"contact" | "medical">("contact");
+  const [activeTab, setActiveTab] = useState<"players" | "contact" | "billing">(
+    "players"
+  );
+  const [contactSubTab, setContactSubTab] = useState<"contact" | "medical">(
+    "contact"
+  );
 
   // Scroll to top on page load/refresh
   useEffect(() => {
     // Scroll to top immediately when component mounts (handles page refresh)
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
 
   // Authentication check - give more time for session to be established
@@ -76,15 +80,18 @@ function ParentProfilePageInner() {
     const checkAuthAndRedirect = async () => {
       // Wait for auth to finish loading
       if (loading) return;
-      
+
       // If authenticated, proceed
       if (isAuthenticated) return;
-      
+
       // If not authenticated, double-check with Supabase directly
       // This handles cases where session exists but useAuth hasn't picked it up yet
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
         if (session && !error) {
           // Session exists but useAuth didn't catch it - refresh the page
           // This will trigger useAuth to re-check
@@ -92,7 +99,7 @@ function ParentProfilePageInner() {
           window.location.reload();
           return;
         }
-        
+
         // No session found - redirect to homepage
         devLog("Profile: No session found, redirecting to homepage");
         router.push("/");
@@ -102,7 +109,7 @@ function ParentProfilePageInner() {
         router.push("/");
       }
     };
-    
+
     checkAuthAndRedirect();
   }, [loading, isAuthenticated, router]);
 
@@ -130,10 +137,16 @@ function ParentProfilePageInner() {
   useEffect(() => {
     const success = searchParams.get("success");
     const playerName = searchParams.get("player");
-    
-    if (!hasShownSuccessToast.current && success === "child_added" && playerName) {
+
+    if (
+      !hasShownSuccessToast.current &&
+      success === "child_added" &&
+      playerName
+    ) {
       hasShownSuccessToast.current = true;
-      toast.success(`Successfully registered ${decodeURIComponent(playerName)}!`);
+      toast.success(
+        `Successfully registered ${decodeURIComponent(playerName)}!`
+      );
       // Remove query params from URL
       router.replace("/parent/profile", { scroll: false });
       // Refresh profile data
@@ -290,7 +303,7 @@ function ParentProfilePageInner() {
                   onClick={() => setActiveTab("contact")}
                 >
                   <span aria-hidden>📇</span>
-                  <span>Contact Info</span>
+                  <span>Info</span>
                 </button>
                 <button
                   className={`flex-1 py-3 rounded-md text-sm sm:text-base text-center font-bebas uppercase tracking-wide flex items-center justify-center gap-2 ${
@@ -324,7 +337,10 @@ function ParentProfilePageInner() {
                           return b.date_of_birth.localeCompare(a.date_of_birth);
                         })
                         .map((child) => (
-                          <div key={child.id} className="w-full max-w-[280px] md:max-w-none">
+                          <div
+                            key={child.id}
+                            className="w-full max-w-[280px] md:max-w-none"
+                          >
                             <ChildDetailsCard child={child} />
                           </div>
                         ))}
@@ -332,9 +348,16 @@ function ParentProfilePageInner() {
                   </>
                 ) : (
                   <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-12 text-center mb-6">
-                    <h3 className="text-xl font-bebas text-white mb-2 uppercase">No registered children yet</h3>
-                    <p className="text-gray-300 mb-4">Register a child to get started</p>
-                    <Link href="/register" className="inline-block px-6 py-3 bg-red text-white rounded hover:bg-red/90 transition">
+                    <h3 className="text-xl font-bebas text-white mb-2 uppercase">
+                      No registered children yet
+                    </h3>
+                    <p className="text-gray-300 mb-4">
+                      Register a child to get started
+                    </p>
+                    <Link
+                      href="/register"
+                      className="inline-block px-6 py-3 bg-red text-white rounded hover:bg-red/90 transition"
+                    >
                       Register a Child
                     </Link>
                   </div>
@@ -403,7 +426,8 @@ function ParentProfilePageInner() {
                         (user?.email ? user.email.split("@")[0] : null)
                       }
                       initialLastName={
-                        profile.parent.name?.split(" ").slice(1).join(" ") || null
+                        profile.parent.name?.split(" ").slice(1).join(" ") ||
+                        null
                       }
                       initialPhone={profile.parent.phone}
                       initialEmergencyContact={profile.parent.emergency_contact}
@@ -474,7 +498,13 @@ function ParentProfilePageInner() {
 
 export default function ParentProfilePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-navy text-white pt-20 px-4">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-navy text-white pt-20 px-4">
+          Loading...
+        </div>
+      }
+    >
       <ParentProfilePageInner />
     </Suspense>
   );

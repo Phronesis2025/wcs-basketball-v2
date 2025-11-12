@@ -1,5 +1,41 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.17 - Supabase Email Integration & Build Fixes
+
+**Release Date**: January 11, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (122 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Supabase Email Template Documentation**:
+  - Created comprehensive Supabase email template for player registration confirmation
+  - Template uses user_metadata variables (playerName, grade, gender, parentFirstName)
+  - Includes player information card, registration steps, and confirmation button
+  - Matches design of Resend email template for consistency
+  - File Created: `docs/SUPABASE_EMAIL_TEMPLATE.md`
+
+### 🔄 Changed
+
+- **Email Flow Consolidation**:
+  - Disabled duplicate Resend email sends in auth callback route
+  - Supabase "Invite User" email template now serves as single welcome/registration email
+  - Resend email code preserved (commented out) for potential re-enablement
+  - Files Modified: `src/app/auth/callback/route.ts`
+
+### 🔧 Fixed
+
+- **Next.js Build Error - useSearchParams Suspense**:
+  - Fixed "useSearchParams() should be wrapped in a suspense boundary" error
+  - Wrapped PaymentSelectContent component in Suspense boundary
+  - Added loading fallback UI for better user experience
+  - Files Modified: `src/app/payment/select/page.tsx`
+
+---
+
 ## 🚀 Version 2.10.16 - Invoice PDF Generation & Email Improvements
 
 **Release Date**: January 11, 2025  

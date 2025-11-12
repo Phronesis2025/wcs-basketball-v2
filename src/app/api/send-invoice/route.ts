@@ -7,13 +7,14 @@ import { fetchTeamById } from "@/lib/actions";
 // Helper functions for email template (matching emailTemplates.ts pattern)
 function getEmailBaseUrl(): string {
   // In production, always use the custom domain (never use Vercel URLs)
-  const isProduction = process.env.NODE_ENV === "production" || process.env.VERCEL;
-  
+  const isProduction =
+    process.env.NODE_ENV === "production" || process.env.VERCEL;
+
   if (isProduction) {
     // In production, always use the custom domain
     return "https://www.wcsbasketball.site";
   }
-  
+
   // Development: Try NEXT_PUBLIC_BASE_URL first
   if (process.env.NEXT_PUBLIC_BASE_URL) {
     const url = process.env.NEXT_PUBLIC_BASE_URL.trim();
@@ -30,7 +31,7 @@ function getEmailBaseUrl(): string {
       return withProtocol.replace(/\/+$/, "");
     }
   }
-  
+
   // Development fallback
   return "http://localhost:3000";
 }
@@ -44,7 +45,8 @@ function getLogoUrl(): string {
 }
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM = process.env.RESEND_FROM || "WCS Basketball <onboarding@resend.dev>";
+const RESEND_FROM =
+  process.env.RESEND_FROM || "WCS Basketball <onboarding@resend.dev>";
 
 export async function POST(request: NextRequest) {
   try {
@@ -126,7 +128,10 @@ export async function POST(request: NextRequest) {
     };
 
     const paidPayments = (payments || []).filter((p) => isPaid(p.status));
-    const totalPaid = paidPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalPaid = paidPayments.reduce(
+      (sum, p) => sum + (Number(p.amount) || 0),
+      0
+    );
     const annualFee = Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360);
     const totalAmount = totalPaid > 0 ? totalPaid : annualFee;
 
@@ -135,7 +140,9 @@ export async function POST(request: NextRequest) {
     if (parent?.address_line1) parentAddressParts.push(parent.address_line1);
     if (parent?.address_line2) parentAddressParts.push(parent.address_line2);
     if (parent?.city || parent?.state || parent?.zip) {
-      parentAddressParts.push([parent?.city, parent?.state, parent?.zip].filter(Boolean).join(", "));
+      parentAddressParts.push(
+        [parent?.city, parent?.state, parent?.zip].filter(Boolean).join(", ")
+      );
     }
     const parentAddress = parentAddressParts.join(", ") || "";
 
@@ -143,49 +150,57 @@ export async function POST(request: NextRequest) {
     const invoiceDate = new Date().toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
-      year: "numeric"
+      year: "numeric",
     });
-    const invoiceNumber = (payments?.[0]?.id || playerId).toString().slice(0, 8);
+    const invoiceNumber = (payments?.[0]?.id || playerId)
+      .toString()
+      .slice(0, 8);
 
     const monthlyFee = 30;
-    const invoiceItems = paidPayments.length > 0
-      ? paidPayments.map((p) => {
-          const paymentDate = new Date(p.created_at);
-          const paymentType = (p.payment_type || "annual").toLowerCase();
-          const isAnnual = paymentType === "annual";
-          
-          // Format description: "Player Name - Annual/Monthly - Year/Month"
-          const year = paymentDate.getFullYear();
-          const month = paymentDate.toLocaleDateString("en-US", { month: "long" });
-          const typeLabel = isAnnual ? "Annual" : "Monthly";
-          const periodLabel = isAnnual ? year.toString() : `${month} ${year}`;
-          const description = `${player.name} - ${typeLabel} - ${periodLabel}`;
-          
-          // Price: Monthly or Annual amount
-          const priceAmount = isAnnual ? annualFee : monthlyFee;
-          const priceLabel = isAnnual ? `Annual ($${annualFee.toFixed(2)})` : `Monthly ($${monthlyFee.toFixed(2)})`;
-          
-          // Qty: 12 for annual, 1 for monthly
-          const quantity = isAnnual ? 12 : 1;
-          
-          // Amount: how much was actually paid
-          const amountPaid = Number(p.amount) || 0;
-          
-          return {
-            date: paymentDate.toLocaleDateString("en-US", {
-              month: "2-digit",
-              day: "2-digit",
-              year: "numeric"
-            }),
-            playerName: player.name || "Player",
-            description,
-            priceLabel,
-            priceAmount,
-            quantity,
-            amountPaid,
-          };
-        })
-      : [];
+    const invoiceItems =
+      paidPayments.length > 0
+        ? paidPayments.map((p) => {
+            const paymentDate = new Date(p.created_at);
+            const paymentType = (p.payment_type || "annual").toLowerCase();
+            const isAnnual = paymentType === "annual";
+
+            // Format description: "Player Name - Annual/Monthly - Year/Month"
+            const year = paymentDate.getFullYear();
+            const month = paymentDate.toLocaleDateString("en-US", {
+              month: "long",
+            });
+            const typeLabel = isAnnual ? "Annual" : "Monthly";
+            const periodLabel = isAnnual ? year.toString() : `${month} ${year}`;
+            // Player name should be in the Player column, not in the description
+            const description = `${typeLabel} - ${periodLabel}`;
+
+            // Price: Monthly or Annual amount
+            const priceAmount = isAnnual ? annualFee : monthlyFee;
+            const priceLabel = isAnnual
+              ? `Annual ($${annualFee.toFixed(2)})`
+              : `Monthly ($${monthlyFee.toFixed(2)})`;
+
+            // Qty: 12 for annual, 1 for monthly
+            const quantity = isAnnual ? 12 : 1;
+
+            // Amount: how much was actually paid
+            const amountPaid = Number(p.amount) || 0;
+
+            return {
+              date: paymentDate.toLocaleDateString("en-US", {
+                month: "2-digit",
+                day: "2-digit",
+                year: "numeric",
+              }),
+              playerName: player.name || "Player",
+              description,
+              priceLabel,
+              priceAmount,
+              quantity,
+              amountPaid,
+            };
+          })
+        : [];
 
     const isPaidInFull = totalPaid >= annualFee && totalPaid > 0;
     const remaining = Math.max(annualFee - totalPaid, 0);
@@ -203,22 +218,27 @@ export async function POST(request: NextRequest) {
       // Use player creation date
       baseDate = new Date(player.created_at);
     }
-    
+
     // Add 30 days
     const nextPaymentDueDate = new Date(baseDate);
     nextPaymentDueDate.setDate(nextPaymentDueDate.getDate() + 30);
-    
-    const nextPaymentDueDateFormatted = nextPaymentDueDate.toLocaleDateString("en-US", {
-      month: "2-digit",
-      day: "2-digit",
-      year: "numeric"
-    });
+
+    const nextPaymentDueDateFormatted = nextPaymentDueDate.toLocaleDateString(
+      "en-US",
+      {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+      }
+    );
 
     // Invoice data for email template (still needed for email content)
     const invoiceData = {
       invoiceDate,
       invoiceNumber,
-      parentName: parent ? `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || "N/A" : "N/A",
+      parentName: parent
+        ? `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || "N/A"
+        : "N/A",
       parentAddress: parentAddress || "N/A",
       playerName: player.name || "—",
       teamName,
@@ -253,7 +273,7 @@ export async function POST(request: NextRequest) {
 
     // Convert PDF to base64 for email attachment
     const pdfBase64 = Buffer.from(pdfBytes).toString("base64");
-    
+
     // Log PDF size for debugging
     const pdfSizeKB = (pdfBytes.length / 1024).toFixed(2);
     const base64SizeKB = (pdfBase64.length / 1024).toFixed(2);
@@ -270,10 +290,11 @@ export async function POST(request: NextRequest) {
       : `Balance $${invoiceData.remaining.toFixed(2)}`;
     const emailSubject = `Your WCS Invoice • ${playerFirst} • ${subjectBalancePart}`;
     const logoUrl = getLogoUrl();
-    const parentGreeting = invoiceData.parentName !== "N/A" 
-      ? `Hi ${invoiceData.parentName},` 
-      : "Hello,";
-    
+    const parentGreeting =
+      invoiceData.parentName !== "N/A"
+        ? `Hi ${invoiceData.parentName},`
+        : "Hello,";
+
     const emailHtml = `
       <!DOCTYPE html>
       <html lang="en">
@@ -391,8 +412,8 @@ export async function POST(request: NextRequest) {
           }
           .status-badge {
             display: inline-block;
-            background: ${invoiceData.isPaidInFull ? '#f0fdf4' : '#fef3c7'};
-            color: ${invoiceData.isPaidInFull ? '#065f46' : '#92400e'};
+            background: ${invoiceData.isPaidInFull ? "#f0fdf4" : "#fef3c7"};
+            color: ${invoiceData.isPaidInFull ? "#065f46" : "#92400e"};
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 14px;
@@ -441,10 +462,16 @@ export async function POST(request: NextRequest) {
           <div class="content">
             <div class="greeting">${parentGreeting}</div>
             <p class="intro-text">
-              Your invoice for <strong>${player.name}</strong> is attached as a PDF. 
-              ${invoiceData.isPaidInFull 
-                ? 'This invoice is paid in full.' 
-                : `Your current remaining balance is <strong>$${invoiceData.remaining.toFixed(2)}</strong>.`}
+              Your invoice for <strong>${
+                player.name
+              }</strong> is attached as a PDF. 
+              ${
+                invoiceData.isPaidInFull
+                  ? "This invoice is paid in full."
+                  : `Your current remaining balance is <strong>$${invoiceData.remaining.toFixed(
+                      2
+                    )}</strong>.`
+              }
             </p>
 
             <div class="invoice-info-box">
@@ -460,36 +487,48 @@ export async function POST(request: NextRequest) {
                 <span class="info-label">Player:</span>
                 <span class="info-value">${player.name}</span>
               </div>
-              ${invoiceData.teamName !== "Not Assigned Yet" 
-                ? `<div class="info-row">
+              ${
+                invoiceData.teamName !== "Not Assigned Yet"
+                  ? `<div class="info-row">
                     <span class="info-label">Team:</span>
                     <span class="info-value">${invoiceData.teamName}</span>
                    </div>`
-                : ''}
+                  : ""
+              }
               <div class="info-row">
                 <span class="info-label">Next Payment Due:</span>
                 <span class="info-value">${nextPaymentDueDateFormatted}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Subtotal:</span>
-                <span class="info-value">$${invoiceData.subtotal.toFixed(2)}</span>
+                <span class="info-value">$${invoiceData.subtotal.toFixed(
+                  2
+                )}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Total Amount:</span>
-                <span class="info-value">$${invoiceData.totalAmount.toFixed(2)}</span>
+                <span class="info-value">$${invoiceData.totalAmount.toFixed(
+                  2
+                )}</span>
               </div>
-              ${!invoiceData.isPaidInFull 
-                ? `<div class="info-row">
+              ${
+                !invoiceData.isPaidInFull
+                  ? `<div class="info-row">
                     <span class="info-label">Remaining Balance:</span>
-                    <span class="info-value">$${invoiceData.remaining.toFixed(2)}</span>
+                    <span class="info-value">$${invoiceData.remaining.toFixed(
+                      2
+                    )}</span>
                    </div>`
-                : ''}
+                  : ""
+              }
             </div>
 
             <p class="closing-text">
-              ${invoiceData.isPaidInFull 
-                ? 'Thank you for your payment! We appreciate your commitment to WCS Basketball.' 
-                : 'If you have any questions about this invoice or need to make a payment, please don\'t hesitate to contact us.'}
+              ${
+                invoiceData.isPaidInFull
+                  ? "Thank you for your payment! We appreciate your commitment to WCS Basketball."
+                  : "If you have any questions about this invoice or need to make a payment, please don't hesitate to contact us."
+              }
             </p>
             
             <p class="closing-text">
@@ -543,27 +582,43 @@ export async function POST(request: NextRequest) {
 
           if (!emailResponse.ok) {
             const errorText = await emailResponse.text();
-            devError(`send-invoice: Failed to send email (attempt ${attempt}/${maxRetries})`, errorText);
-            
+            devError(
+              `send-invoice: Failed to send email (attempt ${attempt}/${maxRetries})`,
+              errorText
+            );
+
             // If it's a server error (5xx) and we have retries left, retry
             if (emailResponse.status >= 500 && attempt < maxRetries) {
               devLog(`send-invoice: Retrying in ${retryDelay}ms...`);
-              await new Promise(resolve => setTimeout(resolve, retryDelay));
+              await new Promise((resolve) => setTimeout(resolve, retryDelay));
               continue;
             }
-            
-            throw new Error(`Resend API error: ${emailResponse.status} - ${errorText}`);
+
+            throw new Error(
+              `Resend API error: ${emailResponse.status} - ${errorText}`
+            );
           }
 
           return emailResponse;
         } catch (error: any) {
           // Handle timeout or connection errors
-          if (error.name === 'AbortError') {
-            devError(`send-invoice: Request timeout (attempt ${attempt}/${maxRetries})`);
-          } else if (error.code === 'UND_ERR_SOCKET' || error.message?.includes('fetch failed')) {
-            devError(`send-invoice: Connection error (attempt ${attempt}/${maxRetries})`, error.message);
+          if (error.name === "AbortError") {
+            devError(
+              `send-invoice: Request timeout (attempt ${attempt}/${maxRetries})`
+            );
+          } else if (
+            error.code === "UND_ERR_SOCKET" ||
+            error.message?.includes("fetch failed")
+          ) {
+            devError(
+              `send-invoice: Connection error (attempt ${attempt}/${maxRetries})`,
+              error.message
+            );
           } else {
-            devError(`send-invoice: Error (attempt ${attempt}/${maxRetries})`, error);
+            devError(
+              `send-invoice: Error (attempt ${attempt}/${maxRetries})`,
+              error
+            );
           }
 
           // If this is the last attempt, throw the error
@@ -573,8 +628,8 @@ export async function POST(request: NextRequest) {
 
           // Wait before retrying
           devLog(`send-invoice: Retrying in ${retryDelay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, retryDelay));
-          
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
+
           // Exponential backoff: increase delay for subsequent retries
           retryDelay *= 1.5;
         }
@@ -606,21 +661,22 @@ export async function POST(request: NextRequest) {
     });
   } catch (error: any) {
     devError("send-invoice: Exception", error);
-    
+
     // Provide more specific error messages based on error type
     let errorMessage = "Failed to send invoice";
-    if (error.name === 'AbortError' || error.message?.includes('timeout')) {
-      errorMessage = "Request timed out. The email service may be experiencing delays. Please try again later.";
-    } else if (error.code === 'UND_ERR_SOCKET' || error.message?.includes('fetch failed')) {
-      errorMessage = "Connection error. Please check your internet connection and try again.";
-    } else if (error.message?.includes('Resend API error')) {
+    if (error.name === "AbortError" || error.message?.includes("timeout")) {
+      errorMessage =
+        "Request timed out. The email service may be experiencing delays. Please try again later.";
+    } else if (
+      error.code === "UND_ERR_SOCKET" ||
+      error.message?.includes("fetch failed")
+    ) {
+      errorMessage =
+        "Connection error. Please check your internet connection and try again.";
+    } else if (error.message?.includes("Resend API error")) {
       errorMessage = "Email service error. Please try again later.";
     }
-    
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-

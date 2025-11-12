@@ -20,6 +20,7 @@ const ADMIN_NOTIFICATIONS_TO = (process.env.ADMIN_NOTIFICATIONS_TO || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+const annualFee = Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360);
 
 const stripe = new Stripe(STRIPE_SECRET_KEY, {
   apiVersion: "2025-08-27.basil",
@@ -84,7 +85,9 @@ async function generateSinglePaymentInvoiceData(data: {
   if (parent?.address_line1) parentAddressParts.push(parent.address_line1);
   if (parent?.address_line2) parentAddressParts.push(parent.address_line2);
   if (parent?.city || parent?.state || parent?.zip) {
-    parentAddressParts.push([parent?.city, parent?.state, parent?.zip].filter(Boolean).join(", "));
+    parentAddressParts.push(
+      [parent?.city, parent?.state, parent?.zip].filter(Boolean).join(", ")
+    );
   }
   const parentAddress = parentAddressParts.join(", ") || "";
 
@@ -92,7 +95,7 @@ async function generateSinglePaymentInvoiceData(data: {
   const invoiceDate = new Date().toLocaleDateString("en-US", {
     month: "2-digit",
     day: "2-digit",
-    year: "numeric"
+    year: "numeric",
   });
   const invoiceNumber = payment.id.toString().slice(0, 8);
 
@@ -103,7 +106,7 @@ async function generateSinglePaymentInvoiceData(data: {
   const isMonthly = paymentType === "monthly";
   const isQuarterly = paymentType === "quarterly";
 
-  // Format description: "Player Name - Annual/Monthly/Quarterly - Year/Month"
+  // Format description: "Annual/Monthly/Quarterly - Year/Month" (player name goes in Player column)
   const year = paymentDate.getFullYear();
   const month = paymentDate.toLocaleDateString("en-US", { month: "long" });
   let typeLabel = "Annual";
@@ -115,7 +118,7 @@ async function generateSinglePaymentInvoiceData(data: {
     typeLabel = "Quarterly";
     periodLabel = `${month} ${year}`;
   }
-  const description = `${player.name || "Player"} - ${typeLabel} - ${periodLabel}`;
+  const description = `${typeLabel} - ${periodLabel}`;
 
   // Price: show Annual, Monthly, or Quarterly amount with label
   let priceAmount = annualFee;
@@ -138,8 +141,10 @@ async function generateSinglePaymentInvoiceData(data: {
     date: paymentDate.toLocaleDateString("en-US", {
       month: "2-digit",
       day: "2-digit",
-      year: "numeric"
+      year: "numeric",
     }),
+    // Move player name into its own column
+    playerName: player.name || "Player",
     description,
     priceLabel,
     priceAmount,
@@ -158,7 +163,9 @@ async function generateSinglePaymentInvoiceData(data: {
   return {
     invoiceDate,
     invoiceNumber,
-    parentName: parent ? `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || "N/A" : "N/A",
+    parentName: parent
+      ? `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || "N/A"
+      : "N/A",
     parentAddress: parentAddress || "N/A",
     playerName: player.name || "—",
     teamName: teamName || "Not Assigned Yet",
@@ -187,7 +194,7 @@ async function notifyAdmins(
       ADMIN_NOTIFICATIONS_TO.length > 1
         ? ADMIN_NOTIFICATIONS_TO.slice(1)
         : undefined;
-    
+
     // Merge any additional BCC from options
     const bcc = options?.bcc
       ? [...(otherAdmins || []), ...options.bcc]
@@ -328,7 +335,7 @@ export async function POST(req: Request) {
               .select("email")
               .eq("id", player.parent_id)
               .single();
-            
+
             if (!parentErr && parentData?.email) {
               parentEmail = parentData.email;
               devLog("webhook: fetched parent_email from parents table", {
@@ -351,15 +358,73 @@ export async function POST(req: Request) {
           const { firstName: playerFirstName, lastName: playerLastName } =
             splitFullName(player.name);
 
+          // Check if this is a first payment by counting existing paid payments
+          // Exclude the current payment (session.id) to avoid double-counting
+          const { data: allExistingPayments, error: existingPaymentsErr } =
+            await supabaseAdmin!
+              .from("payments")
+              .select("id, amount, payment_type, status, stripe_payment_id")
+              .eq("player_id", paymentRow.player_id);
+
+          if (existingPaymentsErr) {
+            devError("webhook: failed to fetch existing payments (checkout)", existingPaymentsErr);
+          }
+
+          // Filter out the current payment to avoid double-counting
+          const existingPayments = (allExistingPayments || []).filter(
+            (p) => p.stripe_payment_id !== session.id && p.id !== paymentRow.id
+          );
+
+          // Count paid payments (excluding this one)
+          const isPaid = (status: string | null | undefined) => {
+            const s = (status || "").toString().toLowerCase();
+            return s === "paid" || s === "succeeded" || s.includes("paid");
+          };
+
+          const paidPayments = existingPayments.filter((p) => isPaid(p.status));
+          const isFirstPayment = paidPayments.length === 0;
+
+          // Calculate remaining balance and next due date for subsequent payments
+          const totalPaidBefore = paidPayments.reduce(
+            (sum, p) => sum + (Number(p.amount) || 0),
+            0
+          );
+          const totalPaidAfter = totalPaidBefore + amount;
+          const remainingBalance = Math.max(annualFee - totalPaidAfter, 0);
+          
+          const paymentDate = new Date();
+          const nextDueDate =
+            !isFirstPayment && remainingBalance > 0
+              ? new Date(paymentDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+              : null;
+          const nextDueDateFormatted = nextDueDate
+            ? nextDueDate.toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })
+            : undefined;
+
+          devLog("webhook: checkout payment check", {
+            playerId: paymentRow.player_id,
+            sessionId: session.id,
+            existingPaymentsCount: existingPayments?.length || 0,
+            paidPaymentsCount: paidPayments.length,
+            isFirstPayment,
+            remainingBalance,
+          });
+
           if (parentEmail) {
-            // Optionally fetch team info for the next 2 weeks
+            // Optionally fetch team info (only for first payment)
             let teamInfo = null as any;
-            try {
-              if (player.team_id) {
-                teamInfo = await fetchTeamDataForEmail(player.team_id);
+            if (isFirstPayment) {
+              try {
+                if (player.team_id) {
+                  teamInfo = await fetchTeamDataForEmail(player.team_id);
+                }
+              } catch (e) {
+                devError("webhook: fetchTeamDataForEmail error", e);
               }
-            } catch (e) {
-              devError("webhook: fetchTeamDataForEmail error", e);
             }
 
             const parentEmailData = getPaymentConfirmationEmail({
@@ -370,11 +435,14 @@ export async function POST(req: Request) {
               teamName: player.teams?.name || undefined,
               amount: amount,
               paymentType: paymentRow.payment_type,
-              paymentDate: new Date().toLocaleDateString("en-US", {
+              paymentDate: paymentDate.toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
               }),
+              isFirstPayment: isFirstPayment,
+              nextDueDate: nextDueDateFormatted,
+              remainingBalance: !isFirstPayment && remainingBalance > 0 ? remainingBalance : undefined,
               teamInfo: teamInfo || undefined,
             });
 
@@ -497,16 +565,23 @@ export async function POST(req: Request) {
                 to: parentEmail,
                 subject: parentEmailData.subject,
                 playerId: paymentRow.player_id,
-                errorMessage: emailErr instanceof Error ? emailErr.message : String(emailErr),
-                errorStack: emailErr instanceof Error ? emailErr.stack : undefined,
+                errorMessage:
+                  emailErr instanceof Error
+                    ? emailErr.message
+                    : String(emailErr),
+                errorStack:
+                  emailErr instanceof Error ? emailErr.stack : undefined,
               });
               // Don't re-throw - webhook should still succeed even if email fails
             }
           } else {
-            devError("webhook: no parent email available for payment confirmation", {
-              playerId: paymentRow.player_id,
-              parentId: player.parent_id,
-            });
+            devError(
+              "webhook: no parent email available for payment confirmation",
+              {
+                playerId: paymentRow.player_id,
+                parentId: player.parent_id,
+              }
+            );
           }
 
           // Send admin payment confirmation email
@@ -521,11 +596,19 @@ export async function POST(req: Request) {
                   .eq("id", player.parent_id)
                   .single();
                 if (parent) {
-                  parentName = `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || player.parent_email || "Parent";
+                  parentName =
+                    `${parent.first_name || ""} ${
+                      parent.last_name || ""
+                    }`.trim() ||
+                    player.parent_email ||
+                    "Parent";
                 }
               }
             } catch (e) {
-              devError("webhook: error fetching parent name for admin email", e);
+              devError(
+                "webhook: error fetching parent name for admin email",
+                e
+              );
               parentName = player.parent_email || "Parent";
             }
 
@@ -547,13 +630,13 @@ export async function POST(req: Request) {
             });
 
             try {
-              await notifyAdmins(
-                adminEmailData.subject,
-                adminEmailData.html
-              );
+              await notifyAdmins(adminEmailData.subject, adminEmailData.html);
               devLog("webhook: admin payment confirmation email sent");
             } catch (adminEmailErr) {
-              devError("webhook: failed to send admin payment notification", adminEmailErr);
+              devError(
+                "webhook: failed to send admin payment notification",
+                adminEmailErr
+              );
             }
           }
         } catch (e) {
@@ -574,9 +657,12 @@ export async function POST(req: Request) {
         if (!customerId) break;
 
         if (invoice.billing_reason === "subscription_create") {
-          devLog("webhook: skipping invoice.payment_succeeded for subscription create", {
-            invoiceId: invoice.id,
-          });
+          devLog(
+            "webhook: skipping invoice.payment_succeeded for subscription create",
+            {
+              invoiceId: invoice.id,
+            }
+          );
           break;
         }
 
@@ -605,30 +691,115 @@ export async function POST(req: Request) {
             .select("email")
             .eq("id", player.parent_id)
             .single();
-          
+
           if (!parentErr && parentData?.email) {
             parentEmail = parentData.email;
-            devLog("webhook: fetched parent_email from parents table (renewal)", {
-              playerId: player.id,
-              parentId: player.parent_id,
-              email: parentEmail,
-            });
+            devLog(
+              "webhook: fetched parent_email from parents table (renewal)",
+              {
+                playerId: player.id,
+                parentId: player.parent_id,
+                email: parentEmail,
+              }
+            );
           } else if (parentErr) {
-            devError("webhook: failed to fetch parent email (renewal)", parentErr);
+            devError(
+              "webhook: failed to fetch parent email (renewal)",
+              parentErr
+            );
           }
         }
 
-        // Insert a new paid payment record for the renewal
+        // Check if this is a first payment by counting existing paid payments
+        // Exclude any payment with the same stripe_payment_id (invoice.id) to avoid double-counting
+        const { data: allExistingPayments, error: existingPaymentsErr } =
+          await supabaseAdmin!
+            .from("payments")
+            .select("id, amount, payment_type, status, stripe_payment_id")
+            .eq("player_id", player.id);
+
+        if (existingPaymentsErr) {
+          devError("webhook: failed to fetch existing payments", existingPaymentsErr);
+        }
+
+        // Filter out the current invoice payment to avoid double-counting
+        const existingPayments = (allExistingPayments || []).filter(
+          (p) => p.stripe_payment_id !== invoice.id
+        );
+
+        // Count paid payments (excluding this one we're about to insert)
+        const isPaid = (status: string | null | undefined) => {
+          const s = (status || "").toString().toLowerCase();
+          return s === "paid" || s === "succeeded" || s.includes("paid");
+        };
+
+        const paidPayments = (existingPayments || []).filter((p) => isPaid(p.status));
+        const isFirstPayment = paidPayments.length === 0;
+
+        devLog("webhook: payment check", {
+          playerId: player.id,
+          invoiceId: invoice.id,
+          existingPaymentsCount: existingPayments?.length || 0,
+          paidPaymentsCount: paidPayments.length,
+          isFirstPayment,
+        });
+
+        // Calculate total paid (before inserting this payment)
+        const totalPaidBefore = paidPayments.reduce(
+          (sum, p) => sum + (Number(p.amount) || 0),
+          0
+        );
+
+        // Determine payment type from invoice metadata or existing payments
+        // Try to get from invoice metadata first, then fall back to most common payment type
+        let paymentType = "monthly"; // default
+        if (invoice.metadata?.payment_type) {
+          paymentType = invoice.metadata.payment_type;
+        } else if (paidPayments.length > 0) {
+          // Use the most common payment type from existing payments
+          const paymentTypeCounts = new Map<string, number>();
+          paidPayments.forEach((p) => {
+            const pt = p.payment_type || "monthly";
+            paymentTypeCounts.set(pt, (paymentTypeCounts.get(pt) || 0) + 1);
+          });
+          let maxCount = 0;
+          paymentTypeCounts.forEach((count, pt) => {
+            if (count > maxCount) {
+              maxCount = count;
+              paymentType = pt;
+            }
+          });
+        }
+
+        // Insert a new paid payment record for the renewal/subsequent payment
         const { error: insErr } = await supabaseAdmin!.from("payments").insert([
           {
             player_id: player.id,
             stripe_payment_id: invoice.id, // store invoice id
             amount,
-            payment_type: "monthly",
+            payment_type: paymentType,
             status: "paid",
           },
         ]);
         if (insErr) devError("webhook: insert renewal payment failed", insErr);
+
+        // Calculate remaining balance and next due date
+        const totalPaidAfter = totalPaidBefore + amount;
+        const remainingBalance = Math.max(annualFee - totalPaidAfter, 0);
+        
+        // Next due date is 30 days after this payment if there's a balance
+        const paymentDate = new Date();
+        const nextDueDate =
+          remainingBalance > 0
+            ? new Date(paymentDate.getTime() + 30 * 24 * 60 * 60 * 1000)
+            : null;
+        const nextDueDateFormatted = nextDueDate
+          ? nextDueDate.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          : undefined;
 
         // Ensure player remains active
         const { error: updErr } = await supabaseAdmin!
@@ -658,14 +829,16 @@ export async function POST(req: Request) {
 
         // Send confirmation email to parent
         if (parentEmail) {
-          // Optionally fetch team info
+          // Optionally fetch team info (only for first payment)
           let teamInfo = null as any;
-          try {
-            if (playerWithTeam?.team_id) {
-              teamInfo = await fetchTeamDataForEmail(playerWithTeam.team_id);
+          if (isFirstPayment) {
+            try {
+              if (playerWithTeam?.team_id) {
+                teamInfo = await fetchTeamDataForEmail(playerWithTeam.team_id);
+              }
+            } catch (e) {
+              devError("webhook: fetchTeamDataForEmail (renewal) error", e);
             }
-          } catch (e) {
-            devError("webhook: fetchTeamDataForEmail (renewal) error", e);
           }
 
           try {
@@ -682,12 +855,15 @@ export async function POST(req: Request) {
                 undefined,
               teamName: playerWithTeam?.teams?.name || undefined,
               amount: amount,
-              paymentType: "monthly",
-              paymentDate: new Date().toLocaleDateString("en-US", {
+              paymentType: paymentType,
+              paymentDate: paymentDate.toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
               }),
+              isFirstPayment: isFirstPayment,
+              nextDueDate: nextDueDateFormatted,
+              remainingBalance: remainingBalance > 0 ? remainingBalance : undefined,
               teamInfo: teamInfo || undefined,
             });
 
@@ -716,7 +892,10 @@ export async function POST(req: Request) {
                   if (team?.name) teamName = team.name;
                   if (team?.logo_url) teamLogoUrl = team.logo_url;
                 } catch (err) {
-                  devError("webhook: failed to fetch team for invoice (renewal)", err);
+                  devError(
+                    "webhook: failed to fetch team for invoice (renewal)",
+                    err
+                  );
                 }
               }
 
@@ -766,14 +945,20 @@ export async function POST(req: Request) {
               }
             } catch (pdfErr) {
               // Log error but don't fail the webhook - email will still send without PDF
-              devError("webhook: failed to generate invoice PDF (renewal)", pdfErr);
+              devError(
+                "webhook: failed to generate invoice PDF (renewal)",
+                pdfErr
+              );
             }
 
-            devLog("webhook: attempting to send parent renewal confirmation email", {
-              to: parentEmail,
-              hasAttachment: !!pdfAttachment,
-              subject: parentEmailData.subject,
-            });
+            devLog(
+              "webhook: attempting to send parent renewal confirmation email",
+              {
+                to: parentEmail,
+                hasAttachment: !!pdfAttachment,
+                subject: parentEmailData.subject,
+              }
+            );
 
             await sendEmail(
               parentEmail,
@@ -784,26 +969,34 @@ export async function POST(req: Request) {
               }
             );
 
-            devLog("webhook: parent subscription renewal email sent successfully", {
-              to: parentEmail,
-              hasAttachment: !!pdfAttachment,
-              subject: parentEmailData.subject,
-            });
+            devLog(
+              "webhook: parent subscription renewal email sent successfully",
+              {
+                to: parentEmail,
+                hasAttachment: !!pdfAttachment,
+                subject: parentEmailData.subject,
+              }
+            );
           } catch (emailErr) {
             devError("webhook: parent renewal email error", {
               error: emailErr,
               to: parentEmail,
               subject: parentEmailData.subject,
               playerId: player.id,
-              errorMessage: emailErr instanceof Error ? emailErr.message : String(emailErr),
-              errorStack: emailErr instanceof Error ? emailErr.stack : undefined,
+              errorMessage:
+                emailErr instanceof Error ? emailErr.message : String(emailErr),
+              errorStack:
+                emailErr instanceof Error ? emailErr.stack : undefined,
             });
           }
         } else {
-          devError("webhook: no parent email available for payment confirmation (renewal)", {
-            playerId: player.id,
-            parentId: player.parent_id,
-          });
+          devError(
+            "webhook: no parent email available for payment confirmation (renewal)",
+            {
+              playerId: player.id,
+              parentId: player.parent_id,
+            }
+          );
         }
 
         // Send admin payment confirmation email for renewal
@@ -818,11 +1011,19 @@ export async function POST(req: Request) {
                 .eq("id", player.parent_id)
                 .single();
               if (parent) {
-                parentName = `${parent.first_name || ""} ${parent.last_name || ""}`.trim() || parentEmail || "Parent";
+                parentName =
+                  `${parent.first_name || ""} ${
+                    parent.last_name || ""
+                  }`.trim() ||
+                  parentEmail ||
+                  "Parent";
               }
             }
           } catch (e) {
-            devError("webhook: error fetching parent name for admin email (renewal)", e);
+            devError(
+              "webhook: error fetching parent name for admin email (renewal)",
+              e
+            );
             parentName = parentEmail || "Parent";
           }
 
@@ -833,8 +1034,8 @@ export async function POST(req: Request) {
             parentEmail: parentEmail || "",
             teamName: playerWithTeam?.teams?.name || undefined,
             amount: amount,
-            paymentType: "monthly",
-            paymentDate: new Date().toLocaleDateString("en-US", {
+            paymentType: paymentType,
+            paymentDate: paymentDate.toLocaleDateString("en-US", {
               year: "numeric",
               month: "long",
               day: "numeric",
@@ -844,13 +1045,13 @@ export async function POST(req: Request) {
           });
 
           try {
-            await notifyAdmins(
-              adminEmailData.subject,
-              adminEmailData.html
-            );
+            await notifyAdmins(adminEmailData.subject, adminEmailData.html);
             devLog("webhook: admin subscription renewal email sent");
           } catch (adminEmailErr) {
-            devError("webhook: failed to send admin renewal notification", adminEmailErr);
+            devError(
+              "webhook: failed to send admin renewal notification",
+              adminEmailErr
+            );
           }
         }
 

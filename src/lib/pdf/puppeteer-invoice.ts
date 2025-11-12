@@ -148,82 +148,82 @@ export async function generateInvoicePDFFromHTML(
       timeout: 30000, // 30 second timeout
     });
     
-    // Wait for the payment API responses to complete
+    // Optimized: Wait for payment API responses with shorter timeout
     if (apiResponses.length > 0) {
       devLog("generateInvoicePDFFromHTML: Waiting for payment API responses", { count: apiResponses.length });
       try {
-        await Promise.all(apiResponses);
+        await Promise.race([
+          Promise.all(apiResponses),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('API timeout')), 15000)) // 15s max
+        ]);
         devLog("generateInvoicePDFFromHTML: All payment API responses completed");
-        // Wait a bit for React to process the responses
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Reduced wait for React to process - 500ms should be enough
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (error) {
-        devLog("generateInvoicePDFFromHTML: Error waiting for API responses", error);
+        devLog("generateInvoicePDFFromHTML: Error waiting for API responses, continuing", error);
       }
     } else {
-      // If no API calls detected, wait a bit for them to start
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      // Check again
+      // If no API calls detected, wait briefly for them to start
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Check again with shorter timeout
       if (apiResponses.length > 0) {
-        await Promise.all(apiResponses);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        try {
+          await Promise.race([
+            Promise.all(apiResponses),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('API timeout')), 10000))
+          ]);
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          devLog("generateInvoicePDFFromHTML: API wait timeout, continuing", error);
+        }
       }
     }
 
-    // Wait for the page to finish loading (wait for loading state to be false)
-    devLog("generateInvoicePDFFromHTML: Waiting for page to finish loading");
+    // Optimized: Combined wait for loading state and data in single check
+    devLog("generateInvoicePDFFromHTML: Waiting for page to finish loading and data to appear");
     try {
-      // Wait for the "Loading invoice..." text to disappear
+      // Wait for both loading to clear AND data to appear - more efficient single check
       await page.waitForFunction(
         () => {
+          // First check loading is gone
           const loadingText = document.body.textContent || '';
-          return !loadingText.includes('Loading invoice...');
-        },
-        { timeout: 20000 }
-      );
-      devLog("generateInvoicePDFFromHTML: Loading state cleared");
-      
-      // Wait for payment data to actually appear in the table
-      // The API calls might complete but React needs time to render
-      // Wait for the subtotal to appear, which indicates data has loaded
-      try {
-        await page.waitForFunction(
-          () => {
-            // First check if subtotal is visible (more reliable indicator)
-            const bodyText = document.body.textContent || '';
-            const hasSubtotal = bodyText.includes('Subtotal:') && bodyText.match(/\$\d+\.\d{2}/);
-            
-            if (hasSubtotal) {
-              // Also verify table has data
-              const tbody = document.querySelector('table tbody');
-              if (tbody) {
-                const rows = tbody.querySelectorAll('tr');
-                // Check if any row has actual payment data (amount with $ sign)
-                for (const row of Array.from(rows)) {
-                  const cells = row.querySelectorAll('td');
-                  if (cells.length >= 6) {
-                    const amountCell = cells[5];
-                    const amountText = (amountCell.textContent || '').trim();
-                    // Must have $ sign to be real payment data
-                    if (amountText && amountText.includes('$') && amountText !== '$0.00') {
-                      // Also verify player name cell has content
-                      const playerCell = cells[1];
-                      const playerText = (playerCell.textContent || '').trim();
-                      if (playerText && playerText !== '') {
-                        return true; // Found a real data row
-                      }
-                    }
-                  }
+          if (loadingText.includes('Loading invoice...')) return false;
+          
+          // Then check for subtotal (indicates data loaded)
+          const hasSubtotal = loadingText.includes('Subtotal:') && loadingText.match(/\$\d+\.\d{2}/);
+          if (!hasSubtotal) return false;
+          
+          // Finally verify table has actual data
+          const tbody = document.querySelector('table tbody');
+          if (!tbody) return false;
+          
+          const rows = tbody.querySelectorAll('tr');
+          for (const row of Array.from(rows)) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length >= 6) {
+              const amountCell = cells[5];
+              const amountText = (amountCell.textContent || '').trim();
+              if (amountText && amountText.includes('$') && amountText !== '$0.00') {
+                const playerCell = cells[1];
+                const playerText = (playerCell.textContent || '').trim();
+                if (playerText && playerText !== '') {
+                  return true; // Found real data
                 }
               }
             }
-            return false;
-          },
-          { timeout: 40000, polling: 1000 } // Wait up to 40 seconds, check every second
-        );
-        devLog("generateInvoicePDFFromHTML: Payment data confirmed in table");
-      } catch (error) {
-        devLog("generateInvoicePDFFromHTML: Payment data wait timeout", error);
-        // Log what we actually see in the table
+          }
+          return false;
+        },
+        { timeout: 15000, polling: 200 } // Reduced timeout to 15s, check every 200ms (faster)
+      );
+      devLog("generateInvoicePDFFromHTML: Payment data confirmed in table");
+      
+      // Minimal wait for React to finish rendering - 200ms should be enough
+      await new Promise(resolve => setTimeout(resolve, 200));
+    } catch (error) {
+      devLog("generateInvoicePDFFromHTML: Payment data wait timeout, continuing anyway", error);
+      // Log table state for debugging
+      try {
         const tableDebug = await page.evaluate(() => {
           const tbody = document.querySelector('table tbody');
           if (!tbody) return { error: 'No tbody found' };
@@ -241,97 +241,10 @@ export async function generateInvoicePDFFromHTML(
           });
         });
         devLog("generateInvoicePDFFromHTML: Table debug info", JSON.stringify(tableDebug, null, 2));
-      }
-      
-      // Wait a bit more for React to finish rendering all components
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    } catch (error) {
-      devLog("generateInvoicePDFFromHTML: Loading wait timeout, continuing anyway", error);
-    }
-
-    // Wait for the invoice table to be populated with data
-    // This ensures React has finished rendering the payment items
-    devLog("generateInvoicePDFFromHTML: Waiting for table data");
-    
-    // First, wait for the table element itself to exist
-    try {
-      await page.waitForSelector('table tbody', { timeout: 10000 });
-      devLog("generateInvoicePDFFromHTML: Table element found");
-    } catch (error) {
-      devLog("generateInvoicePDFFromHTML: Table element not found, continuing anyway", error);
-    }
-    
-    // Then wait for actual data in the table - but don't fail if there are no payments
-    // The timeout is expected if there are no payments to show
-    try {
-      // Wait for table rows with actual payment data
-      await page.waitForFunction(
-        () => {
-          const tbody = document.querySelector('table tbody');
-          if (!tbody) return false;
-          
-          const rows = tbody.querySelectorAll('tr');
-          if (rows.length === 0) return false;
-          
-          // Check if at least one row has actual payment data
-          for (const row of Array.from(rows)) {
-            const cells = row.querySelectorAll('td');
-            if (cells.length < 6) continue; // Need all 6 columns
-            
-            // Check specifically for amount cell (last one) to have $ sign
-            // This is the most reliable indicator of actual payment data
-            const amountCell = cells[5];
-            const amountText = (amountCell.textContent || '').trim();
-            const hasAmount = amountText !== '' && amountText.includes('$');
-            
-            // Also check that player name cell (2nd cell) has content
-            const playerCell = cells[1];
-            const playerText = (playerCell.textContent || '').trim();
-            const hasPlayer = playerText !== '';
-            
-            // If we have both amount and player name, it's a real data row
-            if (hasAmount && hasPlayer) {
-              return true;
-            }
-          }
-          
-          return false;
-        },
-        { timeout: 20000, polling: 500 } // Wait up to 20 seconds, check every 500ms
-      );
-      devLog("generateInvoicePDFFromHTML: Table data loaded successfully");
-    } catch (error) {
-      // This is expected if there are no payments - don't treat it as a critical error
-      devLog("generateInvoicePDFFromHTML: Table wait completed (may have no payments to display)", error);
-      
-      // Log table state for debugging - expand the arrays to see actual content
-      try {
-        const tableState = await page.evaluate(() => {
-          const tbody = document.querySelector('table tbody');
-          if (!tbody) return { found: false };
-          const rows = tbody.querySelectorAll('tr');
-          const rowData = Array.from(rows).slice(0, 5).map((row, idx) => {
-            const cells = row.querySelectorAll('td');
-            return {
-              rowIndex: idx,
-              cellCount: cells.length,
-              cellTexts: Array.from(cells).map(c => (c.textContent || '').trim()),
-              // Check specific cells
-              date: cells[0] ? (cells[0].textContent || '').trim() : '',
-              player: cells[1] ? (cells[1].textContent || '').trim() : '',
-              amount: cells[5] ? (cells[5].textContent || '').trim() : '',
-            };
-          });
-          return { found: true, rowCount: rows.length, sampleRows: rowData };
-        });
-        devLog("generateInvoicePDFFromHTML: Table state after timeout", JSON.stringify(tableState, null, 2));
       } catch (evalError) {
         devLog("generateInvoicePDFFromHTML: Could not evaluate table state", evalError);
       }
     }
-
-    // Wait a bit more for any dynamic content to fully render
-    await new Promise(resolve => setTimeout(resolve, 3000));
 
     // Inject CSS to hide footer elements in PDF (more reliable than @media print)
     // Also hide via JavaScript as a backup

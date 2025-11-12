@@ -1,5 +1,38 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.17  
+**Release Date**: 2025-01-11
+
+---
+
+## Version 2.10.17 Entries
+
+### Entry 1: Supabase Email Template Documentation
+
+- **Version**: `2.10.17`
+- **Release Date**: `2025-01-11`
+- **Category**: `added`
+- **Description**: `Created comprehensive Supabase email template for player registration confirmation. Template uses user_metadata variables (playerName, grade, gender, parentFirstName) and includes player information card, registration steps, and confirmation button. Matches design of Resend email template for consistency.`
+- **Is Published**: `true`
+
+### Entry 2: Email Flow Consolidation
+
+- **Version**: `2.10.17`
+- **Release Date**: `2025-01-11`
+- **Category**: `changed`
+- **Description**: `Consolidated email flow by disabling duplicate Resend email sends in auth callback route. Supabase "Invite User" email template now serves as single welcome/registration email. Resend email code preserved (commented out) for potential re-enablement.`
+- **Is Published**: `true`
+
+### Entry 3: Next.js Build Error Fix - useSearchParams Suspense
+
+- **Version**: `2.10.17`
+- **Release Date**: `2025-01-11`
+- **Category**: `fixed`
+- **Description**: `Fixed "useSearchParams() should be wrapped in a suspense boundary" build error. Wrapped PaymentSelectContent component in Suspense boundary with loading fallback UI for better user experience.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.16  
 **Release Date**: 2025-01-11
 
