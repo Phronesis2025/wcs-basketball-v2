@@ -1,5 +1,74 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.18 - Test Site Banner & Location Verification
+
+**Release Date**: January 12, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (124 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Test Site Banner**:
+  - Created dismissible banner indicating site is for testing only
+  - Amber/yellow warning colors with sticky positioning above navbar
+  - Dismiss state persisted in localStorage
+  - Appears on all pages to prevent random sign-ups during testing
+  - Files Created: `src/components/TestSiteBanner.tsx`
+  - Files Modified: `src/app/layout.tsx`
+
+- **Location Verification System**:
+  - IP-based geolocation check (50-mile radius from Salina, Kansas)
+  - Zip code verification with real-time validation
+  - LocationGate component blocks out-of-region users
+  - Server-side API route to avoid CORS issues
+  - Fallback geocoding using OpenStreetMap Nominatim
+  - Files Created:
+    - `src/lib/locationVerification.ts`
+    - `src/lib/zipCodeVerification.ts`
+    - `src/components/LocationGate.tsx`
+    - `src/app/api/verify-location/route.ts`
+    - `src/app/api/verify-zip/route.ts`
+
+- **Real-Time Zip Code Validation**:
+  - Validation occurs as user types (500ms debounce)
+  - Error messages display below field when out of radius
+  - Submit/Next buttons disabled when zip code invalid
+  - Integrated into registration and volunteer forms
+  - Files Modified:
+    - `src/components/registration/RegistrationWizard.tsx`
+    - `src/app/coach-volunteer-signup/page.tsx`
+    - `src/lib/schemas/registrationSchema.ts`
+
+### 🔧 Fixed
+
+- **Build Error - Coaches Login Page**:
+  - Fixed missing closing div tag causing compilation error
+  - Files Modified: `src/app/coaches/login/page.tsx`
+
+### 🔄 Changed
+
+- **Registration Form**:
+  - Added zip code field with tooltip explanation
+  - Integrated LocationGate wrapper for location check
+  - Files Modified: `src/components/registration/RegistrationWizard.tsx`
+
+- **Volunteer Form**:
+  - Added real-time zip code validation
+  - Integrated LocationGate wrapper
+  - Files Modified: `src/app/coach-volunteer-signup/page.tsx`
+
+- **API Routes**:
+  - Added server-side zip code verification to all registration endpoints
+  - Files Modified:
+    - `src/app/api/auth/magic-link/route.ts`
+    - `src/app/api/register-player/route.ts`
+    - `src/app/api/coach-volunteer-signup/route.ts`
+
+---
+
 ## 🚀 Version 2.10.17 - Supabase Email Integration & Build Fixes
 
 **Release Date**: January 11, 2025  

@@ -1,5 +1,62 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.18  
+**Release Date**: 2025-01-12
+
+---
+
+## Version 2.10.18 Entries
+
+### Entry 1: Test Site Banner
+
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `added`
+- **Description**: `Created dismissible test site banner that appears on all pages. Banner uses amber/yellow warning colors with sticky positioning above navbar. Prevents random sign-ups during testing phase. Dismiss state persisted in localStorage.`
+- **Is Published**: `true`
+
+### Entry 2: Location Verification System
+
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `added`
+- **Description**: `Implemented comprehensive location verification system to restrict registration to users within 50 miles of Salina, Kansas. System uses IP-based geolocation for initial check and zip code verification for form submission. Includes LocationGate component that blocks access to registration, volunteer signup, and coaches login pages for out-of-region users.`
+- **Is Published**: `true`
+
+### Entry 3: Real-Time Zip Code Validation
+
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `added`
+- **Description**: `Added real-time zip code validation to registration and volunteer forms. Validation occurs as user types (500ms debounce) and displays error messages below field when zip code is outside service area. Submit/Next buttons are disabled when zip code is invalid. Uses server-side API route to avoid CORS issues.`
+- **Is Published**: `true`
+
+### Entry 4: Server-Side Zip Code Verification API
+
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `added`
+- **Description**: `Created /api/verify-zip server-side API route for zip code verification. Resolves CORS issues by handling external geocoding API calls on server. Includes fallback to OpenStreetMap Nominatim API if primary service fails. All zip code verifications now go through this route.`
+- **Is Published**: `true`
+
+### Entry 5: Location Gate Component
+
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `added`
+- **Description**: `Created LocationGate component that performs IP-based geolocation check before rendering protected content. Displays loading state during verification and access restricted message for out-of-region users. Used to protect registration, volunteer signup, and coaches login pages.`
+- **Is Published**: `true`
+
+### Entry 6: Build Fix - Coaches Login Page
+
+- **Version**: `2.10.18`
+- **Release Date**: `2025-01-12`
+- **Category**: `fixed`
+- **Description**: `Fixed missing closing div tag in coaches login page that was causing build compilation error.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.17  
 **Release Date**: 2025-01-11
 

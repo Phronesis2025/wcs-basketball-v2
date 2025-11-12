@@ -5,6 +5,7 @@ import RegistrationWizard from "@/components/registration/RegistrationWizard";
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import BasketballLoader from "@/components/BasketballLoader";
+import LocationGate from "@/components/LocationGate";
 
 export const dynamic = 'force-dynamic';
 
@@ -46,12 +47,14 @@ function RegisterInner() {
 
           {/* Registration Wizard */}
           {!authLoading && (
-            <div className="bg-gray-900 rounded-lg p-6 md:p-8 border border-gray-700">
-              <RegistrationWizard
-                skipParentStep={fromProfile && isAuthenticated}
-                prefillData={prefillData}
-              />
-            </div>
+            <LocationGate>
+              <div className="bg-gray-900 rounded-lg p-6 md:p-8 border border-gray-700">
+                <RegistrationWizard
+                  skipParentStep={fromProfile && isAuthenticated}
+                  prefillData={prefillData}
+                />
+              </div>
+            </LocationGate>
           )}
 
           {authLoading && (

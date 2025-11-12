@@ -78,6 +78,7 @@ export default function RegistrationWizard({
         "",
       parent_email: prefillData.parent_email || user?.email || "",
       parent_phone: prefillData.parent_phone || "",
+      parent_zip: prefillData.parent_zip || "",
       player_first_name: prefillData.player_first_name || "",
       player_last_name: prefillData.player_last_name || "",
       player_birthdate: prefillData.player_birthdate || "",
@@ -263,6 +264,68 @@ export default function RegistrationWizard({
         );
       }
 
+      // Verify zip code is within service area (double-check, but real-time validation should have caught this)
+      if (allFormData.parent_zip) {
+        // If real-time validation already found an error, don't proceed
+        if (zipValidationError) {
+          setLoading(false);
+          setTimeout(() => {
+            const zipField = document.querySelector('[name="parent_zip"]');
+            if (zipField) {
+              zipField.scrollIntoView({ behavior: "smooth", block: "center" });
+              (zipField as HTMLElement).focus();
+            }
+          }, 100);
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/verify-zip", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ zipCode: allFormData.parent_zip.trim() }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to verify zip code");
+          }
+
+          const zipVerification = await response.json();
+          
+          if (!zipVerification.allowed) {
+            // Set error on the zip code field
+            methods.setError("parent_zip", {
+              type: "manual",
+              message: zipVerification.error ||
+                "Registration is currently limited to residents within 50 miles of Salina, Kansas."
+            });
+            setZipValidationError(zipVerification.error ||
+              "Registration is currently limited to residents within 50 miles of Salina, Kansas.");
+            setLoading(false);
+            // Scroll to the zip code field
+            setTimeout(() => {
+              const zipField = document.querySelector('[name="parent_zip"]');
+              if (zipField) {
+                zipField.scrollIntoView({ behavior: "smooth", block: "center" });
+                (zipField as HTMLElement).focus();
+              }
+            }, 100);
+            return;
+          }
+        } catch (err) {
+          devError("RegistrationWizard: Zip code verification error", err);
+          methods.setError("parent_zip", {
+            type: "manual",
+            message: "Unable to verify location. Please try again."
+          });
+          setZipValidationError("Unable to verify location. Please try again.");
+          setLoading(false);
+          return;
+        }
+      }
+
       // For unauthenticated users (new parents), use magic-link flow which sends Supabase confirmation email
       if (!isAuthenticated || !parentUserId) {
         devLog(
@@ -273,6 +336,7 @@ export default function RegistrationWizard({
           parent_first_name: allFormData.parent_first_name,
           parent_last_name: allFormData.parent_last_name,
           parent_email: allFormData.parent_email,
+          parent_zip: allFormData.parent_zip,
           player_first_name: allFormData.player_first_name,
           player_last_name: allFormData.player_last_name,
           player_gender: allFormData.player_gender,
@@ -330,6 +394,7 @@ export default function RegistrationWizard({
           parent_last_name: allFormData.parent_last_name,
           parent_email: allFormData.parent_email,
           parent_phone: allFormData.parent_phone || undefined,
+          parent_zip: allFormData.parent_zip,
           player: {
             first_name: allFormData.player_first_name,
             last_name: allFormData.player_last_name,
@@ -388,8 +453,76 @@ export default function RegistrationWizard({
   const waiverSigned = watch("waiver_signed");
   const bothCheckboxesChecked = coppaConsent && waiverSigned;
 
+  // Watch zip code for real-time validation
+  const parentZip = watch("parent_zip");
+  const [zipValidationError, setZipValidationError] = useState<string | null>(null);
+  const [isValidatingZip, setIsValidatingZip] = useState(false);
+
+  // Validate zip code in real-time
+  useEffect(() => {
+    const validateZipCode = async () => {
+      if (!parentZip || parentZip.trim().length < 5) {
+        setZipValidationError(null);
+        return;
+      }
+
+      // Check if it's a valid format first
+      const zipRegex = /^\d{5}(-\d{4})?$/;
+      if (!zipRegex.test(parentZip.trim())) {
+        setZipValidationError(null); // Let schema validation handle format errors
+        return;
+      }
+
+      setIsValidatingZip(true);
+      setZipValidationError(null);
+
+      try {
+        // Use API route instead of direct import to avoid CORS issues
+        const response = await fetch("/api/verify-zip", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ zipCode: parentZip.trim() }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to verify zip code");
+        }
+
+        const zipVerification = await response.json();
+        
+        if (!zipVerification.allowed) {
+          setZipValidationError(
+            zipVerification.error ||
+              "Registration is currently limited to residents within 50 miles of Salina, Kansas."
+          );
+          // Also set error in form for validation
+          methods.setError("parent_zip", {
+            type: "manual",
+            message: zipVerification.error ||
+              "Registration is currently limited to residents within 50 miles of Salina, Kansas."
+          });
+        } else {
+          setZipValidationError(null);
+          methods.clearErrors("parent_zip");
+        }
+      } catch (err) {
+        devError("RegistrationWizard: Real-time zip validation error", err);
+        // Don't show error on API failure, let user proceed
+        setZipValidationError(null);
+      } finally {
+        setIsValidatingZip(false);
+      }
+    };
+
+    // Debounce validation
+    const timeoutId = setTimeout(validateZipCode, 500);
+    return () => clearTimeout(timeoutId);
+  }, [parentZip, methods]);
+
   return (
-    <TooltipProvider>
+    <TooltipProvider delayDuration={200}>
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Step Indicator */}
@@ -561,11 +694,11 @@ export default function RegistrationWizard({
               <div>
                 <label className="block text-sm text-gray-300 mb-2">
                   Phone (Optional)
-                  <Tooltip>
+                  <Tooltip delayDuration={200}>
                     <TooltipTrigger asChild>
-                      <span className="ml-2 text-gray-400 cursor-help">ℹ️</span>
+                      <span className="ml-2 text-gray-400 cursor-help hover:text-gray-200 transition-colors">ℹ️</span>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent side="top" className="max-w-xs">
                       <p>We'll use this to contact you about your player</p>
                     </TooltipContent>
                   </Tooltip>
@@ -587,11 +720,46 @@ export default function RegistrationWizard({
                 )}
               </div>
 
+              <div>
+                <label className="block text-sm text-gray-300 mb-2">
+                  Zip Code <span className="text-[#FF0000]">*</span>
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <span className="ml-2 text-gray-400 cursor-help hover:text-gray-200 transition-colors">ℹ️</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-xs">
+                      <p>Used to verify you're within our service area (50 miles of Salina, Kansas)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </label>
+                <input
+                  {...methods.register("parent_zip")}
+                  type="text"
+                  className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] min-h-[48px]"
+                  placeholder="Enter your zip code"
+                  maxLength={10}
+                  aria-invalid={!!errors.parent_zip}
+                  aria-label="Parent zip code"
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                />
+                {isValidatingZip && (
+                  <p className="text-gray-400 text-sm mt-1">
+                    Verifying location...
+                  </p>
+                )}
+                {(errors.parent_zip || zipValidationError) && (
+                  <p className="text-[#FF0000] text-sm mt-1">
+                    {zipValidationError || errors.parent_zip?.message}
+                  </p>
+                )}
+              </div>
+
               <div className="flex gap-4 pt-4">
                 <button
                   type="button"
                   onClick={handleNext}
-                  disabled={!isValid}
+                  disabled={!isValid || !!zipValidationError || isValidatingZip}
                   className="flex-1 bg-[#FF0000] text-white font-bold py-3 rounded disabled:opacity-50 hover:bg-[#FF0000]/90 transition-colors min-h-[48px]"
                 >
                   Next: Player Information
@@ -709,11 +877,11 @@ export default function RegistrationWizard({
               <div>
                 <label className="block text-sm text-gray-300 mb-2">
                   Experience Level <span className="text-red">*</span>
-                  <Tooltip>
+                  <Tooltip delayDuration={200}>
                     <TooltipTrigger asChild>
-                      <span className="ml-2 text-gray-400 cursor-help">ℹ️</span>
+                      <span className="ml-2 text-gray-400 cursor-help hover:text-gray-200 transition-colors">ℹ️</span>
                     </TooltipTrigger>
-                    <TooltipContent>
+                    <TooltipContent side="top" className="max-w-xs">
                       <p>
                         Helps with team placement. 1 = No Experience, 5 =
                         Competitive League

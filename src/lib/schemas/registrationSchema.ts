@@ -21,6 +21,11 @@ export const parentBasicsSchema = z.object({
       (val) => !val || /^[\d\s\-()+]+$/.test(val),
       "Invalid phone number format"
     ),
+  parent_zip: z
+    .string()
+    .min(5, "Zip code is required")
+    .max(10, "Invalid zip code format")
+    .regex(/^\d{5}(-\d{4})?$/, "Invalid zip code format"),
 });
 
 // Step 2: Player Info Schema

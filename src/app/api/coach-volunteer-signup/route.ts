@@ -34,6 +34,30 @@ export async function POST(req: Request) {
       );
     }
 
+    // Verify zip code is within service area
+    if (zip) {
+      try {
+        const { verifyZipCodeInRadius } = await import("@/lib/zipCodeVerification");
+        const zipVerification = await verifyZipCodeInRadius(zip.trim());
+        
+        if (!zipVerification.allowed) {
+          return NextResponse.json(
+            { 
+              error: zipVerification.error ||
+                "Registration is currently limited to residents within 50 miles of Salina, Kansas."
+            },
+            { status: 403 }
+          );
+        }
+      } catch (err) {
+        devError("coach-volunteer-signup: Zip code verification error", err);
+        return NextResponse.json(
+          { error: "Unable to verify location. Please try again." },
+          { status: 500 }
+        );
+      }
+    }
+
     // Validate profanity in all text fields
     const profanityErrors: string[] = [];
     const fieldsToCheck = [

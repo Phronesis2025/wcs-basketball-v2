@@ -11,6 +11,7 @@ import {
   generateCSRFToken,
 } from "@/lib/security";
 import { AuthPersistence } from "@/lib/authPersistence";
+import LocationGate from "@/components/LocationGate";
 // Server actions temporarily disabled due to Next.js issues
 
 export default function CoachesLogin() {
@@ -321,8 +322,9 @@ export default function CoachesLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      <div className="pt-20 pb-12 sm:pt-24">
+    <LocationGate>
+      <div className="min-h-screen bg-black text-white p-4">
+        <div className="pt-20 pb-12 sm:pt-24">
         <div className="w-full max-w-md space-y-8 mx-auto">
           <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
             WCS Coaches
@@ -478,5 +480,6 @@ export default function CoachesLogin() {
         </div>
       </div>
     </div>
+    </LocationGate>
   );
 }

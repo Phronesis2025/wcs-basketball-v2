@@ -12,6 +12,7 @@ import ConditionalFooter from "../components/ConditionalFooter";
 import WebVitalsTracker from "../components/WebVitalsTracker";
 import SignOutLoader from "../components/SignOutLoader";
 import HandleAuthRedirect from "../components/auth/HandleAuthRedirect";
+import TestSiteBanner from "../components/TestSiteBanner";
 
 export const metadata: Metadata = {
   title: "WCS Basketball - Where Champions Start",
@@ -139,6 +140,7 @@ export default function RootLayout({
               <HandleAuthRedirect />
             </Suspense>
             <ScrollToTop />
+            <TestSiteBanner />
             <HomepageLayout />
             {children}
             <ConditionalFooter />

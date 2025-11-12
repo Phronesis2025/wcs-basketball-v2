@@ -6,6 +6,7 @@ import { fetchTeams } from "@/lib/actions";
 import type { Team } from "@/types/supabase";
 import Input from "@/components/ui/input";
 import { validateInput } from "@/lib/security";
+import LocationGate from "@/components/LocationGate";
 
 export default function CoachVolunteerSignupPage() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function CoachVolunteerSignupPage() {
   const [teamsLoading, setTeamsLoading] = useState(true);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
+  const [zipValidationError, setZipValidationError] = useState<string | null>(null);
+  const [isValidatingZip, setIsValidatingZip] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -77,6 +80,81 @@ export default function CoachVolunteerSignupPage() {
         delete newErrors[field];
         return newErrors;
       });
+    }
+
+    // Real-time zip code validation (debounced)
+    if (field === "zip" && typeof value === "string") {
+      // Clear any existing timeout
+      if ((window as any).zipValidationTimeout) {
+        clearTimeout((window as any).zipValidationTimeout);
+      }
+      // Set new timeout for debounced validation
+      (window as any).zipValidationTimeout = setTimeout(() => {
+        validateZipCodeRealTime(value);
+      }, 500);
+    }
+  };
+
+  // Real-time zip code validation
+  const validateZipCodeRealTime = async (zip: string) => {
+    if (!zip || zip.trim().length < 5) {
+      setZipValidationError(null);
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.zip;
+        return newErrors;
+      });
+      return;
+    }
+
+    // Check if it's a valid format first
+    const zipRegex = /^\d{5}(-\d{4})?$/;
+    if (!zipRegex.test(zip.trim())) {
+      setZipValidationError(null); // Let form validation handle format errors
+      return;
+    }
+
+    setIsValidatingZip(true);
+    setZipValidationError(null);
+
+    try {
+      // Use API route instead of direct import to avoid CORS issues
+      const response = await fetch("/api/verify-zip", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ zipCode: zip.trim() }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to verify zip code");
+      }
+
+      const zipVerification = await response.json();
+      
+      if (!zipVerification.allowed) {
+        const errorMsg = zipVerification.error ||
+          "Registration is currently limited to residents within 50 miles of Salina, Kansas.";
+        setZipValidationError(errorMsg);
+        setErrors((prev) => ({
+          ...prev,
+          zip: errorMsg,
+        }));
+      } else {
+        setZipValidationError(null);
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors.zip;
+          return newErrors;
+        });
+      }
+    } catch (err) {
+      console.error("Real-time zip validation error:", err);
+      // Don't show error on API failure
+      setZipValidationError(null);
+    } finally {
+      setIsValidatingZip(false);
     }
   };
 
@@ -198,6 +276,40 @@ export default function CoachVolunteerSignupPage() {
       return;
     }
 
+    // Verify zip code is within service area
+    if (formData.zip) {
+      try {
+        const { verifyZipCodeInRadius } = await import("@/lib/zipCodeVerification");
+        const zipVerification = await verifyZipCodeInRadius(formData.zip.trim());
+        
+        if (!zipVerification.allowed) {
+          const errorMsg = zipVerification.error ||
+            "Registration is currently limited to residents within 50 miles of Salina, Kansas.";
+          setErrors({
+            zip: errorMsg
+          });
+          setZipValidationError(errorMsg);
+          // Scroll to the zip code field
+          setTimeout(() => {
+            const zipField = document.querySelector('[name="zip"]');
+            if (zipField) {
+              zipField.scrollIntoView({ behavior: "smooth", block: "center" });
+              (zipField as HTMLElement).focus();
+            }
+          }, 100);
+          return;
+        }
+      } catch (err) {
+        console.error("Zip code verification error:", err);
+        const errorMsg = "Unable to verify location. Please try again.";
+        setErrors({
+          zip: errorMsg
+        });
+        setZipValidationError(errorMsg);
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -288,11 +400,12 @@ export default function CoachVolunteerSignupPage() {
   }
 
   return (
-    <div className="bg-navy min-h-screen text-white">
-      <section
-        className="pt-20 pb-12 sm:pt-24"
-        aria-label="Coach/Volunteer Signup"
-      >
+    <LocationGate>
+      <div className="bg-navy min-h-screen text-white">
+        <section
+          className="pt-20 pb-12 sm:pt-24"
+          aria-label="Coach/Volunteer Signup"
+        >
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="text-center mb-8">
@@ -560,11 +673,16 @@ export default function CoachVolunteerSignupPage() {
                         onChange={(e) =>
                           handleInputChange("zip", e.target.value)
                         }
-                        className={errors.zip ? "border-red-500" : ""}
+                        className={errors.zip || zipValidationError ? "border-red-500" : ""}
                       />
-                      {errors.zip && (
+                      {isValidatingZip && (
+                        <p className="text-gray-400 text-sm mt-1">
+                          Verifying location...
+                        </p>
+                      )}
+                      {(errors.zip || zipValidationError) && (
                         <p className="text-red-400 text-sm mt-1">
-                          {errors.zip}
+                          {zipValidationError || errors.zip}
                         </p>
                       )}
                     </div>
@@ -811,7 +929,7 @@ export default function CoachVolunteerSignupPage() {
               <div className="flex justify-center">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !!zipValidationError || isValidatingZip}
                   className="bg-red text-white font-bebas font-bold px-8 py-3 rounded-lg text-xl uppercase tracking-wide hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? "Submitting..." : "Submit Application"}
@@ -822,5 +940,6 @@ export default function CoachVolunteerSignupPage() {
         </div>
       </section>
     </div>
+    </LocationGate>
   );
 }

@@ -18,6 +18,7 @@ export async function POST(req: Request) {
       parent_phone,
       parent_first_name,
       parent_last_name,
+      parent_zip,
       player: { first_name, last_name, birthdate, grade, gender },
       waiver_signed,
     } = body || {};
@@ -33,6 +34,30 @@ export async function POST(req: Request) {
         { error: "Missing required fields" },
         { status: 400 }
       );
+    }
+
+    // Verify zip code is within service area
+    if (parent_zip) {
+      try {
+        const { verifyZipCodeInRadius } = await import("@/lib/zipCodeVerification");
+        const zipVerification = await verifyZipCodeInRadius(parent_zip);
+        
+        if (!zipVerification.allowed) {
+          return NextResponse.json(
+            { 
+              error: zipVerification.error ||
+                "Registration is currently limited to residents within 50 miles of Salina, Kansas."
+            },
+            { status: 403 }
+          );
+        }
+      } catch (err) {
+        devError("register-player: Zip code verification error", err);
+        return NextResponse.json(
+          { error: "Unable to verify location. Please try again." },
+          { status: 500 }
+        );
+      }
     }
 
     if (!supabaseAdmin) {
