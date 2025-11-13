@@ -67,6 +67,7 @@ export default function DrillsPage() {
 
   const [drills, setDrills] = useState<PracticeDrill[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -163,122 +164,190 @@ export default function DrillsPage() {
     return timeMatch && skillMatch;
   });
 
+  // Handler for PDF download
+  const handleDownloadPDF = async () => {
+    if (!selectedDrill || isGeneratingPDF) return;
+
+    try {
+      setIsGeneratingPDF(true);
+
+      // Call the API route to generate PDF on the server
+      const response = await fetch("/api/generate-drill-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(selectedDrill),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      // Get the PDF blob from the response
+      const blob = await response.blob();
+
+      // Create a download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+
+      // Create a safe filename from the drill title
+      const safeTitle = sanitizeInput(selectedDrill.title)
+        .replace(/[^a-z0-9]/gi, "_")
+        .toLowerCase()
+        .substring(0, 50); // Limit filename length
+      link.download = `${safeTitle}.pdf`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      Sentry.captureException(err);
+      setError("Failed to generate PDF. Please try again.");
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-navy text-white">
       <section className="pt-20 pb-12 sm:pt-24" aria-label="Practice Drills">
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-        <h1
-          className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase"
-          aria-label="Practice Drills"
-        >
-          Practice Drills
-        </h1>
-        {error && (
-          <div className="mb-8 p-4 bg-gray-900/50 border border-red-500/50 rounded-lg">
-            <p className="text-red font-inter">
-              Failed to load drills. Please try again.
-            </p>
-          </div>
-        )}
+          <h1
+            className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase"
+            aria-label="Practice Drills"
+          >
+            Practice Drills
+          </h1>
+          {error && (
+            <div className="mb-8 p-4 bg-gray-900/50 border border-red-500/50 rounded-lg">
+              <p className="text-red font-inter">
+                Failed to load drills. Please try again.
+              </p>
+            </div>
+          )}
 
-        <section className="mb-8" aria-label="Drill Filters">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="time-filter"
-                className="text-white font-inter text-sm mb-2 block"
-              >
-                Time
-              </label>
-              <select
-                id="time-filter"
-                value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value)}
-                className="w-full bg-gray-900 text-white border border-red-500/50 rounded p-2"
-              >
-                {timeCategories.map((category) => (
-                  <option key={category.value} value={category.value}>
-                    {category.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="skill-filter"
-                className="text-white font-inter text-sm mb-2 block"
-              >
-                Skill
-              </label>
-              <select
-                id="skill-filter"
-                value={skillFilter}
-                onChange={(e) => setSkillFilter(e.target.value)}
-                className="w-full bg-gray-900 text-white border border-red-500/50 rounded p-2"
-              >
-                <option value="all">All Skills</option>
-                {uniqueSkills.map((skill) => (
-                  <option key={skill} value={skill}>
-                    {skill}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </section>
-        <section aria-label="Drills">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDrills.length > 0 ? (
-              filteredDrills.map((drill) => (
-                <motion.div
-                  key={drill.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 cursor-pointer hover:bg-gray-800/50 transition-colors"
-                  onClick={() => setSelectedDrill(drill)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setSelectedDrill(drill);
-                    }
-                  }}
-                  aria-label={`View ${drill.title} drill details`}
+          <section className="mb-8" aria-label="Drill Filters">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label
+                  htmlFor="time-filter"
+                  className="text-white font-inter text-sm mb-2 block"
                 >
-                  <div className="flex-shrink-0">
-                    <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
-                      {drill.category} • {drill.skills.join(", ")}
-                    </h4>
-                    <h3 className="text-2xl font-bebas mt-2 text-white line-clamp-1 leading-tight overflow-hidden">
-                      {sanitizeInput(drill.title)}
-                    </h3>
-                    <p
-                      className="text-gray-300 font-inter leading-tight mt-4 text-sm lg:text-base overflow-hidden"
-                      style={{
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        lineHeight: "1.2em",
-                        maxHeight: "2.4em",
-                      }}
-                    >
-                      Equipment: {drill.equipment.join(", ")}
-                    </p>
-                  </div>
+                  Time
+                </label>
+                <select
+                  id="time-filter"
+                  value={timeFilter}
+                  onChange={(e) => setTimeFilter(e.target.value)}
+                  className="w-full bg-gray-900 text-white border border-red-500/50 rounded p-2"
+                >
+                  {timeCategories.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label
+                  htmlFor="skill-filter"
+                  className="text-white font-inter text-sm mb-2 block"
+                >
+                  Skill
+                </label>
+                <select
+                  id="skill-filter"
+                  value={skillFilter}
+                  onChange={(e) => setSkillFilter(e.target.value)}
+                  className="w-full bg-gray-900 text-white border border-red-500/50 rounded p-2"
+                >
+                  <option value="all">All Skills</option>
+                  {uniqueSkills.map((skill) => (
+                    <option key={skill} value={skill}>
+                      {skill}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </section>
+          <section aria-label="Drills">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDrills.length > 0 ? (
+                filteredDrills.map((drill) => (
+                  <motion.div
+                    key={drill.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 cursor-pointer hover:bg-gray-800/50 transition-colors"
+                    onClick={() => setSelectedDrill(drill)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedDrill(drill);
+                      }
+                    }}
+                    aria-label={`View ${drill.title} drill details`}
+                  >
+                    <div className="flex-shrink-0">
+                      <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
+                        {drill.category} • {drill.skills.join(", ")}
+                      </h4>
+                      <h3 className="text-2xl font-bebas mt-2 text-white line-clamp-1 leading-tight overflow-hidden">
+                        {sanitizeInput(drill.title)}
+                      </h3>
+                      <p
+                        className="text-gray-300 font-inter leading-tight mt-4 text-sm lg:text-base overflow-hidden"
+                        style={{
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          lineHeight: "1.2em",
+                          maxHeight: "2.4em",
+                        }}
+                      >
+                        Equipment: {drill.equipment.join(", ")}
+                      </p>
+                    </div>
 
-                  <div className="flex-1 flex flex-col justify-between mt-4">
-                    <div className="flex-shrink-0 mb-4">
-                      {(() => {
-                        // Check for YouTube URL first
-                        if (drill.youtube_url) {
-                          const videoId = extractYouTubeVideoId(drill.youtube_url);
-                          if (videoId) {
-                            const thumbnailUrl = getYouTubeThumbnailUrl(videoId);
+                    <div className="flex-1 flex flex-col justify-between mt-4">
+                      <div className="flex-shrink-0 mb-4">
+                        {(() => {
+                          // Check for YouTube URL first
+                          if (drill.youtube_url) {
+                            const videoId = extractYouTubeVideoId(
+                              drill.youtube_url
+                            );
+                            if (videoId) {
+                              const thumbnailUrl =
+                                getYouTubeThumbnailUrl(videoId);
+                              return (
+                                <Image
+                                  src={thumbnailUrl}
+                                  alt={drill.title}
+                                  width={400}
+                                  height={192}
+                                  className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
+                                  style={{ aspectRatio: "400/192" }}
+                                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                                />
+                              );
+                            }
+                          }
+                          // Fallback to image_url if no YouTube URL
+                          if (drill.image_url) {
                             return (
                               <Image
-                                src={thumbnailUrl}
+                                src={drill.image_url}
                                 alt={drill.title}
                                 width={400}
                                 height={192}
@@ -288,56 +357,43 @@ export default function DrillsPage() {
                               />
                             );
                           }
-                        }
-                        // Fallback to image_url if no YouTube URL
-                        if (drill.image_url) {
+                          // No image or YouTube URL
                           return (
-                            <Image
-                              src={drill.image_url}
-                              alt={drill.title}
-                              width={400}
-                              height={192}
-                              className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
-                              style={{ aspectRatio: "400/192" }}
-                              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                            />
+                            <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
+                              <span className="text-gray-500 text-sm">
+                                No Image
+                              </span>
+                            </div>
                           );
-                        }
-                        // No image or YouTube URL
-                        return (
-                          <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
-                            <span className="text-gray-500 text-sm">
-                              No Image
-                            </span>
-                          </div>
-                        );
-                      })()}
-                    </div>
+                        })()}
+                      </div>
 
-                    <div className="flex-shrink-0 py-2">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setSelectedDrill(drill);
-                        }}
-                        className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
-                        aria-label={`View details for ${drill.title}`}
-                        type="button"
-                      >
-                        View Details
-                      </button>
+                      <div className="flex-shrink-0 py-2">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setSelectedDrill(drill);
+                          }}
+                          className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                          aria-label={`View details for ${drill.title}`}
+                          type="button"
+                        >
+                          View Details
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <div className="col-span-full bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
-                <p className="text-gray-300 font-inter">No drills available.</p>
-              </div>
-            )}
-          </div>
-        </section>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-full bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
+                  <p className="text-gray-300 font-inter">
+                    No drills available.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
       </section>
 
@@ -379,25 +435,64 @@ export default function DrillsPage() {
                     {sanitizeInput(selectedDrill.title)}
                   </h2>
                 </div>
-                <button
-                  onClick={() => setSelectedDrill(null)}
-                  className="text-white hover:text-gray-300 transition-colors"
-                  aria-label="Close modal"
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleDownloadPDF}
+                    disabled={isGeneratingPDF}
+                    className="text-black hover:text-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="Download PDF"
+                    title="Download PDF"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+                    {isGeneratingPDF ? (
+                      <svg
+                        className="w-6 h-6 animate-spin"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setSelectedDrill(null)}
+                    className="text-black hover:text-gray-700 transition-colors"
+                    aria-label="Close modal"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -484,7 +579,9 @@ export default function DrillsPage() {
                 </div>
                 <div className="bg-gray-100 rounded-lg p-4">
                   {(() => {
-                    const videoId = extractYouTubeVideoId(selectedDrill.youtube_url);
+                    const videoId = extractYouTubeVideoId(
+                      selectedDrill.youtube_url
+                    );
                     if (videoId) {
                       const embedUrl = getYouTubeEmbedUrl(videoId);
                       return (

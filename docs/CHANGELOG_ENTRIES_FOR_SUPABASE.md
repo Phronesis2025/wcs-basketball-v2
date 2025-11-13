@@ -1,5 +1,54 @@
 # Changelog Entries to Add to Supabase Database
 
+**Version**: 2.10.19  
+**Release Date**: 2025-01-13
+
+---
+
+## Version 2.10.19 Entries
+
+### Entry 1: Practice Drill PDF Download Feature
+
+- **Version**: `2.10.19`
+- **Release Date**: `2025-01-13`
+- **Category**: `added`
+- **Description**: `Added PDF download button to Practice drill modal. Users can download a formatted PDF of any practice drill with all details including skills, equipment, duration, benefits, and instructions. PDF uses Puppeteer to render HTML page, ensuring exact visual match with web version. PDFs use Bebas font for headers and Inter font for body text, matching the modal design.`
+- **Is Published**: `true`
+
+### Entry 2: Practice Drill PDF Generation API
+
+- **Version**: `2.10.19`
+- **Release Date**: `2025-01-13`
+- **Category**: `added`
+- **Description**: `Created server-side API route /api/generate-drill-pdf that generates PDFs using Puppeteer. Route navigates to print-friendly drill page and converts HTML to PDF. Uses same PDF generation approach as invoice PDFs for consistency. Includes proper error handling and logging.`
+- **Is Published**: `true`
+
+### Entry 3: Print-Friendly Drill Page
+
+- **Version**: `2.10.19`
+- **Release Date**: `2025-01-13`
+- **Category**: `added`
+- **Description**: `Created print-friendly drill page at /drills/[id]?print=1 that displays drill content optimized for PDF generation. Page uses server-side rendering and matches modal layout exactly. Includes all drill information: category/difficulty badges, skills/equipment/duration with icons, benefits, and instructions.`
+- **Is Published**: `true`
+
+### Entry 4: PDF Generation Improvements
+
+- **Version**: `2.10.19`
+- **Release Date**: `2025-01-13`
+- **Category**: `changed`
+- **Description**: `Improved PDF generation by removing test banner, footer, and drill images from PDF output. Added Puppeteer script to hide navigation elements and ensure clean PDF output. PDFs now only contain drill content without site navigation or test elements.`
+- **Is Published**: `true`
+
+### Entry 5: Fontkit Dependency for PDF Fonts
+
+- **Version**: `2.10.19`
+- **Release Date**: `2025-01-13`
+- **Category**: `added`
+- **Description**: `Added fontkit dependency to support custom font embedding in PDF generation. Initially attempted to use pdf-lib with custom fonts (Bebas and Inter) but switched to Puppeteer approach for better compatibility and exact visual matching.`
+- **Is Published**: `true`
+
+---
+
 **Version**: 2.10.18  
 **Release Date**: 2025-01-12
 

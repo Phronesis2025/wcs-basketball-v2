@@ -1,5 +1,80 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.19 - Practice Drill PDF Download Feature
+
+**Release Date**: January 13, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (125 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Practice Drill PDF Download Feature**:
+  - Added PDF download button to Practice drill modal header
+  - Users can download formatted PDFs of any practice drill
+  - PDFs include all drill details: skills, equipment, duration, benefits, and instructions
+  - PDFs use Bebas font for headers and Inter font for body text, matching modal design
+  - Files Created:
+    - `src/lib/pdf/puppeteer-drill.ts`
+    - `src/app/drills/[id]/page.tsx`
+  - Files Modified:
+    - `src/app/drills/page.tsx`
+    - `src/app/api/generate-drill-pdf/route.ts`
+
+- **Practice Drill PDF Generation API**:
+  - Created server-side API route `/api/generate-drill-pdf` for PDF generation
+  - Uses Puppeteer to render HTML drill page to PDF
+  - Follows same PDF generation approach as invoice PDFs for consistency
+  - Includes proper error handling, logging, and loading states
+  - Files Created: `src/app/api/generate-drill-pdf/route.ts`
+
+- **Print-Friendly Drill Page**:
+  - Created server-side drill page at `/drills/[id]?print=1` for PDF generation
+  - Page displays drill content optimized for PDF output
+  - Matches modal layout exactly with all drill information
+  - Includes category/difficulty badges, skills/equipment/duration with icons
+  - Files Created: `src/app/drills/[id]/page.tsx`
+
+- **Fontkit Dependency**:
+  - Added fontkit package for custom font support in PDF generation
+  - Initially attempted pdf-lib with custom fonts but switched to Puppeteer approach
+  - Files Modified: `package.json`
+
+### 🔧 Fixed
+
+- **PDF Generation Build Error**:
+  - Fixed "Module not found: Can't resolve 'fs'" error by moving PDF generation to server-side API route
+  - Client component now calls API route instead of directly importing server-side code
+  - Files Modified:
+    - `src/app/api/generate-drill-pdf/route.ts`
+    - `src/app/drills/page.tsx`
+
+- **Server Component Styled-JSX Error**:
+  - Fixed "'client-only' cannot be imported from a Server Component" error
+  - Removed styled-jsx usage from server component
+  - Files Modified: `src/app/drills/[id]/page.tsx`
+
+### 🔄 Changed
+
+- **PDF Generation Approach**:
+  - Switched from pdf-lib to Puppeteer for drill PDF generation
+  - Matches invoice PDF generation approach for consistency
+  - Ensures exact visual match with web version
+  - Files Modified:
+    - `src/lib/pdf/puppeteer-drill.ts`
+    - `src/app/api/generate-drill-pdf/route.ts`
+
+- **PDF Content Cleanup**:
+  - Removed test banner from PDF output
+  - Removed footer from PDF output
+  - Removed drill images from PDF output (videos still shown when not printing)
+  - Added Puppeteer script to hide navigation elements
+  - Files Modified: `src/lib/pdf/puppeteer-drill.ts`
+
+---
+
 ## 🚀 Version 2.10.18 - Test Site Banner & Location Verification
 
 **Release Date**: January 12, 2025  

@@ -40,6 +40,7 @@
     "dotenv": "^17.2.2",
     "embla-carousel-autoplay": "^8.6.0",
     "embla-carousel-react": "^8.6.0",
+    "fontkit": "^2.0.4",
     "framer-motion": "^12.23.12",
     "next": "15.5.2",
     "pdf-lib": "^1.17.1",
