@@ -54,12 +54,18 @@ export function checkRateLimit(ip: string): {
   };
 }
 
-// Helper to create secure responses
+/**
+ * Helper to create secure responses with security headers
+ * @param data - Response data to send
+ * @param status - HTTP status code (default: 200)
+ * @param additionalHeaders - Additional headers to include
+ * @returns NextResponse with security headers
+ */
 export function createSecureResponse(
   data: unknown,
   status: number = 200,
   additionalHeaders: Record<string, string> = {}
-) {
+): NextResponse {
   return NextResponse.json(data, {
     status,
     headers: {
@@ -69,14 +75,24 @@ export function createSecureResponse(
   });
 }
 
-// Helper to create error responses with security headers
+/**
+ * Helper to create error responses with security headers
+ * Ensures no sensitive information is leaked in error messages
+ * @param error - Error message (sanitized, no sensitive data)
+ * @param status - HTTP status code (default: 500)
+ * @param additionalHeaders - Additional headers to include
+ * @returns NextResponse with security headers
+ */
 export function createErrorResponse(
   error: string,
   status: number = 500,
   additionalHeaders: Record<string, string> = {}
-) {
+): NextResponse {
+  // Ensure error message doesn't contain sensitive information
+  const sanitizedError = error.replace(/password|token|key|secret/gi, "[REDACTED]");
+  
   return NextResponse.json(
-    { error },
+    { error: sanitizedError },
     {
       status,
       headers: {
