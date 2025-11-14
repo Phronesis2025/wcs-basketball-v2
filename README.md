@@ -8,6 +8,22 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 **Build Status**: Clean Build ✅  
 **Live URL**: https://wcs-basketball-v2.vercel.app
 
+## 🔧 Development Tools
+
+### MCP (Model Context Protocol) Integration
+
+This project uses MCP servers for enhanced development workflow:
+
+- **Supabase MCP**: Direct database access, migrations, and type generation
+- **Stripe MCP**: Payment processing and subscription management
+- **Postman MCP**: API testing and webhook verification
+- **Resend MCP**: Email service integration
+- **Vercel MCP**: Deployment management and logs
+- **Sentry MCP**: Error tracking and monitoring
+- **CodeRabbit MCP**: AI-powered code review integration
+
+See `docs/mcp/MCP_SETUP.md` for configuration details.
+
 ## 🏀 Features
 
 ### Core Functionality
@@ -122,6 +138,7 @@ A modern, secure basketball team management system built with Next.js 15, TypeSc
 - [Environment Setup](docs/ENVIRONMENT_SETUP.md) - Configuration guide
 - [Deployment Guide](docs/DEPLOY.md) - Production deployment instructions
 - [Testing Guide](docs/TESTING.md) - Testing procedures and examples
+- [MCP Setup](docs/mcp/MCP_SETUP.md) - Model Context Protocol configuration
 
 ## 🛡️ Security Features
 
@@ -151,6 +168,9 @@ The application is deployed on Vercel with automatic deployments from the main b
 ## 📝 Recent Updates
 
 ### v2.9.8 - January 2025 (Current)
+
+- **CodeRabbit MCP Integration**: Added CodeRabbit MCP server for AI-powered code review automation
+- **Development Tools**: Enhanced MCP integration with multiple service connections
 
 - **Payment Flow Improvements**: Added payment options to checkout form, direct redirect to Stripe checkout after form completion
 - **Registration Status Badges**: Moved status badges onto individual player cards with visual progression (Pending → Approved → Active)
