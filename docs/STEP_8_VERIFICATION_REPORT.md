@@ -1,6 +1,6 @@
 # Step 8 Verification Report - Hide Payment UI Until Approved & Paid
 
-**Date:** January 13, 2025  
+**Date:** November 14, 2025,  
 **Status:** ⚠️ **PARTIALLY IMPLEMENTED** - Needs minor fixes
 
 ---
@@ -25,7 +25,7 @@ Hide payment elements until BOTH conditions are met:
 
 **Status:** ✅ **CORRECTLY IMPLEMENTED**
 
-- **`isApprovedAndPaid()` function exists** (lines 203-207):
+- **`isApprovedAndPaid()` function exists** (in `ChildDetailsCard.tsx`):
   ```typescript
   const isApprovedAndPaid = () => {
     const approved = isApproved();
@@ -34,7 +34,7 @@ Hide payment elements until BOTH conditions are met:
   };
   ```
 
-- **Message shown when not approved/paid** (lines 926-934):
+- **Message shown when not approved/paid** (in `ChildDetailsCard.tsx`, conditional rendering section):
   ```typescript
   {!isApprovedAndPaid() && (
     <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
@@ -53,7 +53,7 @@ Hide payment elements until BOTH conditions are met:
 
 **Status:** ✅ **MOSTLY CORRECT** - Invoice section properly gated
 
-- **Invoice section gated correctly** (lines 362-371):
+- **Invoice section gated correctly** (in `PaymentHistoryTable.tsx`, `uniquePlayers` filter):
   ```typescript
   const uniquePlayers = Array.from(playersById.values()).filter((player) => {
     const approved = isApproved(player.id);
@@ -66,7 +66,7 @@ Hide payment elements until BOTH conditions are met:
   )}
   ```
 
-- **"View Full Invoice" button** (line 393-398): ✅ Only shown when `uniquePlayers.length > 0` (i.e., when there are approved + paid players)
+- **"View Full Invoice" button** (in `PaymentHistoryTable.tsx`, invoice section): ✅ Only shown when `uniquePlayers.length > 0` (i.e., when there are approved + paid players)
 
 ---
 
@@ -74,7 +74,7 @@ Hide payment elements until BOTH conditions are met:
 
 ### Issue 1: "Pay" Button Not Fully Gated
 
-**Location:** `src/components/parent/PaymentHistoryTable.tsx` (lines 419-434)
+**Location:** `src/components/parent/PaymentHistoryTable.tsx` (in the "Pay" button section)
 
 **Problem:** The "Pay" button shows for any approved player, even if they haven't paid yet.
 
@@ -193,6 +193,6 @@ The payment UI hiding is mostly implemented correctly. The only issue is the "Pa
 
 ---
 
-**Last Updated:** January 13, 2025  
+**Last Updated:** November 14, 2025,  
 **Verified By:** Code Review
 

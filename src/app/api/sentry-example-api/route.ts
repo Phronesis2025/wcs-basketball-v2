@@ -23,19 +23,10 @@ class SentryExampleAPIError extends Error {
  * This intentionally throws an error to verify error tracking
  */
 export async function GET() {
-  try {
-    // Capture the error with Sentry before throwing
-    const error = new SentryExampleAPIError(
-      "This error is raised on the backend called by the example page."
-    );
-    Sentry.captureException(error);
-    throw error;
-  } catch (error) {
-    // Re-throw to ensure proper error handling
-    if (error instanceof SentryExampleAPIError) {
-      throw error;
-    }
-    // Fallback for unexpected errors
-    throw new Error("Unexpected error in Sentry test route");
-  }
+  // Create and capture the error with Sentry before throwing
+  const error = new SentryExampleAPIError(
+    "This error is raised on the backend called by the example page."
+  );
+  Sentry.captureException(error);
+  throw error;
 }

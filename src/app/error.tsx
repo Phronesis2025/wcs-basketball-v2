@@ -24,7 +24,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="bg-navy min-h-screen text-white flex items-center justify-center" role="alert" aria-live="polite">
+    <div className="bg-navy min-h-screen text-white flex items-center justify-center" role="alert">
       <div className="text-center max-w-md px-4">
         <h1 className="text-4xl font-bebas mb-4">Something went wrong!</h1>
         <p className="text-lg mb-6">

@@ -1,6 +1,6 @@
 # Plan Completion Status - Supabase Email Customization
 
-**Date:** January 13, 2025  
+**Date:** November 14, 2025,  
 **Plan Document:** `player.plan.md` / `docs/PLAN_REVIEW_SUMMARY.md`  
 **Status:** ✅ **6 of 8 steps completed** (Step 7 skipped, Step 8 needs verification)
 
@@ -37,7 +37,7 @@
   - `user_metadata` containing player details (playerName, grade, gender, parentFirstName, parentLastName)
   - `redirectTo` URL pointing to `/auth/callback` with magic_link_token and player name
   - Works in both development and production environments
-- **Lines:** 174-186, 232-244
+- **Location:** `inviteUserByEmail` function calls with `user_metadata` and `redirectTo` parameters
 
 ### 5. ✅ Create Email Confirmation Callback Route
 - **Status:** COMPLETED
@@ -47,13 +47,13 @@
   - Merges pending registrations
   - Redirects to registration-success with player name
   - Auto-signs in user via Supabase session
-- **Lines:** 7-50, 36-50
+- **Location:** Route handler function that processes OTP confirmation and redirects
 
 ### 6. ✅ Disable Parent Welcome Email
 - **Status:** COMPLETED
 - **File:** `src/app/auth/callback/route.ts`
 - **Implementation:** Resend email code is commented out (preserved for re-enablement)
-- **Lines:** 360-387 (magic link flow), 559-605 (OAuth flow)
+- **Location:** Magic link flow and OAuth flow sections (Resend email code commented out)
 - **Note:** Admin email still active ✅
 
 ---
@@ -81,20 +81,20 @@
   - ✅ Invoice section only shows for approved + paid players
   - ✅ "View Full Invoice" button properly gated
   - ⚠️ "Pay" button shows for approved players only (should check payment too)
-- **Issue:** "Pay" button in PaymentHistoryTable (lines 419-434) only checks `isApproved()`, not payment status
+- **Issue:** "Pay" button in PaymentHistoryTable (in the "Pay" button section) only checks `isApproved()`, not payment status
 - **Fix Needed:** Update "Pay" button logic to check both `isApproved()` AND `hasPaidPayment()`
 - **See:** `docs/STEP_8_VERIFICATION_REPORT.md` for full details
 
 **Current Code:**
 ```typescript
-// Line 203-207: Function exists
+// Function exists in ChildDetailsCard.tsx:
 const isApprovedAndPaid = () => {
   const approved = isApproved();
   const hasPaid = payments.some((p) => isPaid(p.status));
   return approved && hasPaid;
 };
 
-// Line 926: Used to show message
+// Used to show message (conditional rendering section):
 {!isApprovedAndPaid() && (
   <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded">
     <p className="text-sm text-yellow-800 text-center">
@@ -171,6 +171,6 @@ After Step 8 verification:
 
 ---
 
-**Last Updated:** January 13, 2025  
+**Last Updated:** November 14, 2025,  
 **Status:** 6/8 Complete, 1 Skipped, 1 Needs Verification
 
