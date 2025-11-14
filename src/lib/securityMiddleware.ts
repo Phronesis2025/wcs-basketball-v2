@@ -89,7 +89,11 @@ export function createErrorResponse(
   additionalHeaders: Record<string, string> = {}
 ): NextResponse {
   // Ensure error message doesn't contain sensitive information
-  const sanitizedError = error.replace(/password|token|key|secret/gi, "[REDACTED]");
+  // Use word boundaries to avoid partial matches (e.g., "secretary" -> "[REDACTED]ary")
+  const sanitizedError = error.replace(
+    /\b(password|token|key|secret|email|api[_-]?key|access[_-]?token|session|credential)\b/gi,
+    "[REDACTED]"
+  );
   
   return NextResponse.json(
     { error: sanitizedError },
