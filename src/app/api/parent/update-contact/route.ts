@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function PUT(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const body = await request.json();
@@ -22,7 +20,7 @@ export async function PUT(request: NextRequest) {
     } = body;
 
     if (!email) {
-      return NextResponse.json({ error: "Email required" }, { status: 400 });
+      throw new ValidationError("Email required");
     }
 
     devLog("Updating contact info for parent:", email);
@@ -58,24 +56,13 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      devError("Error updating contact info:", error);
-      return NextResponse.json(
-        { error: "Failed to update contact information" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update contact information", error);
     }
 
     devLog("Contact info updated for parent:", email);
 
-    return NextResponse.json({
-      success: true,
-      parent: updatedParent,
-    });
+    return formatSuccessResponse({ parent: updatedParent });
   } catch (error) {
-    devError("Update contact API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

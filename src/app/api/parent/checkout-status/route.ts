@@ -1,19 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const parentId = request.nextUrl.searchParams.get("parent_id");
     if (!parentId) {
-      return NextResponse.json({ error: "parent_id required" }, { status: 400 });
+      throw new ValidationError("parent_id required");
     }
 
     const { data: parent, error } = await supabaseAdmin
@@ -23,22 +21,14 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (error) {
-      devError("Error fetching parent checkout status:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch checkout status" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch checkout status", error);
     }
 
-    return NextResponse.json({
+    return formatSuccessResponse({
       checkout_completed: parent?.checkout_completed || false,
     });
   } catch (error) {
-    devError("Parent checkout status API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
