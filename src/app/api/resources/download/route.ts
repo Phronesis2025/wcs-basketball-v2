@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Get user ID from headers (for logging, but allow both admins and coaches)
@@ -19,19 +17,13 @@ export async function GET(request: NextRequest) {
     const path = searchParams.get("path");
 
     if (!bucket || !path) {
-      return NextResponse.json(
-        { error: "Bucket and path parameters are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Bucket and path parameters are required");
     }
 
     // Validate bucket name (security check)
     const allowedBuckets = ["resources", "images"];
     if (!allowedBuckets.includes(bucket)) {
-      return NextResponse.json(
-        { error: "Invalid bucket name" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid bucket name");
     }
 
     // Get public URL for download
@@ -45,21 +37,13 @@ export async function GET(request: NextRequest) {
       userId: userId || "unknown",
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       url: urlData.publicUrl,
       bucket,
       path,
     });
   } catch (error) {
-    devError("Download file API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to generate download URL",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

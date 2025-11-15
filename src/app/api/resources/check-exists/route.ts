@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const { searchParams } = new URL(request.url);
@@ -16,19 +14,13 @@ export async function GET(request: NextRequest) {
     const path = searchParams.get("path");
 
     if (!bucket || !path) {
-      return NextResponse.json(
-        { error: "Bucket and path parameters are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Bucket and path parameters are required");
     }
 
     // Validate bucket name
     const allowedBuckets = ["resources", "images"];
     if (!allowedBuckets.includes(bucket)) {
-      return NextResponse.json(
-        { error: "Invalid bucket name" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid bucket name");
     }
 
     // Check if file exists
@@ -39,30 +31,19 @@ export async function GET(request: NextRequest) {
       });
 
     if (error) {
-      devError("Error checking file existence:", error);
-      return NextResponse.json(
-        { error: "Failed to check file existence" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to check file existence", error);
     }
 
     const fileName = path.split("/").pop() || "";
     const fileExists = data?.some((file) => file.name === fileName) || false;
 
-    return NextResponse.json({
+    return formatSuccessResponse({
       exists: fileExists,
       path,
       bucket,
     });
   } catch (error) {
-    devError("Check file exists API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to check file existence",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
