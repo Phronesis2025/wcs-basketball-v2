@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,10 +9,7 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("User ID is required");
     }
 
     devLog("Fetching profile data for user:", userId);
@@ -24,19 +22,12 @@ export async function GET(request: NextRequest) {
       .limit(1);
 
     if (coachError) {
-      devError("Error fetching coach data:", coachError);
-      return NextResponse.json(
-        { error: "Failed to fetch coach data" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch coach data", coachError);
     }
 
     const coachData = Array.isArray(coachRows) ? coachRows[0] : coachRows;
     if (!coachData) {
-      return NextResponse.json(
-        { error: "Coach not found for this user" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Coach not found for this user");
     }
 
     // Fetch login stats from login_logs (authoritative source)
@@ -142,18 +133,8 @@ export async function GET(request: NextRequest) {
 
     devLog("Profile data fetched successfully");
 
-    return NextResponse.json({
-      success: true,
-      data: profileData,
-    });
+    return formatSuccessResponse(profileData);
   } catch (error) {
-    devError("Profile API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch profile data",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

@@ -2,20 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { ParentProfile } from "@/types/supabase";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Get email from query params or auth
     const email = request.nextUrl.searchParams.get("email");
     if (!email) {
-      return NextResponse.json({ error: "Email required" }, { status: 400 });
+      throw new ValidationError("Email required");
     }
 
     devLog("Fetching parent profile for:", email);
@@ -28,16 +26,12 @@ export async function GET(request: NextRequest) {
       .maybeSingle();
 
     if (parentError) {
-      devError("Error fetching parent:", parentError);
-      return NextResponse.json(
-        { error: "Failed to fetch parent" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch parent", parentError);
     }
 
     // If no parent found, return empty profile
     if (!parent) {
-      return NextResponse.json({
+      return formatSuccessResponse({
         parent: {
           email,
           name: null,
@@ -65,11 +59,7 @@ export async function GET(request: NextRequest) {
       .eq("is_deleted", false);
 
     if (childrenError) {
-      devError("Error fetching children:", childrenError);
-      return NextResponse.json(
-        { error: "Failed to fetch children" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch children", childrenError);
     }
 
     const parentInfo = {
@@ -97,11 +87,7 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (paymentsError) {
-      devError("Error fetching payments:", paymentsError);
-      return NextResponse.json(
-        { error: "Failed to fetch payments" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch payments", paymentsError);
     }
 
     // Add player names to payments
@@ -130,12 +116,8 @@ export async function GET(request: NextRequest) {
       pending_payments: pendingCount,
     };
 
-    return NextResponse.json(profile);
+    return formatSuccessResponse(profile);
   } catch (error) {
-    devError("Parent profile API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
