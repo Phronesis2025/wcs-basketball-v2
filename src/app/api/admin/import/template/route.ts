@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError } from "@/lib/security";
 import { generateExcelTemplate } from "@/lib/excel-template";
 import * as XLSX from "xlsx";
+import { AuthenticationError, AuthorizationError, ApiError, handleApiError } from "@/lib/errorHandler";
 
 async function isAdmin(userId?: string | null): Promise<boolean> {
   if (!userId || !supabaseAdmin) return false;
@@ -22,12 +23,12 @@ export async function GET(request: NextRequest) {
     // Check authentication
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check admin role
     if (!(await isAdmin(userId))) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      throw new AuthorizationError("Admin access required");
     }
 
     // Generate template using the shared function
@@ -42,11 +43,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    devError("Template generation error:", error);
-    return NextResponse.json(
-      { error: "Failed to generate template" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

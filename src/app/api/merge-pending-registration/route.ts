@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { sendEmail } from "@/lib/email";
 import { getAdminPlayerRegistrationEmail } from "@/lib/emailTemplates";
+import { ValidationError, ApiError, AuthenticationError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,17 +11,11 @@ export async function POST(request: NextRequest) {
     const { email } = body;
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Email is required");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database connection unavailable" },
-        { status: 500 }
-      );
+      throw new ApiError("Database connection unavailable", 500);
     }
 
     // Get pending registration
@@ -32,26 +27,18 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (pendingError) {
-      devError("merge-pending-registration: Error fetching pending registration", pendingError);
-      return NextResponse.json(
-        { error: "Failed to fetch pending registration" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch pending registration", pendingError);
     }
 
     if (!pendingReg || pendingReg.merged_at) {
       // No pending registration or already merged
-      return NextResponse.json({ success: true, message: "No pending registration to merge" });
+      return formatSuccessResponse({ message: "No pending registration to merge" });
     }
 
     // Get user
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser();
     if (userError || !user) {
-      devError("merge-pending-registration: Failed to get user", userError);
-      return NextResponse.json(
-        { error: "User not authenticated" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("User not authenticated");
     }
 
     // Create or get parent record
@@ -84,11 +71,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (parentError || !newParent) {
-        devError("merge-pending-registration: Failed to create parent", parentError);
-        return NextResponse.json(
-          { error: "Failed to create parent record" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to create parent record", parentError);
       }
 
       parentId = newParent.id;
@@ -113,11 +96,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (playerError) {
-      devError("merge-pending-registration: Failed to create player", playerError);
-      return NextResponse.json(
-        { error: "Failed to create player record" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to create player record", playerError);
     }
 
     // Mark as merged
@@ -150,18 +129,13 @@ export async function POST(request: NextRequest) {
       playerId: player.id,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Pending registration merged successfully",
       parentId,
       playerId: player.id,
     });
   } catch (error) {
-    devError("merge-pending-registration: Exception", error);
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
