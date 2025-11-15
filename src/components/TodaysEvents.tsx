@@ -54,8 +54,9 @@ export default function TodaysEvents({
           throw new Error(`Failed to fetch schedules: ${eventsResponse.status}`);
         }
 
-        const eventsData = await eventsResponse.json();
-        const teamsData = await teamsResponse.json();
+        const { extractApiResponseData } = await import("@/lib/errorHandler");
+        const eventsData = await extractApiResponseData(eventsResponse);
+        const teamsData = await extractApiResponseData(teamsResponse);
 
         if (!isMounted) return;
 

@@ -36,7 +36,15 @@ export default function BasketballProgressModal({
       setCurrentFactIndex(0);
 
       fetch("/api/basketball-facts")
-        .then((res) => res.json())
+        .then(async (res) => {
+          if (!res.ok) {
+            const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+            const errorMessage = await extractApiErrorMessage(res);
+            throw new Error(errorMessage);
+          }
+          const { extractApiResponseData } = await import("@/lib/errorHandler");
+          return extractApiResponseData<{ facts: Array<{ emoji: string; fact_text: string }> }>(res);
+        })
         .then((data) => {
           if (data.facts && data.facts.length > 0) {
             setFacts(data.facts);

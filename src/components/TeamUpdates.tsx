@@ -102,8 +102,24 @@ export default function TeamUpdates({
     if (!updates && !isLoading && fetchedUpdates.length === 0) {
       setIsLoading(true);
       Promise.all([
-        fetch("/api/team-updates").then((res) => res.json()),
-        fetch("/api/teams").then((res) => res.json()),
+        fetch("/api/team-updates").then(async (res) => {
+          if (!res.ok) {
+            const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+            const errorMessage = await extractApiErrorMessage(res);
+            throw new Error(errorMessage);
+          }
+          const { extractApiResponseData } = await import("@/lib/errorHandler");
+          return extractApiResponseData(res);
+        }),
+        fetch("/api/teams").then(async (res) => {
+          if (!res.ok) {
+            const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+            const errorMessage = await extractApiErrorMessage(res);
+            throw new Error(errorMessage);
+          }
+          const { extractApiResponseData } = await import("@/lib/errorHandler");
+          return extractApiResponseData(res);
+        }),
       ])
         .then(([updatesData, teamsData]) => {
           setFetchedUpdates(updatesData);

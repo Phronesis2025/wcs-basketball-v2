@@ -250,7 +250,8 @@ export default function CoachProfile({
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
+      const { extractApiResponseData } = await import("@/lib/errorHandler");
+      const result = await extractApiResponseData<{ success: boolean; data: CoachProfileData; error?: string }>(response);
 
       if (!result.success) {
         throw new Error(result.error || "Failed to fetch profile data");
@@ -298,8 +299,9 @@ export default function CoachProfile({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        devError("Error updating profile:", errorData);
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        devError("Error updating profile:", errorMessage);
         return;
       }
 
@@ -359,8 +361,9 @@ export default function CoachProfile({
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to delete file");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
       toast.success("File deleted successfully!");

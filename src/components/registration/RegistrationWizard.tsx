@@ -492,10 +492,13 @@ export default function RegistrationWizard({
         });
 
         if (!response.ok) {
-          throw new Error("Failed to verify zip code");
+          const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+          const errorMessage = await extractApiErrorMessage(response);
+          throw new Error(errorMessage);
         }
 
-        const zipVerification = await response.json();
+        const { extractApiResponseData } = await import("@/lib/errorHandler");
+        const zipVerification = await extractApiResponseData<{ allowed: boolean; error?: string }>(response);
         
         if (!zipVerification.allowed) {
           setZipValidationError(

@@ -61,11 +61,13 @@ export default function CommitChart({ userId }: CommitChartProps) {
         );
 
         if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to fetch commits");
+          const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+          const errorMessage = await extractApiErrorMessage(response);
+          throw new Error(errorMessage);
         }
 
-        const result = await response.json();
+        const { extractApiResponseData } = await import("@/lib/errorHandler");
+        const result = await extractApiResponseData<CommitChartData>(response);
 
         if (mounted) {
           setChartData(result);
