@@ -7,6 +7,7 @@ import {
   getAdminPlayerRegistrationEmail,
   getWelcomePendingEmail,
 } from "@/lib/emailTemplates";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(req: Request) {
   try {
@@ -30,10 +31,7 @@ export async function POST(req: Request) {
       !last_name ||
       !birthdate
     ) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      throw new ValidationError("Missing required fields");
     }
 
     // Verify zip code is within service area
@@ -43,28 +41,20 @@ export async function POST(req: Request) {
         const zipVerification = await verifyZipCodeInRadius(parent_zip);
         
         if (!zipVerification.allowed) {
-          return NextResponse.json(
-            { 
-              error: zipVerification.error ||
-                "Registration is currently limited to residents within 50 miles of Salina, Kansas."
-            },
-            { status: 403 }
+          throw new ValidationError(
+            zipVerification.error ||
+            "Registration is currently limited to residents within 50 miles of Salina, Kansas.",
+            "parent_zip"
           );
         }
       } catch (err) {
         devError("register-player: Zip code verification error", err);
-        return NextResponse.json(
-          { error: "Unable to verify location. Please try again." },
-          { status: 500 }
-        );
+        throw new ApiError("Unable to verify location. Please try again.", 500, undefined, err);
       }
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database connection unavailable" },
-        { status: 500 }
-      );
+      throw new ApiError("Database connection unavailable", 500);
     }
 
     // Step 1: Create or get parent record with basic info only
@@ -126,20 +116,13 @@ export async function POST(req: Request) {
         .single();
 
       if (parentError) {
-        devError("register-player parent create error", parentError);
-        return NextResponse.json(
-          { error: "Failed to create parent record" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to create parent record", parentError);
       }
       parentRecord = newParent;
     }
 
     if (!parentRecord?.id) {
-      return NextResponse.json(
-        { error: "Failed to create or retrieve parent record" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to create or retrieve parent record");
     }
 
     // Step 2: Create player with parent_id foreign key
@@ -161,11 +144,7 @@ export async function POST(req: Request) {
       .single();
 
     if (error) {
-      devError("register-player insert error", error);
-      return NextResponse.json(
-        { error: "Failed to register player" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to register player", error);
     }
 
     // Email behavior:
@@ -236,9 +215,8 @@ export async function POST(req: Request) {
 
 
     devLog("register-player OK", { player_id: player.id });
-    return NextResponse.json({ success: true, player });
+    return formatSuccessResponse({ player });
   } catch (e) {
-    devError("register-player exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e);
   }
 }

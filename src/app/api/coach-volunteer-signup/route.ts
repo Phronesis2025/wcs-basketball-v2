@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError, validateInput } from "@/lib/security";
 import { sendEmail } from "@/lib/email";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(req: Request) {
   try {
@@ -28,10 +29,7 @@ export async function POST(req: Request) {
 
     // Validate required fields
     if (!first_name || !last_name || !email || !role || !background_check_consent) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      throw new ValidationError("Missing required fields");
     }
 
     // Verify zip code is within service area
@@ -41,20 +39,15 @@ export async function POST(req: Request) {
         const zipVerification = await verifyZipCodeInRadius(zip.trim());
         
         if (!zipVerification.allowed) {
-          return NextResponse.json(
-            { 
-              error: zipVerification.error ||
-                "Registration is currently limited to residents within 50 miles of Salina, Kansas."
-            },
-            { status: 403 }
+          throw new ValidationError(
+            zipVerification.error ||
+            "Registration is currently limited to residents within 50 miles of Salina, Kansas.",
+            "zip"
           );
         }
       } catch (err) {
         devError("coach-volunteer-signup: Zip code verification error", err);
-        return NextResponse.json(
-          { error: "Unable to verify location. Please try again." },
-          { status: 500 }
-        );
+        throw new ApiError("Unable to verify location. Please try again.", 500, undefined, err);
       }
     }
 
@@ -88,17 +81,11 @@ export async function POST(req: Request) {
         errors: profanityErrors,
         email,
       });
-      return NextResponse.json(
-        { error: profanityErrors.join(" ") },
-        { status: 400 }
-      );
+      throw new ValidationError(profanityErrors.join(" "));
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database connection unavailable" },
-        { status: 500 }
-      );
+      throw new ApiError("Database connection unavailable", 500);
     }
 
     // Get team name if child_team_id is provided
@@ -144,11 +131,7 @@ export async function POST(req: Request) {
       .single();
 
     if (insertError) {
-      devError("coach-volunteer-signup: database insert error", insertError);
-      return NextResponse.json(
-        { error: "Failed to save application" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to save application", insertError);
     }
 
     devLog("coach-volunteer-signup: application saved", {
@@ -309,17 +292,12 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Application submitted successfully",
       id: application.id,
     });
   } catch (error) {
-    devError("coach-volunteer-signup: unexpected error", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
