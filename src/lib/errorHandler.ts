@@ -351,3 +351,31 @@ export function formatSuccessResponse<T>(
   );
 }
 
+/**
+ * Convenience function to handle errors in API routes and return a NextResponse
+ * This combines handleError and formatErrorResponse for easier use
+ * 
+ * @param error - The error to handle
+ * @param request - Optional NextRequest for extracting context (userId, userAgent, etc.)
+ * @returns NextResponse with error details
+ */
+export function handleApiError(
+  error: unknown,
+  request?: { headers: Headers }
+): NextResponse {
+  const userId = request?.headers.get("x-user-id") || undefined;
+  const userAgent = request?.headers.get("user-agent") || undefined;
+  const ipAddress =
+    request?.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request?.headers.get("x-real-ip") ||
+    undefined;
+
+  const errorResponse = handleError(error, {
+    userId,
+    userAgent,
+    ipAddress,
+  });
+
+  return formatErrorResponse(errorResponse);
+}
+

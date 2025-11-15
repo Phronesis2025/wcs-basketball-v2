@@ -6,6 +6,7 @@ import {
 } from "@/lib/analytics";
 import { getUserRole } from "@/lib/actions";
 import { devLog, devError } from "@/lib/security";
+import { AuthenticationError, AuthorizationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,19 +14,13 @@ export async function GET(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
     const userData = await getUserRole(userId);
     if (!userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     const { searchParams } = new URL(request.url);
@@ -78,33 +73,23 @@ export async function GET(request: NextRequest) {
     // Also get error statistics
     const errorStats = await getErrorStatistics();
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        logs: result.logs,
-        pagination: {
-          page: result.page,
-          totalPages: result.totalPages,
-          total: result.total,
-          limit,
-        },
-        filters: {
-          severity,
-          resolved,
-          search,
-        },
-        statistics: errorStats,
+    return formatSuccessResponse({
+      logs: result.logs,
+      pagination: {
+        page: result.page,
+        totalPages: result.totalPages,
+        total: result.total,
+        limit,
       },
+      filters: {
+        severity,
+        resolved,
+        search,
+      },
+      statistics: errorStats,
     });
   } catch (error) {
-    devError("Error logs API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch error logs",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
@@ -114,19 +99,13 @@ export async function DELETE(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
     const userData = await getUserRole(userId);
     if (!userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     devLog("Clearing all errors for admin:", userId);
@@ -134,19 +113,11 @@ export async function DELETE(request: NextRequest) {
     // Clear all errors (mark as resolved)
     const resolvedCount = await clearAllErrors(userId);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: `Successfully resolved ${resolvedCount} errors`,
       resolvedCount,
     });
   } catch (error) {
-    devError("Clear errors API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to clear errors",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

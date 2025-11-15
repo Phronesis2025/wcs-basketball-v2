@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isWithinRadius, isInKansas } from "@/lib/locationVerification";
-import { devError } from "@/lib/security";
+import { handleApiError } from "@/lib/errorHandler";
 
 /**
  * Get client IP address from request headers
@@ -121,8 +121,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    devError("Location verification error:", error);
-    // Fail open - allow access if there's an error
+    // Fail open - allow access if there's an error (security feature)
+    // Log the error but don't block access
+    handleApiError(error, request);
     return NextResponse.json({
       allowed: true,
       reason: "Error verifying location, allowing access",
