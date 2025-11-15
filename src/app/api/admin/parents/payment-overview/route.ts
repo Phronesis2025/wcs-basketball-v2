@@ -28,6 +28,44 @@ interface ParentPaymentOverview {
   due_date: string | null;
 }
 
+// Type for player from database query (with parent_email, parent_id)
+interface PlayerWithParent {
+  parent_email: string | null;
+  parent_id: string | null;
+}
+
+// Type for parent from database
+interface ParentRecord {
+  id: string;
+  email: string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  address_line1: string | null;
+  address_line2: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+}
+
+// Type for child/player from database query
+interface ChildPlayer {
+  id: string;
+  name: string;
+  status: string | null;
+  team_id: string | null;
+  parent_id: string | null;
+  parent_email: string | null;
+  created_at: string;
+}
+
+// Type for payment from database
+interface PaymentRecord {
+  amount: number | string;
+  status: string | null;
+  created_at: string;
+}
+
 /**
  * Check if payment status is paid
  */
@@ -125,7 +163,7 @@ export async function GET(request: NextRequest) {
     const parentEmailsFromPlayers = new Set<string>();
     const parentIdsFromPlayers = new Set<string>();
     
-    (players || []).forEach((p: any) => {
+    (players || []).forEach((p: PlayerWithParent) => {
       if (p.parent_email) parentEmailsFromPlayers.add(p.parent_email);
       if (p.parent_id) parentIdsFromPlayers.add(p.parent_id);
     });
@@ -134,7 +172,7 @@ export async function GET(request: NextRequest) {
     const allParentIds = new Set<string>();
     const allParentEmails = new Set<string>();
 
-    (parentsFromTable || []).forEach((p: any) => {
+    (parentsFromTable || []).forEach((p: ParentRecord) => {
       allParentIds.add(p.id);
       allParentEmails.add(p.email);
     });
@@ -143,8 +181,8 @@ export async function GET(request: NextRequest) {
     parentIdsFromPlayers.forEach((id) => allParentIds.add(id));
 
     // Build parent data map
-    const parentMap = new Map<string, any>();
-    (parentsFromTable || []).forEach((p: any) => {
+    const parentMap = new Map<string, ParentRecord>();
+    (parentsFromTable || []).forEach((p: ParentRecord) => {
       parentMap.set(p.id, p);
       parentMap.set(p.email, p);
     });
@@ -153,7 +191,7 @@ export async function GET(request: NextRequest) {
     const parentOverviews: ParentPaymentOverview[] = await Promise.all(
       Array.from(allParentEmails).map(async (email: string) => {
         // Find parent record
-        let parentRecord = parentMap.get(email);
+        let parentRecord: ParentRecord | null = parentMap.get(email) || null;
         
         // If not found by email, try to find by ID
         if (!parentRecord) {
@@ -162,7 +200,7 @@ export async function GET(request: NextRequest) {
             .select("*")
             .eq("email", email)
             .maybeSingle();
-          parentRecord = parentByEmail;
+          parentRecord = parentByEmail as ParentRecord | null;
         }
 
         // Get all children for this parent (by parent_id or parent_email)
@@ -181,13 +219,13 @@ export async function GET(request: NextRequest) {
           return null;
         }
 
-        const childrenList = children || [];
+        const childrenList = (children || []) as ChildPlayer[];
         const approvedChildren = childrenList.filter(
-          (c: any) => c.status === "approved" || c.status === "active"
+          (c: ChildPlayer) => c.status === "approved" || c.status === "active"
         );
 
         // Get all payments for these children
-        const childIds = childrenList.map((c: any) => c.id);
+        const childIds = childrenList.map((c: ChildPlayer) => c.id);
         let totalPaid = 0;
         let hasPendingPayments = false;
         let lastPaymentDate: Date | null = null;
@@ -202,7 +240,7 @@ export async function GET(request: NextRequest) {
           if (paymentsError) {
             devError(`Error fetching payments for ${email}:`, paymentsError);
           } else {
-            (payments || []).forEach((p: any) => {
+            (payments || []).forEach((p: PaymentRecord) => {
               if (isPaid(p.status)) {
                 totalPaid += Number(p.amount) || 0;
                 if (!lastPaymentDate) {
@@ -226,7 +264,7 @@ export async function GET(request: NextRequest) {
           dueDate.setDate(dueDate.getDate() + 30);
         } else if (childrenList.length > 0) {
           // Use earliest child creation date
-          const earliestChild = childrenList.reduce((earliest: any, child: any) => {
+          const earliestChild = childrenList.reduce((earliest: ChildPlayer | null, child: ChildPlayer) => {
             const childDate = new Date(child.created_at);
             return !earliest || childDate < new Date(earliest.created_at)
               ? child
@@ -257,7 +295,7 @@ export async function GET(request: NextRequest) {
           city: parentRecord?.city || null,
           state: parentRecord?.state || null,
           zip: parentRecord?.zip || null,
-          players: childrenList.map((c: any) => ({
+          players: childrenList.map((c: ChildPlayer) => ({
             id: c.id,
             name: c.name,
             status: c.status,
@@ -287,6 +325,9 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+
+
 
 
 

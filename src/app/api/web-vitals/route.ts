@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Try to get user ID from auth if not provided
-    let userId = user_id;
+    const userId = user_id;
     if (!userId) {
       // Check if user is authenticated via headers
       const authHeader = request.headers.get("authorization");

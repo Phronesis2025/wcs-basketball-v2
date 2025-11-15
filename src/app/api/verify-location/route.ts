@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isWithinRadius, isInKansas } from "@/lib/locationVerification";
+import { devError } from "@/lib/security";
 
 /**
  * Get client IP address from request headers
@@ -52,7 +53,7 @@ async function getLocationFromIP(ip: string): Promise<{
 
     return null;
   } catch (error) {
-    console.error("Error fetching location from IP:", error);
+    devError("Error fetching location from IP:", error);
     return null;
   }
 }
@@ -120,7 +121,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Location verification error:", error);
+    devError("Location verification error:", error);
     // Fail open - allow access if there's an error
     return NextResponse.json({
       allowed: true,

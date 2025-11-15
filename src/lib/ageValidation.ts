@@ -42,7 +42,7 @@ export function normalizePlayerGrade(playerGrade: string | null | undefined): st
   const grade = playerGrade.trim();
   
   // If already in full format, return as-is
-  if (VALID_GRADE_LEVELS.includes(grade as any)) {
+  if ((VALID_GRADE_LEVELS as readonly string[]).includes(grade)) {
     return grade;
   }
   

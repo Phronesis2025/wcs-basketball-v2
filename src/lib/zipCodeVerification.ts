@@ -3,6 +3,8 @@
  * Converts zip codes to coordinates and verifies they're within service area
  */
 
+import { devError } from "./security";
+
 // Cache for zip code coordinates to reduce API calls
 const zipCodeCache = new Map<string, { lat: number; lng: number; timestamp: number }>();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -65,7 +67,7 @@ export async function getZipCodeCoordinates(
 
     return await getZipCodeCoordinatesFallback(cleanZip);
   } catch (error) {
-    console.error("Error geocoding zip code:", error);
+    devError("Error geocoding zip code:", error);
     // Try fallback
     return await getZipCodeCoordinatesFallback(cleanZip);
   }
@@ -113,7 +115,7 @@ async function getZipCodeCoordinatesFallback(
 
     return null;
   } catch (error) {
-    console.error("Error in fallback geocoding:", error);
+    devError("Error in fallback geocoding:", error);
     return null;
   }
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, ReactNode } from "react";
 import BasketballLoader from "./BasketballLoader";
 import { supabase } from "@/lib/supabaseClient";
+import { devError } from "@/lib/security";
 
 interface LocationGateProps {
   children: ReactNode;
@@ -28,7 +29,7 @@ export default function LocationGate({ children, onVerified }: LocationGateProps
         }
       } catch (err) {
         // Continue with location check if auth check fails
-        console.error("Error checking auth:", err);
+        devError("Error checking auth:", err);
       }
 
       // Check sessionStorage first (valid for current session)
@@ -69,7 +70,7 @@ export default function LocationGate({ children, onVerified }: LocationGateProps
           );
         }
       } catch (err) {
-        console.error("Location verification error:", err);
+        devError("Location verification error:", err);
         // On error, allow access but log the issue
         // This prevents blocking legitimate users if API is down
         setIsAllowed(true);

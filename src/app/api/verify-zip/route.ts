@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyZipCodeInRadius } from "@/lib/zipCodeVerification";
+import { devError } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Zip code verification API error:", error);
+    devError("Zip code verification API error:", error);
     return NextResponse.json(
       {
         allowed: false,

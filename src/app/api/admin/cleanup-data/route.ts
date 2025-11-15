@@ -2,6 +2,13 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 
+// Type for cleanup result from RPC function
+interface CleanupResult {
+  deleted_count?: number;
+  freed_bytes?: number;
+  error?: string;
+}
+
 // POST endpoint to run data cleanup functions
 // Should be called via cron job or manually by admins
 export async function POST(req: Request) {
@@ -30,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     // Run cleanup functions
-    const results: Record<string, any> = {};
+    const results: Record<string, CleanupResult> = {};
 
     // Cleanup old audit logs (12+ months)
     const { data: auditResult, error: auditError } = await supabaseAdmin.rpc(

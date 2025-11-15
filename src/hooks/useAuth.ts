@@ -5,9 +5,22 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 
+// Type for authenticated user with metadata
+interface AuthenticatedUser {
+  id: string;
+  email?: string;
+  user_metadata?: {
+    role?: string;
+    first_name?: string;
+    last_name?: string;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 interface AuthState {
   isAuthenticated: boolean;
-  user: any | null;
+  user: AuthenticatedUser | null;
   loading: boolean;
   isAdmin: boolean;
   userRole: string | null;

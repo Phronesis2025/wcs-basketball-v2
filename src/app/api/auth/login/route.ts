@@ -108,9 +108,9 @@ export async function POST(request: NextRequest) {
 
     // Track login event for analytics
     try {
-      console.log("🔍 Login API - About to call trackLogin for user:", data.user.id);
+      devLog("🔍 Login API - About to call trackLogin for user:", data.user.id);
       const { trackLogin } = await import("@/lib/analytics");
-      console.log("🔍 Login API - trackLogin function imported successfully");
+      devLog("🔍 Login API - trackLogin function imported successfully");
       await trackLogin(data.user.id, {
         ipAddress:
           request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -119,10 +119,9 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get("user-agent") || undefined,
         success: true,
       });
-      console.log("🔍 Login API - trackLogin completed successfully");
+      devLog("🔍 Login API - trackLogin completed successfully");
     } catch (trackingError) {
-      console.error("❌ Login API - Failed to track login event:", trackingError);
-      devError("Failed to track login event:", trackingError);
+      devError("❌ Login API - Failed to track login event:", trackingError);
       // Don't fail the login if tracking fails
     }
 

@@ -75,7 +75,7 @@ export async function PUT(
     devLog("Updating team:", { teamId, teamName, ageGroup, gender });
 
     // Debug team image update
-    console.log("🔍 Team Update API - Image Debug:", {
+    devLog("🔍 Team Update API - Image Debug:", {
       teamId,
       teamName,
       teamImageUrl,

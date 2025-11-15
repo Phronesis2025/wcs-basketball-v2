@@ -2,18 +2,24 @@
 
 import { Suspense } from "react";
 import RegistrationWizard from "@/components/registration/RegistrationWizard";
-import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import BasketballLoader from "@/components/BasketballLoader";
+import { devError } from "@/lib/security";
+
+interface PrefillData {
+  parent_email?: string;
+  parent_first_name?: string;
+  parent_last_name?: string;
+  parent_phone?: string;
+}
 
 function AddChildInner() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { isAuthenticated, user, loading: authLoading } = useAuth();
-  const [prefillData, setPrefillData] = useState<any>({});
+  const [prefillData, setPrefillData] = useState<PrefillData>({});
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -45,7 +51,7 @@ function AddChildInner() {
           }
         }
       } catch (error) {
-        console.error("Failed to load parent data:", error);
+        devError("Failed to load parent data:", error);
       }
     };
 
@@ -77,7 +83,7 @@ function AddChildInner() {
             Add Another Player
           </h1>
           <p className="text-gray-300 text-lg">
-            Your parent information has been pre-filled. Just complete your player's details below.
+            Your parent information has been pre-filled. Just complete your player&apos;s details below.
           </p>
         </div>
 

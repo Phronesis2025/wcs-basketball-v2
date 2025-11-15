@@ -64,6 +64,57 @@ export interface ParsedExcelData {
   warnings: ValidationError[];
 }
 
+// Type for raw Excel row data from XLSX library
+type RawExcelRow = Record<string, string | number | undefined>;
+
+// Type for normalized row data (all fields optional, matching ParsedPlayerRow structure)
+interface NormalizedRowData {
+  player_external_id?: string;
+  player_first_name?: string;
+  player_last_name?: string;
+  player_dob?: string;
+  player_gender?: string;
+  jersey_number?: string;
+  grade?: string;
+  school_name?: string;
+  shirt_size?: string;
+  position_preference?: string;
+  previous_experience?: string;
+  medical_allergies?: string;
+  medical_conditions?: string;
+  medical_medications?: string;
+  doctor_name?: string;
+  doctor_phone?: string;
+  emergency_contact?: string;
+  emergency_phone?: string;
+  team_name?: string;
+  season?: string;
+  parent1_email?: string;
+  parent1_first_name?: string;
+  parent1_last_name?: string;
+  parent1_phone?: string;
+  parent1_relationship?: string;
+  parent1_address_line1?: string;
+  parent1_address_line2?: string;
+  parent1_city?: string;
+  parent1_state?: string;
+  parent1_zip?: string;
+  parent1_emergency_contact?: string;
+  parent1_emergency_phone?: string;
+  parent2_email?: string;
+  parent2_first_name?: string;
+  parent2_last_name?: string;
+  parent2_phone?: string;
+  parent2_relationship?: string;
+  parent2_address_line1?: string;
+  parent2_address_line2?: string;
+  parent2_city?: string;
+  parent2_state?: string;
+  parent2_zip?: string;
+  parent2_emergency_contact?: string;
+  parent2_emergency_phone?: string;
+}
+
 /**
  * Parses an Excel file and returns structured data with validation
  */
@@ -96,14 +147,14 @@ export function parseExcelFile(file: File): Promise<ParsedExcelData> {
         const jsonData = XLSX.utils.sheet_to_json(worksheet, {
           defval: "", // Default value for empty cells
           raw: false, // Return as strings for consistent parsing
-        }) as any[];
+        }) as RawExcelRow[];
 
         // Validate and parse rows
         const rows: ParsedPlayerRow[] = [];
         const errors: ValidationError[] = [];
         const warnings: ValidationError[] = [];
 
-        jsonData.forEach((row: any, index: number) => {
+        jsonData.forEach((row: RawExcelRow, index: number) => {
           const rowNumber = index + 2; // +2 because row 1 is header, Excel rows are 1-based
 
           // Normalize field names (handle variations in header names)
@@ -196,8 +247,8 @@ export function parseExcelFile(file: File): Promise<ParsedExcelData> {
 /**
  * Normalizes row data by handling various header name formats
  */
-function normalizeRowData(row: any): any {
-  const normalized: any = {};
+function normalizeRowData(row: RawExcelRow): NormalizedRowData {
+  const normalized: NormalizedRowData = {};
 
   // Map various possible column names to standard names
   const fieldMappings: Record<string, string[]> = {
@@ -251,8 +302,9 @@ function normalizeRowData(row: any): any {
   Object.keys(fieldMappings).forEach((standardName) => {
     const possibleNames = fieldMappings[standardName];
     for (const possibleName of possibleNames) {
-      if (row[possibleName] !== undefined && row[possibleName] !== "") {
-        normalized[standardName] = row[possibleName];
+      const value = row[possibleName];
+      if (value !== undefined && value !== "") {
+        normalized[standardName as keyof NormalizedRowData] = String(value);
         break;
       }
     }
@@ -264,7 +316,7 @@ function normalizeRowData(row: any): any {
 /**
  * Validates a single row and returns errors
  */
-function validateRow(row: any, rowNumber: number): ValidationError[] {
+function validateRow(row: NormalizedRowData, rowNumber: number): ValidationError[] {
   const errors: ValidationError[] = [];
 
   // Required player fields
@@ -423,7 +475,7 @@ function validateRow(row: any, rowNumber: number): ValidationError[] {
 /**
  * Validates optional fields and returns warnings
  */
-function validateRowWarnings(row: any, rowNumber: number): ValidationError[] {
+function validateRowWarnings(row: NormalizedRowData, rowNumber: number): ValidationError[] {
   const warnings: ValidationError[] = [];
 
   // Warn if jersey_number is missing (optional but recommended)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getUserRole } from "@/lib/actions";
 import { devLog, devError } from "@/lib/security";
 import { subMonths, format, parseISO } from "date-fns";
+import { execSync } from "child_process";
 
 interface GitHubCommit {
   commit: {
@@ -31,7 +32,6 @@ async function getRepoInfo(): Promise<{ owner: string; repo: string } | null> {
   // Fallback: try to detect from git remote (only works in development)
   if (process.env.NODE_ENV === "development") {
     try {
-      const { execSync } = require("child_process");
       const remoteUrl = execSync("git config --get remote.origin.url", {
         encoding: "utf-8",
       }).trim();
@@ -89,15 +89,21 @@ async function fetchCommitsFromGitHub(
           throw new Error(`Repository ${owner}/${repo} not found`);
         }
         if (response.status === 403) {
-          const rateLimitRemaining = response.headers.get("x-ratelimit-remaining");
+          const rateLimitRemaining = response.headers.get(
+            "x-ratelimit-remaining"
+          );
           if (rateLimitRemaining === "0") {
             throw new Error(
               "GitHub API rate limit exceeded. Please add GITHUB_TOKEN environment variable."
             );
           }
-          throw new Error("GitHub API access forbidden. Check your token permissions.");
+          throw new Error(
+            "GitHub API access forbidden. Check your token permissions."
+          );
         }
-        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `GitHub API error: ${response.status} ${response.statusText}`
+        );
       }
 
       const commits: GitHubCommit[] = await response.json();
@@ -206,12 +212,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to fetch commits",
-        details:
-          error instanceof Error ? error.message : "Unknown error",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
   }
 }
-
-

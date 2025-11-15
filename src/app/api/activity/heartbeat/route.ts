@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError, devLog } from "@/lib/security";
 
+// Type for Supabase PostgREST error
+interface PostgRESTError {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+}
+
 // Update the user's last_active_at timestamp. This captures site activity beyond just logins.
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +33,7 @@ export async function POST(request: NextRequest) {
       .eq("id", userId)
       .limit(1);
     // If column is missing, avoid throwing 500; return non-fatal success
-    if (readErr && (readErr as any)?.code === "PGRST204") {
+    if (readErr && (readErr as PostgRESTError)?.code === "PGRST204") {
       devError("heartbeat: last_active_at column missing on users", readErr);
       return NextResponse.json({ success: true, updated: false, reason: "column_missing" });
     }
@@ -51,7 +59,7 @@ export async function POST(request: NextRequest) {
 
       if (error) {
         // Handle missing column gracefully
-        if ((error as any)?.code === "PGRST204") {
+        if ((error as PostgRESTError)?.code === "PGRST204") {
           devError("heartbeat: last_active_at column missing on users (update)", error);
           return NextResponse.json({ success: true, updated: false, reason: "column_missing" });
         }

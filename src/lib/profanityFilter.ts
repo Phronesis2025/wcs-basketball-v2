@@ -6,6 +6,8 @@
  * Only blocks truly offensive language, not legitimate words.
  */
 
+import { devLog } from "./security";
+
 /**
  * Focused list of explicit curse words only
  * Note: Slurs, hate speech, sexual/violent/drug terms are intentionally excluded.
@@ -211,13 +213,11 @@ export function validateInputForProfanity(
   }
 
   // Debug logging for development
-  if (process.env.NODE_ENV === "development") {
-    console.log(`Profanity detected in ${fieldName}:`, {
-      value,
-      detectedWords,
-      severity,
-    });
-  }
+  devLog(`Profanity detected in ${fieldName}:`, {
+    value,
+    detectedWords,
+    severity,
+  });
 
   const sanitizedValue = sanitizeProfanity(value);
 
