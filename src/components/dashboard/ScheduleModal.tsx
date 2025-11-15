@@ -1,8 +1,10 @@
 // src/components/dashboard/ScheduleModal.tsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import { Schedule, TeamUpdate, PracticeDrill } from "../../types/supabase";
-import { validateInput, devLog, devError } from "../../lib/security";
+import { devError } from "../../lib/security";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useScheduleModal } from "./schedule-modal/hooks/useScheduleModal";
+import RecurringScheduleConfig from "./schedule-modal/RecurringScheduleConfig";
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -25,614 +27,48 @@ export default function ScheduleModal({
   loading = false,
   selectedTeamId,
 }: ScheduleModalProps) {
-  const [activeTab, setActiveTab] = useState<
-    "Game" | "Practice" | "Update" | "Drill"
-  >("Game");
-
   // Lock scroll when modal is open
   useScrollLock(isOpen);
 
-  // Game form fields
-  const [gameType, setGameType] = useState<"game" | "tournament">("game");
-  const [gameDateTime, setGameDateTime] = useState("");
-  const [gameEndDateTime, setGameEndDateTime] = useState("");
-  const [gameOpponent, setGameOpponent] = useState("");
-  const [gameLocation, setGameLocation] = useState("");
-  const [gameComments, setGameComments] = useState("");
-
-  // Practice form fields
-  const [practiceTitle, setPracticeTitle] = useState("");
-  const [practiceDateTime, setPracticeDateTime] = useState("");
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurringType, setRecurringType] = useState<"count" | "date">("count");
-  const [recurringCount, setRecurringCount] = useState(4);
-  const [recurringEndDate, setRecurringEndDate] = useState("");
-  const [selectedDays, setSelectedDays] = useState<number[]>([]);
-  const [practiceDuration, setPracticeDuration] = useState("");
-  const [practiceLocation, setPracticeLocation] = useState("");
-  const [practiceComments, setPracticeComments] = useState("");
-
-  // Update form fields
-  const [updateTitle, setUpdateTitle] = useState("");
-  const [updateContent, setUpdateContent] = useState("");
-  const [updateDateTime, setUpdateDateTime] = useState("");
-  const [updateImage, setUpdateImage] = useState<File | null>(null);
-  const [updateImagePreview, setUpdateImagePreview] = useState<string | null>(
-    null
-  );
-  const [isImportant, setIsImportant] = useState(false);
-
-  // Drill form fields
-  const [drillTitle, setDrillTitle] = useState("");
-  const [drillSkills, setDrillSkills] = useState<string[]>([]);
-  const [drillEquipment, setDrillEquipment] = useState<string[]>([]);
-  const [drillTime, setDrillTime] = useState("");
-  const [drillInstructions, setDrillInstructions] = useState("");
-  const [drillAdditionalInfo, setDrillAdditionalInfo] = useState("");
-  const [drillBenefits, setDrillBenefits] = useState("");
-  const [drillDifficulty, setDrillDifficulty] = useState<
-    "Basic" | "Intermediate" | "Advanced" | "Expert"
-  >("Basic");
-  const [drillCategory, setDrillCategory] = useState<
-    "Drill" | "Warm-up" | "Conditioning" | "Skill Development" | "Team Building"
-  >("Drill");
-  const [drillImage, setDrillImage] = useState<File | null>(null);
-  const [drillImagePreview, setDrillImagePreview] = useState<string | null>(
-    null
-  );
-  const [drillYoutubeUrl, setDrillYoutubeUrl] = useState("");
-  const [updateImageError, setUpdateImageError] = useState<string | null>(null);
-  const [drillImageError, setDrillImageError] = useState<string | null>(null);
-  const [newSkill, setNewSkill] = useState("");
-  const [newEquipment, setNewEquipment] = useState("");
-  const [dateValidationError, setDateValidationError] = useState<string | null>(
-    null
-  );
-
-  // Predefined options (commented out for future use)
-  // const skillOptions = [
-  //   "Passing",
-  //   "Defensive stance & footwork",
-  //   "Shooting",
-  //   "Rebounding",
-  //   "Dribbling",
-  // ];
-
-  // const equipmentOptions = ["None", "Cones", "Markers", "Chairs"];
-
-  const days = [
-    { letter: "S", name: "Sunday" },
-    { letter: "M", name: "Monday" },
-    { letter: "T", name: "Tuesday" },
-    { letter: "W", name: "Wednesday" },
-    { letter: "T", name: "Thursday" },
-    { letter: "F", name: "Friday" },
-    { letter: "S", name: "Saturday" },
-  ];
-
-  const resetForms = React.useCallback(() => {
-    setGameType("game");
-    setGameDateTime("");
-    setGameEndDateTime("");
-    setGameOpponent("");
-    setGameLocation("");
-    setGameComments("");
-    setPracticeTitle("");
-    setPracticeDateTime("");
-    setIsRecurring(false);
-    setRecurringType("count");
-    setRecurringCount(4);
-    setRecurringEndDate("");
-    setSelectedDays([]);
-    setPracticeDuration("");
-    setPracticeLocation("");
-    setPracticeComments("");
-    setUpdateTitle("");
-    setUpdateContent("");
-    setUpdateDateTime("");
-    setUpdateImage(null);
-    setUpdateImagePreview(null);
-    setIsImportant(false);
-    setDrillTitle("");
-    setDrillSkills([]);
-    setDrillEquipment([]);
-    setNewSkill("");
-    setNewEquipment("");
-    setDrillTime("");
-    setDrillInstructions("");
-    setDrillAdditionalInfo("");
-    setDrillBenefits("");
-    setDrillDifficulty("Basic");
-    setDrillCategory("Drill");
-    setDrillImage(null);
-    setDrillImagePreview(null);
-    setDrillYoutubeUrl("");
-    setUpdateImageError(null);
-    setDrillImageError(null);
-    setDateValidationError(null);
-  }, []);
-
-  useEffect(() => {
-    if (isOpen) {
-      setActiveTab(type);
-    }
-  }, [isOpen, type]);
-
-  // Cleanup preview URLs on unmount
-  useEffect(() => {
-    return () => {
-      if (updateImagePreview) {
-        URL.revokeObjectURL(updateImagePreview);
-      }
-      if (drillImagePreview) {
-        URL.revokeObjectURL(drillImagePreview);
-      }
-    };
-  }, [updateImagePreview, drillImagePreview]);
+  // Use the custom hook for all form state and logic
+  const formState = useScheduleModal({
+    type,
+    editingData,
+    selectedTeamId,
+    onProfanityError,
+  });
 
   // Cleanup file inputs when modal closes
   useEffect(() => {
     if (!isOpen) {
-      setUpdateImage(null);
-      setUpdateImagePreview(null);
-      setDrillImage(null);
-      setDrillImagePreview(null);
+      formState.resetForms();
     }
-  }, [isOpen]);
+  }, [isOpen, formState]);
 
-  // File change handlers
-  const handleUpdateImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        setUpdateImageError("Please select a valid image file");
-        return;
-      }
-
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        setUpdateImageError("File size must be less than 5MB");
-        return;
-      }
-
-      setUpdateImage(file);
-      setUpdateImageError(null);
-
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setUpdateImagePreview(previewUrl);
-    }
-  };
-
-  const handleDrillImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith("image/")) {
-        setDrillImageError("Please select a valid image file");
-        return;
-      }
-
-      // Validate file size (5MB limit)
-      if (file.size > 5 * 1024 * 1024) {
-        setDrillImageError("File size must be less than 5MB");
-        return;
-      }
-
-      setDrillImage(file);
-      setDrillImageError(null);
-
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setDrillImagePreview(previewUrl);
-    }
-  };
-
+  // Cleanup preview URLs on unmount
   useEffect(() => {
-    if (editingData && isOpen) {
-      // Populate form fields based on editing data
-      if ("event_type" in editingData) {
-        // Schedule data
-        // Convert ISO timestamp to datetime-local format
-        const formatForDateTimeLocal = (isoString: string) => {
-          const date = new Date(isoString);
-          return date.toISOString().slice(0, 16); // "yyyy-MM-ddTHH:mm"
-        };
-
-        setGameDateTime(formatForDateTimeLocal(editingData.date_time));
-        setGameOpponent(editingData.opponent || "");
-        setGameLocation(editingData.location || "");
-        setGameComments(editingData.description || "");
-        setPracticeTitle(editingData.title || editingData.description || "");
-        setPracticeDateTime(formatForDateTimeLocal(editingData.date_time));
-        setPracticeLocation(editingData.location || "");
-        setPracticeComments(editingData.description || "");
-
-        // Set gameType based on event_type
-        if (editingData.event_type === "Tournament") {
-          setGameType("tournament");
-          // Set end date if available
-          if (editingData.end_date_time) {
-            setGameEndDateTime(
-              formatForDateTimeLocal(editingData.end_date_time)
-            );
-          }
-        } else {
-          setGameType("game");
-        }
-
-        // Check if this is a recurring practice
-        if (
-          editingData.event_type === "Practice" &&
-          editingData.recurring_group_id
-        ) {
-          setIsRecurring(true);
-
-          // Use enhanced recurring pattern data if available
-          if (
-            "recurringPattern" in editingData &&
-            editingData.recurringPattern
-          ) {
-            const pattern = editingData.recurringPattern as {
-              selectedDays: number[];
-              recurringType: "count" | "date";
-              recurringCount: number;
-              recurringEndDate?: string;
-            };
-            setRecurringType(pattern.recurringType);
-            setRecurringCount(pattern.recurringCount);
-            setSelectedDays(pattern.selectedDays);
-            if (pattern.recurringEndDate) {
-              // Convert ISO timestamp to date format for date input
-              const date = new Date(pattern.recurringEndDate);
-              setRecurringEndDate(date.toISOString().slice(0, 10)); // "yyyy-MM-dd"
-            }
-          } else {
-            // Fallback: extract from current event date
-            setRecurringType("date");
-            setRecurringCount(4);
-            const eventDate = new Date(editingData.date_time);
-            const dayOfWeek = eventDate.getDay();
-            setSelectedDays([dayOfWeek]);
-          }
-        } else {
-          setIsRecurring(false);
-        }
-      } else if ("content" in editingData) {
-        // Update data
-        setUpdateTitle(editingData.title || "");
-        setUpdateContent(editingData.content || "");
-        // Convert ISO timestamp to datetime-local format if date_time exists
-        if (editingData.date_time) {
-          const formatForDateTimeLocal = (isoString: string) => {
-            const date = new Date(isoString);
-            return date.toISOString().slice(0, 16); // "yyyy-MM-ddTHH:mm"
-          };
-          setUpdateDateTime(formatForDateTimeLocal(editingData.date_time));
-        }
-        // Handle existing image - we can't set a File object from URL, so we leave updateImage as null
-        // The user will need to re-select the file if they want to change it
-        setUpdateImage(null);
-      } else if ("skills" in editingData) {
-        // Practice drill data
-        setDrillTitle(editingData.title || "");
-        setDrillSkills(editingData.skills || []);
-        setDrillEquipment(editingData.equipment || []);
-        setDrillTime(editingData.time || "");
-        setDrillInstructions(editingData.instructions || "");
-        setDrillAdditionalInfo(editingData.additional_info || "");
-        setDrillBenefits(editingData.benefits || "");
-        setDrillDifficulty(
-          editingData.difficulty as
-            | "Basic"
-            | "Intermediate"
-            | "Advanced"
-            | "Expert"
-        );
-        setDrillCategory(
-          editingData.category as
-            | "Drill"
-            | "Warm-up"
-            | "Conditioning"
-            | "Skill Development"
-            | "Team Building"
-        );
-        setDrillYoutubeUrl(editingData.youtube_url || "");
+    return () => {
+      if (formState.updateImagePreview) {
+        URL.revokeObjectURL(formState.updateImagePreview);
       }
-    } else {
-      // Reset form when opening for new item
-      resetForms();
-    }
-  }, [editingData, isOpen, resetForms]);
-
-  // Scroll locking is handled by useScrollLock hook above
-
-  // Real-time validation for tournament dates
-  useEffect(() => {
-    if (gameType === "tournament" && gameDateTime && gameEndDateTime) {
-      const startDate = new Date(gameDateTime);
-      const endDate = new Date(gameEndDateTime);
-
-      if (endDate <= startDate) {
-        setDateValidationError("End date must be after start date");
-      } else {
-        setDateValidationError(null);
+      if (formState.drillImagePreview) {
+        URL.revokeObjectURL(formState.drillImagePreview);
       }
-    } else {
-      setDateValidationError(null);
-    }
-  }, [gameType, gameDateTime, gameEndDateTime]);
+    };
+  }, [formState.updateImagePreview, formState.drillImagePreview]);
+
+  // Form population and validation are handled by the hook
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
-    // IMPROVED WORKAROUND: Read datetime directly from DOM for all datetime inputs
-    const getDateTimeValue = (stateValue: string, inputSelector: string) => {
-      if (stateValue) return stateValue;
-      const input = document.querySelector(inputSelector) as HTMLInputElement;
-      return input?.value || "";
-    };
-
-    const actualGameDateTime = getDateTimeValue(
-      gameDateTime,
-      'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
-    );
-    const actualGameEndDateTime = getDateTimeValue(
-      gameEndDateTime,
-      'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
-    );
-    const actualPracticeDateTime = getDateTimeValue(
-      practiceDateTime,
-      'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
-    );
-    const actualUpdateDateTime = getDateTimeValue(
-      updateDateTime,
-      'input[type="datetime-local"][placeholder*="mm/dd/yyyy"]'
-    );
-
-    // Additional fallback - try to find any datetime input in the current form
-    const fallbackDateTime = () => {
-      const inputs = document.querySelectorAll('input[type="datetime-local"]');
-      for (const input of inputs) {
-        if (input.value && input.value.trim() !== "") {
-          devLog("Found datetime input with value:", input.value);
-          return input.value;
-        }
-      }
-      devLog("No datetime input found with value");
-      return "";
-    };
-
-    const finalPracticeDateTime = actualPracticeDateTime || fallbackDateTime();
-    const finalGameDateTime = actualGameDateTime || fallbackDateTime();
-    const finalUpdateDateTime = actualUpdateDateTime || fallbackDateTime();
-
-    // Debug logging
-    devLog("Form submission debug:", {
-      activeTab,
-      gameDateTime,
-      practiceDateTime,
-      updateDateTime,
-      actualGameDateTime,
-      actualPracticeDateTime,
-      actualUpdateDateTime,
-    });
-
-    // Validate all text inputs for profanity
-    const validationErrors: string[] = [];
-
-    // Validate based on active tab
-    if (activeTab === "Game") {
-      const opponentValidation = validateInput(gameOpponent, "opponent");
-      const locationValidation = validateInput(gameLocation, "location");
-      const commentsValidation = validateInput(gameComments, "comments");
-
-      if (!opponentValidation.isValid)
-        validationErrors.push(...opponentValidation.errors);
-      if (!locationValidation.isValid)
-        validationErrors.push(...locationValidation.errors);
-      if (!commentsValidation.isValid)
-        validationErrors.push(...commentsValidation.errors);
-
-      // Validate tournament end date
-      if (gameType === "tournament") {
-        if (!gameEndDateTime) {
-          validationErrors.push("Tournament end date and time is required");
-        } else {
-          // Check if end date is before start date
-          const startDate = new Date(finalGameDateTime);
-          const endDate = new Date(actualGameEndDateTime || gameEndDateTime);
-
-          if (endDate <= startDate) {
-            validationErrors.push(
-              "Tournament end date must be after the start date"
-            );
-          }
-        }
-      }
-    } else if (activeTab === "Practice") {
-      const titleValidation = validateInput(practiceTitle, "practice title");
-      const durationValidation = validateInput(practiceDuration, "duration");
-      const locationValidation = validateInput(practiceLocation, "location");
-      const commentsValidation = validateInput(practiceComments, "comments");
-
-      if (!titleValidation.isValid)
-        validationErrors.push(...titleValidation.errors);
-      if (!durationValidation.isValid)
-        validationErrors.push(...durationValidation.errors);
-      if (!locationValidation.isValid)
-        validationErrors.push(...locationValidation.errors);
-      if (!commentsValidation.isValid)
-        validationErrors.push(...commentsValidation.errors);
-    } else if (activeTab === "Update") {
-      const titleValidation = validateInput(updateTitle, "update title");
-      const contentValidation = validateInput(updateContent, "update content");
-
-      if (!titleValidation.isValid)
-        validationErrors.push(...titleValidation.errors);
-      if (!contentValidation.isValid)
-        validationErrors.push(...contentValidation.errors);
-    } else if (activeTab === "Drill") {
-      const titleValidation = validateInput(drillTitle, "drill title");
-      const instructionsValidation = validateInput(
-        drillInstructions,
-        "instructions"
-      );
-      const additionalInfoValidation = validateInput(
-        drillAdditionalInfo,
-        "additional info"
-      );
-      const benefitsValidation = validateInput(drillBenefits, "benefits");
-
-      if (!titleValidation.isValid)
-        validationErrors.push(...titleValidation.errors);
-      if (!instructionsValidation.isValid)
-        validationErrors.push(...instructionsValidation.errors);
-      if (!additionalInfoValidation.isValid)
-        validationErrors.push(...additionalInfoValidation.errors);
-      if (!benefitsValidation.isValid)
-        validationErrors.push(...benefitsValidation.errors);
-
-      // Validate YouTube URL if provided
-      if (drillYoutubeUrl.trim()) {
-        const youtubeUrlPattern = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
-        if (!youtubeUrlPattern.test(drillYoutubeUrl.trim())) {
-          validationErrors.push("Please enter a valid YouTube URL");
-        }
+    const formData = formState.handleSubmit(e);
+    if (formData) {
+      try {
+        onSubmit(formData);
+      } catch (error) {
+        devError("Error submitting form:", error);
       }
     }
-
-    // If there are validation errors, show them and prevent submission
-    if (validationErrors.length > 0) {
-      onProfanityError(validationErrors);
-      return;
-    }
-
-    let formData: Record<string, unknown> = {};
-
-    switch (activeTab) {
-      case "Game":
-        formData = {
-          // No formType column in schedules table; infer on client
-          event_type: gameType === "tournament" ? "Tournament" : "Game",
-          team_id: selectedTeamId,
-          date_time: finalGameDateTime,
-          opponent: gameOpponent,
-          location: gameLocation,
-          description: gameComments,
-          gameDateTime: finalGameDateTime, // Pass actual value for form submission
-          gameEndDateTime: actualGameEndDateTime || gameEndDateTime, // Pass processed end date for tournaments
-          gameLocation: gameLocation, // Pass with gameLocation key for validation
-          gameOpponent: gameOpponent, // Pass with gameOpponent key for validation
-          gameComments: gameComments, // Pass with gameComments key for validation
-          gameType: gameType, // Pass game type for validation
-        };
-        break;
-      case "Practice":
-        formData = {
-          // No formType column in schedules table; infer on client
-          event_type: "Practice",
-          team_id: selectedTeamId,
-          title: practiceTitle,
-          date_time: finalPracticeDateTime,
-          location: practiceLocation,
-          description: practiceComments,
-          duration: practiceDuration,
-          isRecurring,
-          recurringType,
-          recurringCount,
-          recurringEndDate,
-          selectedDays,
-          // Pass with expected key names for validation and parent handler
-          practiceDateTime: finalPracticeDateTime,
-          practiceTitle: practiceTitle,
-          practiceLocation: practiceLocation,
-          practiceComments: practiceComments,
-          practiceDuration: practiceDuration,
-        };
-        break;
-      case "Update":
-        formData = {
-          formType: "Update",
-          title: updateTitle,
-          content: updateContent,
-          date_time: finalUpdateDateTime || null,
-          image: updateImage,
-          isImportant,
-          // If date_time is provided, also save to schedules table
-          saveToSchedules: !!finalUpdateDateTime,
-        };
-        break;
-      case "Drill":
-        // Auto-add any typed values that weren't added to arrays
-        const finalSkills = [...drillSkills];
-        const finalEquipment = [...drillEquipment];
-
-        if (newSkill.trim() && !drillSkills.includes(newSkill.trim())) {
-          finalSkills.push(newSkill.trim());
-        }
-        if (
-          newEquipment.trim() &&
-          !drillEquipment.includes(newEquipment.trim())
-        ) {
-          finalEquipment.push(newEquipment.trim());
-        }
-
-        formData = {
-          formType: "Drill",
-          title: drillTitle,
-          skills: finalSkills,
-          equipment: finalEquipment,
-          time: drillTime,
-          instructions: drillInstructions,
-          additional_info: drillAdditionalInfo,
-          benefits: drillBenefits,
-          difficulty: drillDifficulty,
-          category: drillCategory,
-          image: drillImage,
-          youtube_url: drillYoutubeUrl.trim() || undefined,
-        };
-        break;
-    }
-
-    try {
-      onSubmit(formData);
-    } catch (error) {
-      devError("Error submitting form:", error);
-      // Error handling is managed by the parent component
-    }
-  };
-
-  const toggleDay = (dayIndex: number) => {
-    setSelectedDays((prev) =>
-      prev.includes(dayIndex)
-        ? prev.filter((d) => d !== dayIndex)
-        : [...prev, dayIndex]
-    );
-  };
-
-  // Drill helper functions
-  const addSkill = () => {
-    if (newSkill.trim() && !drillSkills.includes(newSkill.trim())) {
-      setDrillSkills([...drillSkills, newSkill.trim()]);
-      setNewSkill("");
-    }
-  };
-
-  const removeSkill = (skill: string) => {
-    setDrillSkills(drillSkills.filter((s) => s !== skill));
-  };
-
-  const addEquipment = () => {
-    if (newEquipment.trim() && !drillEquipment.includes(newEquipment.trim())) {
-      setDrillEquipment([...drillEquipment, newEquipment.trim()]);
-      setNewEquipment("");
-    }
-  };
-
-  const removeEquipment = (equipment: string) => {
-    setDrillEquipment(drillEquipment.filter((e) => e !== equipment));
   };
 
   if (!isOpen) return null;
@@ -669,9 +105,9 @@ export default function ScheduleModal({
           {(["Game", "Practice", "Update", "Drill"] as const).map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => formState.setActiveTab(tab)}
               className={`px-4 py-3 text-sm font-inter transition-colors ${
-                activeTab === tab
+                formState.activeTab === tab
                   ? "bg-blue-600 text-white"
                   : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
               }`}
@@ -684,21 +120,21 @@ export default function ScheduleModal({
         <form onSubmit={handleSubmit} className="p-3 sm:p-6">
           <div className="mb-6">
             <h3 className="text-xl font-bebas uppercase text-gray-900">
-              {activeTab}
+              {formState.activeTab}
             </h3>
           </div>
 
           {/* Game Form */}
-          {activeTab === "Game" && (
+          {formState.activeTab === "Game" && (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                   Event Type
                 </label>
                 <select
-                  value={gameType}
+                  value={formState.gameType}
                   onChange={(e) =>
-                    setGameType(e.target.value as "game" | "tournament")
+                    formState.setGameType(e.target.value as "game" | "tournament")
                   }
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
@@ -709,15 +145,15 @@ export default function ScheduleModal({
               </div>
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                  {gameType === "tournament"
+                  {formState.gameType === "tournament"
                     ? "Start Date & Time"
                     : "Date & Time"}
                 </label>
                 <div className="w-full">
                   <input
                     type="datetime-local"
-                    value={gameDateTime}
-                    onChange={(e) => setGameDateTime(e.target.value)}
+                    value={formState.gameDateTime}
+                    onChange={(e) => formState.setGameDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
                     className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
                     style={{ width: "100%", maxWidth: "100%" }}
@@ -725,7 +161,7 @@ export default function ScheduleModal({
                   />
                 </div>
               </div>
-              {gameType === "tournament" && (
+              {formState.gameType === "tournament" && (
                 <div>
                   <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
                     End Date & Time
@@ -733,20 +169,20 @@ export default function ScheduleModal({
                   <div className="w-full">
                     <input
                       type="datetime-local"
-                      value={gameEndDateTime}
-                      onChange={(e) => setGameEndDateTime(e.target.value)}
+                      value={formState.gameEndDateTime}
+                      onChange={(e) => formState.setGameEndDateTime(e.target.value)}
                       placeholder="mm/dd/yyyy --:-- --"
                       className={`block w-full max-w-full p-3 border rounded-md focus:outline-none focus:ring-2 text-gray-900 appearance-none overflow-hidden ${
-                        dateValidationError
+                        formState.dateValidationError
                           ? "border-red-500 focus:ring-red-500"
                           : "border-gray-300 focus:ring-blue-500"
                       }`}
                       style={{ width: "100%", maxWidth: "100%" }}
                       required
                     />
-                    {dateValidationError && (
+                    {formState.dateValidationError && (
                       <p className="text-red-500 text-sm mt-1 font-medium">
-                        {dateValidationError}
+                        {formState.dateValidationError}
                       </p>
                     )}
                   </div>
@@ -758,8 +194,8 @@ export default function ScheduleModal({
                 </label>
                 <input
                   type="text"
-                  value={gameOpponent}
-                  onChange={(e) => setGameOpponent(e.target.value)}
+                  value={formState.gameOpponent}
+                  onChange={(e) => formState.setGameOpponent(e.target.value)}
                   placeholder="eg. Central 7th grade"
                   className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   style={{ width: "100%", maxWidth: "100%" }}
@@ -771,8 +207,8 @@ export default function ScheduleModal({
                 </label>
                 <input
                   type="text"
-                  value={gameLocation}
-                  onChange={(e) => setGameLocation(e.target.value)}
+                  value={formState.gameLocation}
+                  onChange={(e) => formState.setGameLocation(e.target.value)}
                   placeholder="eg. Salina South Gym"
                   className="w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   style={{ width: "100%", maxWidth: "100%" }}
@@ -784,8 +220,8 @@ export default function ScheduleModal({
                   Comments (optional)
                 </label>
                 <textarea
-                  value={gameComments}
-                  onChange={(e) => setGameComments(e.target.value)}
+                  value={formState.gameComments}
+                  onChange={(e) => formState.setGameComments(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   rows={3}
                 />
@@ -794,7 +230,7 @@ export default function ScheduleModal({
           )}
 
           {/* Practice Form */}
-          {activeTab === "Practice" && (
+          {formState.activeTab === "Practice" && (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
@@ -802,8 +238,8 @@ export default function ScheduleModal({
                 </label>
                 <input
                   type="text"
-                  value={practiceTitle}
-                  onChange={(e) => setPracticeTitle(e.target.value)}
+                  value={formState.practiceTitle}
+                  onChange={(e) => formState.setPracticeTitle(e.target.value)}
                   placeholder="eg. Shooting Drills"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
@@ -815,8 +251,8 @@ export default function ScheduleModal({
                 <div className="w-full">
                   <input
                     type="datetime-local"
-                    value={practiceDateTime}
-                    onChange={(e) => setPracticeDateTime(e.target.value)}
+                    value={formState.practiceDateTime}
+                    onChange={(e) => formState.setPracticeDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
                     className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
                     style={{ width: "100%", maxWidth: "100%" }}
@@ -826,118 +262,18 @@ export default function ScheduleModal({
               </div>
 
               {/* Recurring Options */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex items-center space-x-3 mb-4">
-                  <input
-                    type="checkbox"
-                    id="is-recurring"
-                    checked={isRecurring}
-                    onChange={(e) => setIsRecurring(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label
-                    htmlFor="is-recurring"
-                    className="text-sm font-inter font-medium text-gray-700"
-                  >
-                    Reoccurring
-                  </label>
-                </div>
-
-                {isRecurring && (
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                        Every
-                      </label>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="number"
-                          min="1"
-                          max="4"
-                          value="1"
-                          className="w-16 p-2 border border-gray-300 rounded-md text-center text-gray-900"
-                          disabled
-                        />
-                        <select className="p-2 border border-gray-300 rounded-md text-gray-900">
-                          <option value="week">Week(s)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                        Repeat on:
-                      </label>
-                      <div className="flex space-x-2">
-                        {days.map((day, index) => (
-                          <button
-                            key={`${day.name}-${index}`}
-                            type="button"
-                            onClick={() => toggleDay(index)}
-                            className={`w-10 h-10 rounded-full text-xs font-medium transition-colors ${
-                              selectedDays.includes(index)
-                                ? "bg-blue-600 text-white"
-                                : "bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
-                            }`}
-                            title={day.name}
-                          >
-                            {day.letter}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
-                        Ends
-                      </label>
-                      <div className="space-y-2">
-                        <label className="flex items-center space-x-3">
-                          <input
-                            type="radio"
-                            name="end-option"
-                            value="count"
-                            checked={recurringType === "count"}
-                            onChange={() => setRecurringType("count")}
-                            className="w-4 h-4 text-blue-600 border-gray-300"
-                          />
-                          <span className="text-sm text-gray-700">After</span>
-                          <input
-                            type="number"
-                            min="2"
-                            max="52"
-                            value={recurringCount}
-                            onChange={(e) =>
-                              setRecurringCount(parseInt(e.target.value) || 4)
-                            }
-                            className="w-16 p-2 border border-gray-300 rounded-md text-center text-gray-900"
-                          />
-                          <span className="text-sm text-gray-700">times</span>
-                        </label>
-                        <label className="flex items-center space-x-3">
-                          <input
-                            type="radio"
-                            name="end-option"
-                            value="date"
-                            checked={recurringType === "date"}
-                            onChange={() => setRecurringType("date")}
-                            className="w-4 h-4 text-blue-600 border-gray-300"
-                          />
-                          <span className="text-sm text-gray-700">On</span>
-                          <input
-                            type="date"
-                            value={recurringEndDate}
-                            onChange={(e) =>
-                              setRecurringEndDate(e.target.value)
-                            }
-                            className="p-2 border border-gray-300 rounded-md text-gray-900"
-                          />
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              <RecurringScheduleConfig
+                isRecurring={formState.isRecurring}
+                onRecurringChange={formState.setIsRecurring}
+                recurringType={formState.recurringType}
+                onRecurringTypeChange={formState.setRecurringType}
+                recurringCount={formState.recurringCount}
+                onRecurringCountChange={formState.setRecurringCount}
+                recurringEndDate={formState.recurringEndDate}
+                onRecurringEndDateChange={formState.setRecurringEndDate}
+                selectedDays={formState.selectedDays}
+                onToggleDay={formState.toggleDay}
+              />
 
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
@@ -945,8 +281,8 @@ export default function ScheduleModal({
                 </label>
                 <input
                   type="text"
-                  value={practiceDuration}
-                  onChange={(e) => setPracticeDuration(e.target.value)}
+                  value={formState.practiceDuration}
+                  onChange={(e) => formState.setPracticeDuration(e.target.value)}
                   placeholder="eg. 90 min"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
@@ -957,8 +293,8 @@ export default function ScheduleModal({
                 </label>
                 <input
                   type="text"
-                  value={practiceLocation}
-                  onChange={(e) => setPracticeLocation(e.target.value)}
+                  value={formState.practiceLocation}
+                  onChange={(e) => formState.setPracticeLocation(e.target.value)}
                   placeholder="eg. Salina South Gym"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
@@ -969,8 +305,8 @@ export default function ScheduleModal({
                   Comments (optional)
                 </label>
                 <textarea
-                  value={practiceComments}
-                  onChange={(e) => setPracticeComments(e.target.value)}
+                  value={formState.practiceComments}
+                  onChange={(e) => formState.setPracticeComments(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   rows={3}
                 />
@@ -979,7 +315,7 @@ export default function ScheduleModal({
           )}
 
           {/* Update Form */}
-          {activeTab === "Update" && (
+          {formState.activeTab === "Update" && (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-inter font-medium text-gray-700 mb-2">
@@ -987,8 +323,8 @@ export default function ScheduleModal({
                 </label>
                 <input
                   type="text"
-                  value={updateTitle}
-                  onChange={(e) => setUpdateTitle(e.target.value)}
+                  value={formState.updateTitle}
+                  onChange={(e) => formState.setUpdateTitle(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
                 />
@@ -1000,8 +336,8 @@ export default function ScheduleModal({
                 <div className="w-full">
                   <input
                     type="datetime-local"
-                    value={updateDateTime}
-                    onChange={(e) => setUpdateDateTime(e.target.value)}
+                    value={formState.updateDateTime}
+                    onChange={(e) => formState.setUpdateDateTime(e.target.value)}
                     placeholder="mm/dd/yyyy --:-- --"
                     className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
                     style={{ width: "100%", maxWidth: "100%" }}
@@ -1017,8 +353,8 @@ export default function ScheduleModal({
                   Content
                 </label>
                 <textarea
-                  value={updateContent}
-                  onChange={(e) => setUpdateContent(e.target.value)}
+                  value={formState.updateContent}
+                  onChange={(e) => formState.setUpdateContent(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   rows={4}
                   required
@@ -1030,10 +366,10 @@ export default function ScheduleModal({
                 </label>
 
                 {/* Image Preview */}
-                {updateImagePreview && (
+                {formState.updateImagePreview && (
                   <div className="mb-4">
                     <img
-                      src={updateImagePreview}
+                      src={formState.updateImagePreview}
                       alt="New update image"
                       className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                     />
@@ -1049,7 +385,7 @@ export default function ScheduleModal({
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleUpdateImageChange}
+                      onChange={formState.handleUpdateImageChange}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                       id="update-image-upload"
                     />
@@ -1090,9 +426,9 @@ export default function ScheduleModal({
                       </div>
                     </div>
                   </div>
-                  {updateImageError && (
+                  {formState.updateImageError && (
                     <p className="text-[red] text-sm mt-1 font-medium">
-                      {updateImageError}
+                      {formState.updateImageError}
                     </p>
                   )}
                 </div>
@@ -1101,8 +437,8 @@ export default function ScheduleModal({
                 <input
                   type="checkbox"
                   id="is-important"
-                  checked={isImportant}
-                  onChange={(e) => setIsImportant(e.target.checked)}
+                  checked={formState.isImportant}
+                  onChange={(e) => formState.setIsImportant(e.target.checked)}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <label
@@ -1116,7 +452,7 @@ export default function ScheduleModal({
           )}
 
           {/* Drill Form */}
-          {activeTab === "Drill" && (
+          {formState.activeTab === "Drill" && (
             <div className="space-y-6">
               {/* Title */}
               <div>
@@ -1125,8 +461,8 @@ export default function ScheduleModal({
                 </label>
                 <input
                   type="text"
-                  value={drillTitle}
-                  onChange={(e) => setDrillTitle(e.target.value)}
+                  value={formState.drillTitle}
+                  onChange={(e) => formState.setDrillTitle(e.target.value)}
                   placeholder="e.g., Lightning Pass Relay"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   required
@@ -1140,8 +476,8 @@ export default function ScheduleModal({
                 </label>
                 <input
                   type="url"
-                  value={drillYoutubeUrl}
-                  onChange={(e) => setDrillYoutubeUrl(e.target.value)}
+                  value={formState.drillYoutubeUrl}
+                  onChange={(e) => formState.setDrillYoutubeUrl(e.target.value)}
                   placeholder="e.g., https://www.youtube.com/watch?v=VIDEO_ID"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 />
@@ -1161,24 +497,24 @@ export default function ScheduleModal({
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        value={newSkill}
-                        onChange={(e) => setNewSkill(e.target.value)}
+                        value={formState.newSkill}
+                        onChange={(e) => formState.setNewSkill(e.target.value)}
                         placeholder="e.g., Passing"
                         className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         onKeyPress={(e) =>
-                          e.key === "Enter" && (e.preventDefault(), addSkill())
+                          e.key === "Enter" && (e.preventDefault(), formState.addSkill())
                         }
                       />
                       <button
                         type="button"
-                        onClick={addSkill}
+                        onClick={formState.addSkill}
                         className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
                       >
                         Add
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {drillSkills.map((skill, index) => (
+                      {formState.drillSkills.map((skill, index) => (
                         <span
                           key={index}
                           className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm"
@@ -1186,7 +522,7 @@ export default function ScheduleModal({
                           {skill}
                           <button
                             type="button"
-                            onClick={() => removeSkill(skill)}
+                            onClick={() => formState.removeSkill(skill)}
                             className="text-blue-600 hover:text-blue-800"
                           >
                             ×
@@ -1206,25 +542,25 @@ export default function ScheduleModal({
                     <div className="flex gap-2">
                       <input
                         type="text"
-                        value={newEquipment}
-                        onChange={(e) => setNewEquipment(e.target.value)}
+                        value={formState.newEquipment}
+                        onChange={(e) => formState.setNewEquipment(e.target.value)}
                         placeholder="e.g., cones"
                         className="flex-1 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                         onKeyPress={(e) =>
                           e.key === "Enter" &&
-                          (e.preventDefault(), addEquipment())
+                          (e.preventDefault(), formState.addEquipment())
                         }
                       />
                       <button
                         type="button"
-                        onClick={addEquipment}
+                        onClick={formState.addEquipment}
                         className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
                       >
                         Add
                       </button>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {drillEquipment.map((equipment, index) => (
+                      {formState.drillEquipment.map((equipment, index) => (
                         <span
                           key={index}
                           className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-sm"
@@ -1232,7 +568,7 @@ export default function ScheduleModal({
                           {equipment}
                           <button
                             type="button"
-                            onClick={() => removeEquipment(equipment)}
+                            onClick={() => formState.removeEquipment(equipment)}
                             className="text-green-600 hover:text-green-800"
                           >
                             ×
@@ -1252,8 +588,8 @@ export default function ScheduleModal({
                   </label>
                   <input
                     type="text"
-                    value={drillTime}
-                    onChange={(e) => setDrillTime(e.target.value)}
+                    value={formState.drillTime}
+                    onChange={(e) => formState.setDrillTime(e.target.value)}
                     placeholder="e.g., 10 minutes"
                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                     required
@@ -1264,9 +600,9 @@ export default function ScheduleModal({
                     Difficulty *
                   </label>
                   <select
-                    value={drillDifficulty}
+                    value={formState.drillDifficulty}
                     onChange={(e) =>
-                      setDrillDifficulty(
+                      formState.setDrillDifficulty(
                         e.target.value as
                           | "Basic"
                           | "Intermediate"
@@ -1287,9 +623,9 @@ export default function ScheduleModal({
                     Category *
                   </label>
                   <select
-                    value={drillCategory}
+                    value={formState.drillCategory}
                     onChange={(e) =>
-                      setDrillCategory(
+                      formState.setDrillCategory(
                         e.target.value as
                           | "Drill"
                           | "Warm-up"
@@ -1315,8 +651,8 @@ export default function ScheduleModal({
                   Instructions *
                 </label>
                 <textarea
-                  value={drillInstructions}
-                  onChange={(e) => setDrillInstructions(e.target.value)}
+                  value={formState.drillInstructions}
+                  onChange={(e) => formState.setDrillInstructions(e.target.value)}
                   placeholder="Detailed step-by-step instructions for the drill..."
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   rows={6}
@@ -1330,8 +666,8 @@ export default function ScheduleModal({
                   Additional Information
                 </label>
                 <textarea
-                  value={drillAdditionalInfo}
-                  onChange={(e) => setDrillAdditionalInfo(e.target.value)}
+                  value={formState.drillAdditionalInfo}
+                  onChange={(e) => formState.setDrillAdditionalInfo(e.target.value)}
                   placeholder="Tips, variations, age-specific modifications, etc..."
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   rows={4}
@@ -1344,8 +680,8 @@ export default function ScheduleModal({
                   Benefits *
                 </label>
                 <textarea
-                  value={drillBenefits}
-                  onChange={(e) => setDrillBenefits(e.target.value)}
+                  value={formState.drillBenefits}
+                  onChange={(e) => formState.setDrillBenefits(e.target.value)}
                   placeholder="What skills and abilities does this drill develop?"
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   rows={3}
@@ -1360,10 +696,10 @@ export default function ScheduleModal({
                 </label>
 
                 {/* Image Preview */}
-                {drillImagePreview && (
+                {formState.drillImagePreview && (
                   <div className="mb-4">
                     <img
-                      src={drillImagePreview}
+                      src={formState.drillImagePreview}
                       alt="New drill image"
                       className="w-32 h-32 object-cover rounded-lg border border-gray-300"
                     />
@@ -1380,7 +716,7 @@ export default function ScheduleModal({
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleDrillImageChange}
+                        onChange={formState.handleDrillImageChange}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         id="drill-image-upload"
                         key={`drill-upload-${
@@ -1427,9 +763,9 @@ export default function ScheduleModal({
                       </div>
                     </label>
                   </div>
-                  {drillImageError && (
+                  {formState.drillImageError && (
                     <p className="text-[red] text-sm mt-1 font-medium">
-                      {drillImageError}
+                      {formState.drillImageError}
                     </p>
                   )}
                 </div>
@@ -1446,13 +782,13 @@ export default function ScheduleModal({
             >
               {loading
                 ? "Saving..."
-                : activeTab === "Drill"
+                : formState.activeTab === "Drill"
                 ? "Post Drill"
-                : activeTab === "Game"
+                : formState.activeTab === "Game"
                 ? `Schedule ${
-                    gameType === "tournament" ? "Tournament" : "Game"
+                    formState.gameType === "tournament" ? "Tournament" : "Game"
                   }`
-                : `Schedule ${activeTab}`}
+                : `Schedule ${formState.activeTab}`}
             </button>
           </div>
         </form>
