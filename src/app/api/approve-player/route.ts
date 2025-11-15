@@ -7,6 +7,7 @@ import {
   getPlayerOnHoldEmail,
   getPlayerRejectedEmail,
 } from "@/lib/emailTemplates";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(req: Request) {
   try {
@@ -14,10 +15,7 @@ export async function POST(req: Request) {
     const { player_id, team_id, status = "approved", rejection_reason, on_hold_reason } = body || {};
     
     if (!player_id) {
-      return NextResponse.json(
-        { error: "player_id required" },
-        { status: 400 }
-      );
+      throw new ValidationError("player_id required");
     }
 
     // Get player info before update (include parent_id for email fix)
@@ -28,11 +26,7 @@ export async function POST(req: Request) {
       .single();
 
     if (fetchError || !player) {
-      devError("approve-player: Fetch error", fetchError);
-      return NextResponse.json(
-        { error: "Player not found" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Player not found");
     }
 
     // Prepare update object
@@ -61,11 +55,7 @@ export async function POST(req: Request) {
       .single();
 
     if (error || !updated) {
-      devError("approve-player update error", error);
-      return NextResponse.json(
-        { error: "Failed to update player status" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update player status", error);
     }
 
     // Get team name for emails/notifications
@@ -230,12 +220,8 @@ export async function POST(req: Request) {
 
 
     devLog("approve-player OK", { player_id, status });
-    return NextResponse.json({
-      success: true,
-      player: updated,
-    });
+    return formatSuccessResponse({ player: updated });
   } catch (e) {
-    devError("approve-player exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e);
   }
 }

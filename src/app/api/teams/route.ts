@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../lib/supabaseClient";
 import { devError } from "../../../lib/security";
+import { DatabaseError, handleApiError, formatSuccessResponse } from "../../../lib/errorHandler";
 
 export async function GET() {
   try {
@@ -61,22 +62,14 @@ export async function GET() {
         .order("name", { ascending: true });
 
       if (fallbackError) {
-        devError("Error fetching teams:", fallbackError);
-        return NextResponse.json(
-          { error: "Failed to fetch teams" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to fetch teams", fallbackError);
       }
 
       // Add default is_active: true to all teams
       teams =
         teamsFallback?.map((team) => ({ ...team, is_active: true })) || [];
     } else if (error) {
-      devError("Error fetching teams:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch teams" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch teams", error);
     }
 
     // Transform the data to include coach names, filtering out inactive coaches
@@ -105,17 +98,11 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(transformedTeams, {
-      headers: {
-        // Cache for 60 seconds, then revalidate in background
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
-      },
-    });
+    const response = formatSuccessResponse(transformedTeams);
+    // Add cache headers
+    response.headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=120");
+    return response;
   } catch (error) {
-    devError("Error fetching teams:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch teams" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

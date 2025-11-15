@@ -1,23 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function PUT(request: NextRequest) {
   try {
     const { userId, updates } = await request.json();
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "User ID is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("User ID is required");
     }
 
     if (!updates || Object.keys(updates).length === 0) {
-      return NextResponse.json(
-        { error: "No updates provided" },
-        { status: 400 }
-      );
+      throw new ValidationError("No updates provided");
     }
 
     devLog("Updating profile for user:", userId, "with updates:", updates);
@@ -30,8 +25,7 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (coachError) {
-      devError("Error fetching coach data:", coachError);
-      return NextResponse.json({ error: "Coach not found" }, { status: 404 });
+      throw new NotFoundError("Coach not found");
     }
 
     // Prepare updates for coaches table
@@ -60,11 +54,7 @@ export async function PUT(request: NextRequest) {
         });
 
       if (authError) {
-        devError("Error updating email in auth:", authError);
-        return NextResponse.json(
-          { error: "Failed to update email" },
-          { status: 500 }
-        );
+        throw new ApiError("Failed to update email", 500, undefined, authError);
       }
     }
 
@@ -76,11 +66,7 @@ export async function PUT(request: NextRequest) {
         .eq("id", coachData.id);
 
       if (updateCoachError) {
-        devError("Error updating coach data:", updateCoachError);
-        return NextResponse.json(
-          { error: "Failed to update coach information" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to update coach information", updateCoachError);
       }
     }
 
@@ -92,28 +78,16 @@ export async function PUT(request: NextRequest) {
         .eq("id", userId);
 
       if (updateUserError) {
-        devError("Error updating user data:", updateUserError);
-        return NextResponse.json(
-          { error: "Failed to update user information" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to update user information", updateUserError);
       }
     }
 
     devLog("Profile updated successfully for user:", userId);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Profile updated successfully",
     });
   } catch (error) {
-    devError("Update profile API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to update profile",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

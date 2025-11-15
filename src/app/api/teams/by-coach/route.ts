@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,14 +9,11 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+      throw new ValidationError("Missing userId");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const { data, error } = await supabaseAdmin
@@ -41,8 +39,7 @@ export async function GET(request: NextRequest) {
       .eq("teams.is_deleted", false);
 
     if (error) {
-      devError("API teams/by-coach fetch error:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new DatabaseError("Failed to fetch teams for coach", error);
     }
 
     const teams = (data || []).map((item) => {
@@ -68,12 +65,8 @@ export async function GET(request: NextRequest) {
       (team, index, self) => index === self.findIndex((t) => t.id === team.id)
     );
 
-    return NextResponse.json(uniqueTeams);
+    return formatSuccessResponse(uniqueTeams);
   } catch (err) {
-    devError("Unexpected error in /api/teams/by-coach:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch teams for coach" },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }

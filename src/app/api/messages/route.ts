@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError, sanitizeInput } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // Extract @mentions from message content
 function extractMentions(content: string): string[] {
@@ -99,17 +100,11 @@ export async function POST(request: NextRequest) {
     const { content, authorId, authorName } = await request.json();
 
     if (!content || !authorId || !authorName) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      throw new ValidationError("Missing required fields");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const sanitizedContent = sanitizeInput(String(content).trim());
@@ -132,8 +127,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      devError("[API] Create message failed:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new DatabaseError("Failed to create message", error);
     }
 
     // Process mentions after successful message creation
@@ -149,12 +143,8 @@ export async function POST(request: NextRequest) {
       // Don't fail the message creation if mention processing fails
     }
 
-    return NextResponse.json(data);
+    return formatSuccessResponse(data);
   } catch (err) {
-    devError("[API] Unexpected error creating message:", err);
-    return NextResponse.json(
-      { error: "Failed to create message" },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }
