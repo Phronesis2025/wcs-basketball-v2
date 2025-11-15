@@ -11,6 +11,26 @@ import { devError } from "./security";
 import { logErrorToDatabase, logServerError, ErrorSeverity } from "./errorLogger";
 
 /**
+ * Standardized API error response format
+ */
+export interface ApiErrorResponse {
+  error: string;
+  message?: string;
+  field?: string;
+  code?: string;
+  details?: unknown;
+}
+
+/**
+ * Standardized API success response format
+ */
+export interface ApiSuccessResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  message?: string;
+}
+
+/**
  * Custom error classes for different error types
  */
 
@@ -377,5 +397,148 @@ export function handleApiError(
   });
 
   return formatErrorResponse(errorResponse);
+}
+
+/**
+ * Extract error message from an API response (for use in components)
+ * Handles both standardized error format and legacy formats for backward compatibility
+ * 
+ * @param response - The Response object from fetch
+ * @returns Promise that resolves to the error message string
+ * @throws Error if response cannot be parsed
+ * 
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/endpoint');
+ * if (!response.ok) {
+ *   const errorMessage = await extractApiErrorMessage(response);
+ *   setErrors({ general: errorMessage });
+ * }
+ * ```
+ */
+export async function extractApiErrorMessage(response: Response): Promise<string> {
+  try {
+    const data = await response.json();
+    
+    // Handle standardized error format (from formatErrorResponse)
+    if (data.error?.message) {
+      return data.error.message;
+    }
+    
+    // Handle legacy error format (direct error field)
+    if (data.error && typeof data.error === "string") {
+      return data.error;
+    }
+    
+    // Handle error field in root
+    if (typeof data.error === "string") {
+      return data.error;
+    }
+    
+    // Handle message field
+    if (data.message && typeof data.message === "string") {
+      return data.message;
+    }
+    
+    // Fallback to status text or generic message
+    return response.statusText || "An error occurred. Please try again.";
+  } catch (parseError) {
+    // If JSON parsing fails, return status text or generic message
+    devError("Failed to parse error response:", parseError);
+    return response.statusText || "An error occurred. Please try again.";
+  }
+}
+
+/**
+ * Extract field-specific error from an API response (for use in components)
+ * Useful for validation errors that are tied to specific form fields
+ * 
+ * @param response - The Response object from fetch
+ * @returns Promise that resolves to an object with field name and error message, or null
+ * 
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/endpoint');
+ * if (!response.ok) {
+ *   const fieldError = await extractApiFieldError(response);
+ *   if (fieldError) {
+ *     setErrors({ [fieldError.field]: fieldError.message });
+ *   }
+ *   const generalError = await extractApiErrorMessage(response);
+ *   setErrors(prev => ({ ...prev, general: generalError }));
+ * }
+ * ```
+ */
+export async function extractApiFieldError(
+  response: Response
+): Promise<{ field: string; message: string } | null> {
+  try {
+    const data = await response.json();
+    
+    // Handle standardized error format
+    if (data.error?.field && data.error?.message) {
+      return {
+        field: data.error.field,
+        message: data.error.message,
+      };
+    }
+    
+    // Handle legacy format with field in root
+    if (data.field && data.error) {
+      return {
+        field: data.field,
+        message: typeof data.error === "string" ? data.error : data.error.message || "Validation error",
+      };
+    }
+    
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extract data from a successful API response (for use in components)
+ * Handles both standardized success format and legacy formats
+ * 
+ * @param response - The Response object from fetch
+ * @returns Promise that resolves to the data payload
+ * @throws Error if response is not ok or cannot be parsed
+ * 
+ * @example
+ * ```typescript
+ * const response = await fetch('/api/endpoint');
+ * if (!response.ok) {
+ *   const errorMessage = await extractApiErrorMessage(response);
+ *   throw new Error(errorMessage);
+ * }
+ * const data = await extractApiResponseData(response);
+ * ```
+ */
+export async function extractApiResponseData<T = unknown>(response: Response): Promise<T> {
+  if (!response.ok) {
+    const errorMessage = await extractApiErrorMessage(response);
+    throw new Error(errorMessage);
+  }
+  
+  try {
+    const data = await response.json();
+    
+    // Handle standardized success format (from formatSuccessResponse)
+    if (data.success && data.data !== undefined) {
+      return data.data as T;
+    }
+    
+    // Handle legacy format (direct data)
+    if (data.data !== undefined) {
+      return data.data as T;
+    }
+    
+    // Handle direct response (no wrapper)
+    return data as T;
+  } catch (parseError) {
+    devError("Failed to parse API response:", parseError);
+    throw new Error("Failed to parse server response");
+  }
 }
 

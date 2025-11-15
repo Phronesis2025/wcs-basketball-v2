@@ -30,12 +30,15 @@ function InvoiceEmailButton({
         body: JSON.stringify({ playerId }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        setMessage(`Error: ${data.error || "Failed to send invoice"}`);
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        setMessage(`Error: ${errorMessage}`);
         return;
       }
+
+      const { extractApiResponseData } = await import("@/lib/errorHandler");
+      const data = await extractApiResponseData(response);
 
       setMessage(`Invoice Sent`);
 

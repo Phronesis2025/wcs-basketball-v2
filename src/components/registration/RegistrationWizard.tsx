@@ -289,10 +289,13 @@ export default function RegistrationWizard({
           });
 
           if (!response.ok) {
-            throw new Error("Failed to verify zip code");
+            const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+            const errorMessage = await extractApiErrorMessage(response);
+            throw new Error(errorMessage);
           }
 
-          const zipVerification = await response.json();
+          const { extractApiResponseData } = await import("@/lib/errorHandler");
+          const zipVerification = await extractApiResponseData<{ allowed: boolean; error?: string }>(response);
           
           if (!zipVerification.allowed) {
             // Set error on the zip code field
@@ -355,8 +358,9 @@ export default function RegistrationWizard({
         });
 
         if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || "Failed to send confirmation email");
+          const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+          const errorMessage = await extractApiErrorMessage(response);
+          throw new Error(errorMessage);
         }
 
         // Clear draft
@@ -407,8 +411,9 @@ export default function RegistrationWizard({
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Registration failed");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
       // Clear draft

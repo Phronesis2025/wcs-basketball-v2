@@ -110,10 +110,13 @@ export default function ParentPaymentDetailModal({
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch parent details");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
-      const profile = await response.json();
+      const { extractApiResponseData } = await import("@/lib/errorHandler");
+      const profile = await extractApiResponseData<ParentProfile>(response);
       setDetailedProfile(profile);
     } catch (error) {
       devError("Error fetching parent profile:", error);
@@ -140,8 +143,9 @@ export default function ParentPaymentDetailModal({
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to send reminder");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
       toast.dismiss(loadingToast);
@@ -172,8 +176,9 @@ export default function ParentPaymentDetailModal({
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to send invoice");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
       toast.dismiss(loadingToast);
@@ -224,8 +229,9 @@ export default function ParentPaymentDetailModal({
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to mark payments as paid");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
       toast.dismiss(loadingToast);

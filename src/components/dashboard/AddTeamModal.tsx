@@ -190,11 +190,13 @@ export default function AddTeamModal({
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to upload logo");
+      const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+      const errorMessage = await extractApiErrorMessage(response);
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    const { extractApiResponseData } = await import("@/lib/errorHandler");
+    const data = await extractApiResponseData<{ url: string }>(response);
     return data.url;
   };
 
@@ -219,12 +221,14 @@ export default function AddTeamModal({
     devLog("🖼️ API response ok:", response.ok);
 
     if (!response.ok) {
-      const errorData = await response.json();
-      devError("🖼️ API error response:", errorData);
-      throw new Error(errorData.error || "Failed to upload team image");
+      const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+      const errorMessage = await extractApiErrorMessage(response);
+      devError("🖼️ API error response:", errorMessage);
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    const { extractApiResponseData } = await import("@/lib/errorHandler");
+    const data = await extractApiResponseData<{ url: string }>(response);
     devLog("🖼️ API success response:", data);
     return data.url;
   };

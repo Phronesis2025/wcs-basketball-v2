@@ -190,7 +190,8 @@ export default function Navbar() {
               clearTimeout(timeoutId);
 
               if (response.ok) {
-                const userData = await response.json();
+                const { extractApiResponseData } = await import("@/lib/errorHandler");
+                const userData = await extractApiResponseData<{ role: string | null; password_reset: boolean | null }>(response);
                 const role = userData.role; // Can be "admin", "coach", "parent", or null
                 const isAdminUser = role === "admin";
                 setIsAdmin(isAdminUser);
