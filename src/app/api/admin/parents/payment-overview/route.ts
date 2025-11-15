@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { getUserRole } from "@/lib/actions";
+import { ValidationError, AuthenticationError, AuthorizationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 interface ParentPaymentOverview {
   id: string;
@@ -105,26 +106,17 @@ export async function GET(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
     const userData = await getUserRole(userId);
     if (!userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     devLog("Fetching parent payment overview");
@@ -137,11 +129,7 @@ export async function GET(request: NextRequest) {
       .select("id, email, first_name, last_name, phone, address_line1, address_line2, city, state, zip");
 
     if (parentsError) {
-      devError("Error fetching parents:", parentsError);
-      return NextResponse.json(
-        { error: "Failed to fetch parents" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch parents", parentsError);
     }
 
     // Get all unique parent emails from players table (for legacy data)
@@ -152,11 +140,7 @@ export async function GET(request: NextRequest) {
       .not("parent_email", "is", null);
 
     if (playersError) {
-      devError("Error fetching players:", playersError);
-      return NextResponse.json(
-        { error: "Failed to fetch players" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch players", playersError);
     }
 
     // Get unique parent emails and IDs
@@ -316,13 +300,9 @@ export async function GET(request: NextRequest) {
       (p): p is ParentPaymentOverview => p !== null
     );
 
-    return NextResponse.json(validOverviews);
+    return formatSuccessResponse(validOverviews);
   } catch (error) {
-    devError("Parent payment overview API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
