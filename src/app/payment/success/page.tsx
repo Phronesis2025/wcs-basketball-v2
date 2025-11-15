@@ -113,7 +113,7 @@ function PaymentSuccessInner() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (error) {
-      console.error("Error downloading welcome kit:", error);
+      devError("Error downloading welcome kit:", error);
       alert("Failed to download welcome kit. Please try again later.");
     } finally {
       setDownloadLoading(false);

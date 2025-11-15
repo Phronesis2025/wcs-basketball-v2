@@ -286,9 +286,7 @@ export default function Navbar() {
               setUserRole(cachedRole);
             }
             // Only log in development mode
-            if (process.env.NODE_ENV === "development") {
-              console.log("Navbar: Using cached admin status:", cachedAdmin);
-            }
+            devLog("Navbar: Using cached admin status:", cachedAdmin);
           } else {
             // No cache available, check role
             checkAdminRole(session?.user?.id).then((adminStatus) => {

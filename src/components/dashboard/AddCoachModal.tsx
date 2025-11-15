@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Coach } from "@/types/supabase";
-import { validateInput } from "@/lib/security";
+import { validateInput, devLog, devError } from "@/lib/security";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import ManageDeleteConfirmModal from "./ManageDeleteConfirmModal";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -58,7 +58,7 @@ export default function AddCoachModal({
 
   // Initialize form when editing
   useEffect(() => {
-    console.log("AddCoachModal useEffect - editingCoach:", editingCoach);
+    devLog("AddCoachModal useEffect - editingCoach:", editingCoach);
 
     const fetchAssignedTeam = async (coachId: string) => {
       try {
@@ -69,7 +69,7 @@ export default function AddCoachModal({
           .maybeSingle();
 
         if (error) {
-          console.error("Error fetching assigned team:", error);
+          devError("Error fetching assigned team:", error);
           return;
         }
 
@@ -77,15 +77,15 @@ export default function AddCoachModal({
           const team = data.teams as { id: string; name: string };
           setAssignedTeam(team);
           setSelectedTeamId(team.id);
-          console.log("Assigned team found:", team);
+          devLog("Assigned team found:", team);
         }
       } catch (err) {
-        console.error("Error fetching assigned team:", err);
+        devError("Error fetching assigned team:", err);
       }
     };
 
     if (editingCoach) {
-      console.log("Populating form with coach data:", {
+      devLog("Populating form with coach data:", {
         firstName: editingCoach.first_name,
         lastName: editingCoach.last_name,
         email: editingCoach.email,
@@ -156,10 +156,10 @@ export default function AddCoachModal({
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("File input changed:", e.target.files);
+    devLog("File input changed:", e.target.files);
     const file = e.target.files?.[0];
     if (file) {
-      console.log("File selected:", {
+      devLog("File selected:", {
         name: file.name,
         type: file.type,
         size: file.size,
@@ -167,7 +167,7 @@ export default function AddCoachModal({
 
       // Validate file type
       if (!file.type.startsWith("image/")) {
-        console.log("Invalid file type:", file.type);
+        devLog("Invalid file type:", file.type);
         setErrors((prev) => ({
           ...prev,
           image: "Please select a valid image file",
@@ -177,7 +177,7 @@ export default function AddCoachModal({
 
       // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
-        console.log("File too large:", file.size);
+        devLog("File too large:", file.size);
         setErrors((prev) => ({
           ...prev,
           image: "File size must be less than 5MB",
@@ -185,7 +185,7 @@ export default function AddCoachModal({
         return;
       }
 
-      console.log("File validation passed, setting selected file");
+      devLog("File validation passed, setting selected file");
       setSelectedFile(file);
 
       // Create preview URL
@@ -195,7 +195,7 @@ export default function AddCoachModal({
       // Clear any previous errors
       setErrors((prev) => ({ ...prev, image: "" }));
     } else {
-      console.log("No file selected");
+      devLog("No file selected");
     }
   };
 
@@ -315,7 +315,7 @@ export default function AddCoachModal({
 
       onSubmit(coachData);
     } catch (error) {
-      console.error("Error uploading image:", error);
+      devError("Error uploading image:", error);
       setErrors((prev) => ({
         ...prev,
         image: "Failed to upload image. Please try again.",
@@ -333,7 +333,7 @@ export default function AddCoachModal({
       await onDelete(editingCoach);
       setShowDeleteConfirm(false);
     } catch (error) {
-      console.error("Delete error:", error);
+      devError("Delete error:", error);
     } finally {
       setDeleting(false);
     }
@@ -549,7 +549,7 @@ export default function AddCoachModal({
                     htmlFor="coach-image-upload"
                     className="flex items-center justify-center w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
                     onClick={(e) => {
-                      console.log("File upload label clicked");
+                      devLog("File upload label clicked");
                       e.preventDefault();
                       const fileInput = document.getElementById(
                         "coach-image-upload"

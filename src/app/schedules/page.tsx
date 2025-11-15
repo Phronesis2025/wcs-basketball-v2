@@ -7,6 +7,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useTeams } from "@/hooks/useTeams";
 import { shouldUseRealtime } from "@/lib/networkUtils";
+import { devError } from "@/lib/security";
 
 import MobileMonth from "@/components/calendar/MobileMonth";
 import EventDetailsModal from "@/components/calendar/EventDetailsModal";
@@ -37,7 +38,7 @@ export default function SchedulesPage() {
         // Clear any previous errors on successful fetch
         setError(null);
       } catch (err) {
-        console.error("Failed to load schedules:", err);
+        devError("Failed to load schedules:", err);
         Sentry.captureException(err);
 
         // Provide more specific error messages based on the error type

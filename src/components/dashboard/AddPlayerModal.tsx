@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Player, Team } from "@/types/supabase";
-import { validateInput } from "@/lib/security";
+import { validateInput, devLog, devError } from "@/lib/security";
 import {
   isGradeCompatible,
   isGenderCompatible,
@@ -70,9 +70,9 @@ export default function AddPlayerModal({
 
   // Initialize form when editing
   useEffect(() => {
-    console.log("AddPlayerModal useEffect - editingPlayer:", editingPlayer);
+    devLog("AddPlayerModal useEffect - editingPlayer:", editingPlayer);
     if (editingPlayer) {
-      console.log("Populating form with player data:", {
+      devLog("Populating form with player data:", {
         name: editingPlayer.name,
         jerseyNumber: editingPlayer.jersey_number,
         grade: editingPlayer.grade,
@@ -356,7 +356,7 @@ export default function AddPlayerModal({
       await onDelete(editingPlayer);
       setShowDeleteConfirm(false);
     } catch (error) {
-      console.error("Delete error:", error);
+      devError("Delete error:", error);
     } finally {
       setDeleting(false);
     }

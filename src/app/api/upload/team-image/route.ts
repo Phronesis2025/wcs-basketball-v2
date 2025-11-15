@@ -4,12 +4,12 @@ import { devLog, devError } from "@/lib/security";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("🖼️ Team Image Upload API - Starting upload process");
+    devLog("🖼️ Team Image Upload API - Starting upload process");
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const teamName = formData.get("teamName") as string;
 
-    console.log("🖼️ Team Image Upload API - Received:", {
+    devLog("🖼️ Team Image Upload API - Received:", {
       fileName: file?.name,
       fileSize: file?.size,
       teamName,
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     const fileBuffer = await file.arrayBuffer();
 
     // Upload to Supabase storage using admin client (bypasses RLS)
-    console.log("🖼️ Team Image Upload API - About to upload to Supabase:", {
+    devLog("🖼️ Team Image Upload API - About to upload to Supabase:", {
       filePath,
       fileSize: fileBuffer.byteLength,
       contentType: file.type,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         upsert: true, // Allow overwriting existing files
       });
 
-    console.log("🖼️ Team Image Upload API - Supabase upload result:", {
+    devLog("🖼️ Team Image Upload API - Supabase upload result:", {
       data,
       error,
     });
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
     } = supabaseAdmin.storage.from("images").getPublicUrl(filePath);
 
     devLog("Successfully uploaded team image:", { fileName, publicUrl });
-    console.log("🖼️ Team Image Upload API - Upload successful:", {
+    devLog("🖼️ Team Image Upload API - Upload successful:", {
       fileName,
       publicUrl,
     });

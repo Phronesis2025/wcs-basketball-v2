@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { onCLS, onFCP, onLCP, onTTFB, onINP, Metric } from "web-vitals";
+import { devError } from "@/lib/security";
 
 /**
  * WebVitalsTracker Component
@@ -41,7 +42,7 @@ export default function WebVitalsTracker() {
         });
       } catch (error) {
         // Silently fail - don't break the app if analytics fails
-        console.error("Failed to send web vitals:", error);
+        devError("Failed to send web vitals:", error);
       }
     };
 

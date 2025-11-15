@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { devError } from "@/lib/security";
 
 interface BasketballProgressModalProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ export default function BasketballProgressModal({
           }
         })
         .catch((err) => {
-          console.error("Failed to fetch basketball facts", err);
+          devError("Failed to fetch basketball facts", err);
         });
     }
   }, [isOpen]);

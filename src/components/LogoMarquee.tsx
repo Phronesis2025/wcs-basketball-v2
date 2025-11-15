@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { devError } from "@/lib/security";
 
 interface Team {
   id: string;
@@ -39,7 +40,7 @@ export default function LogoMarquee() {
           .order("name");
 
         if (error) {
-          console.error("Error fetching teams:", error);
+          devError("Error fetching teams:", error);
           // Use fallback logos if database fetch fails
           setTeams(
             fallbackLogos.map((logo, index) => ({
@@ -52,7 +53,7 @@ export default function LogoMarquee() {
           setTeams(data || []);
         }
       } catch (error) {
-        console.error("Error fetching teams:", error);
+        devError("Error fetching teams:", error);
         // Use fallback logos if there's an error
         setTeams(
           fallbackLogos.map((logo, index) => ({

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import BasketballLoader from "@/components/BasketballLoader";
+import { devError } from "@/lib/security";
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,7 @@ export default function AdminParentsPage() {
         setParents(data);
       }
     } catch (error) {
-      console.error("Error fetching parents:", error);
+      devError("Error fetching parents:", error);
     } finally {
       setIsLoading(false);
     }

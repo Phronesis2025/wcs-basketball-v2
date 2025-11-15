@@ -1,7 +1,7 @@
 // src/components/dashboard/ScheduleModal.tsx
 import React, { useState, useEffect } from "react";
 import { Schedule, TeamUpdate, PracticeDrill } from "../../types/supabase";
-import { validateInput } from "../../lib/security";
+import { validateInput, devLog, devError } from "../../lib/security";
 import { useScrollLock } from "@/hooks/useScrollLock";
 
 interface ScheduleModalProps {
@@ -396,11 +396,11 @@ export default function ScheduleModal({
       const inputs = document.querySelectorAll('input[type="datetime-local"]');
       for (const input of inputs) {
         if (input.value && input.value.trim() !== "") {
-          console.log("Found datetime input with value:", input.value);
+          devLog("Found datetime input with value:", input.value);
           return input.value;
         }
       }
-      console.log("No datetime input found with value");
+      devLog("No datetime input found with value");
       return "";
     };
 
@@ -409,7 +409,7 @@ export default function ScheduleModal({
     const finalUpdateDateTime = actualUpdateDateTime || fallbackDateTime();
 
     // Debug logging
-    console.log("Form submission debug:", {
+    devLog("Form submission debug:", {
       activeTab,
       gameDateTime,
       practiceDateTime,
@@ -599,7 +599,7 @@ export default function ScheduleModal({
     try {
       onSubmit(formData);
     } catch (error) {
-      console.error("Error submitting form:", error);
+      devError("Error submitting form:", error);
       // Error handling is managed by the parent component
     }
   };

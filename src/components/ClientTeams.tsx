@@ -9,6 +9,7 @@ import * as Sentry from "@sentry/nextjs";
 import { Team } from "@/types/supabase";
 import { useTeams } from "@/hooks/useTeams";
 import { supabase } from "@/lib/supabaseClient";
+import { devLog, devError } from "@/lib/security";
 
 interface ClientTeamsProps {
   initialTeams: Team[];
@@ -38,7 +39,7 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
 
   // Set up real-time subscriptions for team changes
   useEffect(() => {
-    console.log("Setting up real-time subscription for teams...");
+    devLog("Setting up real-time subscription for teams...");
     const channel = supabase
       .channel("teams_changes")
       .on(
@@ -49,7 +50,7 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
           table: "teams",
         },
         (payload) => {
-          console.log("Team change detected:", payload);
+          devLog("Team change detected:", payload);
 
           if (payload.eventType === "INSERT" && payload.new.is_active) {
             // New team added and is active
@@ -95,20 +96,20 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
         }
       )
       .subscribe((status) => {
-        console.log("Teams subscription status:", status);
+        devLog("Teams subscription status:", status);
         if (status === "SUBSCRIBED") {
-          console.log("✅ Successfully subscribed to teams changes");
+          devLog("✅ Successfully subscribed to teams changes");
         } else if (status === "CHANNEL_ERROR") {
-          console.error("❌ Error subscribing to teams changes");
+          devError("❌ Error subscribing to teams changes");
         } else if (status === "TIMED_OUT") {
-          console.warn("⏰ Teams subscription timed out");
+          devLog("⏰ Teams subscription timed out");
         } else if (status === "CLOSED") {
-          console.log("🔒 Teams subscription closed");
+          devLog("🔒 Teams subscription closed");
         }
       });
 
     return () => {
-      console.log("Cleaning up teams subscription...");
+      devLog("Cleaning up teams subscription...");
       supabase.removeChannel(channel);
     };
   }, []);
@@ -116,7 +117,7 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
   // Periodic refresh to ensure teams are up-to-date
   useEffect(() => {
     const interval = setInterval(() => {
-      console.log("Periodic refresh: fetching teams...");
+      devLog("Periodic refresh: fetching teams...");
       refetch();
     }, 60000); // Refresh every minute
 
