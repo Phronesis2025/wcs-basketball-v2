@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, AuthenticationError, AuthorizationError, NotFoundError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 async function isAdmin(userId?: string | null): Promise<boolean> {
   if (!userId || !supabaseAdmin) return false;
@@ -15,27 +16,18 @@ async function isAdmin(userId?: string | null): Promise<boolean> {
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server misconfigured" },
-        { status: 500 }
-      );
+      throw new ApiError("Server misconfigured", 500);
     }
 
     const userId = request.headers.get("x-user-id");
     if (!(await isAdmin(userId))) {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     const { email } = await request.json();
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Email is required");
     }
 
     // Check if user exists in users table
@@ -46,10 +38,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (userError || !userData) {
-      return NextResponse.json(
-        { error: "User not found in users table" },
-        { status: 404 }
-      );
+      throw new NotFoundError("User not found in users table");
     }
 
     // Check if auth user exists
@@ -58,8 +47,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (!getUserError && authUser?.user) {
-      return NextResponse.json({
-        success: true,
+      return formatSuccessResponse({
         message: "Auth user already exists",
         authUserId: authUser.user.id,
       });
@@ -78,8 +66,7 @@ export async function POST(request: NextRequest) {
         .update({ id: userByEmail.id })
         .eq("id", userData.id);
 
-      return NextResponse.json({
-        success: true,
+      return formatSuccessResponse({
         message: "Found existing auth user by email, updated users table",
         authUserId: userByEmail.id,
       });
@@ -95,11 +82,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (createError || !newAuthUser?.user) {
-      devError("Failed to create auth user:", createError);
-      return NextResponse.json(
-        { error: "Failed to create auth user", details: createError?.message },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to create auth user", createError);
     }
 
     // Update password_reset flag
@@ -110,18 +93,13 @@ export async function POST(request: NextRequest) {
 
     devLog("Created auth user for:", email);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Auth user created successfully. User must reset password.",
       authUserId: newAuthUser.user.id,
       requiresPasswordReset: true,
     });
   } catch (err) {
-    devError("Unexpected error in fix-missing-auth-user:", err);
-    return NextResponse.json(
-      { error: "An error occurred. Please try again." },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }
 

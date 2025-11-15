@@ -2,16 +2,14 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { sendEmail } from "@/lib/email";
+import { ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // GET endpoint to check database size and alerts
 // Can be called manually or via cron job
 export async function GET(req: Request) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database connection unavailable" },
-        { status: 500 }
-      );
+      throw new ApiError("Database connection unavailable", 500);
     }
 
     // Optional: Verify cron secret for scheduled calls
@@ -30,11 +28,7 @@ export async function GET(req: Request) {
     );
 
     if (metricsError) {
-      devError("database-monitor: metrics error", metricsError);
-      return NextResponse.json(
-        { error: "Failed to get metrics" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to get database metrics", metricsError);
     }
 
     // Check alert status
@@ -116,15 +110,13 @@ export async function GET(req: Request) {
       alert_level: alert?.alert_level,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       metrics: metric,
       alert: alert,
       timestamp: new Date().toISOString(),
     });
   } catch (e) {
-    devError("database-monitor exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e, req);
   }
 }
 

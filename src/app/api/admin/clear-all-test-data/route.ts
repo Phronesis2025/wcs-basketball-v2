@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(req: Request) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database connection unavailable" },
-        { status: 500 }
-      );
+      throw new ApiError("Database connection unavailable", 500);
     }
 
     devLog(
@@ -22,11 +20,7 @@ export async function POST(req: Request) {
       .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all records
 
     if (pendingRegError) {
-      devError("clear-all-test-data: Error deleting pending_registrations", pendingRegError);
-      return NextResponse.json(
-        { error: "Failed to delete pending registrations" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to delete pending registrations", pendingRegError);
     }
 
     devLog("clear-all-test-data: Deleted pending_registrations", { count: pendingRegDeleted });
@@ -39,11 +33,7 @@ export async function POST(req: Request) {
       .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all records
 
     if (deleteError) {
-      devError("clear-all-test-data: Error deleting players", deleteError);
-      return NextResponse.json(
-        { error: "Failed to delete players" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to delete players", deleteError);
     }
 
     devLog("clear-all-test-data: Deleted players (payments cascade)", { count: playersDeleted });
@@ -55,17 +45,12 @@ export async function POST(req: Request) {
       .neq("id", "00000000-0000-0000-0000-000000000000");
 
     if (parentsDeleteErr) {
-      devError("clear-all-test-data: Error deleting parents", parentsDeleteErr);
-      return NextResponse.json(
-        { error: "Failed to delete parents" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to delete parents", parentsDeleteErr);
     }
 
     devLog("clear-all-test-data: Deleted parents", { parentsDeleted });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "All test data cleared successfully (pending_registrations, parents, and players). Note: auth.users must be deleted manually.",
       details: {
         pendingRegistrationsDeleted: pendingRegDeleted || 0,
@@ -74,7 +59,6 @@ export async function POST(req: Request) {
       },
     });
   } catch (e) {
-    devError("clear-all-test-data exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e, req);
   }
 }
