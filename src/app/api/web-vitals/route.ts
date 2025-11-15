@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 /**
  * API endpoint to receive and store Core Web Vitals metrics
@@ -11,10 +12,7 @@ export async function POST(request: NextRequest) {
     // Check if request has a body
     const contentType = request.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      return NextResponse.json(
-        { error: "Invalid content type" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid content type");
     }
 
     // Safely parse JSON body
@@ -22,18 +20,14 @@ export async function POST(request: NextRequest) {
     try {
       const text = await request.text();
       if (!text || text.trim() === "") {
-        return NextResponse.json(
-          { error: "Empty request body" },
-          { status: 400 }
-        );
+        throw new ValidationError("Empty request body");
       }
       body = JSON.parse(text);
     } catch (parseError) {
-      devError("Web vitals: Failed to parse JSON", parseError);
-      return NextResponse.json(
-        { error: "Invalid JSON" },
-        { status: 400 }
-      );
+      if (parseError instanceof ValidationError) {
+        throw parseError;
+      }
+      throw new ValidationError("Invalid JSON");
     }
 
     const {
@@ -47,27 +41,17 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!page || !metric_name || metric_value === undefined) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      throw new ValidationError("Missing required fields: page, metric_name, metric_value");
     }
 
     // Validate metric name
     const validMetrics = ["LCP", "FID", "CLS", "FCP", "TTFB", "INP"];
     if (!validMetrics.includes(metric_name)) {
-      return NextResponse.json(
-        { error: "Invalid metric name" },
-        { status: 400 }
-      );
+      throw new ValidationError(`Invalid metric name. Must be one of: ${validMetrics.join(", ")}`);
     }
 
     if (!supabaseAdmin) {
-      devError("Admin client not available for web vitals storage");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Try to get user ID from auth if not provided
@@ -92,25 +76,14 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (error) {
-      devError("Failed to store web vital:", error);
-      return NextResponse.json(
-        { error: "Failed to store metric" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to store web vital", error);
     }
 
     devLog(`Web vital stored: ${metric_name} = ${metric_value}ms on ${page}`);
 
-    return NextResponse.json({ success: true });
+    return formatSuccessResponse({ message: "Web vital stored successfully" });
   } catch (error) {
-    devError("Web vitals API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to process web vital",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

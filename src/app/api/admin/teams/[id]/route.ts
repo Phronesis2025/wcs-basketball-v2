@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { AuthenticationError, AuthorizationError, ValidationError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function PUT(
   request: NextRequest,
@@ -10,10 +11,7 @@ export async function PUT(
     // Get user ID from request headers
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
@@ -24,10 +22,7 @@ export async function PUT(
       .single();
 
     if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     const {
@@ -46,10 +41,7 @@ export async function PUT(
     } = await request.json();
 
     if (!teamName || !ageGroup || !gender) {
-      return NextResponse.json(
-        { error: "Team name, grade level, and gender are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Team name, grade level, and gender are required");
     }
 
     // Validate grade level (stored in age_group field)
@@ -64,10 +56,7 @@ export async function PUT(
       "U18 (High School)",
     ];
     if (!validGradeLevels.includes(ageGroup)) {
-      return NextResponse.json(
-        { error: `Invalid grade level. Must be one of: ${validGradeLevels.join(", ")}` },
-        { status: 400 }
-      );
+      throw new ValidationError(`Invalid grade level. Must be one of: ${validGradeLevels.join(", ")}`);
     }
 
     const { id: teamId } = await params;
@@ -127,26 +116,17 @@ export async function PUT(
           .single();
 
         if (teamRetryError) {
-          devError("Failed to update team:", teamRetryError);
-          return NextResponse.json(
-            { error: "Failed to update team" },
-            { status: 500 }
-          );
+          throw new DatabaseError("Failed to update team", teamRetryError);
         }
 
         devLog("Team updated successfully (without is_active):", teamRetry.id);
-        return NextResponse.json({
-          success: true,
+        return formatSuccessResponse({
           message: "Team updated successfully",
           data: teamRetry,
         });
       }
 
-      devError("Failed to update team:", teamError);
-      return NextResponse.json(
-        { error: "Failed to update team" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update team", teamError);
     }
 
     // If team is being deactivated, mark all players as unassigned
@@ -298,20 +278,12 @@ export async function PUT(
 
     devLog("Team updated successfully:", team.id);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Team updated successfully",
       data: team,
     });
   } catch (error) {
-    devError("Update team API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to update team",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
@@ -354,27 +326,15 @@ export async function DELETE(
       .eq("id", teamId);
 
     if (deleteTeamError) {
-      devError("Failed to delete team:", deleteTeamError);
-      return NextResponse.json(
-        { error: "Failed to delete team" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to delete team", deleteTeamError);
     }
 
     devLog("Team deleted successfully:", teamId);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Team deleted successfully",
     });
   } catch (error) {
-    devError("Delete team API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to delete team",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
