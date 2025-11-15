@@ -3,6 +3,7 @@ import { getUserRole } from "@/lib/actions";
 import { devLog, devError } from "@/lib/security";
 import { subMonths, format, parseISO } from "date-fns";
 import { execSync } from "child_process";
+import { ValidationError, AuthenticationError, AuthorizationError, ApiError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 interface GitHubCommit {
   commit: {
@@ -154,19 +155,13 @@ export async function GET(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
     const userData = await getUserRole(userId);
     if (!userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     // Get query parameters
@@ -177,12 +172,8 @@ export async function GET(request: NextRequest) {
     // Get repository info
     const repoInfo = await getRepoInfo();
     if (!repoInfo) {
-      return NextResponse.json(
-        {
-          error:
-            "Repository information not found. Please set GITHUB_OWNER and GITHUB_REPO environment variables.",
-        },
-        { status: 400 }
+      throw new ValidationError(
+        "Repository information not found. Please set GITHUB_OWNER and GITHUB_REPO environment variables."
       );
     }
 
@@ -201,20 +192,12 @@ export async function GET(request: NextRequest) {
     // Group commits by date
     const groupedCommits = groupCommitsByDate(commits, groupBy);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       data: groupedCommits,
       totalCommits: commits.length,
       repository: `${repoInfo.owner}/${repoInfo.repo}`,
     });
   } catch (error) {
-    devError("Commits API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch commits",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

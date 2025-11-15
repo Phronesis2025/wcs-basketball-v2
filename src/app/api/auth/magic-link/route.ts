@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -61,10 +62,7 @@ export async function POST(request: NextRequest) {
       !player_gender ||
       !player_birthdate
     ) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      throw new ValidationError("Missing required fields");
     }
 
     // Verify zip code is within service area
@@ -74,28 +72,20 @@ export async function POST(request: NextRequest) {
         const zipVerification = await verifyZipCodeInRadius(parent_zip);
         
         if (!zipVerification.allowed) {
-          return NextResponse.json(
-            { 
-              error: zipVerification.error ||
-                "Registration is currently limited to residents within 50 miles of Salina, Kansas."
-            },
-            { status: 403 }
+          throw new ValidationError(
+            zipVerification.error ||
+            "Registration is currently limited to residents within 50 miles of Salina, Kansas.",
+            "parent_zip"
           );
         }
       } catch (err) {
         devError("magic-link: Zip code verification error", err);
-        return NextResponse.json(
-          { error: "Unable to verify location. Please try again." },
-          { status: 500 }
-        );
+        throw new ApiError("Unable to verify location. Please try again.", 500, undefined, err);
       }
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database connection unavailable" },
-        { status: 500 }
-      );
+      throw new ApiError("Database connection unavailable", 500);
     }
 
     // Generate unique token
@@ -148,11 +138,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (updateError) {
-          devError("magic-link: Update pending registration error", updateError);
-          return NextResponse.json(
-            { error: "Failed to update registration" },
-            { status: 500 }
-          );
+          throw new DatabaseError("Failed to update registration", updateError);
         }
 
         // Use Supabase invitation for updated pending registration too
@@ -187,28 +173,19 @@ export async function POST(request: NextRequest) {
         );
 
         if (inviteError || !inviteData) {
-          devError("magic-link: Failed to invite user (updated pending reg)", inviteError);
-          return NextResponse.json(
-            { error: "Failed to send invitation email" },
-            { status: 500 }
-          );
+          throw new ApiError("Failed to send invitation email", 500, undefined, inviteError);
         }
 
         devLog("magic-link: Supabase invitation sent (updated pending reg)", {
           email: parent_email,
         });
 
-        return NextResponse.json({
-          success: true,
+        return formatSuccessResponse({
           message: "Magic link sent to your email",
         });
       }
 
-      devError("magic-link: Insert pending registration error", insertError);
-      return NextResponse.json(
-        { error: "Failed to create registration" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to create registration", insertError);
     }
 
     // Use Supabase's invitation flow which sends confirmation email (our customized welcome email)
@@ -245,11 +222,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (inviteError || !inviteData) {
-      devError("magic-link: Failed to invite user via Supabase", inviteError);
-      return NextResponse.json(
-        { error: "Failed to send invitation email" },
-        { status: 500 }
-      );
+      throw new ApiError("Failed to send invitation email", 500, undefined, inviteError);
     }
 
     // Supabase will automatically send the confirmation email with our customized template
@@ -259,16 +232,11 @@ export async function POST(request: NextRequest) {
       userId: inviteData.user?.id,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Magic link sent to your email",
     });
   } catch (error) {
-    devError("magic-link: Exception", error);
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

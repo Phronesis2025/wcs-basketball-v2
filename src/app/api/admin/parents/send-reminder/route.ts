@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { getUserRole } from "@/lib/actions";
 import { sendEmail } from "@/lib/email";
+import { ValidationError, AuthenticationError, AuthorizationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,35 +11,23 @@ export async function POST(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
     const userData = await getUserRole(userId);
     if (!userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const { email } = await request.json();
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Email is required");
     }
 
     devLog("Sending payment reminder to:", email);
@@ -51,11 +40,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (parentError) {
-      devError("Error fetching parent:", parentError);
-      return NextResponse.json(
-        { error: "Failed to fetch parent information" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch parent information", parentError);
     }
 
     // Get all children for this parent
@@ -70,11 +55,7 @@ export async function POST(request: NextRequest) {
       );
 
     if (childrenError) {
-      devError("Error fetching children:", childrenError);
-      return NextResponse.json(
-        { error: "Failed to fetch children information" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch children information", childrenError);
     }
 
     const childrenList = children || [];
@@ -242,27 +223,16 @@ export async function POST(request: NextRequest) {
         childrenCount: approvedChildren.length,
       });
 
-      return NextResponse.json({
-        success: true,
+      return formatSuccessResponse({
         message: "Payment reminder sent successfully",
         email,
         pendingAmount,
       });
     } catch (error) {
-      devError("Failed to send payment reminder email:", error);
-      return NextResponse.json(
-        {
-          error: "Failed to send payment reminder email. Please try again later.",
-        },
-        { status: 500 }
-      );
+      throw new ApiError("Failed to send payment reminder email. Please try again later.", 500, undefined, error);
     }
   } catch (error) {
-    devError("Send payment reminder API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
