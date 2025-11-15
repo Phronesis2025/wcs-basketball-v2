@@ -1,24 +1,17 @@
 // src/components/dashboard/MessageBoard.tsx
 import React, { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
-import { supabase } from "../../lib/supabaseClient";
 import { CoachMessage, CoachMessageReply } from "../../types/supabase";
-import {
-  getMessages,
-  getMessageReplies,
-  createMessage,
-  createReply,
-  updateMessage,
-  updateReply,
-  deleteMessage,
-  deleteReply,
-  pinMessage,
-  getUnreadMentionsForUser,
-  markMentionAsRead,
-} from "../../lib/messageActions";
-import { devLog, devError, validateInput } from "../../lib/security";
+import { devLog, devError } from "../../lib/security";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import BasketballLoader from "../BasketballLoader";
+import { useMessages } from "./message-board/hooks/useMessages";
+import { useReplies } from "./message-board/hooks/useReplies";
+import { useMentions } from "./message-board/hooks/useMentions";
+import { useEditing } from "./message-board/hooks/useEditing";
+import MessageComposer from "./message-board/MessageComposer";
+import UnreadMentions from "./message-board/UnreadMentions";
+import MessageItem from "./message-board/MessageItem";
 
 interface MessageBoardProps {
   userId: string;
