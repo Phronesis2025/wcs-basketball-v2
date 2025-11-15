@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { AuthenticationError, AuthorizationError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 /**
  * Migration API to convert existing team age groups (U8-U18) to grade levels
@@ -22,10 +23,7 @@ export async function POST(request: NextRequest) {
     // Get user ID from request headers
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
@@ -36,10 +34,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     // Age group to grade level mapping
@@ -59,21 +54,14 @@ export async function POST(request: NextRequest) {
       .in("age_group", Object.keys(ageGroupToGrade));
 
     if (fetchError) {
-      devError("Failed to fetch teams for migration:", fetchError);
-      return NextResponse.json(
-        { error: "Failed to fetch teams", details: fetchError.message },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch teams for migration", fetchError);
     }
 
     if (!teams || teams.length === 0) {
-      return NextResponse.json(
-        { 
-          message: "No teams found with old age group values to migrate",
-          migrated: 0 
-        },
-        { status: 200 }
-      );
+      return formatSuccessResponse({
+        message: "No teams found with old age group values to migrate",
+        migrated: 0,
+      });
     }
 
     devLog(`Found ${teams.length} teams to migrate`);
@@ -133,22 +121,15 @@ export async function POST(request: NextRequest) {
     const successful = migrationResults.filter((r) => r.success).length;
     const failed = migrationResults.filter((r) => !r.success).length;
 
-    return NextResponse.json(
-      {
-        message: `Migration completed: ${successful} successful, ${failed} failed`,
-        total: teams.length,
-        successful,
-        failed,
-        results: migrationResults,
-      },
-      { status: 200 }
-    );
+    return formatSuccessResponse({
+      message: `Migration completed: ${successful} successful, ${failed} failed`,
+      total: teams.length,
+      successful,
+      failed,
+      results: migrationResults,
+    });
   } catch (error) {
-    devError("Migration error:", error);
-    return NextResponse.json(
-      { error: "Migration failed", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

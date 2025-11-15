@@ -10,6 +10,7 @@ import {
 import { fetchTeamDataForEmail } from "@/lib/emailHelpers";
 import { generateInvoicePDF } from "@/lib/pdf/invoice";
 import { fetchTeamById } from "@/lib/actions";
+import { ValidationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export const dynamic = "force-dynamic";
 
@@ -229,6 +230,7 @@ export async function POST(req: Request) {
     );
   } catch (err) {
     devError("stripe-webhook signature verify error", err);
+    // Stripe expects specific error format for signature verification failures
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
@@ -1066,12 +1068,16 @@ export async function POST(req: Request) {
     }
 
     devLog("stripe-webhook handled", { type: event.type });
+    // Stripe expects { received: true } format for successful webhook processing
     return NextResponse.json({ received: true });
   } catch (e: any) {
     devError("stripe-webhook handler error", e);
+    // Stripe expects specific error format - use handleApiError but preserve Stripe's expected format
+    const errorResponse = handleApiError(e, req);
+    // Ensure we return the format Stripe expects
     return NextResponse.json(
       { error: "Webhook handler error" },
-      { status: 500 }
+      { status: errorResponse.status }
     );
   }
 }
