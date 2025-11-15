@@ -3,16 +3,14 @@ import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { coachResetTokens } from "@/lib/coachResetTokens";
 import crypto from "crypto";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
     const { username } = await request.json();
 
     if (!username) {
-      return NextResponse.json(
-        { error: "Username is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Username is required");
     }
 
     devLog("Coach/Admin forgot password request for username:", username);
@@ -81,17 +79,19 @@ export async function POST(request: NextRequest) {
     // Return token to redirect user to reset page
     const baseUrl = request.headers.get("origin") || process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       token: resetToken,
       redirectUrl: `${baseUrl}/coaches/reset-password?token=${resetToken}`,
     });
   } catch (err) {
-    devError("Unexpected error in coach forgot password:", err);
-    return NextResponse.json(
-      { error: "An error occurred. Please try again." },
-      { status: 500 }
-    );
+    // Special handling: Don't reveal if user exists (security best practice)
+    // If it's a validation error, we can still return success message
+    if (err instanceof ValidationError) {
+      return formatSuccessResponse({
+        message: "If that username exists, a password reset email has been sent.",
+      });
+    }
+    return handleApiError(err, request);
   }
 }
 
