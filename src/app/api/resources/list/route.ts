@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ApiError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Get user ID from headers for potential future use
@@ -136,21 +134,13 @@ export async function GET(request: NextRequest) {
       clubLogosCount: clubLogos.length,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       documents,
       teamLogos,
       clubLogos,
     });
   } catch (error) {
-    devError("List resources API error:", error);
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
