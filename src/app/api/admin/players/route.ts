@@ -6,6 +6,7 @@ import {
   createSecureResponse,
   createErrorResponse,
 } from "../../../../lib/securityMiddleware";
+import { AuthenticationError, AuthorizationError, DatabaseError, handleApiError } from "../../../../lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function GET(request: NextRequest) {
     // Get user ID from request headers
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return createErrorResponse("Authentication required", 401);
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (userError || !userData || userData.role !== "admin") {
-      return createErrorResponse("Admin access required", 403);
+      throw new AuthorizationError("Admin access required");
     }
 
     // Fetch all players (including inactive) for admin management
@@ -73,21 +74,30 @@ export async function GET(request: NextRequest) {
         await fallbackQuery;
 
       if (fallbackError) {
-        devError("Error fetching players:", fallbackError);
-        return createErrorResponse("Failed to fetch players", 500);
+        throw new DatabaseError("Failed to fetch players", fallbackError);
       }
 
       return createSecureResponse(playersFallback || []);
     }
 
     if (error) {
-      devError("Error fetching players:", error);
-      return createErrorResponse("Failed to fetch players", 500);
+      throw new DatabaseError("Failed to fetch players", error);
     }
 
     return createSecureResponse(players || []);
   } catch (error) {
-    devError("Unexpected error in /api/admin/players:", error);
-    return createErrorResponse("Failed to fetch players", 500);
+    // For rate limiting, use createErrorResponse to maintain security headers
+    // For other errors, use centralized handler but wrap with security headers
+    const errorResponse = handleApiError(error, request);
+    // Add security headers to the error response
+    Object.entries({
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "X-XSS-Protection": "1; mode=block",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+    }).forEach(([key, value]) => {
+      errorResponse.headers.set(key, value);
+    });
+    return errorResponse;
   }
 }

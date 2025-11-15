@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET() {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     devLog("Fetching all parents summary");
@@ -21,15 +19,11 @@ export async function GET() {
       .not("parent_email", "is", null);
 
     if (playersError) {
-      devError("Error fetching players:", playersError);
-      return NextResponse.json(
-        { error: "Failed to fetch players" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch players", playersError);
     }
 
     if (!players || players.length === 0) {
-      return NextResponse.json([]);
+      return formatSuccessResponse([]);
     }
 
     // Get unique parent emails
@@ -77,12 +71,8 @@ export async function GET() {
       })
     );
 
-    return NextResponse.json(parentsSummary);
+    return formatSuccessResponse(parentsSummary);
   } catch (error) {
-    devError("Admin parents API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
