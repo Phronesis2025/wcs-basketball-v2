@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { generateWelcomeKitPDF } from "@/lib/pdf/welcomeKit";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,17 +10,11 @@ export async function GET(request: NextRequest) {
     const playerId = searchParams.get("player_id");
 
     if (!playerId) {
-      return NextResponse.json(
-        { error: "player_id is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("player_id is required");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database connection unavailable" },
-        { status: 500 }
-      );
+      throw new ApiError("Database connection unavailable", 500);
     }
 
     // Fetch player and parent data
@@ -45,11 +40,7 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (playerError || !player) {
-      devError("generate-welcome-kit: Player fetch error", playerError);
-      return NextResponse.json(
-        { error: "Player not found" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Player not found");
     }
 
     // Get team coach information if available
@@ -97,11 +88,10 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    devError("generate-welcome-kit: Exception", error);
-    return NextResponse.json(
-      { error: "Failed to generate welcome kit" },
-      { status: 500 }
-    );
+    // For PDF generation errors, we need to return a JSON error response
+    // since we can't return a PDF error response
+    const errorResponse = handleApiError(error, request);
+    return errorResponse;
   }
 }
 
