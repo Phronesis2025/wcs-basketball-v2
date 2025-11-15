@@ -64,10 +64,10 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: true, // STEP 1.4: Temporarily allow builds while fixing issues (will be re-enabled at end)
   },
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: true, // STEP 1.4: Temporarily allow builds while fixing issues (will be re-enabled at end)
   },
   // Disable static optimization for pages using useSearchParams
   output: process.env.NODE_ENV === 'production' ? undefined : undefined,
