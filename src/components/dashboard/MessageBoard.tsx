@@ -37,20 +37,40 @@ export default function MessageBoard({
     devLog("MessageBoard - isAdmin type:", typeof isAdmin);
   }, [userId, isAdmin]);
 
-  const [messages, setMessages] = useState<CoachMessage[]>([]);
-  const [replies, setReplies] = useState<Record<string, CoachMessageReply[]>>(
-    {}
-  );
+  // Use custom hooks for state management
+  const messagesHook = useMessages({
+    userId,
+    userName,
+    isAdmin,
+    onRefresh: () => {
+      if (onMentionRead) {
+        onMentionRead();
+      }
+    },
+  });
+
+  const repliesHook = useReplies({
+    userId,
+    userName,
+    isAdmin,
+    onRefresh: () => {
+      if (onMentionRead) {
+        onMentionRead();
+      }
+    },
+  });
+
+  const mentionsHook = useMentions({
+    userId,
+    onMentionRead,
+  });
+
+  const editingHook = useEditing();
+
+  // Local state for UI
   const [expandedMessage, setExpandedMessage] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState<string>("");
-  const [newMessageText, setNewMessageText] = useState<string>("");
+  const [replyText, setReplyText] = useState<Record<string, string>>({});
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
-  const [editingMessage, setEditingMessage] = useState<string | null>(null);
-  const [editingReply, setEditingReply] = useState<string | null>(null);
-  const [editText, setEditText] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{
     id: string;
@@ -59,124 +79,36 @@ export default function MessageBoard({
   const [deleteTargetReplyCount, setDeleteTargetReplyCount] = useState<number>(0);
   const [showProfanityModal, setShowProfanityModal] = useState(false);
   const [profanityErrors, setProfanityErrors] = useState<string[]>([]);
-  const [unreadMentions, setUnreadMentions] = useState<any[]>([]);
-  const [loadingMentions, setLoadingMentions] = useState(false);
 
   // Lock scroll when any modal is open - unified scroll management
   useScrollLock(
     showNewMessageModal ||
-      !!editingMessage ||
-      !!editingReply ||
+      !!editingHook.editingMessage ||
+      !!editingHook.editingReply ||
       showDeleteConfirm ||
       showProfanityModal
   );
 
-  // Load messages and replies
-  const loadMessages = useCallback(async () => {
-    try {
-      devLog("Loading messages...");
-      setLoading(true);
-      const messagesData = await getMessages();
-      devLog("Loaded messages:", messagesData.length);
-      setMessages(messagesData);
-
-      // Load replies for each message
-      for (const message of messagesData) {
-        await loadReplies(message.id);
-      }
-    } catch (error) {
-      devError("Error loading messages:", error);
-      // If it's a table not found error, show helpful message
-      if (
-        error instanceof Error &&
-        error.message.includes("tables not yet created")
-      ) {
-        setMessages([]); // Set empty array to show the setup message
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Load unread mentions
-  const loadUnreadMentions = useCallback(async () => {
-    if (!userId) return;
-
-    try {
-      setLoadingMentions(true);
-      devLog("Loading unread mentions...");
-
-      const mentions = await getUnreadMentionsForUser(userId);
-      setUnreadMentions(mentions);
-
-      devLog("Unread mentions loaded:", mentions.length);
-    } catch (error) {
-      devError("Error loading unread mentions:", error);
-      setUnreadMentions([]);
-    } finally {
-      setLoadingMentions(false);
-    }
-  }, [userId]);
-
-  // Handle marking mention as read
-  const handleMarkMentionRead = async (notificationId: string) => {
-    try {
-      devLog("Marking mention as read:", notificationId);
-
-      const success = await markMentionAsRead(notificationId);
-
-      if (success) {
-        // Remove from unread list
-        setUnreadMentions((prev) =>
-          prev.filter((m) => m.id !== notificationId)
-        );
-
-        // Show success message
-        toast.success("Mention marked as read", {
-          duration: 2000,
-          position: "top-right",
-        });
-
-        // Reload messages to update parent component count
-        loadMessages();
-        
-        // Notify parent component to refresh unread mentions count
-        if (onMentionRead) {
-          onMentionRead();
-        }
-      } else {
-        toast.error("Failed to mark mention as read", {
-          duration: 3000,
-          position: "top-right",
-        });
-      }
-    } catch (error) {
-      devError("Error marking mention as read:", error);
-      toast.error("An error occurred", {
-        duration: 3000,
-        position: "top-right",
+  // Load replies for all messages when messages change
+  useEffect(() => {
+    if (messagesHook.messages.length > 0) {
+      messagesHook.messages.forEach((message) => {
+        repliesHook.loadReplies(message.id);
       });
     }
-  };
-
-  useEffect(() => {
-    if (userId) {
-      loadMessages();
-      loadUnreadMentions();
-    }
-  }, [userId, loadMessages, loadUnreadMentions]);
+  }, [messagesHook.messages, repliesHook]);
 
   // Refresh when refreshTrigger changes
   useEffect(() => {
     if (userId && refreshTrigger !== undefined && refreshTrigger > 0) {
-      loadMessages();
-      loadUnreadMentions();
+      messagesHook.loadMessages();
+      mentionsHook.loadUnreadMentions();
     }
-  }, [refreshTrigger, userId, loadMessages, loadUnreadMentions]);
+  }, [refreshTrigger, userId, messagesHook, mentionsHook]);
 
   // Handle scrolling to a specific message and opening reply
   useEffect(() => {
-    if (scrollToMessageId && messages.length > 0) {
+    if (scrollToMessageId && messagesHook.messages.length > 0) {
       // Wait a bit for messages to render
       setTimeout(() => {
         const messageElement = document.getElementById(`message-${scrollToMessageId}`);
@@ -195,335 +127,58 @@ export default function MessageBoard({
         }
       }, 300);
     }
-  }, [scrollToMessageId, messages]);
+  }, [scrollToMessageId, messagesHook.messages]);
 
-  // Debug logging for message data
-  useEffect(() => {
-    if (messages.length > 0) {
-      devLog("Messages loaded for delete check:", {
-        messageCount: messages.length,
-        firstMessage: messages[0],
-        userId,
-        isAdmin,
-        editingMessage,
-        allMessageAuthors: messages.map((m) => ({
-          id: m.id,
-          author_id: m.author_id,
-          author_name: m.author_name,
-        })),
-      });
-    }
-  }, [messages, userId, isAdmin, editingMessage]);
-
-  // Set up real-time subscriptions
-  useEffect(() => {
-    devLog("Setting up real-time subscription...");
-    devLog("Setting up real-time subscription for user:", userId);
-
-    const channel = supabase
-      .channel("coach-messages", {
-        config: {
-          broadcast: { self: true },
-          presence: { key: userId || "anonymous" },
-        },
-      })
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "coach_messages",
-        },
-        (payload) => {
-          devLog("New message inserted:", payload);
-          loadMessages();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "coach_messages",
-        },
-        (payload) => {
-          devLog("Message updated:", payload);
-          loadMessages();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "coach_message_replies",
-        },
-        (payload) => {
-          devLog("New reply inserted:", payload);
-          loadMessages();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "coach_message_replies",
-        },
-        (payload) => {
-          devLog("Reply updated:", payload);
-          loadMessages();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "message_notifications",
-          filter: `mentioned_user_id=eq.${userId}`,
-        },
-        (payload) => {
-          devLog("New mention notification:", payload);
-          // Reload unread mentions
-          loadUnreadMentions();
-          // Trigger refresh of messages to update parent component
-          loadMessages();
-          // Show toast notification
-          toast.success("You were mentioned in a message!", {
-            duration: 5000,
-            position: "top-right",
-          });
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "message_notifications",
-          filter: `mentioned_user_id=eq.${userId}`,
-        },
-        (payload) => {
-          devLog("Mention notification updated:", payload);
-          // Reload unread mentions to reflect changes
-          loadUnreadMentions();
-          // Update parent component count
-          loadMessages();
-        }
-      )
-      .subscribe((status, err) => {
-        devLog("Real-time subscription status:", status);
-
-        if (status === "SUBSCRIBED") {
-          devLog("Successfully subscribed to real-time updates");
-          setRealtimeConnected(true);
-        } else if (status === "CHANNEL_ERROR") {
-          devError("Real-time subscription error:", err);
-          setRealtimeConnected(false);
-        } else if (status === "TIMED_OUT") {
-          devError("Real-time subscription timed out");
-          setRealtimeConnected(false);
-        } else if (status === "CLOSED") {
-          devLog("Real-time subscription closed");
-          setRealtimeConnected(false);
-        }
-      });
-
-    return () => {
-      devLog("Cleaning up real-time subscription");
-      supabase.removeChannel(channel);
-    };
-  }, [userId, loadMessages]);
-
-  const loadReplies = async (messageId: string) => {
-    try {
-      const repliesData = await getMessageReplies(messageId);
-      setReplies((prev) => ({
-        ...prev,
-        [messageId]: repliesData,
-      }));
-    } catch (error) {
-      devError("Error loading replies:", error);
-    }
-  };
-
-  const handleNewMessage = async () => {
-    if (!newMessageText.trim() || submitting) return;
-
-    // Add userId validation
-    if (!userId || userId === "") {
-      toast.error(
-        "User session not ready. Please wait a moment and try again.",
-        {
-          duration: 4000,
-          position: "top-right",
-        }
-      );
-      return;
-    }
-
-    // Validate message for profanity
-    const validation = validateInput(newMessageText, "message");
-    if (!validation.isValid) {
-      setProfanityErrors(validation.errors);
+  // Wrapper functions that handle profanity errors
+  const handleNewMessage = async (messageText: string) => {
+    const result = await messagesHook.handleNewMessage(messageText);
+    if (!result.success && result.errors) {
+      setProfanityErrors(result.errors);
       setShowProfanityModal(true);
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-
-      // Fetch current coach name from database
-      let currentCoachName = userName;
-      try {
-        const { data: coachRows, error: coachError } = await supabase
-          .from("coaches")
-          .select("first_name, last_name")
-          .eq("user_id", userId)
-          .limit(1);
-
-        if (!coachError && coachRows && Array.isArray(coachRows) && coachRows[0]) {
-          currentCoachName = `${coachRows[0].first_name} ${coachRows[0].last_name}`;
-        }
-      } catch (error) {
-        devError("Error fetching coach name for message:", error);
-        // Continue with existing userName as fallback
-      }
-
-      const created = await createMessage(
-        validation.sanitizedValue,
-        userId,
-        currentCoachName
-      );
-      // Optimistically prepend the new message so it appears immediately
-      setMessages((prev) => [created, ...prev]);
-      setNewMessageText("");
+    } else if (result.success) {
       setShowNewMessageModal(false);
-      toast.success("Message posted successfully", {
-        duration: 3000,
-        position: "top-right",
-      });
-    } catch (error) {
-      devError("Error creating message:", error);
-      toast.error("Failed to create message. Please try again.", {
-        duration: 4000,
-        position: "top-right",
-      });
-    } finally {
-      setSubmitting(false);
     }
   };
 
   const handleReply = async (messageId: string) => {
-    if (!replyText.trim() || submitting) return;
-
-    // Validate reply for profanity
-    const validation = validateInput(replyText, "reply");
-    if (!validation.isValid) {
-      setProfanityErrors(validation.errors);
+    const currentReplyText = replyText[messageId] || "";
+    const result = await repliesHook.handleReply(messageId, currentReplyText);
+    if (!result.success && result.errors) {
+      setProfanityErrors(result.errors);
       setShowProfanityModal(true);
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      const created = await createReply(
-        messageId,
-        validation.sanitizedValue,
-        userId,
-        userName
-      );
-      // Optimistically append the new reply to the thread
-      setReplies((prev) => ({
-        ...prev,
-        [messageId]: [...(prev[messageId] || []), created],
-      }));
-      setReplyText("");
-      toast.success("Reply posted successfully", {
-        duration: 3000,
-        position: "top-right",
-      });
-    } catch (error) {
-      devError("Error creating reply:", error);
-      toast.error("Failed to create reply. Please try again.", {
-        duration: 4000,
-        position: "top-right",
-      });
-    } finally {
-      setSubmitting(false);
+    } else if (result.success) {
+      setReplyText((prev) => ({ ...prev, [messageId]: "" }));
     }
   };
 
   const handleEditMessage = async (messageId: string) => {
-    if (!editText.trim() || submitting) return;
-
-    // Validate edited message for profanity
-    const validation = validateInput(editText, "message");
-    if (!validation.isValid) {
-      setProfanityErrors(validation.errors);
+    const result = await messagesHook.handleEditMessage(
+      messageId,
+      editingHook.editText
+    );
+    if (!result.success && result.errors) {
+      setProfanityErrors(result.errors);
       setShowProfanityModal(true);
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      await updateMessage(
-        messageId,
-        validation.sanitizedValue,
-        userId,
-        isAdmin
-      );
-      setEditingMessage(null);
-      setEditText("");
-      toast.success("Message updated successfully", {
-        duration: 3000,
-        position: "top-right",
-      });
-    } catch (error) {
-      devError("Error updating message:", error);
-      toast.error("Failed to update message. Please try again.", {
-        duration: 4000,
-        position: "top-right",
-      });
-    } finally {
-      setSubmitting(false);
+    } else if (result.success) {
+      editingHook.cancelEdit();
     }
   };
 
   const handleEditReply = async (replyId: string) => {
-    if (!editText.trim() || submitting) return;
-
-    // Validate edited reply for profanity
-    const validation = validateInput(editText, "reply");
-    if (!validation.isValid) {
-      setProfanityErrors(validation.errors);
+    const result = await repliesHook.handleEditReply(
+      replyId,
+      editingHook.editText
+    );
+    if (!result.success && result.errors) {
+      setProfanityErrors(result.errors);
       setShowProfanityModal(true);
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-      await updateReply(replyId, validation.sanitizedValue, userId, isAdmin);
-      setEditingReply(null);
-      setEditText("");
-      toast.success("Reply updated successfully", {
-        duration: 3000,
-        position: "top-right",
-      });
-    } catch (error) {
-      devError("Error updating reply:", error);
-      toast.error("Failed to update reply. Please try again.", {
-        duration: 4000,
-        position: "top-right",
-      });
-    } finally {
-      setSubmitting(false);
+    } else if (result.success) {
+      editingHook.cancelEdit();
     }
   };
 
   const handleDeleteMessage = (messageId: string) => {
-    const messageReplies = replies[messageId] || [];
+    const messageReplies = repliesHook.replies[messageId] || [];
     const replyCount = messageReplies.length;
     setDeleteTarget({ id: messageId, type: "message" });
     setDeleteTargetReplyCount(replyCount);
@@ -534,41 +189,22 @@ export default function MessageBoard({
     if (!deleteTarget) return;
 
     try {
-      setSubmitting(true);
-      devLog("Attempting to delete:", { deleteTarget, userId, isAdmin });
-
       if (deleteTarget.type === "message") {
-        try {
-          await deleteMessage(deleteTarget.id, userId, isAdmin);
-          toast.success("Message deleted successfully", {
-            duration: 3000,
-            position: "top-right",
-          });
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Failed to delete message";
-          // Check if error is about replies
-          if (errorMessage.includes("replies") || errorMessage.includes("reply")) {
-            toast.error(errorMessage, {
-              duration: 5000,
-              position: "top-right",
-            });
+        const result = await messagesHook.handleDeleteMessage(deleteTarget.id);
+        if (!result.success) {
+          if (result.hasReplies) {
             // Don't close modal, let user see the error
-            setSubmitting(false);
             return;
           }
-          throw error; // Re-throw other errors
+          throw new Error(result.error || "Failed to delete message");
         }
       } else {
-        await deleteReply(deleteTarget.id, userId, isAdmin);
-        toast.success("Reply deleted successfully", {
-          duration: 3000,
-          position: "top-right",
-        });
+        const result = await repliesHook.handleDeleteReply(deleteTarget.id);
+        if (!result.success) {
+          throw new Error(result.error || "Failed to delete reply");
+        }
       }
 
-      devLog("Deleted successfully, refreshing messages...");
-      await loadMessages();
-      devLog("Messages refreshed after deletion");
       setShowDeleteConfirm(false);
       setDeleteTarget(null);
       setDeleteTargetReplyCount(0);
@@ -579,8 +215,6 @@ export default function MessageBoard({
         duration: 4000,
         position: "top-right",
       });
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -591,131 +225,30 @@ export default function MessageBoard({
   };
 
   const handlePinMessage = async (messageId: string) => {
-    try {
-      setSubmitting(true);
-      await pinMessage(messageId, isAdmin);
-      // Find the message to determine if it was pinned or unpinned
-      const message = messages.find((m) => m.id === messageId);
-      if (message) {
-        toast.success(
-          message.is_pinned ? "Message unpinned" : "Message pinned",
-          {
-            duration: 3000,
-            position: "top-right",
-          }
-        );
-      }
-    } catch (error) {
-      devError("Error pinning message:", error);
-      toast.error("Failed to pin/unpin message. Please try again.", {
-        duration: 4000,
-        position: "top-right",
-      });
-    } finally {
-      setSubmitting(false);
-    }
+    await messagesHook.handlePinMessage(messageId);
   };
 
   const toggleExpanded = (messageId: string) => {
     setExpandedMessage(expandedMessage === messageId ? null : messageId);
   };
 
-  const startEdit = (
-    message: CoachMessage | CoachMessageReply,
-    type: "message" | "reply"
-  ) => {
-    setEditText(message.content);
-    if (type === "message") {
-      setEditingMessage(message.id);
-    } else {
-      setEditingReply(message.id);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingMessage(null);
-    setEditingReply(null);
-    setEditText("");
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    const now = new Date();
-    const messageTime = new Date(timestamp);
-    const diffInHours = Math.floor(
-      (now.getTime() - messageTime.getTime()) / (1000 * 60 * 60)
-    );
-
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor(
-        (now.getTime() - messageTime.getTime()) / (1000 * 60)
-      );
-      return `${diffInMinutes} min ago`;
-    } else if (diffInHours < 24) {
-      return `${diffInHours} hr ago`;
-    } else {
-      const diffInDays = Math.floor(diffInHours / 24);
-      return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
-    }
-  };
-
-  const renderMessageContent = (content: string) => {
-    const parts = content.split(/(@[a-zA-Z0-9._-]+)/g);
-    return parts.map((part, index) => {
-      if (part.match(/^@[a-zA-Z0-9._-]+$/)) {
-        return (
-          <span
-            key={index}
-            className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-sm font-medium"
-          >
-            {part}
-          </span>
-        );
+  const handleMentionClick = (messageId: string) => {
+    setExpandedMessage(messageId);
+    setTimeout(() => {
+      const messageElement = document.getElementById(`message-${messageId}`);
+      if (messageElement) {
+        messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => {
+          const replyTextarea = messageElement.querySelector('textarea[placeholder*="reply"], textarea[placeholder*="Reply"], textarea[placeholder*="Write a reply"]') as HTMLTextAreaElement;
+          if (replyTextarea) {
+            replyTextarea.focus();
+          }
+        }, 500);
       }
-      return part;
-    });
+    }, 100);
   };
 
-  /**
-   * Check if the current user can edit a message/reply
-   * - Admins can edit any message
-   * - Coaches can only edit their own messages
-   */
-  const canEdit = (authorId: string) => {
-    devLog("canEdit check:", {
-      isAdmin,
-      authorId,
-      userId,
-      result: isAdmin || authorId === userId,
-    });
-    // Admins can edit any message
-    if (isAdmin) {
-      return true;
-    }
-    // Coaches can only edit their own messages
-    return authorId === userId;
-  };
-
-  /**
-   * Check if the current user can delete a message/reply
-   * - Admins can delete any message
-   * - Coaches can only delete their own messages
-   */
-  const canDelete = (authorId: string) => {
-    devLog("canDelete check:", {
-      isAdmin,
-      authorId,
-      userId,
-      result: isAdmin || authorId === userId,
-    });
-    // Admins can delete any message
-    if (isAdmin) {
-      return true;
-    }
-    // Coaches can only delete their own messages
-    return authorId === userId;
-  };
-
-  if (loading) {
+  if (messagesHook.loading) {
     return (
       <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-100">
         <div className="flex items-center justify-center py-8">
@@ -736,19 +269,19 @@ export default function MessageBoard({
             <p className="text-xs sm:text-sm text-gray-500 font-inter">
               Ask questions and share insights with other coaches
             </p>
-            <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-1">
               <div
                 className={`w-2 h-2 rounded-full ${
-                  realtimeConnected ? "bg-green-500" : "bg-red-500"
+                  messagesHook.realtimeConnected ? "bg-green-500" : "bg-red-500"
                 }`}
                 title={
-                  realtimeConnected
+                  messagesHook.realtimeConnected
                     ? "Real-time updates active"
                     : "Real-time updates disconnected"
                 }
               />
               <span className="text-xs text-gray-400">
-                {realtimeConnected ? "Live" : "Offline"}
+                {messagesHook.realtimeConnected ? "Live" : "Offline"}
               </span>
             </div>
           </div>
@@ -756,63 +289,18 @@ export default function MessageBoard({
         <div className="flex items-center space-x-2">
           <button
             type="button"
-            onClick={loadMessages}
+            onClick={messagesHook.loadMessages}
             className="bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm font-inter hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={loading}
+            disabled={messagesHook.loading}
             title="Refresh messages"
           >
-            {loading ? "Loading..." : "↻"}
-          </button>
-          <button
-            type="button"
-            onClick={async () => {
-              devLog("Testing real-time connection...");
-
-              // Test by creating a temporary message
-              try {
-                const testMessage = `Test message at ${new Date().toLocaleTimeString()}`;
-                devLog("Creating test message:", testMessage);
-
-                // Fetch current coach name for test message too
-                let currentCoachName = userName;
-                try {
-                  const { data: coachData, error: coachError } = await supabase
-                    .from("coaches")
-                    .select("first_name, last_name")
-                    .eq("user_id", userId)
-                    .single();
-
-                  if (!coachError && coachData) {
-                    currentCoachName = `${coachData.first_name} ${coachData.last_name}`;
-                  }
-                } catch (error) {
-                  devError(
-                    "Error fetching coach name for test message:",
-                    error
-                  );
-                }
-
-                await createMessage(testMessage, userId, currentCoachName);
-                devLog("Test message created successfully");
-
-                // Force refresh the messages to show the new one
-                devLog("Manually refreshing messages...");
-                await loadMessages();
-                devLog("Messages refreshed");
-              } catch (error) {
-                devError("Test message creation failed:", error);
-              }
-            }}
-            className="bg-yellow-100 text-yellow-700 px-3 py-2 rounded-md text-sm font-inter hover:bg-yellow-200 transition-colors"
-            title="Test real-time connection by creating a test message"
-          >
-            Test
+            {messagesHook.loading ? "Loading..." : "↻"}
           </button>
           <button
             type="button"
             onClick={() => setShowNewMessageModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            disabled={submitting}
+            disabled={messagesHook.submitting}
           >
             + New Message
           </button>
@@ -820,52 +308,15 @@ export default function MessageBoard({
       </div>
 
       {/* New Message Modal */}
-      {showNewMessageModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-bebas uppercase text-gray-900 mb-4">
-              New Message
-            </h3>
-            <textarea
-              value={newMessageText}
-              onChange={(e) => setNewMessageText(e.target.value)}
-              placeholder="What's on your mind?"
-              className="w-full p-3 border border-gray-300 rounded-md text-base sm:text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-              rows={4}
-              maxLength={1000}
-            />
-            <div className="flex justify-between items-center mt-2">
-              <span className="text-xs text-gray-500">
-                {newMessageText.length}/1000 characters
-              </span>
-            </div>
-            <div className="flex items-center justify-end space-x-2 mt-4">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowNewMessageModal(false);
-                  setNewMessageText("");
-                }}
-                className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
-                disabled={submitting}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleNewMessage}
-                disabled={!newMessageText.trim() || submitting}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {submitting ? "Posting..." : "Post Message"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <MessageComposer
+        isOpen={showNewMessageModal}
+        onClose={() => setShowNewMessageModal(false)}
+        onSubmit={handleNewMessage}
+        submitting={messagesHook.submitting}
+      />
 
       <div className="space-y-4">
-        {messages.length === 0 ? (
+        {messagesHook.messages.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-4">
               <h4 className="text-lg font-semibold text-blue-900 mb-2">
@@ -903,485 +354,50 @@ export default function MessageBoard({
         ) : (
           <>
             {/* Unread Mentions Section */}
-            {(() => {
-              // Filter mentions to only show those for the current user (additional safety check)
-              const userMentions = unreadMentions.filter(
-                (mention) => mention.mentioned_user_id === userId
-              );
-              
-              return userMentions.length > 0 && (
-              <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-lg font-bebas text-black dark:text-black">
-                    <span className="md:hidden">{userMentions.length} unread</span>
-                    <span className="hidden md:inline">UNREAD MENTIONS ({userMentions.length})</span>
-                  </h4>
-                  <button
-                    onClick={() => {
-                      userMentions.forEach((m) =>
-                        handleMarkMentionRead(m.id)
-                      );
-                    }}
-                    className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-inter underline"
-                  >
-                    Mark all as read
-                  </button>
-                </div>
+            <UnreadMentions
+              mentions={mentionsHook.unreadMentions}
+              userId={userId}
+              onMarkRead={mentionsHook.handleMarkMentionRead}
+              onMarkAllRead={() => {
+                mentionsHook.unreadMentions.forEach((m) =>
+                  mentionsHook.handleMarkMentionRead(m.id)
+                );
+              }}
+              onMentionClick={handleMentionClick}
+            />
 
-                <div className="space-y-3">
-                  {userMentions.map((mention) => {
-                    const isReply = !!mention.reply_id;
-                    // For replies, get the reply data; for messages, get the message data
-                    const replyData = mention.coach_message_replies;
-                    const messageData = mention.coach_messages;
-                    const parentMessage = replyData?.coach_messages;
-                    
-                    // Get the actual content that mentions the user
-                    // If it's a reply, use the reply content; if it's a message, use the message content
-                    const actualContent = isReply 
-                      ? (replyData?.content || "")
-                      : (messageData?.content || "");
-                    const authorName = isReply
-                      ? (replyData?.author_name || "")
-                      : (messageData?.author_name || "");
-
-                    // Determine the message_id to scroll to
-                    // If it's a reply, get the parent message_id; otherwise use the message_id
-                    const targetMessageId = isReply 
-                      ? (replyData?.message_id || mention.message_id)
-                      : mention.message_id;
-
-                    const handleMentionClick = () => {
-                      if (!targetMessageId) return;
-                      
-                      // Mark the mention as read
-                      handleMarkMentionRead(mention.id);
-                      
-                      // Scroll to the message and open reply
-                      setTimeout(() => {
-                        const messageElement = document.getElementById(`message-${targetMessageId}`);
-                        if (messageElement) {
-                          // Expand the message to show reply
-                          setExpandedMessage(targetMessageId);
-                          // Scroll to the message
-                          messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
-                          // Focus on the reply textarea if it exists
-                          setTimeout(() => {
-                            const replyTextarea = messageElement.querySelector('textarea[placeholder*="reply"], textarea[placeholder*="Reply"], textarea[placeholder*="Write a reply"]') as HTMLTextAreaElement;
-                            if (replyTextarea) {
-                              replyTextarea.focus();
-                            }
-                          }, 500);
-                        }
-                      }, 100);
-                    };
-
-                    return (
-                      <div
-                        key={mention.id}
-                        className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                        onClick={handleMentionClick}
-                      >
-                        <div className="flex items-start gap-3">
-                          <input
-                            type="checkbox"
-                            onChange={(e) => {
-                              e.stopPropagation(); // Prevent triggering the card click
-                              handleMarkMentionRead(mention.id);
-                            }}
-                            className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-semibold text-gray-900 dark:text-white text-sm">
-                                {authorName}
-                              </span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {isReply ? "replied to you" : "mentioned you in a post"}
-                              </span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                • {new Date(
-                                  mention.mentioned_at
-                                ).toLocaleDateString()}
-                              </span>
-                            </div>
-                            {/* Show parent message context if it's a reply */}
-                            {isReply && parentMessage && (
-                              <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-900 rounded text-xs border-l-2 border-gray-300 dark:border-gray-600">
-                                <div className="text-gray-600 dark:text-gray-400 mb-1">
-                                  <span className="font-semibold">{parentMessage.author_name}</span>
-                                  {" "}posted:
-                                </div>
-                                <p className="text-gray-700 dark:text-gray-300 italic">
-                                  {renderMessageContent(parentMessage.content || "")}
-                                </p>
-                              </div>
-                            )}
-                            {/* Show the actual reply/message that mentions the user */}
-                            <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border-l-2 border-blue-400 dark:border-blue-500">
-                              <p className="text-sm text-gray-900 dark:text-white font-medium">
-                                {renderMessageContent(actualContent)}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-              );
-            })()}
-
-            {messages.map((message) => {
-              const messageReplies = replies[message.id] || [];
+            {messagesHook.messages.map((message) => {
+              const messageReplies = repliesHook.replies[message.id] || [];
               const isExpanded = expandedMessage === message.id;
-              const isEditing = editingMessage === message.id;
+              const isEditing = editingHook.editingMessage === message.id;
 
               return (
-                <div
+                <MessageItem
                   key={message.id}
-                  id={`message-${message.id}`}
-                  className={`border-b border-gray-100 pb-4 last:border-b-0 ${
-                    message.is_pinned
-                      ? "bg-yellow-50 border-l-4 border-l-yellow-400 pl-4"
-                      : ""
-                  }`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2 mb-2">
-                        <div className="flex items-center space-x-2">
-                          <span className="font-inter font-semibold text-gray-900 text-sm sm:text-base">
-                            {message.author_name}
-                          </span>
-                          {message.is_pinned && (
-                            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
-                              PINNED
-                            </span>
-                          )}
-                          {message.updated_at !== message.created_at && (
-                            <span className="text-xs text-gray-400">
-                              (edited)
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-xs sm:text-sm text-gray-500">
-                          • {formatTimestamp(message.created_at)}
-                        </span>
-                      </div>
-
-                      {isEditing ? (
-                        <div className="space-y-3">
-                          <textarea
-                            value={editText}
-                            onChange={(e) => setEditText(e.target.value)}
-                            className="w-full p-3 border border-gray-300 rounded-md text-base sm:text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                            rows={3}
-                            maxLength={1000}
-                          />
-                          <div className="flex items-center justify-end space-x-2">
-                            <button
-                              type="button"
-                              onClick={cancelEdit}
-                              className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
-                              disabled={submitting}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleEditMessage(message.id)}
-                              disabled={!editText.trim() || submitting}
-                              className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {submitting ? "Saving..." : "Save"}
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-gray-700 font-inter mb-3 text-sm sm:text-base">
-                          {renderMessageContent(message.content)}
-                        </p>
-                      )}
-
-                      <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                        <button
-                          type="button"
-                          onClick={() => toggleExpanded(message.id)}
-                          className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-inter self-start"
-                          disabled={submitting}
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                            />
-                          </svg>
-                          <span>Reply</span>
-                        </button>
-                        <span className="text-xs sm:text-sm text-gray-500">
-                          {isExpanded
-                            ? `Hide ${messageReplies.length} comments`
-                            : `View ${messageReplies.length} comments`}
-                        </span>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex items-center space-x-1 mt-2">
-                        {canEdit(message.author_id) && !isEditing && (
-                          <button
-                            type="button"
-                            onClick={() => startEdit(message, "message")}
-                            className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
-                            aria-label="Edit message"
-                            disabled={submitting}
-                          >
-                            <svg
-                              className="w-5 h-5 sm:w-4 sm:h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          </button>
-                        )}
-                        {canDelete(message.author_id) && !isEditing && (
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteMessage(message.id)}
-                            className={`p-2 sm:p-1 rounded-md transition-colors ${
-                              !isAdmin && messageReplies.length > 0
-                                ? "text-gray-300 cursor-not-allowed"
-                                : "text-gray-400 hover:text-red-600 hover:bg-red-50"
-                            }`}
-                            aria-label="Delete message"
-                            disabled={submitting || (!isAdmin && messageReplies.length > 0)}
-                            title={
-                              !isAdmin && messageReplies.length > 0
-                                ? "Cannot delete message with replies. Only admins can delete messages that have replies."
-                                : "Delete message"
-                            }
-                          >
-                            <svg
-                              className="w-5 h-5 sm:w-4 sm:h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                              />
-                            </svg>
-                          </button>
-                        )}
-                        {isAdmin && !isEditing && (
-                          <button
-                            type="button"
-                            onClick={() => handlePinMessage(message.id)}
-                            className="text-gray-400 hover:text-yellow-600 p-2 sm:p-1 rounded-md hover:bg-yellow-50 transition-colors"
-                            aria-label={
-                              message.is_pinned
-                                ? "Unpin message"
-                                : "Pin message"
-                            }
-                            disabled={submitting}
-                          >
-                            <svg
-                              className="w-5 h-5 sm:w-4 sm:h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                              />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {isExpanded && (
-                    <div className="mt-4 pl-4 border-l-2 border-gray-200">
-                      <div className="space-y-3 mb-4">
-                        {messageReplies.map((reply) => {
-                          const isEditingReply = editingReply === reply.id;
-                          return (
-                            <div
-                              key={reply.id}
-                              className="flex items-start space-x-2"
-                            >
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  <span className="font-inter font-semibold text-gray-900 text-sm">
-                                    {reply.author_name}
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    • {formatTimestamp(reply.created_at)}
-                                  </span>
-                                  {reply.updated_at !== reply.created_at && (
-                                    <span className="text-xs text-gray-400">
-                                      (edited)
-                                    </span>
-                                  )}
-                                </div>
-
-                                {isEditingReply ? (
-                                  <div className="space-y-2">
-                                    <textarea
-                                      value={editText}
-                                      onChange={(e) =>
-                                        setEditText(e.target.value)
-                                      }
-                                      className="w-full p-2 border border-gray-300 rounded-md text-base sm:text-xs font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                                      rows={2}
-                                      maxLength={500}
-                                    />
-                                    <div className="flex items-center justify-end space-x-2">
-                                      <button
-                                        type="button"
-                                        onClick={cancelEdit}
-                                        className="px-2 py-1 text-xs font-inter text-gray-600 hover:text-gray-800 transition-colors"
-                                        disabled={submitting}
-                                      >
-                                        Cancel
-                                      </button>
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          handleEditReply(reply.id)
-                                        }
-                                        disabled={
-                                          !editText.trim() || submitting
-                                        }
-                                        className="px-2 py-1 bg-blue-600 text-white text-xs font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                      >
-                                        {submitting ? "Saving..." : "Save"}
-                                      </button>
-                                    </div>
-                                  </div>
-                                ) : (
-                                  <>
-                                    <p className="text-gray-700 font-inter text-sm">
-                                      {renderMessageContent(reply.content)}
-                                    </p>
-                                    <div className="flex items-center space-x-1 mt-1">
-                                      {canEdit(reply.author_id) && (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            startEdit(reply, "reply")
-                                          }
-                                          className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
-                                          aria-label="Edit reply"
-                                          disabled={submitting}
-                                        >
-                                          <svg
-                                            className="w-5 h-5 sm:w-4 sm:h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                            />
-                                          </svg>
-                                        </button>
-                                      )}
-                                      {canDelete(reply.author_id) && (
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            handleDeleteReply(reply.id)
-                                          }
-                                          className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
-                                          aria-label="Delete reply"
-                                          disabled={submitting}
-                                        >
-                                          <svg
-                                            className="w-5 h-5 sm:w-4 sm:h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                          </svg>
-                                        </button>
-                                      )}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="space-y-3">
-                        <textarea
-                          value={replyText}
-                          onChange={(e) => setReplyText(e.target.value)}
-                          placeholder="Write a reply..."
-                          className="w-full p-3 border border-gray-300 rounded-md text-base sm:text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
-                          rows={3}
-                          maxLength={500}
-                        />
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">
-                            {replyText.length}/500 characters
-                          </span>
-                          <div className="flex items-center space-x-2">
-                            <button
-                              type="button"
-                              onClick={() => setReplyText("")}
-                              className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
-                              disabled={submitting}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleReply(message.id)}
-                              disabled={!replyText.trim() || submitting}
-                              className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                            >
-                              {submitting ? "Posting..." : "Post Reply"}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  message={message}
+                  replies={messageReplies}
+                  isExpanded={isExpanded}
+                  isEditing={isEditing}
+                  editText={editingHook.editText}
+                  onEditTextChange={editingHook.setEditText}
+                  onStartEdit={editingHook.startEdit}
+                  onCancelEdit={editingHook.cancelEdit}
+                  onSaveEdit={handleEditMessage}
+                  onDelete={handleDeleteMessage}
+                  onPin={handlePinMessage}
+                  onToggleExpanded={toggleExpanded}
+                  replyText={replyText[message.id] || ""}
+                  onReplyTextChange={(text) =>
+                    setReplyText((prev) => ({ ...prev, [message.id]: text }))
+                  }
+                  onSubmitReply={handleReply}
+                  onEditReply={handleEditReply}
+                  onDeleteReply={handleDeleteReply}
+                  editingReply={editingHook.editingReply}
+                  userId={userId}
+                  isAdmin={isAdmin}
+                  submitting={messagesHook.submitting || repliesHook.submitting}
+                />
               );
             })}
           </>
@@ -1430,14 +446,6 @@ export default function MessageBoard({
                 permanently removed from the message board.
               </p>
               <div className="flex space-x-3 justify-center">
-                {(() => {
-                  devLog("Rendering modal buttons:", {
-                    showDeleteConfirm,
-                    deleteTarget,
-                    submitting,
-                  });
-                  return null;
-                })()}
                 <button
                   type="button"
                   onClick={() => {
@@ -1446,19 +454,19 @@ export default function MessageBoard({
                     setDeleteTarget(null);
                   }}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
-                  disabled={submitting}
+                  disabled={messagesHook.submitting || repliesHook.submitting}
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    if (!submitting) {
+                    if (!messagesHook.submitting && !repliesHook.submitting) {
                       devLog("Delete button clicked in modal");
                       confirmDelete();
                     }
                   }}
-                  disabled={submitting}
+                  disabled={messagesHook.submitting || repliesHook.submitting}
                   style={{
                     minWidth: "100px",
                     padding: "8px 24px",
@@ -1468,36 +476,29 @@ export default function MessageBoard({
                     backgroundColor: "#dc2626",
                     border: "2px solid #b91c1c",
                     borderRadius: "6px",
-                    cursor: submitting ? "not-allowed" : "pointer",
-                    opacity: submitting ? 0.5 : 1,
+                    cursor: (messagesHook.submitting || repliesHook.submitting) ? "not-allowed" : "pointer",
+                    opacity: (messagesHook.submitting || repliesHook.submitting) ? 0.5 : 1,
                     display: "inline-block",
                     textAlign: "center",
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                     transition: "all 0.2s ease-in-out",
                   }}
                   onMouseEnter={(e) => {
-                    if (!submitting) {
+                    if (!messagesHook.submitting && !repliesHook.submitting) {
                       e.currentTarget.style.backgroundColor = "#b91c1c";
                       e.currentTarget.style.boxShadow =
                         "0 10px 15px -3px rgba(0, 0, 0, 0.1)";
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (!submitting) {
+                    if (!messagesHook.submitting && !repliesHook.submitting) {
                       e.currentTarget.style.backgroundColor = "#dc2626";
                       e.currentTarget.style.boxShadow =
                         "0 4px 6px -1px rgba(0, 0, 0, 0.1)";
                     }
                   }}
                 >
-                  {(() => {
-                    devLog("Button content:", {
-                      submitting,
-                      content: submitting ? "Deleting..." : "Delete",
-                    });
-                    return null;
-                  })()}
-                  {submitting ? "Deleting..." : "Delete"}
+                  {(messagesHook.submitting || repliesHook.submitting) ? "Deleting..." : "Delete"}
                 </button>
               </div>
             </div>

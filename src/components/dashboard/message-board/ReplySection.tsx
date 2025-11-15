@@ -1,5 +1,5 @@
 // src/components/dashboard/message-board/ReplySection.tsx
-import React, { useState } from "react";
+import React from "react";
 import { CoachMessageReply } from "@/types/supabase";
 import ReplyItem from "./ReplyItem";
 
