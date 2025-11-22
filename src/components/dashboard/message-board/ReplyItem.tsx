@@ -76,7 +76,7 @@ export default function ReplyItem({
         ) : (
           <>
             <p className="text-gray-700 font-inter text-sm">
-              {renderMessageContent(reply.content)}
+              {renderMessageContent(reply?.content || '')}
             </p>
             <div className="flex items-center space-x-1 mt-1">
               {canEdit(reply.author_id, userId, isAdmin) && (

@@ -195,6 +195,9 @@ html {
   animation: stepPulse 2s ease-in-out infinite;
 }
 
+/* Import Inter from Google Fonts for better weight coverage */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @font-face {
   font-family: "Inter";
   src: url("/fonts/Inter-Regular.ttf") format("truetype");
@@ -246,6 +249,71 @@ html {
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none; /* For Chrome, Safari, and Opera */
+}
+
+/* Hide Scrollbar (Alternative naming for reference compatibility) */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Grain Texture Background - Subtle noise effect */
+.bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* Glass Panel Effect */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Text Balance Utility */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Fade Enter Animations - For scroll-triggered content */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Delay utilities for staggered animations */
+.delay-100 {
+  transition-delay: 100ms;
+}
+
+.delay-200 {
+  transition-delay: 200ms;
+}
+
+.delay-300 {
+  transition-delay: 300ms;
+}
+
+/* Parallax Layer Optimization */
+.parallax-layer {
+  will-change: transform;
+}
+
+/* Story Card Hover Effect (Taboo-style) */
+.story-card:hover img {
+  transform: scale(1.03);
+}
+
+.story-card img {
+  transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 /* Global Image Scaling - Scale all images proportionally */

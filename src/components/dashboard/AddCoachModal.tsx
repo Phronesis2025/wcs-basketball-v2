@@ -56,8 +56,10 @@ export default function AddCoachModal({
   // Lock scroll when modal is open
   useScrollLock(isOpen);
 
-  // Initialize form when editing
+  // Initialize form when editing or when modal opens
   useEffect(() => {
+    if (!isOpen) return; // Only run when modal is open
+    
     devLog("AddCoachModal useEffect - editingCoach:", editingCoach);
 
     const fetchAssignedTeam = async (coachId: string) => {
@@ -108,6 +110,7 @@ export default function AddCoachModal({
       // Fetch assigned team
       fetchAssignedTeam(editingCoach.id);
     } else {
+      // Reset form for "Add" mode
       setFormData({
         firstName: "",
         lastName: "",
@@ -127,7 +130,7 @@ export default function AddCoachModal({
     setSelectedFile(null);
     setImagePreview(null);
     setErrors((prev) => ({ ...prev, image: "" }));
-  }, [editingCoach]);
+  }, [editingCoach, isOpen]);
 
   // Cleanup preview URL on unmount
   useEffect(() => {

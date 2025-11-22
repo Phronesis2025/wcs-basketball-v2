@@ -57,17 +57,35 @@ export async function getMessageReplies(
       .order("created_at", { ascending: true });
 
     if (error) {
-      devError("Error fetching replies:", error);
-      throw new Error(error.message);
+      // Check if table doesn't exist first (before logging error)
+      const errorMessage = error.message || String(error) || "";
+      if (
+        errorMessage.includes("relation") &&
+        errorMessage.includes("does not exist")
+      ) {
+        devLog(
+          "Message replies table not yet created. Returning empty array."
+        );
+        return [];
+      }
+      // For other errors, log and return empty array instead of treating as hard errors
+      devLog(
+        "Error fetching replies, returning empty array. Error object:",
+        error
+      );
+      devLog(
+        "Error fetching replies, returning empty array. Error message:",
+        errorMessage
+      );
+      return [];
     }
 
     devLog("Successfully fetched replies:", data?.length || 0);
     return data || [];
   } catch (err: unknown) {
-    devError("Error in getMessageReplies:", err);
-    const errorMessage =
-      err instanceof Error ? err.message : "Failed to fetch replies";
-    throw new Error(errorMessage);
+    // Swallow exceptions and just return an empty array – replies are optional
+    devLog("Exception in getMessageReplies, returning empty array:", err);
+    return [];
   }
 }
 
@@ -592,7 +610,26 @@ export async function getUnreadMentionCount(userId: string): Promise<number> {
       .is("acknowledged_at", null);
 
     if (error) {
-      devError("Error fetching unread mention count:", error);
+      // Check if table doesn't exist first (before logging error)
+      const errorMessage = error.message || String(error) || "";
+      if (
+        errorMessage.includes("relation") &&
+        errorMessage.includes("does not exist")
+      ) {
+        devLog(
+          "Message notifications table not yet created. Returning 0 unread count."
+        );
+        return 0;
+      }
+      // For other errors, log and return 0 (don't surface as DEV ERROR)
+      devLog(
+        "Error fetching unread mention count, returning 0. Error object:",
+        error
+      );
+      devLog(
+        "Error fetching unread mention count, returning 0. Error message:",
+        errorMessage
+      );
       return 0;
     }
 
@@ -607,7 +644,8 @@ export async function getUnreadMentionCount(userId: string): Promise<number> {
     devLog("Unread mentions:", count);
     return count;
   } catch (error) {
-    devError("Error in getUnreadMentionCount:", error);
+    // Silently return 0 for any exceptions (table doesn't exist, network errors, etc.)
+    devLog("Exception in getUnreadMentionCount, returning 0:", error);
     return 0;
   }
 }
@@ -655,7 +693,26 @@ export async function getUnreadMentionsForUser(userId: string) {
       .order("mentioned_at", { ascending: false });
 
     if (error) {
-      devError("Error fetching unread mentions:", error);
+      // Check if table doesn't exist first (before logging error)
+      const errorMessage = error.message || String(error) || "";
+      if (
+        errorMessage.includes("relation") &&
+        errorMessage.includes("does not exist")
+      ) {
+        devLog(
+          "Message notifications table not yet created. Returning empty mention list."
+        );
+        return [];
+      }
+      // For other errors, log and return empty array (no DEV ERROR noise)
+      devLog(
+        "Error fetching unread mentions, returning empty array. Error object:",
+        error
+      );
+      devLog(
+        "Error fetching unread mentions, returning empty array. Error message:",
+        errorMessage
+      );
       return [];
     }
 
@@ -667,7 +724,11 @@ export async function getUnreadMentionsForUser(userId: string) {
     devLog("Unread mentions fetched:", filteredData?.length || 0);
     return filteredData;
   } catch (error) {
-    devError("Error in getUnreadMentionsForUser:", error);
+    // Return empty array for any exceptions (table doesn't exist, network errors, etc.)
+    devLog(
+      "Exception in getUnreadMentionsForUser, returning empty array:",
+      error
+    );
     return [];
   }
 }

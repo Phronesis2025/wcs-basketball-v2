@@ -111,7 +111,7 @@ export default function LogoMarquee() {
 
   return (
     <section
-      className="bg-navy/80 py-8 overflow-hidden"
+      className="bg-[#030303] py-8 overflow-hidden border-t border-white/5"
       aria-label="Team Logos"
     >
       <div className="marquee-track flex items-center">

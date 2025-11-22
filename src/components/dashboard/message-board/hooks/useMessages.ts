@@ -50,6 +50,11 @@ export function useMessages({
     }
   }, []);
 
+  // Load messages on mount
+  useEffect(() => {
+    loadMessages();
+  }, [loadMessages]);
+
   // Set up real-time subscriptions
   useEffect(() => {
     devLog("Setting up real-time subscription for user:", userId);

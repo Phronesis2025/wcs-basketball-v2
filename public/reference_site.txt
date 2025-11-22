@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>World Class Sports | Elite Basketball</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+          font-family: 'Inter', sans-serif;
+          background-color: #030303;
+          color: #ffffff;
+          -webkit-font-smoothing: antialiased;
+      }
+
+      /* Grain Texture */
+      .bg-grain {
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+      }
+
+      /* Utilities */
+      .glass-panel {
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(10px);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .text-balance { text-wrap: balance; }
+
+      /* Hide Scrollbar */
+      .hide-scrollbar::-webkit-scrollbar { display: none; }
+      .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* Animations */
+      .fade-enter {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .fade-enter-active { opacity: 1; transform: translateY(0); }
+      .delay-100 { transition-delay: 100ms; }
+      .delay-200 { transition-delay: 200ms; }
+      .delay-300 { transition-delay: 300ms; }
+
+      /* Taboo-style Card Hover */
+      .story-card:hover img { transform: scale(1.03); }
+      .story-card img { transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1); }
+    </style>
+    <style>
+      .parallax-layer { will-change: transform; }
+    </style>
+  </head>
+  <body
+    class="bg-[#030303] bg-grain min-h-screen flex flex-col overflow-x-hidden"
+  >
+    <!-- Navigation (WCS Structure) -->
+    <nav
+      class="fixed top-0 w-full z-50 border-b border-white/5 bg-[#030303]/80 backdrop-blur-md transition-all duration-300"
+      id="navbar"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between"
+      >
+        <!-- Brand -->
+        <a href="#" class="flex items-center gap-2.5 group z-50">
+          <div
+            class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-black group-hover:scale-105 transition-transform"
+          >
+            <span class="iconify text-lg" data-icon="lucide:trophy"></span>
+          </div>
+          <span class="font-semibold tracking-tight text-sm text-white">
+            World Class Sports
+          </span>
+        </a>
+
+        <!-- Links (WCS Style) -->
+        <div
+          class="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2"
+        >
+          <a
+            href="#home"
+            class="text-xs font-medium text-white transition-colors"
+          >
+            Home
+          </a>
+          <a
+            href="#around-wcs"
+            class="text-xs font-medium text-neutral-400 hover:text-white transition-colors"
+          >
+            Programs
+          </a>
+          <a
+            href="#tournaments"
+            class="text-xs font-medium text-neutral-400 hover:text-white transition-colors"
+          >
+            Tournaments
+          </a>
+          <a
+            href="#camps"
+            class="text-xs font-medium text-neutral-400 hover:text-white transition-colors"
+          >
+            Camps
+          </a>
+          <a
+            href="#schedule"
+            class="text-xs font-medium text-neutral-400 hover:text-white transition-colors"
+          >
+            Schedule
+          </a>
+          <a
+            href="#contact"
+            class="text-xs font-medium text-neutral-400 hover:text-white transition-colors"
+          >
+            Contact
+          </a>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-3">
+          <a
+            href="#"
+            class="hidden md:flex text-xs font-medium text-neutral-400 hover:text-white px-3 py-2 transition-colors"
+          >
+            Sign In
+          </a>
+          <a
+            href="#register"
+            class="flex items-center gap-2 bg-white text-black px-4 py-2 rounded-full text-xs font-medium hover:bg-neutral-200 transition-all hover:scale-[1.02]"
+          >
+            Register
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section with Parallax -->
+    <section
+      id="home"
+      class="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center"
+    >
+      <!-- Background Glow -->
+      <div
+        class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-900/[0.05] blur-[120px] rounded-full pointer-events-none -z-10"
+      ></div>
+
+      <div
+        class="max-w-5xl mx-auto text-center flex flex-col items-center z-10 relative"
+      >
+        <div
+          class="fade-enter inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8"
+        >
+          <span class="relative flex h-2 w-2">
+            <span
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75"
+            ></span>
+            <span
+              class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"
+            ></span>
+          </span>
+          <span
+            class="text-[11px] font-medium uppercase tracking-widest text-neutral-300"
+          >
+            Winter Leagues Open
+          </span>
+        </div>
+
+        <h1
+          class="fade-enter delay-100 text-6xl md:text-8xl lg:text-9xl font-semibold tracking-tighter text-white leading-[0.9] text-balance mb-8"
+        >
+          BUILT FOR
+          <br />
+          <span
+            class="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40"
+          >
+            THE GAME.
+          </span>
+        </h1>
+
+        <p
+          class="fade-enter delay-200 text-neutral-400 text-lg leading-relaxed max-w-xl mb-10 text-balance font-light"
+        >
+          The premier destination for youth basketball development, competitive
+          tournaments, and elite training.
+        </p>
+
+        <div
+          class="fade-enter delay-300 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
+        >
+          <button
+            class="w-full sm:w-auto h-12 px-8 rounded-full bg-white text-black font-medium text-sm hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2"
+          >
+            Find a Program
+          </button>
+        </div>
+      </div>
+
+      <!-- Parallax Image Grid -->
+      <div
+        class="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-hidden"
+      >
+        <!-- Left Column -->
+        <div
+          class="absolute left-[5%] md:left-[10%] top-[20%] w-48 md:w-64 aspect-[3/4] rounded-lg overflow-hidden opacity-30 parallax-layer"
+          data-speed="0.05"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&amp;w=1000&amp;auto=format&amp;fit=crop"
+            class="w-full h-full object-cover grayscale"
+            alt="Team"
+          />
+        </div>
+        <div
+          class="absolute left-[2%] md:left-[5%] top-[70%] w-40 md:w-56 aspect-[3/4] rounded-lg overflow-hidden opacity-20 parallax-layer"
+          data-speed="0.1"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1518407613690-d9fc990e795f?q=80&amp;w=1000&amp;auto=format&amp;fit=crop"
+            class="w-full h-full object-cover grayscale"
+            alt="Play"
+          />
+        </div>
+
+        <!-- Right Column -->
+        <div
+          class="absolute right-[5%] md:right-[10%] top-[15%] w-56 md:w-72 aspect-[3/4] rounded-lg overflow-hidden opacity-30 parallax-layer"
+          data-speed="0.08"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1504450758481-7338eba7524a?q=80&amp;w=1000&amp;auto=format&amp;fit=crop"
+            class="w-full h-full object-cover grayscale"
+            alt="Hoop"
+          />
+        </div>
+        <div
+          class="absolute right-[2%] md:right-[8%] top-[65%] w-44 md:w-60 aspect-[3/4] rounded-lg overflow-hidden opacity-20 parallax-layer"
+          data-speed="0.12"
+        >
+          <img
+            src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/917d6f93-fb36-439a-8c48-884b67b35381_1600w.jpg"
+            class="w-full h-full object-cover grayscale"
+            alt="Coach"
+          />
+        </div>
+      </div>
+    </section>
+    <section
+      id="metrics"
+      class="py-16 border-y border-white/5 bg-[#0A0A0A] relative z-20"
+    >
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div class="fade-enter group">
+            <h3
+              class="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tighter group-hover:text-blue-500 transition-colors"
+            >
+              15k+
+            </h3>
+            <p
+              class="text-neutral-500 text-xs font-mono uppercase tracking-widest"
+            >
+              Athletes Developed
+            </p>
+          </div>
+          <div class="fade-enter delay-100 group">
+            <h3
+              class="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tighter group-hover:text-blue-500 transition-colors"
+            >
+              200+
+            </h3>
+            <p
+              class="text-neutral-500 text-xs font-mono uppercase tracking-widest"
+            >
+              College Commits
+            </p>
+          </div>
+          <div class="fade-enter delay-200 group">
+            <h3
+              class="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tighter group-hover:text-blue-500 transition-colors"
+            >
+              45
+            </h3>
+            <p
+              class="text-neutral-500 text-xs font-mono uppercase tracking-widest"
+            >
+              State Titles
+            </p>
+          </div>
+          <div class="fade-enter delay-300 group">
+            <h3
+              class="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tighter group-hover:text-blue-500 transition-colors"
+            >
+              #1
+            </h3>
+            <p
+              class="text-neutral-500 text-xs font-mono uppercase tracking-widest"
+            >
+              Rated Facility
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Winning Programs / Bento Grid -->
+
+    <!-- Fan Zone (Taboo.tv Style: "Raw and real") -->
+    <section class="py-24 border-t border-white/5 bg-[#050505]">
+      <div class="px-6 max-w-7xl mx-auto mb-10 flex items-end justify-between">
+        <div class="fade-enter">
+          <h2
+            class="text-4xl md:text-6xl font-semibold tracking-tighter text-white mb-2"
+          >
+            THE CULTURE.
+          </h2>
+          <p
+            class="text-neutral-500 text-sm font-mono uppercase tracking-widest"
+          >
+            Raw and Real. Inside WCS.
+          </p>
+        </div>
+        <div class="flex gap-2">
+          <button
+            id="scrollLeft"
+            class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors"
+          >
+            <span class="iconify" data-icon="lucide:arrow-left"></span>
+          </button>
+          <button
+            id="scrollRight"
+            class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-white hover:text-black transition-colors"
+          >
+            <span class="iconify" data-icon="lucide:arrow-right"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Horizontal Scroll Container -->
+      <div
+        id="storiesContainer"
+        class="flex gap-4 overflow-x-auto hide-scrollbar px-6 pb-10 snap-x snap-mandatory"
+      >
+        <div class="shrink-0 w-[10vw] hidden md:block"></div>
+        <!-- Spacer -->
+
+        <!-- Story Card 1 -->
+        <div
+          class="story-card relative shrink-0 w-[85vw] md:w-[400px] aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 snap-center cursor-pointer group border border-white/10"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1505666287802-931dc83948e9?q=80&amp;w=1000&amp;auto=format&amp;fit=crop"
+            class="absolute inset-0 w-full h-full object-cover opacity-80"
+            alt="Story"
+          />
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90"
+          ></div>
+          <div class="absolute bottom-0 left-0 p-8 z-10">
+            <span
+              class="text-[10px] font-mono uppercase text-white/60 mb-2 block"
+            >
+              Documentary
+            </span>
+            <h3 class="text-2xl font-medium text-white leading-tight mb-2">
+              Road to Nationals
+            </h3>
+            <p class="text-neutral-400 text-xs line-clamp-2">
+              Follow the U17 Elite team as they navigate the toughest circuit in
+              the region.
+            </p>
+          </div>
+          <div
+            class="absolute top-4 right-4 bg-black/50 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-white border border-white/10"
+          >
+            08:24
+          </div>
+        </div>
+
+        <!-- Story Card 2 -->
+        <div
+          class="story-card relative shrink-0 w-[85vw] md:w-[400px] aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 snap-center cursor-pointer group border border-white/10"
+        >
+          <img
+            src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/4734259a-bad7-422f-981e-ce01e79184f2_1600w.jpg"
+            class="absolute inset-0 w-full h-full object-cover opacity-80"
+            alt="Story"
+          />
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90"
+          ></div>
+          <div class="absolute bottom-0 left-0 p-8 z-10">
+            <span
+              class="text-[10px] font-mono uppercase text-white/60 mb-2 block"
+            >
+              Player Profile
+            </span>
+            <h3 class="text-2xl font-medium text-white leading-tight mb-2">
+              The Grind Never Stops
+            </h3>
+            <p class="text-neutral-400 text-xs line-clamp-2">
+              A day in the life of our top prospects. School, training,
+              recovery.
+            </p>
+          </div>
+        </div>
+
+        <!-- Story Card 3 -->
+        <div
+          class="story-card relative shrink-0 w-[85vw] md:w-[400px] aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 snap-center cursor-pointer group border border-white/10"
+        >
+          <img
+            src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/c543a9e1-f226-4ced-80b0-feb8445a75b9_1600w.jpg"
+            class="absolute inset-0 w-full h-full object-cover opacity-80"
+            alt="Story"
+          />
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90"
+          ></div>
+          <div class="absolute bottom-0 left-0 p-8 z-10">
+            <span
+              class="text-[10px] font-mono uppercase text-white/60 mb-2 block"
+            >
+              Event
+            </span>
+            <h3 class="text-2xl font-medium text-white leading-tight mb-2">
+              Winter Showcase
+            </h3>
+            <p class="text-neutral-400 text-xs line-clamp-2">
+              Highlights from the annual WCS Winter Classic tournament.
+            </p>
+          </div>
+          <div
+            class="absolute top-4 right-4 bg-black/50 backdrop-blur px-2 py-1 rounded text-[10px] font-bold text-white border border-white/10"
+          >
+            Live
+          </div>
+        </div>
+
+        <!-- Story Card 4 -->
+        <div
+          class="story-card relative shrink-0 w-[85vw] md:w-[400px] aspect-[3/4] rounded-lg overflow-hidden bg-neutral-900 snap-center cursor-pointer group border border-white/10"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1504609773096-104ff2c73ba4?q=80&amp;w=1000&amp;auto=format&amp;fit=crop"
+            class="absolute inset-0 w-full h-full object-cover opacity-80"
+            alt="Story"
+          />
+          <div
+            class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/90"
+          ></div>
+          <div class="absolute bottom-0 left-0 p-8 z-10">
+            <span
+              class="text-[10px] font-mono uppercase text-white/60 mb-2 block"
+            >
+              Alumni
+            </span>
+            <h3 class="text-2xl font-medium text-white leading-tight mb-2">
+              Next Level
+            </h3>
+            <p class="text-neutral-400 text-xs line-clamp-2">
+              Tracking our alumni currently playing in Collegiate programs.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section
+      id="around-wcs"
+      class="py-24 px-6 border-t border-white/5 bg-[#030303]"
+    >
+      <div class="max-w-7xl mx-auto">
+        <div
+          class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4"
+        >
+          <div class="fade-enter">
+            <h2
+              class="text-3xl md:text-4xl font-semibold tracking-tighter text-white mb-2"
+            >
+              Around the WCS
+            </h2>
+            <p class="text-neutral-400 text-sm max-w-md">
+              From beginners to college prospects. Choose your path.
+            </p>
+          </div>
+          <a
+            href="#"
+            class="text-sm text-white border-b border-white/30 pb-1 hover:border-white transition-colors inline-block"
+          >
+            View All Divisions
+          </a>
+        </div>
+
+        <div
+          class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[280px]"
+        >
+          <!-- Skills Academy -->
+          <div
+            class="md:col-span-2 row-span-1 relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] fade-enter p-8 flex flex-col justify-between"
+          >
+            <div
+              class="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            ></div>
+            <div class="relative z-10">
+              <div
+                class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-white"
+              >
+                <span class="iconify" data-icon="lucide:dumbbell"></span>
+              </div>
+              <h3 class="text-xl font-semibold text-white mb-2 tracking-tight">
+                Skills Academy
+              </h3>
+              <p class="text-neutral-400 text-sm max-w-xs">
+                Focus on fundamentals: shooting, ball handling, and footwork
+                mechanics.
+              </p>
+            </div>
+          </div>
+
+          <!-- Travel Teams -->
+          <div
+            class="md:col-span-2 row-span-2 relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] fade-enter delay-100"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1574629810360-7efbbe195018?q=80&amp;w=1000&amp;auto=format&amp;fit=crop"
+              class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
+              alt="Travel Team"
+            />
+            <div
+              class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"
+            ></div>
+            <div class="absolute bottom-0 left-0 p-8 w-full">
+              <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide mb-4"
+              >
+                Tryouts Open
+              </div>
+              <h3 class="text-3xl font-semibold text-white mb-2 tracking-tight">
+                WCS Travel Teams
+              </h3>
+              <p class="text-neutral-300 text-sm max-w-md mb-4">
+                Regional and National AAU competition. Join a legacy of winning
+                teams.
+              </p>
+              <a
+                href="#"
+                class="inline-flex items-center gap-2 text-sm font-medium text-white hover:gap-3 transition-all"
+              >
+                Team Details
+                <span class="iconify" data-icon="lucide:arrow-right"></span>
+              </a>
+            </div>
+          </div>
+
+          <!-- 3v3 League -->
+          <div
+            class="md:col-span-1 row-span-1 relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] fade-enter delay-200 p-6 flex flex-col justify-between"
+          >
+            <span
+              class="iconify text-3xl text-neutral-500 group-hover:text-white transition-colors"
+              data-icon="lucide:users"
+            ></span>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-1 tracking-tight">
+                3v3 League
+              </h3>
+              <p class="text-neutral-500 text-xs">Fast-paced competition.</p>
+            </div>
+          </div>
+
+          <!-- Camps -->
+          <div
+            class="md:col-span-1 row-span-1 relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] fade-enter delay-300 p-6 flex flex-col justify-between"
+          >
+            <span
+              class="iconify text-3xl text-neutral-500 group-hover:text-white transition-colors"
+              data-icon="lucide:tent"
+            ></span>
+            <div>
+              <h3 class="text-lg font-semibold text-white mb-1 tracking-tight">
+                Summer Camps
+              </h3>
+              <p class="text-neutral-500 text-xs">
+                Week-long intensive sessions.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA / Footer area -->
+    <footer class="border-t border-white/5 bg-black py-20 px-6">
+      <div
+        class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-24"
+      >
+        <div class="md:col-span-2">
+          <a href="#" class="flex items-center gap-2 mb-6">
+            <span class="iconify text-white" data-icon="lucide:trophy"></span>
+            <span class="font-semibold text-white">WCS</span>
+          </a>
+          <h3 class="text-2xl text-white font-medium mb-6">
+            Join the legacy today.
+          </h3>
+          <form class="flex gap-2 max-w-xs">
+            <input
+              type="email"
+              placeholder="Email address"
+              class="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-white/30 transition-colors"
+            />
+            <button
+              class="bg-white text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-200 transition-colors"
+            >
+              <span class="iconify" data-icon="lucide:arrow-right"></span>
+            </button>
+          </form>
+        </div>
+
+        <div>
+          <h4 class="text-white font-medium text-sm mb-4">Programs</h4>
+          <ul class="space-y-3 text-sm text-neutral-500">
+            <li>
+              <a href="#" class="hover:text-white transition-colors">
+                Travel Teams
+              </a>
+            </li>
+            <li>
+              <a href="#" class="hover:text-white transition-colors">
+                Skills Training
+              </a>
+            </li>
+            <li>
+              <a href="#" class="hover:text-white transition-colors">
+                Camps &amp; Clinics
+              </a>
+            </li>
+            <li>
+              <a href="#" class="hover:text-white transition-colors">
+                Private Coaching
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-white font-medium text-sm mb-4">Organization</h4>
+          <ul class="space-y-3 text-sm text-neutral-500">
+            <li>
+              <a href="#" class="hover:text-white transition-colors">
+                About WCS
+              </a>
+            </li>
+            <li>
+              <a href="#" class="hover:text-white transition-colors">
+                Coaching Staff
+              </a>
+            </li>
+            <li>
+              <a href="#" class="hover:text-white transition-colors">
+                Facilities
+              </a>
+            </li>
+            <li>
+              <a href="#" class="hover:text-white transition-colors">
+                Contact Us
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div
+        class="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-neutral-600"
+      >
+        <p>© 2024 World Class Sports. All rights reserved.</p>
+        <div class="flex gap-6">
+          <a href="#" class="hover:text-white transition-colors">
+            Privacy Policy
+          </a>
+          <a href="#" class="hover:text-white transition-colors">
+            Terms of Service
+          </a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // Parallax Effect
+      const parallaxLayers = document.querySelectorAll('.parallax-layer');
+
+      window.addEventListener('scroll', () => {
+          const scrollY = window.scrollY;
+
+          // Only apply parallax if we are near the top to save resources
+          if (scrollY < 1000) {
+              parallaxLayers.forEach(layer => {
+                  const speed = layer.getAttribute('data-speed');
+                  const yPos = -(scrollY * speed);
+                  layer.style.transform = `translateY(${yPos}px)`;
+              });
+          }
+
+          // Navbar transparency
+          const nav = document.getElementById('navbar');
+          if (scrollY > 20) {
+              nav.classList.add('bg-[#030303]/90', 'backdrop-blur-xl');
+              nav.classList.remove('bg-[#030303]/80', 'backdrop-blur-md');
+          } else {
+              nav.classList.remove('bg-[#030303]/90', 'backdrop-blur-xl');
+              nav.classList.add('bg-[#030303]/80', 'backdrop-blur-md');
+          }
+      });
+
+      // Horizontal Scroll Buttons
+      const container = document.getElementById('storiesContainer');
+      document.getElementById('scrollRight').addEventListener('click', () => {
+          container.scrollBy({ left: 400, behavior: 'smooth' });
+      });
+      document.getElementById('scrollLeft').addEventListener('click', () => {
+          container.scrollBy({ left: -400, behavior: 'smooth' });
+      });
+
+      // Fade In Observer
+      const observerOptions = {
+          root: null,
+          threshold: 0.1,
+          rootMargin: "0px"
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                  entry.target.classList.add('fade-enter-active');
+                  observer.unobserve(entry.target);
+              }
+          });
+      }, observerOptions);
+
+      document.querySelectorAll('.fade-enter').forEach(el => {
+          observer.observe(el);
+      });
+    </script>
+  </body>
+</html>

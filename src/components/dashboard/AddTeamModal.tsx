@@ -57,8 +57,10 @@ export default function AddTeamModal({
   // Lock scroll when modal is open
   useScrollLock(isOpen);
 
-  // Initialize form when editing
+  // Initialize form when editing or when modal opens
   useEffect(() => {
+    if (!isOpen) return; // Only run when modal is open
+    
     devLog("AddTeamModal useEffect - editingTeam:", editingTeam);
     if (editingTeam) {
       devLog("Populating form with team data:", {
@@ -88,7 +90,7 @@ export default function AddTeamModal({
       setLogoPreview("");
       setImagePreview("");
     }
-  }, [editingTeam]);
+  }, [editingTeam, isOpen]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

@@ -41,22 +41,24 @@ export default function ReplySection({
   return (
     <div className="mt-4 pl-4 border-l-2 border-gray-200">
       <div className="space-y-3 mb-4">
-        {replies.map((reply) => (
-          <ReplyItem
-            key={reply.id}
-            reply={reply}
-            isEditing={editingReply === reply.id}
-            editText={editText}
-            onEditTextChange={onEditTextChange}
-            onStartEdit={() => onStartEdit(reply)}
-            onCancelEdit={onCancelEdit}
-            onSaveEdit={() => onSaveEdit(reply.id)}
-            onDelete={() => onDelete(reply.id)}
-            userId={userId}
-            isAdmin={isAdmin}
-            submitting={submitting}
-          />
-        ))}
+        {replies
+          .filter((reply) => reply && reply.id) // Filter out any null/undefined replies
+          .map((reply) => (
+            <ReplyItem
+              key={reply.id}
+              reply={reply}
+              isEditing={editingReply === reply.id}
+              editText={editText}
+              onEditTextChange={onEditTextChange}
+              onStartEdit={() => onStartEdit(reply)}
+              onCancelEdit={onCancelEdit}
+              onSaveEdit={() => onSaveEdit(reply.id)}
+              onDelete={() => onDelete(reply.id)}
+              userId={userId}
+              isAdmin={isAdmin}
+              submitting={submitting}
+            />
+          ))}
       </div>
 
       <div className="space-y-3">

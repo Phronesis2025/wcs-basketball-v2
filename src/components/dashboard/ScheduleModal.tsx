@@ -43,7 +43,7 @@ export default function ScheduleModal({
     if (!isOpen) {
       formState.resetForms();
     }
-  }, [isOpen, formState]);
+  }, [isOpen, formState.resetForms]);
 
   // Cleanup preview URLs on unmount
   useEffect(() => {

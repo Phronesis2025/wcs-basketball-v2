@@ -143,22 +143,28 @@ export default function Navbar() {
           try {
             const accessToken = session.access_token || session.user?.access_token;
             if (accessToken) {
-              const verifyResponse = await fetch("/api/auth/user", {
-                headers: { Authorization: `Bearer ${accessToken}` },
-              });
-              
-              if (!verifyResponse.ok) {
-                // Token is invalid, clear everything
-                devLog("Navbar: Token validation failed, clearing auth state");
-                localStorage.removeItem("auth.authenticated");
-                localStorage.removeItem("supabase.auth.token");
-                sessionStorage.removeItem("auth.authenticated");
-                sessionStorage.removeItem("supabase.auth.token");
-                setUser(null);
-                setUserFullName(null);
-                setIsAdmin(false);
-                setUserRole(null);
-                return;
+              try {
+                const verifyResponse = await fetch("/api/auth/user", {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                });
+                
+                if (!verifyResponse.ok) {
+                  // Token is invalid, clear everything
+                  devLog("Navbar: Token validation failed, clearing auth state");
+                  localStorage.removeItem("auth.authenticated");
+                  localStorage.removeItem("supabase.auth.token");
+                  sessionStorage.removeItem("auth.authenticated");
+                  sessionStorage.removeItem("supabase.auth.token");
+                  setUser(null);
+                  setUserFullName(null);
+                  setIsAdmin(false);
+                  setUserRole(null);
+                  return;
+                }
+              } catch (fetchError) {
+                // Network error - don't clear state, just log and continue
+                devLog("Navbar: Network error verifying token (non-fatal):", fetchError);
+                // Continue with session restoration despite network error
               }
             }
           } catch (verifyError) {
@@ -212,10 +218,10 @@ export default function Navbar() {
 
               throw new Error(`Role check failed: ${response.status}`);
             } catch (error) {
-              // Only log non-abort errors to reduce console noise
+              // Only log non-abort errors to reduce console noise, and log as debug (not error)
               if (error instanceof Error && error.name !== "AbortError") {
-                devError(
-                  `Navbar admin role check attempt ${attempt} failed:`,
+                devLog(
+                  `Navbar admin role check attempt ${attempt} failed (non-fatal):`,
                   error
                 );
               }
@@ -230,7 +236,9 @@ export default function Navbar() {
 
               // If all attempts failed, set admin to false but don't log abort errors
               if (error instanceof Error && error.name !== "AbortError") {
-                devError("Admin role check failed after all attempts");
+                devLog(
+                  "Navbar: Admin role check failed after all attempts (non-fatal)"
+                );
               }
               setIsAdmin(false);
               setUserRole(null); // Set role to null on error
@@ -528,15 +536,15 @@ export default function Navbar() {
       </Suspense>
       {/* Regular Navbar for all pages (including club management) */}
       <motion.nav
-        className={`sticky top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
-          // Home page: always black background; Other pages: always white
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
+          // Home page: dark with border; Other pages: white with shadow
           isHome
-            ? "bg-black"
+            ? "bg-[#030303]/80 backdrop-blur-md border-b border-white/5"
             : "bg-white/95 backdrop-blur-md shadow-lg"
         }`}
       >
-          <div className="max-w-7xl mx-auto px-2 sm:px-6 py-1">
-            <div className="flex items-center justify-between h-12">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex items-center justify-between h-16">
               <Link
                 href="/"
                 className="flex items-center gap-1 sm:gap-2 hover:opacity-80 transition-opacity duration-300"
@@ -576,34 +584,81 @@ export default function Navbar() {
                   World Class
                 </span>
               </Link>
-              <div className="hidden md:flex items-center gap-6">
-                {navLinks.map((link) => (
+              {/* Centered navigation links for homepage */}
+              {isHome && (
+                <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      className={`font-inter font-medium text-xs transition-colors ${
+                        pathname === link.href
+                          ? "text-white"
+                          : "text-neutral-400 hover:text-white"
+                      }`}
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {/* Regular right-aligned links for other pages */}
+              {!isHome && (
+                <div className="hidden md:flex items-center gap-6">
+                  {navLinks.map((link) => (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      className="font-inter font-medium text-sm transition-all duration-300 ease-out hover:text-red text-navy"
+                    >
+                      {link.name}
+                    </Link>
+                  ))}
+                </div>
+              )}
+
+              {/* Auth buttons */}
+              <div className="hidden md:flex items-center gap-3">
+                {isHome && user && (
                   <Link
-                    key={link.name}
-                    href={link.href}
-                    className={`font-inter font-medium text-sm transition-all duration-300 ease-out hover:text-red ${
-                      isHome
-                        ? "text-white"
-                        : "text-navy"
-                    }`}
+                    href="/dashboard"
+                    className="text-xs font-medium text-neutral-400 hover:text-white px-3 py-2 transition-colors font-inter"
                   >
-                    {link.name}
+                    Dashboard
                   </Link>
-                ))}
+                )}
                 {user ? (
                   <button
                     onClick={handleSignOut}
-                    className={`font-bold px-4 py-2 rounded transition duration-300 text-sm ${
+                    className={`font-bold px-4 py-2 rounded transition duration-300 text-sm font-inter ${
                       isHome
-                        ? "bg-red text-white hover:bg-red-700"
+                        ? "bg-white text-black rounded-full hover:bg-neutral-200 hover:scale-[1.02]"
                         : "bg-navy text-white hover:bg-opacity-90"
                     }`}
                   >
                     Sign Out
                   </button>
                 ) : (
-                  <div className="flex items-center">
-                    <StartNowButton variant="navbar" />
+                  <div className="flex items-center gap-3">
+                    {isHome && (
+                      <Link
+                        href="/login"
+                        className="text-xs font-medium text-neutral-400 hover:text-white px-3 py-2 transition-colors font-inter"
+                      >
+                        Sign In
+                      </Link>
+                    )}
+                    <Link
+                      href="/register"
+                      className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all font-inter ${
+                        isHome
+                          ? "bg-white text-black hover:bg-neutral-200 hover:scale-[1.02]"
+                          : "bg-navy text-white hover:bg-opacity-90"
+                      }`}
+                    >
+                      Register
+                    </Link>
                   </div>
                 )}
               </div>

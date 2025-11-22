@@ -1,85 +1,129 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
 import Image from "next/image";
-import StartNowButton from "@/components/cta/StartNowButton";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function Hero() {
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   return (
     <section
-      className="relative w-full min-h-screen flex items-center justify-start overflow-hidden bg-navy"
+      id="home"
+      className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center bg-[#030303]"
       aria-label="Hero"
-      style={{
-        backgroundImage: 'url("/hero-basketball.jpg")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-      }}
     >
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        preload="metadata"
-        className="absolute top-0 left-0 w-full h-full object-cover"
-        style={{ objectPosition: "top" }}
-        src="/video/hero.mp4"
-        poster="/hero-basketball.jpg"
-        onError={(e) => {
-          const target = e.target as HTMLVideoElement;
-          target.style.display = "none";
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80 sm:from-black/80 sm:via-black/65 sm:to-black/90" />
+      {/* Background Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-900/[0.05] blur-[120px] rounded-full pointer-events-none -z-10" />
 
-      {/* Basketball Flames - Desktop Only (use <img> for animated asset, low priority) */}
-      <div className="hidden sm:block absolute right-[15%] top-1/2 transform -translate-y-1/2 z-10">
-        <Image
-          src="/video/basketball-flames.webp"
-          alt="Basketball flames animation"
-          width={500}
-          height={500}
-          className="w-[500px] h-[500px] object-contain"
-          loading="lazy"
-          priority={false}
-        />
-      </div>
-
-      <div className="relative z-20 text-white flex flex-col items-start justify-between w-full min-h-screen px-4 pt-20 pb-8 sm:px-6 md:px-8 sm:pt-24 sm:pb-16 hero-content max-w-7xl mx-auto">
-        {/* Headline */}
-        <div className="flex-grow flex flex-col justify-center">
-          <h1 className="text-[clamp(2.2rem,6vw,4.5rem)] font-bebas font-bold uppercase leading-tight drop-shadow-lg">
-            <span className="block font-inter text-xl sm:text-xl font-medium mb-1 normal-case">
-              More Than Basketball
-            </span>
-            <span className="block text-[clamp(4rem,12vw,5rem)] leading-none sm:leading-none sm:mb-10">
-              We are <br />
-              World Class
-            </span>
-          </h1>
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto text-center flex flex-col items-center z-10 relative">
+        {/* Badge with pulsing dot */}
+        <div className="fade-enter inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+          </span>
+          <span className="text-[11px] font-medium uppercase tracking-widest text-neutral-300 font-inter">
+            Winter Leagues Open
+          </span>
         </div>
 
-        {/* Basketball Flames - Mobile Only (use <img>, load lazily to avoid LCP hit) */}
-        <div className="sm:hidden flex justify-center mb-6 pl-4">
+        {/* Main Headline */}
+        <h1 className="fade-enter delay-100 text-6xl md:text-8xl lg:text-9xl font-semibold tracking-tighter text-white leading-[0.9] text-balance mb-8 font-inter">
+          BUILT FOR
+          <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">
+            THE GAME.
+          </span>
+        </h1>
+
+        {/* Subtitle */}
+        <p className="fade-enter delay-200 text-neutral-400 text-lg leading-relaxed max-w-xl mb-10 text-balance font-light font-inter">
+          The premier destination for youth basketball development, competitive
+          tournaments, and elite training.
+        </p>
+
+        {/* CTA Button */}
+        <div className="fade-enter delay-300 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+          <Link
+            href="/register"
+            className="w-full sm:w-auto h-12 px-8 rounded-full bg-white text-black font-medium text-sm hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 font-inter"
+          >
+            Find a Program
+          </Link>
+        </div>
+      </div>
+
+      {/* Parallax Image Grid */}
+      <div className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+        {/* Left Column */}
+        <div
+          className="absolute left-[5%] md:left-[10%] top-[20%] w-48 md:w-64 aspect-[3/4] rounded-lg overflow-hidden opacity-30"
+          style={{
+            transform: `translateY(${scrollY * 0.05}px)`,
+          }}
+        >
           <Image
-            src="/video/basketball-flames-optimized.webp"
-            alt="Basketball flames animation"
-            width={400}
-            height={400}
-            className="w-[400px] h-[400px] object-contain"
-            loading="lazy"
-            priority={false}
+            src="/images/boys team.jpg"
+            alt="Team"
+            fill
+            sizes="(max-width: 768px) 192px, 256px"
+            className="w-full h-full object-cover grayscale"
+          />
+        </div>
+        <div
+          className="absolute left-[2%] md:left-[5%] top-[70%] w-40 md:w-56 aspect-[3/4] rounded-lg overflow-hidden opacity-20"
+          style={{
+            transform: `translateY(${scrollY * 0.1}px)`,
+          }}
+        >
+          <Image
+            src="/images/basketball-action.jpg"
+            alt="Play"
+            fill
+            sizes="(max-width: 768px) 160px, 224px"
+            className="w-full h-full object-cover grayscale"
           />
         </div>
 
-        {/* Bottom: Button then Tagline */}
-        <div className="text-left mb-4 sm:mb-0">
-          <StartNowButton variant="hero" />
-
-          <p className="text-2xl sm:text-xl font-inter drop-shadow-lg font-medium">
-            Basketball excellence that extends beyond the game
-          </p>
+        {/* Right Column */}
+        <div
+          className="absolute right-[5%] md:right-[10%] top-[15%] w-56 md:w-72 aspect-[3/4] rounded-lg overflow-hidden opacity-30"
+          style={{
+            transform: `translateY(${scrollY * 0.08}px)`,
+          }}
+        >
+          <Image
+            src="/images/basketball-closeup.jpg"
+            alt="Hoop"
+            fill
+            sizes="(max-width: 768px) 224px, 288px"
+            className="w-full h-full object-cover grayscale"
+          />
+        </div>
+        <div
+          className="absolute right-[2%] md:right-[8%] top-[65%] w-44 md:w-60 aspect-[3/4] rounded-lg overflow-hidden opacity-20"
+          style={{
+            transform: `translateY(${scrollY * 0.12}px)`,
+          }}
+        >
+          <Image
+            src="/images/girls free throw.jpg"
+            alt="Coach"
+            fill
+            sizes="(max-width: 768px) 176px, 240px"
+            className="w-full h-full object-cover grayscale"
+          />
         </div>
       </div>
     </section>

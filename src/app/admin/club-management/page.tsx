@@ -468,15 +468,42 @@ function ClubManagementContent() {
           headers: { "x-user-id": user.id },
         });
         if (roleResponse.ok) {
-          const roleData = await roleResponse.json();
-          devLog("User role:", roleData.role);
-          setUserRole(roleData.role);
+          const roleResponseData = await roleResponse.json();
+          devLog("Role API response:", roleResponseData);
+          
+          // Handle response format - could be { data: { role: ... } } or { role: ... }
+          const roleData = roleResponseData.data || roleResponseData;
+          const roleFromApi = roleData?.role;
+          
+          devLog("Role from API:", roleFromApi);
+          
+          // Handle null role - check user_metadata as fallback
+          let finalRole = roleFromApi;
+          if (!finalRole && user.user_metadata?.role) {
+            finalRole = user.user_metadata.role;
+            devLog("Using role from user_metadata:", finalRole);
+          }
+          
+          // If still no role, default to "coach" for authenticated users
+          if (!finalRole) {
+            devLog("No role found, defaulting to 'coach'");
+            finalRole = "coach";
+          }
+          
+          devLog("Final role set to:", finalRole);
+          setUserRole(finalRole);
           // Update isAdmin based on the actual database role
-          setIsAdmin(roleData.role === "admin");
-          devLog("isAdmin set to:", roleData.role === "admin");
+          const isAdminValue = finalRole === "admin";
+          setIsAdmin(isAdminValue);
+          devLog("isAdmin set to:", isAdminValue);
           // Set authorized flag AFTER we have all required data
           setIsAuthorized(true);
-          devLog("User data loaded successfully - page authorized");
+          devLog("User data loaded successfully - page authorized", {
+            userId: user.id,
+            userRole: finalRole,
+            isAdmin: isAdminValue,
+            isAuthorized: true,
+          });
         } else {
           devError("Failed to fetch user role - response not ok");
           router.push("/coaches/login");
@@ -504,20 +531,46 @@ function ClubManagementContent() {
     setManagementDataLoading(true);
     try {
       // Fetch teams first
-      const teamsResponse = await fetch(
-        userRole === "admin" && userId
-          ? "/api/admin/teams"
-          : userId
-          ? `/api/teams/by-coach?userId=${userId}`
-          : "/api/teams"
-      );
       let fetchedTeams: any[] = [];
-      if (teamsResponse.ok) {
-        const teamsData = await teamsResponse.json();
-        fetchedTeams = Array.isArray(teamsData)
-          ? teamsData
-          : teamsData.teams || [];
-        setTeams(fetchedTeams);
+      try {
+        const teamsResponse = await fetch(
+          userRole === "admin" && userId
+            ? "/api/admin/teams"
+            : userId
+            ? `/api/teams/by-coach?userId=${userId}`
+            : "/api/teams"
+        );
+        
+        if (teamsResponse.ok) {
+          try {
+            const teamsData = await teamsResponse.json();
+            devLog("Teams API response:", teamsData);
+            // Handle {success: true, data: [...]} format from formatSuccessResponse
+            if (teamsData?.success && Array.isArray(teamsData.data)) {
+              fetchedTeams = teamsData.data;
+            } else if (Array.isArray(teamsData)) {
+              fetchedTeams = teamsData;
+            } else if (teamsData?.data && Array.isArray(teamsData.data)) {
+              fetchedTeams = teamsData.data;
+            } else if (teamsData?.teams && Array.isArray(teamsData.teams)) {
+              fetchedTeams = teamsData.teams;
+            } else {
+              devError("Unexpected teams data format:", teamsData);
+              fetchedTeams = [];
+            }
+            devLog("Parsed teams:", fetchedTeams.length);
+            setTeams(fetchedTeams);
+          } catch (jsonError) {
+            devError("Error parsing teams JSON:", jsonError);
+            setTeams([]);
+          }
+        } else {
+          devError("Failed to fetch teams:", teamsResponse.status, teamsResponse.statusText);
+          setTeams([]);
+        }
+      } catch (fetchError) {
+        devError("Network error fetching teams:", fetchError);
+        setTeams([]);
       }
 
       // Fetch players (admins via API, coaches load all then filter by coach teams)
@@ -526,10 +579,26 @@ function ClubManagementContent() {
           headers: { "x-user-id": userId },
         });
         if (playersResponse.ok) {
-          const playersData = await playersResponse.json();
-          setPlayers(
-            Array.isArray(playersData) ? playersData : playersData.players || []
-          );
+          try {
+            const playersData = await playersResponse.json();
+            devLog("Players API response:", playersData);
+            // Handle {success: true, data: [...]} format from createSecureResponse/formatSuccessResponse
+            let playersArray: any[] = [];
+            if (playersData?.success && Array.isArray(playersData.data)) {
+              playersArray = playersData.data;
+            } else if (Array.isArray(playersData)) {
+              playersArray = playersData;
+            } else if (playersData?.data && Array.isArray(playersData.data)) {
+              playersArray = playersData.data;
+            } else if (playersData?.players && Array.isArray(playersData.players)) {
+              playersArray = playersData.players;
+            }
+            devLog("Parsed players:", playersArray.length);
+            setPlayers(playersArray);
+          } catch (jsonError) {
+            devError("Error parsing players JSON:", jsonError);
+            setPlayers([]);
+          }
         }
       } else {
         // For coaches: fetch players for their assigned teams
@@ -537,11 +606,16 @@ function ClubManagementContent() {
           headers: { "x-user-id": userId || "" },
         });
         if (playersResp.ok) {
-          const playersData = await playersResp.json();
-          const coachPlayers = Array.isArray(playersData)
-            ? playersData
-            : playersData.players || [];
-          setPlayers(coachPlayers);
+          try {
+            const playersData = await playersResp.json();
+            const coachPlayers = Array.isArray(playersData)
+              ? playersData
+              : playersData?.players || [];
+            setPlayers(coachPlayers);
+          } catch (jsonError) {
+            devError("Error parsing coach players JSON:", jsonError);
+            setPlayers([]);
+          }
         } else {
           devError(
             `Failed to fetch coach players: ${playersResp.status} ${playersResp.statusText}`
@@ -555,21 +629,34 @@ function ClubManagementContent() {
         const coachesResponse = await fetch("/api/admin/coaches");
         devLog("Coaches response status:", coachesResponse.status);
         if (coachesResponse.ok) {
-          const coachesData = await coachesResponse.json();
-          devLog("Coaches data received:", coachesData);
-          const coachesArray = Array.isArray(coachesData)
-            ? coachesData
-            : coachesData.coaches || [];
-          devLog("Setting coaches array:", coachesArray);
-          devLog(
-            "Coach image URLs:",
-            coachesArray.map((c: any) => ({
-              id: c.id,
-              name: `${c.first_name} ${c.last_name}`,
-              image_url: c.image_url,
-            }))
-          );
-          setCoaches(coachesArray);
+          try {
+            const coachesData = await coachesResponse.json();
+            devLog("Coaches data received:", coachesData);
+            // Handle {success: true, data: [...]} format from formatSuccessResponse
+            let coachesArray: any[] = [];
+            if (coachesData?.success && Array.isArray(coachesData.data)) {
+              coachesArray = coachesData.data;
+            } else if (Array.isArray(coachesData)) {
+              coachesArray = coachesData;
+            } else if (coachesData?.data && Array.isArray(coachesData.data)) {
+              coachesArray = coachesData.data;
+            } else if (coachesData?.coaches && Array.isArray(coachesData.coaches)) {
+              coachesArray = coachesData.coaches;
+            }
+            devLog("Setting coaches array:", coachesArray.length);
+            devLog(
+              "Coach image URLs:",
+              coachesArray.map((c: any) => ({
+                id: c.id,
+                name: `${c.first_name} ${c.last_name}`,
+                image_url: c.image_url,
+              }))
+            );
+            setCoaches(coachesArray);
+          } catch (jsonError) {
+            devError("Error parsing coaches JSON:", jsonError);
+            setCoaches([]);
+          }
         } else {
           devError(
             "Failed to fetch coaches:",
@@ -680,8 +767,13 @@ function ClubManagementContent() {
         throw new Error("Failed to fetch volunteers");
       }
 
-      const data = await response.json();
-      setVolunteers(Array.isArray(data) ? data : []);
+      try {
+        const data = await response.json();
+        setVolunteers(Array.isArray(data) ? data : []);
+      } catch (jsonError) {
+        devError("Error parsing volunteers JSON:", jsonError);
+        setVolunteers([]);
+      }
     } catch (error) {
       devError("Error fetching volunteers:", error);
       toast.error("Failed to load volunteers");
@@ -704,8 +796,13 @@ function ClubManagementContent() {
         throw new Error("Failed to fetch parent payment data");
       }
 
-      const data = await response.json();
-      setParentPaymentData(Array.isArray(data) ? data : []);
+      try {
+        const data = await response.json();
+        setParentPaymentData(Array.isArray(data) ? data : []);
+      } catch (jsonError) {
+        devError("Error parsing parent payment data JSON:", jsonError);
+        setParentPaymentData([]);
+      }
     } catch (error) {
       devError("Error fetching parent payments:", error);
       toast.error("Failed to load parent payment data");
@@ -753,7 +850,22 @@ function ClubManagementContent() {
     if (activeTab === "overview") {
       fetchManagementData();
     } else if (activeTab === "coaches-dashboard") {
-      if (teams.length === 0) fetchManagementData();
+      // Always ensure teams are loaded for coach dashboard
+      if (teams.length === 0) {
+        fetchManagementData();
+      }
+    } else if (activeTab === "profile") {
+      // Load messages for profile tab (message board)
+      // Note: CoachProfile component uses its own useMentions hook to fetch messages
+      // This is just for consistency
+      (async () => {
+        try {
+          const messagesData = await getMessages();
+          setMessages(messagesData || []);
+        } catch (error) {
+          devError("Error loading messages for profile tab:", error);
+        }
+      })();
     } else if (activeTab === "payments") {
       // Always ensure teams and players are loaded for Payment tab
       if (teams.length === 0 || players.length === 0) {
@@ -783,7 +895,9 @@ function ClubManagementContent() {
     } else if (activeTab === "analytics") {
       fetchAnalyticsData();
     }
-  }, [activeTab, isAuthorized, userId, userRole, teams.length, players.length]);
+    // Removed teams.length and players.length from dependencies to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAuthorized, userId, userRole]);
 
   // Activity heartbeat for admins/coaches using this page
   useEffect(() => {
@@ -807,7 +921,16 @@ function ClubManagementContent() {
   // Auto-select a team when teams load on Coach tab
   useEffect(() => {
     if (!isAuthorized || activeTab !== "coaches-dashboard") return;
-    if (selectedTeamId || teams.length === 0) return;
+    // Wait for teams to be loaded before auto-selecting
+    if (teams.length === 0) {
+      // Teams not loaded yet, fetch them if we have userId and userRole
+      if (userId && userRole) {
+        fetchManagementData();
+      }
+      return;
+    }
+    // If a team is already selected, don't auto-select
+    if (selectedTeamId) return;
 
     // If admin, default to "All Teams"
     if (userRole === "admin") {
@@ -825,14 +948,15 @@ function ClubManagementContent() {
       setSelectedTeamId(defaultTeam.id);
       setSelectedTeam(defaultTeam);
     }
-  }, [teams, activeTab, isAuthorized, userRole, userEmail, selectedTeamId]);
+  }, [teams, activeTab, isAuthorized, userRole, userEmail, selectedTeamId, userId]);
 
   // Load coach data when team changes
   useEffect(() => {
+    if (!isAuthorized || !userId || !userRole) return;
     if (selectedTeamId && activeTab === "coaches-dashboard") {
       fetchCoachData();
     }
-  }, [selectedTeamId, activeTab]);
+  }, [selectedTeamId, activeTab, isAuthorized, userId, userRole]);
 
   // Fetch unread mention count
   useEffect(() => {
@@ -1766,6 +1890,9 @@ function ClubManagementContent() {
 
         devLog("Player created successfully:", result);
         toast.success("Player added successfully");
+        setShowEditPlayerModal(false); // Close the modal
+        setEditingPlayer(null); // Clear editing state
+        await fetchManagementData(); // Refresh the data
       }
     } catch (e) {
       devError("Failed to save player", e);

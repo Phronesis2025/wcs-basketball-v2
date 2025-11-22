@@ -52,17 +52,11 @@ export const useProfile = ({ userId }: UseProfileProps) => {
 
       const response = await fetch(`/api/coach/profile?userId=${userId}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await extractApiResponseData<{ success: boolean; data: CoachProfileData; error?: string }>(response);
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to fetch profile data");
-      }
-
-      setProfileData(result.data);
+      // extractApiResponseData already checks response.ok and throws if not ok
+      // It also unwraps the data from {success: true, data: {...}} format
+      const profileData = await extractApiResponseData<CoachProfileData>(response);
+      
+      setProfileData(profileData);
     } catch (error) {
       devError("Error fetching profile data:", error);
     } finally {

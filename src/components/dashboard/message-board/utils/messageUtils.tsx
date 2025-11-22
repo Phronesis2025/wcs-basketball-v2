@@ -31,7 +31,12 @@ export const formatTimestamp = (timestamp: string): string => {
  * @param content - Message content string
  * @returns Array of React elements with mentions highlighted
  */
-export const renderMessageContent = (content: string): (string | React.ReactElement)[] => {
+export const renderMessageContent = (content: string | null | undefined): (string | React.ReactElement)[] => {
+  // Handle null/undefined content gracefully
+  if (!content || typeof content !== 'string') {
+    return ['(empty message)'];
+  }
+  
   const parts = content.split(/(@[a-zA-Z0-9._-]+)/g);
   return parts.map((part, index) => {
     if (part.match(/^@[a-zA-Z0-9._-]+$/)) {

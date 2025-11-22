@@ -89,12 +89,13 @@ export default function MessageBoard({
       showProfanityModal
   );
 
-  // Load replies for all messages when messages change
+  // Load replies for all messages when messages change.
+  // Use a single batched query instead of one request per message to avoid
+  // hitting browser connection limits (net::ERR_INSUFFICIENT_RESOURCES).
   useEffect(() => {
     if (messagesHook.messages.length > 0) {
-      messagesHook.messages.forEach((message) => {
-        repliesHook.loadReplies(message.id);
-      });
+      const ids = messagesHook.messages.map((m) => m.id);
+      repliesHook.loadRepliesForMessages(ids);
     }
   }, [messagesHook.messages, repliesHook]);
 

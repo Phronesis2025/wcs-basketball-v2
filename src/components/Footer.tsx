@@ -43,182 +43,101 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        {/* Mobile Layout */}
-        <div className="md:hidden space-y-6">
-          {/* Logo - Centered at top */}
-          <div className="flex justify-center">
-            <div className="w-40 h-20 relative">
-              <Image
-                src="/logo.png"
-                alt="WCS Basketball Logo"
-                fill
-                sizes="192px"
-                className="object-contain"
-              />
-            </div>
-          </div>
-
-          {/* Quick Links - Centered */}
-          <div className="text-center">
-            <h3 className="font-bebas text-lg mb-3 text-white">QUICK LINKS</h3>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-2 max-w-xs mx-auto justify-items-center">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-inter"
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Stay Updated Text and Button - Centered */}
-          <div className="text-center">
-            <p className="text-white font-inter text-sm mb-3">
-              Stay updated with the latest WCS news and events.
-            </p>
-            <Link
-              href="/register"
-              className="inline-block bg-red text-white px-5 py-2 rounded hover:bg-red/90 transition-colors duration-200 text-sm font-medium"
-            >
-              Join Our Community
+        {/* Main Grid - both mobile and desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-24">
+          {/* Brand and Email Signup */}
+          <div className="md:col-span-2">
+            <Link href="/" className="flex items-center gap-2 mb-6">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+              </svg>
+              <span className="font-semibold text-white font-inter">WCS</span>
             </Link>
-          </div>
-
-          {/* Follow Us - Centered */}
-          <div className="text-center">
-            <h3 className="font-bebas text-lg mb-3 text-white">FOLLOW US</h3>
-            <div className="flex justify-center space-x-4">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-300 hover:text-white transition-colors duration-200"
-                  aria-label={`Follow us on ${social.name}`}
-                >
-                  <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors duration-200">
-                    <span className="text-sm font-bold">
-                      {social.icon === "facebook" && "f"}
-                      {social.icon === "instagram" && "ig"}
-                      {social.icon === "twitter" && "t"}
-                      {social.icon === "youtube" && "yt"}
-                    </span>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop Layout */}
-        <div className="hidden md:grid grid-cols-3 gap-6 items-center">
-          {/* Quick Links - Left */}
-          <div>
-            <h3 className="font-bebas text-lg mb-3 text-white">QUICK LINKS</h3>
-            <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  className="text-white hover:text-gray-300 transition-colors duration-200 text-sm font-inter"
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          {/* Logo - Center */}
-          <div className="flex justify-center">
-            <div className="w-32 h-16 relative">
-              <Image
-                src="/logo.png"
-                alt="WCS Basketball Logo"
-                fill
-                sizes="160px"
-                className="object-contain"
+            <h3 className="text-2xl text-white font-medium mb-6 font-inter">
+              Join the legacy today.
+            </h3>
+            <form className="flex gap-2 max-w-xs">
+              <input
+                type="email"
+                placeholder="Email address"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-white/30 transition-colors font-inter placeholder:text-neutral-500"
               />
-            </div>
+              <button
+                type="submit"
+                className="bg-white text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-200 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </form>
           </div>
 
-          {/* Follow Us - Right */}
-          <div className="text-right">
-            <h3 className="font-bebas text-lg mb-3 text-white">FOLLOW US</h3>
-            <div className="flex justify-end space-x-3 mb-3">
-              {socialLinks.map((social) => (
-                <a
-                  key={social.name}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-gray-300 hover:text-white transition-colors duration-200"
-                  aria-label={`Follow us on ${social.name}`}
-                >
-                  <div className="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors duration-200">
-                    <span className="text-xs font-bold">
-                      {social.icon === "facebook" && "f"}
-                      {social.icon === "instagram" && "ig"}
-                      {social.icon === "twitter" && "t"}
-                      {social.icon === "youtube" && "yt"}
-                    </span>
-                  </div>
-                </a>
-              ))}
-            </div>
-            <div className="text-sm text-white font-inter mb-3">
-              <p className="mb-1">
-                Stay updated with the latest WCS news and events.
-              </p>
-            </div>
-            <div className="flex justify-end">
-              <Link
-                href="/register"
-                className="inline-block bg-red text-white px-4 py-2 rounded hover:bg-red/90 transition-colors duration-200 text-sm font-medium"
-              >
-                Join Our Community
-              </Link>
-            </div>
+          {/* Programs Links */}
+          <div>
+            <h4 className="text-white font-medium text-sm mb-4 font-inter">Programs</h4>
+            <ul className="space-y-3 text-sm text-neutral-500">
+              <li>
+                <Link href="/teams" className="hover:text-white transition-colors font-inter">
+                  Travel Teams
+                </Link>
+              </li>
+              <li>
+                <Link href="/drills" className="hover:text-white transition-colors font-inter">
+                  Skills Training
+                </Link>
+              </li>
+              <li>
+                <Link href="/schedules" className="hover:text-white transition-colors font-inter">
+                  Camps & Clinics
+                </Link>
+              </li>
+              <li>
+                <Link href="/coaches/login" className="hover:text-white transition-colors font-inter">
+                  Private Coaching
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Organization Links */}
+          <div>
+            <h4 className="text-white font-medium text-sm mb-4 font-inter">Organization</h4>
+            <ul className="space-y-3 text-sm text-neutral-500">
+              <li>
+                <Link href="/about" className="hover:text-white transition-colors font-inter">
+                  About WCS
+                </Link>
+              </li>
+              <li>
+                <Link href="/coaches/login" className="hover:text-white transition-colors font-inter">
+                  Coaching Staff
+                </Link>
+              </li>
+              <li>
+                <Link href="/schedules" className="hover:text-white transition-colors font-inter">
+                  Facilities
+                </Link>
+              </li>
+              <li>
+                <Link href="/about" className="hover:text-white transition-colors font-inter">
+                  Contact Us
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
       </div>
 
-      <div className="border-t border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-2 md:space-y-0">
-            <div className="text-sm text-gray-300 font-inter">
-              © {currentYear} WCS Basketball. All rights reserved.
-            </div>
-            <div className="flex flex-wrap justify-center md:justify-end space-x-6 text-sm text-gray-300 font-inter">
-              <Link
-                href="/privacy"
-                className="hover:text-white transition-colors duration-200"
-              >
-                Privacy
-              </Link>
-              <Link
-                href="/terms"
-                className="hover:text-white transition-colors duration-200"
-              >
-                Terms
-              </Link>
-              <Link
-                href="/code-of-conduct"
-                className="hover:text-white transition-colors duration-200"
-              >
-                Code of Conduct
-              </Link>
-              <Link
-                href="/refund-policy"
-                className="hover:text-white transition-colors duration-200"
-              >
-                Refunds
-              </Link>
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-neutral-600">
+        <p className="font-inter">© {currentYear} World Class Sports. All rights reserved.</p>
+        <div className="flex gap-6">
+          <Link href="/privacy" className="hover:text-white transition-colors font-inter">
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className="hover:text-white transition-colors font-inter">
+            Terms of Service
+          </Link>
         </div>
       </div>
     </footer>

@@ -256,19 +256,19 @@ export default function TeamUpdates({
       <section
         ref={sectionRef}
         aria-labelledby="team-updates-title"
-        className="bg-[#F6F6F6] mt-8 mb-12 pt-6 sm:pt-8 pb-12 sm:pb-16 mx-4 sm:mx-6 lg:mx-8"
+        className="bg-[#030303] mt-8 mb-12 pt-6 sm:pt-8 pb-12 sm:pb-16 px-6 border-t border-white/5"
       >
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2
             id="team-updates-title"
-            className="text-3xl sm:text-4xl font-bebas text-center text-navy mb-6 sm:mb-8"
+            className="text-3xl sm:text-4xl font-inter font-semibold tracking-tighter text-center text-white mb-6 sm:mb-8"
           >
-            Around the WCS
+            Team News
           </h2>
-          <div className="bg-white border border-slate-400 rounded-lg p-6 sm:p-8" style={{ borderWidth: '1px' }}>
+          <div className="bg-[#0A0A0A] border border-white/10 rounded-lg p-6 sm:p-8">
           {isLoading ? (
-            <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 text-center">
-              <p className="text-gray-700 font-inter">Loading updates…</p>
+            <div className="bg-black/50 border border-white/10 rounded-lg p-4 text-center">
+              <p className="text-neutral-400 font-inter">Loading updates…</p>
             </div>
           ) : displayUpdates && displayUpdates.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -289,17 +289,17 @@ export default function TeamUpdates({
                       e.preventDefault();
                       setSelectedUpdate(update);
                     }}
-                    className={`flex gap-3 pb-6 border-b border-gray-600/30 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-navy rounded ${
+                    className={`flex gap-3 pb-6 border-b border-white/10 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black rounded ${
                       index < displayUpdates.length - 1 ? "" : "border-b-0"
                     } ${
                       // On desktop, add bottom border if not in last row of each column
-                      index < displayUpdates.length - 2 ? "md:border-b md:border-gray-600/30" : "md:border-b-0"
+                      index < displayUpdates.length - 2 ? "md:border-b md:border-white/10" : "md:border-b-0"
                     }`}
                     aria-label={`Read update: ${update.title}`}
                   >
                     {/* Thumbnail */}
                     {update.image_url ? (
-                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded overflow-hidden bg-gray-800">
+                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded overflow-hidden bg-black/50">
                         <Image
                           src={update.image_url}
                           alt={update.title}
@@ -311,25 +311,25 @@ export default function TeamUpdates({
                         />
                       </div>
                     ) : (
-                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded bg-gray-800 flex items-center justify-center">
-                        <span className="text-gray-500 text-xs">No Image</span>
+                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded bg-black/50 flex items-center justify-center">
+                        <span className="text-neutral-500 text-xs">No Image</span>
                       </div>
                     )}
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {/* Headline */}
-                      <h3 className="font-inter font-semibold text-gray-900 mb-1 line-clamp-2 leading-tight">
+                      <h3 className="font-inter font-semibold text-white mb-1 line-clamp-2 leading-tight">
                         {sanitizeInput(update.title)}
                       </h3>
 
                       {/* Dek/Summary */}
-                      <p className="text-gray-700 font-inter text-sm mb-2 line-clamp-2 leading-snug">
+                      <p className="text-neutral-400 font-inter text-sm mb-2 line-clamp-2 leading-snug">
                         {sanitizeInput(truncatedContent)}
                       </p>
 
                       {/* Meta row */}
-                      <div className="flex items-center gap-2 text-xs text-gray-600 font-inter">
+                      <div className="flex items-center gap-2 text-xs text-neutral-500 font-inter">
                         <span>{teamName}</span>
                         <span>•</span>
                         <span>{relativeTime}</span>
@@ -340,8 +340,8 @@ export default function TeamUpdates({
               })}
             </div>
           ) : (
-            <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 text-center">
-              <p className="text-gray-700 font-inter">No updates available</p>
+            <div className="bg-black/50 border border-white/10 rounded-lg p-4 text-center">
+              <p className="text-neutral-400 font-inter">No updates available</p>
             </div>
           )}
           </div>

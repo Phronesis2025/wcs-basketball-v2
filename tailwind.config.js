@@ -26,6 +26,15 @@ module.exports = {
       backgroundImage: {
         "navy-gradient": "linear-gradient(90deg, #002C51 0%, #002C51 100%)", // Navy gradient
       },
+      // Custom tracking (letter-spacing) for reference design
+      letterSpacing: {
+        tighter: '-0.05em',
+        tight: '-0.025em',
+        normal: '0',
+        wide: '0.025em',
+        wider: '0.05em',
+        widest: '0.1em',
+      },
     },
   },
   plugins: [],

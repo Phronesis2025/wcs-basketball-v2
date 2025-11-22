@@ -1,8 +1,8 @@
 import React from "react";
 import Hero from "../components/Hero";
-import QuoteSection from "../components/QuoteSection";
+import StatsSection from "../components/StatsSection";
+import ProgramsSection from "../components/ProgramsSection";
 import LogoMarquee from "../components/LogoMarquee";
-import FanZone from "../components/FanZone";
 import AdSection from "../components/AdSection";
 import TeamUpdates from "../components/TeamUpdates";
 import { fetchTeams } from "../lib/actions";
@@ -28,17 +28,17 @@ export default async function Home() {
   const coachesError = null;
 
   return (
-    <div className="bg-[#F6F6F6] min-h-screen">
+    <div className="bg-[#030303] bg-grain min-h-screen">
       <Hero />
-      <QuoteSection />
-      <FanZone teamsError={teamsError} coachesError={coachesError} />
+      <StatsSection />
+      <ProgramsSection />
       <AdSection />
+      <LogoMarquee />
       <TeamUpdates
         maxUpdates={8}
         variant="compact-list"
         showViewMoreText={true}
       />
-      <LogoMarquee />
     </div>
   );
 }

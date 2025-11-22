@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { supabase } from "@/lib/supabaseClient";
 import { CoachMessageReply } from "@/types/supabase";
 import {
   getMessageReplies,
@@ -27,18 +28,62 @@ export function useReplies({
   );
   const [submitting, setSubmitting] = useState(false);
 
-  // Load replies for a message
+  // Load replies for a single message (used when a reply is added/edited)
   const loadReplies = useCallback(async (messageId: string) => {
     try {
       const repliesData = await getMessageReplies(messageId);
       setReplies((prev) => ({
         ...prev,
-        [messageId]: repliesData,
+        [messageId]: repliesData || [],
       }));
     } catch (error) {
       devError("Error loading replies:", error);
+      // Set empty array on error to prevent undefined state
+      setReplies((prev) => ({
+        ...prev,
+        [messageId]: [],
+      }));
     }
   }, []);
+
+  // Load replies for many messages in a single batched query to avoid
+  // hammering Supabase with dozens of parallel requests (which causes
+  // net::ERR_INSUFFICIENT_RESOURCES in the browser).
+  const loadRepliesForMessages = useCallback(
+    async (messageIds: string[]) => {
+      if (!messageIds || messageIds.length === 0) return;
+
+      try {
+        const { data, error } = await supabase
+          .from("coach_message_replies")
+          .select("*")
+          .in("message_id", messageIds)
+          .is("deleted_at", null)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          devError("Error loading replies batch:", error);
+          return;
+        }
+
+        const grouped: Record<string, CoachMessageReply[]> = {};
+        (data || []).forEach((reply: any) => {
+          const msgId = reply.message_id;
+          if (!msgId) return;
+          if (!grouped[msgId]) grouped[msgId] = [];
+          grouped[msgId].push(reply as CoachMessageReply);
+        });
+
+        setReplies((prev) => ({
+          ...prev,
+          ...grouped,
+        }));
+      } catch (error) {
+        devError("Error loading replies batch:", error);
+      }
+    },
+    []
+  );
 
   // Create reply
   const handleReply = useCallback(
@@ -159,6 +204,7 @@ export function useReplies({
     replies,
     submitting,
     loadReplies,
+    loadRepliesForMessages,
     handleReply,
     handleEditReply,
     handleDeleteReply,
