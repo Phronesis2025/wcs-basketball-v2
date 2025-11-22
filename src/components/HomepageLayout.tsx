@@ -2,7 +2,6 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import TodaysEvents from "./TodaysEvents";
 import Navbar from "./Navbar";
 
 /**
@@ -17,7 +16,6 @@ function HomepageLayoutInner() {
 
   return (
     <>
-      {isHome && <TodaysEvents />}
       {!isPrint && <Navbar />}
     </>
   );

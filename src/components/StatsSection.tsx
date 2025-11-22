@@ -63,11 +63,10 @@ export default function StatsSection() {
       aria-label="Key Statistics"
     >
       <div className="max-w-7xl mx-auto px-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+        <div className="grid grid-cols-3 gap-8 text-center">
           <StatCard value="300+" description="Players Through WCS" delay="" />
           <StatCard value="20" description="Teams" delay="delay-100" />
           <StatCard value="7" description="State Championships" delay="delay-200" />
-          <StatCard value="#1" description="Rated Facility" delay="delay-300" />
         </div>
       </div>
     </section>

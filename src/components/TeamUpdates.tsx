@@ -256,7 +256,7 @@ export default function TeamUpdates({
       <section
         ref={sectionRef}
         aria-labelledby="team-updates-title"
-        className="bg-[#030303] mt-8 mb-12 pt-6 sm:pt-8 pb-12 sm:pb-16 px-6 border-t border-white/5"
+        className="bg-[#030303] mt-8 mb-12 pt-6 sm:pt-8 pb-6 sm:pb-8 px-6 border-t border-white/5"
       >
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h2
@@ -264,7 +264,7 @@ export default function TeamUpdates({
             initial={{ opacity: 0, y: 20 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.6 }}
-            className="text-4xl sm:text-5xl md:text-6xl font-inter font-semibold tracking-tighter text-center text-white mb-10 sm:mb-12 uppercase"
+            className="text-3xl md:text-5xl font-inter font-semibold tracking-tighter text-white mb-10 sm:mb-12"
           >
             Around the WCS
           </motion.h2>
@@ -300,7 +300,7 @@ export default function TeamUpdates({
                     }`}
                     aria-label={`Read update: ${update.title}`}
                   >
-                    {/* Thumbnail with gradient overlay */}
+                    {/* Thumbnail with lighter gradient overlay */}
                     {update.image_url ? (
                       <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded overflow-hidden bg-black/50 relative">
                         <Image
@@ -312,13 +312,13 @@ export default function TeamUpdates({
                           sizes="(max-width: 640px) 64px, 80px"
                           loading="lazy"
                         />
-                        {/* Very dark gradient overlay that lightens on hover */}
-                        <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-black/90 group-hover:from-black/60 group-hover:via-black/40 group-hover:to-black/60 transition-all duration-300" />
+                        {/* Lighter gradient overlay that becomes even lighter on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/30 to-black/50 group-hover:from-black/30 group-hover:via-black/10 group-hover:to-black/30 transition-all duration-300" />
                       </div>
                     ) : (
                       <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded bg-black/50 flex items-center justify-center relative">
                         <span className="text-neutral-500 text-xs z-10">No Image</span>
-                        <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-black/90 group-hover:from-black/60 group-hover:via-black/40 group-hover:to-black/60 transition-all duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/50 via-black/30 to-black/50 group-hover:from-black/30 group-hover:via-black/10 group-hover:to-black/30 transition-all duration-300" />
                       </div>
                     )}
 
@@ -365,11 +365,11 @@ export default function TeamUpdates({
             onClick={() => setSelectedUpdate(null)}
           >
             <motion.div
-              className="bg-black border border-red-500/50 rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl"
+              className="bg-[#0A0A0A] border border-white/10 rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex-shrink-0">
-                <h3 className="text-red-600 font-bebas uppercase text-base">
+                <h3 className="text-blue-400 font-inter uppercase text-sm tracking-wider">
                   {selectedUpdate?.team_id
                     ? teamsMap.get(selectedUpdate.team_id)?.name ||
                       (selectedUpdate.is_global ? "All Teams" : "Program")
@@ -378,14 +378,14 @@ export default function TeamUpdates({
                 </h3>
                 <h2
                   id="modal-title"
-                  className="text-2xl font-bebas mt-2 text-white"
+                  className="text-2xl font-inter font-semibold mt-2 text-white"
                 >
                   {sanitizeInput(selectedUpdate.title)}
                 </h2>
               </div>
 
               <div className="flex-1 overflow-y-auto mt-4">
-                <p className="text-gray-300 font-inter leading-relaxed">
+                <p className="text-neutral-400 font-inter leading-relaxed">
                   {sanitizeInput(selectedUpdate.content)}
                 </p>
                 {selectedUpdate.image_url && (
@@ -403,7 +403,7 @@ export default function TeamUpdates({
               <div className="flex-shrink-0 mt-4">
                 <button
                   onClick={() => setSelectedUpdate(null)}
-                  className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                  className="w-full bg-gradient-to-b from-[#003d70] to-[#002C51] text-white font-medium py-2 px-4 rounded-lg hover:opacity-90 transition-opacity font-inter shadow-lg shadow-[#002C51]/50"
                   aria-label="Close modal"
                 >
                   Close

@@ -10,6 +10,7 @@ import { AuthPersistence } from "@/lib/authPersistence";
 import { devLog, devError } from "@/lib/security";
 import HandleAuthRedirect from "@/components/auth/HandleAuthRedirect";
 import StartNowButton from "@/components/cta/StartNowButton";
+import StartNowModal from "@/components/cta/StartNowModal";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -20,6 +21,7 @@ export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null); // Store full user role
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
   // Only track scroll for background changes (not for visibility - navbar is always visible now)
   useEffect(() => {
@@ -643,14 +645,14 @@ export default function Navbar() {
                   <div className="flex items-center gap-3">
                     {isHome && (
                       <Link
-                        href="/login"
+                        href="/parent/login"
                         className="text-xs font-medium text-neutral-400 hover:text-white px-3 py-2 transition-colors font-inter"
                       >
                         Sign In
                       </Link>
                     )}
-                    <Link
-                      href="/register"
+                    <button
+                      onClick={() => setIsRegisterModalOpen(true)}
                       className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all font-inter ${
                         isHome
                           ? "bg-white text-black hover:bg-neutral-200 hover:scale-[1.02]"
@@ -658,7 +660,7 @@ export default function Navbar() {
                       }`}
                     >
                       Register
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>
@@ -735,6 +737,13 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+      {/* Register Modal */}
+      {isRegisterModalOpen && (
+        <StartNowModal
+          isOpen={isRegisterModalOpen}
+          onClose={() => setIsRegisterModalOpen(false)}
+        />
+      )}
     </>
   );
 }

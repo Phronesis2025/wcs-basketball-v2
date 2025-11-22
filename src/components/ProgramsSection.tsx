@@ -9,16 +9,17 @@ const programs = [
   {
     title: "Our Values",
     description: "Teamwork, discipline, and passion drive our community.",
-    image: "/images/teamwork.png",
+    image: "/values.png",
     href: "/about",
     icon: "heart",
     colSpan: "md:col-span-2",
     rowSpan: "row-span-1",
+    hasImage: true,
   },
   {
     title: "Our Teams",
     description: "Discover our talented youth basketball teams. Join a legacy of winning programs.",
-    image: "/images/boys team.jpg",
+    image: "/teamss.png",
     href: "/teams",
     badge: "Tryouts Open",
     colSpan: "md:col-span-2",
@@ -26,22 +27,24 @@ const programs = [
     hasImage: true,
   },
   {
-    title: "Schedules",
-    description: "View upcoming games and events.",
-    image: "/images/calendar.png",
-    href: "/schedules",
-    icon: "calendar",
+    title: "Tournaments",
+    description: "Elite competition and showcase events.",
+    image: "/images/basketball-action.jpg",
+    href: "/tournament-signup",
+    icon: "trophy",
     colSpan: "md:col-span-1",
     rowSpan: "row-span-1",
+    hasImage: true,
   },
   {
     title: "Practice Drills",
     description: "Comprehensive training library.",
-    image: "/images/skill.png",
+    image: "/drills.png",
     href: "/drills",
     icon: "dumbbell",
     colSpan: "md:col-span-1",
     rowSpan: "row-span-1",
+    hasImage: true,
   },
 ];
 
@@ -81,15 +84,15 @@ export default function ProgramsSection() {
     <section
       ref={ref}
       id="around-wcs"
-      className="py-24 px-6 border-t border-white/5 bg-[#030303]"
+      className="pt-24 pb-12 px-6 border-t border-white/5 bg-[#030303]"
       aria-label="Programs"
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div className={`fade-enter ${isVisible ? "fade-enter-active" : ""}`}>
-            <h2 className="text-3xl md:text-4xl font-semibold tracking-tighter text-white mb-2 font-inter">
-              Around the WCS
+            <h2 className="text-4xl md:text-6xl font-semibold tracking-tighter text-white mb-2 font-inter uppercase">
+              WCS Fanzone
             </h2>
             <p className="text-neutral-400 text-sm max-w-md font-inter">
               From beginners to college prospects. Choose your path.
@@ -124,8 +127,8 @@ export default function ProgramsSection() {
                     sizes="(max-width: 768px) 100vw, 50vw"
                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                  <div className="absolute bottom-0 left-0 p-8 w-full">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30 group-hover:from-black/90 group-hover:via-black/50 group-hover:to-black/20 transition-all duration-500" />
+                  <div className="absolute bottom-0 left-0 p-8 w-full z-10">
                     {program.badge && (
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide mb-4 font-inter">
                         {program.badge}
@@ -148,38 +151,51 @@ export default function ProgramsSection() {
               );
             }
 
-            // Icon/Text cards (Skills Academy, 3v3, Camps style)
+            // Image cards with dark gradient
             return (
               <Link
                 key={program.title}
                 href={program.href}
-                className={`${program.colSpan} ${program.rowSpan} relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] fade-enter ${delay} ${isVisible ? "fade-enter-active" : ""} p-8 flex flex-col justify-between`}
+                className={`${program.colSpan} ${program.rowSpan} relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] fade-enter ${delay} ${isVisible ? "fade-enter-active" : ""} p-6 flex flex-col justify-between`}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <div className="relative z-10">
-                  <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center mb-4 text-white">
+                {/* Background Image */}
+                <Image
+                  src={program.image}
+                  alt={program.title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 25vw"
+                  className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
+                />
+                {/* Increased dark gradient overlay - lightens slightly on hover */}
+                <div className="absolute inset-0 bg-gradient-to-br from-black via-black/85 to-black group-hover:from-black/90 group-hover:via-black/75 group-hover:to-black/90 transition-all duration-500" />
+                
+                {/* Content */}
+                <div className="relative z-10 flex flex-col h-full justify-between">
+                  <div className="flex items-center justify-center text-neutral-500 group-hover:text-white transition-colors">
                     {program.icon === "heart" && (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                       </svg>
                     )}
-                    {program.icon === "calendar" && (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    {program.icon === "trophy" && (
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                       </svg>
                     )}
                     {program.icon === "dumbbell" && (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2zm0 0V3m0 2v2M9 5h6m0 0V3m0 2v2m0-2h2a2 2 0 012 2v12a2 2 0 01-2 2h-2a2 2 0 01-2-2V7a2 2 0 012-2z" />
                       </svg>
                     )}
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-2 tracking-tight font-inter">
-                    {program.title}
-                  </h3>
-                  <p className="text-neutral-400 text-sm max-w-xs font-inter">
-                    {program.description}
-                  </p>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white mb-1 tracking-tight font-inter">
+                      {program.title}
+                    </h3>
+                    <p className="text-neutral-500 text-xs font-inter">
+                      {program.description}
+                    </p>
+                  </div>
                 </div>
               </Link>
             );

@@ -44,9 +44,9 @@ export default function Footer() {
     <footer className="bg-black text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* Main Grid - both mobile and desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-24">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-24">
           {/* Brand and Email Signup */}
-          <div className="md:col-span-2">
+          <div className="col-span-2 md:col-span-2">
             <Link href="/" className="flex items-center gap-2 mb-6">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -73,28 +73,23 @@ export default function Footer() {
             </form>
           </div>
 
-          {/* Programs Links */}
+          {/* Quick Links */}
           <div>
-            <h4 className="text-white font-medium text-sm mb-4 font-inter">Programs</h4>
+            <h4 className="text-white font-medium text-sm mb-4 font-inter">Quick Links</h4>
             <ul className="space-y-3 text-sm text-neutral-500">
               <li>
                 <Link href="/teams" className="hover:text-white transition-colors font-inter">
-                  Travel Teams
-                </Link>
-              </li>
-              <li>
-                <Link href="/drills" className="hover:text-white transition-colors font-inter">
-                  Skills Training
+                  Teams
                 </Link>
               </li>
               <li>
                 <Link href="/schedules" className="hover:text-white transition-colors font-inter">
-                  Camps & Clinics
+                  Schedules
                 </Link>
               </li>
               <li>
-                <Link href="/coaches/login" className="hover:text-white transition-colors font-inter">
-                  Private Coaching
+                <Link href="/drills" className="hover:text-white transition-colors font-inter">
+                  Drills
                 </Link>
               </li>
             </ul>
@@ -106,22 +101,17 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-neutral-500">
               <li>
                 <Link href="/about" className="hover:text-white transition-colors font-inter">
-                  About WCS
+                  About
                 </Link>
               </li>
               <li>
                 <Link href="/coaches/login" className="hover:text-white transition-colors font-inter">
-                  Coaching Staff
+                  Coaches Login
                 </Link>
               </li>
               <li>
-                <Link href="/schedules" className="hover:text-white transition-colors font-inter">
-                  Facilities
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="hover:text-white transition-colors font-inter">
-                  Contact Us
+                <Link href="/tournament-signup" className="hover:text-white transition-colors font-inter">
+                  Tournaments
                 </Link>
               </li>
             </ul>
@@ -130,13 +120,19 @@ export default function Footer() {
       </div>
 
       <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-neutral-600">
-        <p className="font-inter">© {currentYear} World Class Sports. All rights reserved.</p>
+        <p className="font-inter">© {currentYear} WCS Basketball. All rights reserved.</p>
         <div className="flex gap-6">
           <Link href="/privacy" className="hover:text-white transition-colors font-inter">
-            Privacy Policy
+            Privacy
           </Link>
           <Link href="/terms" className="hover:text-white transition-colors font-inter">
-            Terms of Service
+            Terms
+          </Link>
+          <Link href="/code-of-conduct" className="hover:text-white transition-colors font-inter">
+            Code of Conduct
+          </Link>
+          <Link href="/refund-policy" className="hover:text-white transition-colors font-inter">
+            Refunds
           </Link>
         </div>
       </div>
