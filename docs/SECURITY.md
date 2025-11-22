@@ -15,7 +15,7 @@
 - ✅ Server Actions CORS too permissive - FIXED (restricted to known origins)
 - ✅ Admin delete API routes - FIXED (proper success checking implemented)
 
-### Security Audit (January 2025 - Homepage Redesign)
+### Security Audit (January 2025 - Homepage Redesign - Scroll Jump Fix)
 
 - **NPM Audit Status**: 1 high severity vulnerability (no fix available)
   - ⚠️ **xlsx library** (v0.18.5): Prototype Pollution and ReDoS vulnerabilities
@@ -32,7 +32,16 @@
   - ✅ **js-yaml** (4.0.0-4.1.0): Prototype pollution - FIXED via `npm audit fix`
 - **Linting**: ✅ No linting errors found
 - **Build Status**: ✅ Build successful (129 static pages generated)
-- **Supabase Advisors**: ⚠️ Unable to check (MCP connection not available)
+- **Supabase Advisors**: 
+  - **Security**: 1 warning (low priority)
+    - ⚠️ **Leaked Password Protection Disabled**: HaveIBeenPwned integration not enabled
+      - **Risk Level**: Low (enhancement recommendation)
+      - **Remediation**: Enable leaked password protection in Supabase Auth settings
+      - **Status**: Documented for future enhancement
+  - **Performance**: Multiple unused indexes (INFO level, not critical)
+    - Various indexes on `error_logs`, `news`, `coach_volunteer_applications`, `password_reset_tokens`, `changelog`, `imports`, `performance_metrics`, `web_vitals`, `coach_messages`, `players`, `message_notifications`, and `users` tables
+    - **Risk Level**: None (performance optimization opportunity)
+    - **Status**: Documented for future cleanup
 
 ### Latest Security Audit (January 2025 - v2.10.1)
 

@@ -79,10 +79,10 @@ body {
 /* Speed up on mobile */
 @media (max-width: 768px) {
   .animate-scroll {
-    animation-duration: 40s;
+    animation-duration: 15s;
   }
   .animate-scroll-reverse {
-    animation-duration: 40s;
+    animation-duration: 15s;
   }
 }
 
@@ -443,6 +443,25 @@ img[style*="object-fit"],
   animation: shimmer 2s infinite;
 }
 
+/* Star Glimmer Effect - Gold */
+@keyframes starGlimmer {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    filter: brightness(1) drop-shadow(0 0 0px rgba(255, 215, 0, 0));
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+    filter: brightness(1.3) drop-shadow(0 0 8px rgba(255, 215, 0, 0.8)) drop-shadow(0 0 12px rgba(255, 215, 0, 0.5));
+  }
+}
+
+.star-glimmer {
+  animation: starGlimmer 2s ease-in-out infinite;
+  fill: #FFD700;
+}
+
 
 .flip-card-face {
   position: absolute;
@@ -512,5 +531,45 @@ img[style*="object-fit"],
   }
   100% {
     background-position: 1000px;
+  }
+}
+
+/* Aurora Text Effect - Applied directly to text with flowing motion */
+.hero-aurora-text {
+  position: relative;
+  font-family: sans-serif;
+  text-transform: uppercase;
+  font-size: 2em;
+  letter-spacing: 4px;
+  background: 
+    linear-gradient(90deg, 
+      transparent 0%, 
+      #002C51 20%, 
+      #D91E18 40%, 
+      #ffffff 60%, 
+      #002C51 80%, 
+      transparent 100%
+    ),
+    linear-gradient(90deg, 
+      transparent 0%, 
+      #D91E18 25%, 
+      #ffffff 50%, 
+      #002C51 75%, 
+      transparent 100%
+    );
+  background-size: 200% 100%, 300% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: auroraTextFlow 15s linear infinite;
+  filter: brightness(1.2);
+}
+
+@keyframes auroraTextFlow {
+  0% {
+    background-position: -100% 0%, -150% 0%;
+  }
+  100% {
+    background-position: 200% 0%, 250% 0%;
   }
 }

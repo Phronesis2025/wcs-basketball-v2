@@ -84,7 +84,7 @@ export default function ProgramsSection() {
     <section
       ref={ref}
       id="around-wcs"
-      className="pt-24 pb-12 px-6 border-t border-white/5 bg-[#030303]"
+      className="pt-12 pb-12 px-6 border-t border-white/5 bg-[#030303]"
       aria-label="Programs"
     >
       <div className="max-w-7xl mx-auto">
@@ -94,8 +94,8 @@ export default function ProgramsSection() {
             <h2 className="text-4xl md:text-6xl font-semibold tracking-tighter text-white mb-2 font-inter uppercase">
               WCS Fanzone
             </h2>
-            <p className="text-neutral-400 text-sm max-w-md font-inter">
-              From beginners to college prospects. Choose your path.
+            <p className="text-neutral-400 text-sm max-w-md font-inter uppercase tracking-wider">
+              EXPLORE PROGRAMS, TEAMS, AND RESOURCES
             </p>
           </div>
           <Link
@@ -127,7 +127,7 @@ export default function ProgramsSection() {
                     sizes="(max-width: 768px) 100vw, 50vw"
                     className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-700"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30 group-hover:from-black/90 group-hover:via-black/50 group-hover:to-black/20 transition-all duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/30 group-hover:from-black/70 group-hover:via-black/40 group-hover:to-black/10 transition-all duration-500" />
                   <div className="absolute bottom-0 left-0 p-8 w-full z-10">
                     {program.badge && (
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-600 text-white text-[10px] font-bold uppercase tracking-wide mb-4 font-inter">
@@ -167,7 +167,7 @@ export default function ProgramsSection() {
                   className="absolute inset-0 w-full h-full object-cover transition-all duration-700"
                 />
                 {/* Increased dark gradient overlay - lightens slightly on hover */}
-                <div className="absolute inset-0 bg-gradient-to-br from-black via-black/85 to-black group-hover:from-black/90 group-hover:via-black/75 group-hover:to-black/90 transition-all duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-black via-black/85 to-black group-hover:from-black/70 group-hover:via-black/60 group-hover:to-black/70 transition-all duration-500" />
                 
                 {/* Content */}
                 <div className="relative z-10 flex flex-col h-full justify-between">

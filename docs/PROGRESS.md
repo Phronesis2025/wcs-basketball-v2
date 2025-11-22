@@ -2,13 +2,13 @@
 
 ## Last Updated
 
-January 2025, Current Status - Homepage Redesign (Reference Style) - Ready for Main Branch
+January 2025, Current Status - Homepage Redesign (Reference Style) - Scroll Jump Fix
 
 ## 🚀 Current Status Summary
 
 **Homepage Redesign Complete**: Modern dark-themed homepage matching reference design
 
-### January 2025 - Homepage Redesign (Reference Style)
+### January 2025 - Homepage Redesign (Reference Style) - Scroll Jump Fix
 
 - ✅ **Hero Section**: Redesigned with "BUILT FOR THE GAME" styling, dark theme, parallax background images with flip animations
 - ✅ **Stats Section**: New section displaying "300+ Players", "20 Teams", "7 State Championships"
@@ -23,6 +23,10 @@ January 2025, Current Status - Homepage Redesign (Reference Style) - Ready for M
 - ✅ **Security Audit**: Completed, 1 known vulnerability (xlsx library - no fix available, admin-only feature)
 - ✅ **Build Status**: ✅ Successful build (129 static pages generated)
 - ✅ **Image Updates**: Updated card images (drills.png, values.png, teamss.png)
+- ✅ **Scroll Jump Fix**: Fixed modal close scroll jump issue in "Around the WCS" section
+  - Enhanced `useScrollLock` hook with improved scroll restoration logic
+  - Added prevention of double restoration and multiple restoration attempts
+  - Fixed scroll position preservation when closing modals
 
 **Phase 15 Complete**: FanZone Carousel Redesign & Mobile Layout Improvements
 

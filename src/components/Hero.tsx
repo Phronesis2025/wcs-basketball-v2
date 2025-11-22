@@ -25,8 +25,56 @@ export default function Hero() {
   useEffect(() => {
     const fetchHeroImages = async () => {
       try {
+        // Check localStorage cache first
+        const cacheKey = 'hero-images-cache';
+        const cacheTimestampKey = 'hero-images-cache-timestamp';
+        const cacheExpiry = 3600000; // 1 hour in milliseconds
+        
+        const cachedData = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
+        const cachedTimestamp = typeof window !== 'undefined' ? localStorage.getItem(cacheTimestampKey) : null;
+        
+        if (cachedData && cachedTimestamp) {
+          const timestamp = parseInt(cachedTimestamp, 10);
+          const now = Date.now();
+          
+          // Use cached data if it's less than 1 hour old
+          if (now - timestamp < cacheExpiry) {
+            const { images: imageUrls } = JSON.parse(cachedData);
+            devLog("Using cached hero images");
+            
+            // Process cached images
+            if (imageUrls && imageUrls.length > 0) {
+              const shuffled = [...imageUrls].sort(() => Math.random() - 0.5);
+              const poolSize = Math.ceil(shuffled.length / 4);
+              const pools = {
+                leftTop: shuffled.slice(0, poolSize),
+                leftBottom: shuffled.slice(poolSize, Math.min(poolSize * 2, shuffled.length)),
+                rightTop: shuffled.slice(poolSize * 2, Math.min(poolSize * 3, shuffled.length)),
+                rightBottom: shuffled.slice(poolSize * 3),
+              };
+              
+              const ensureMinimumImages = (pool: string[]) => {
+                if (pool.length === 0) return [];
+                if (pool.length === 1) return [...pool, ...pool];
+                return pool;
+              };
+              
+              setImagePools({
+                leftTop: ensureMinimumImages(pools.leftTop),
+                leftBottom: ensureMinimumImages(pools.leftBottom),
+                rightTop: ensureMinimumImages(pools.rightTop),
+                rightBottom: ensureMinimumImages(pools.rightBottom),
+              });
+              setIsLoadingImages(false);
+              return;
+            }
+          }
+        }
+        
         // Fetch images from API route (uses admin client with proper permissions)
-        const response = await fetch('/api/hero-images');
+        const response = await fetch('/api/hero-images', {
+          cache: 'force-cache', // Use browser cache
+        });
         
         if (!response.ok) {
           devError("Error fetching hero images from API:", response.statusText);
@@ -41,6 +89,12 @@ export default function Hero() {
         }
 
         const { images: imageUrls } = await response.json();
+        
+        // Cache the response
+        if (typeof window !== 'undefined' && imageUrls && imageUrls.length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify({ images: imageUrls }));
+          localStorage.setItem(cacheTimestampKey, Date.now().toString());
+        }
 
         if (imageUrls && imageUrls.length > 0) {
           devLog(`Total image URLs received: ${imageUrls.length}`);
@@ -135,14 +189,32 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden min-h-screen flex flex-col justify-center bg-[#030303]"
+      className="relative pt-20 pb-20 md:pt-32 md:pb-32 px-6 overflow-hidden min-h-screen flex flex-col justify-center bg-[#030303]"
       aria-label="Hero"
     >
+      {/* Background Image - Barely Visible */}
+      <div 
+        className="absolute inset-0 w-full h-full pointer-events-none -z-10 opacity-[0.15]"
+        style={{
+          backgroundImage: 'url(/hoop-silhouette.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      
       {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-900/[0.05] blur-[120px] rounded-full pointer-events-none -z-10" />
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto text-center flex flex-col items-center z-20 relative">
+                {/* Hero Logo Text with Aurora Effect */}
+                <div className="mb-8 flex justify-center">
+                  <p className="hero-aurora-text text-3xl md:text-4xl lg:text-5xl font-normal">
+                    WORLD CLASS SPORTS
+                  </p>
+                </div>
+                
                 {/* Badge with pulsing dot */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8">
                   <span className="relative flex h-2 w-2">
@@ -190,14 +262,14 @@ export default function Hero() {
           {/* Image 1 - Top Left */}
           {imagePools.leftTop.length > 0 && (
             <div
-              className="absolute left-[8%] md:left-[15%] top-[12%] w-36 md:w-56 aspect-[3/4] opacity-30"
+              className="absolute left-[5%] md:left-[12%] top-[8%] w-36 md:w-56 aspect-[3/4] opacity-35"
               style={{
-                transform: `translateY(${scrollY * 0.05}px)`,
+                transform: `translateY(${scrollY * 0.8}px)`,
               }}
             >
               <FlipCard 
                 images={imagePools.leftTop} 
-                interval={5000} 
+                interval={10000} 
                 alt="Team"
               />
             </div>
@@ -206,14 +278,14 @@ export default function Hero() {
           {/* Image 2 - Bottom Left */}
           {imagePools.leftBottom.length > 0 && (
             <div
-              className="absolute left-[0%] md:left-[10%] top-[60%] md:top-[68%] w-52 md:w-72 aspect-[3/4] opacity-20"
+              className="absolute left-[2%] md:left-[8%] top-[55%] md:top-[60%] w-52 md:w-72 aspect-[3/4] opacity-35"
               style={{
-                transform: `translateY(${scrollY * 0.1}px)`,
+                transform: `translateY(${scrollY * 0.3}px)`,
               }}
             >
               <FlipCard 
                 images={imagePools.leftBottom} 
-                interval={7000} 
+                interval={14000} 
                 alt="Play"
               />
             </div>
@@ -222,14 +294,14 @@ export default function Hero() {
           {/* Image 3 - Top Right */}
           {imagePools.rightTop.length > 0 && (
             <div
-              className="absolute right-[8%] md:right-[15%] top-[18%] w-56 md:w-80 aspect-[3/4] opacity-30"
+              className="absolute right-[5%] md:right-[12%] top-[10%] w-56 md:w-80 aspect-[3/4] opacity-35"
               style={{
-                transform: `translateY(${scrollY * 0.08}px)`,
+                transform: `translateY(${scrollY * 1.0}px)`,
               }}
             >
               <FlipCard 
                 images={imagePools.rightTop} 
-                interval={6000} 
+                interval={12000} 
                 alt="Hoop"
               />
             </div>
@@ -238,14 +310,14 @@ export default function Hero() {
           {/* Image 4 - Bottom Right */}
           {imagePools.rightBottom.length > 0 && (
             <div
-              className="absolute right-[0%] md:right-[10%] top-[72%] w-40 md:w-60 aspect-[3/4] opacity-20"
+              className="absolute right-[2%] md:right-[8%] top-[60%] md:top-[65%] w-40 md:w-60 aspect-[3/4] opacity-35"
               style={{
-                transform: `translateY(${scrollY * 0.12}px)`,
+                transform: `translateY(${scrollY * 0.5}px)`,
               }}
             >
               <FlipCard 
                 images={imagePools.rightBottom} 
-                interval={8000} 
+                interval={16000} 
                 alt="Coach"
               />
             </div>

@@ -57,10 +57,11 @@ const allTestimonials: Testimonial[] = [
   },
 ];
 
-const TestimonialCard: React.FC<{ testimonials: Testimonial[]; delay: number; interval: number }> = ({ 
+const TestimonialCard: React.FC<{ testimonials: Testimonial[]; delay: number; interval: number; glimmerDelay: number }> = ({ 
   testimonials, 
   delay,
-  interval 
+  interval,
+  glimmerDelay
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipping, setIsFlipping] = useState(false);
@@ -101,7 +102,10 @@ const TestimonialCard: React.FC<{ testimonials: Testimonial[]; delay: number; in
             {[...Array(currentTestimonial.rating)].map((_, i) => (
               <svg
                 key={i}
-                className="w-4 h-4 fill-white"
+                className="w-4 h-4 star-glimmer"
+                style={{
+                  animationDelay: `${glimmerDelay + i * 0.2}s`,
+                }}
                 viewBox="0 0 20 20"
                 xmlns="http://www.w3.org/2000/svg"
               >
@@ -162,6 +166,7 @@ export default function PlayerTestimonials() {
             testimonials={[allTestimonials[0], allTestimonials[3]]}
             delay={0}
             interval={8000}
+            glimmerDelay={0}
           />
           
           {/* Card 2 - rotates every 9 seconds */}
@@ -169,6 +174,7 @@ export default function PlayerTestimonials() {
             testimonials={[allTestimonials[1], allTestimonials[4]]}
             delay={0.15}
             interval={9000}
+            glimmerDelay={0.7}
           />
           
           {/* Card 3 - rotates every 10 seconds */}
@@ -176,6 +182,7 @@ export default function PlayerTestimonials() {
             testimonials={[allTestimonials[2], allTestimonials[5]]}
             delay={0.3}
             interval={10000}
+            glimmerDelay={1.4}
           />
         </div>
       </div>

@@ -68,7 +68,16 @@ export async function GET() {
     
     devLog(`Total image URLs generated: ${imageUrls.length}`);
     
-    return NextResponse.json({ images: imageUrls });
+    // Return response with caching headers
+    return NextResponse.json(
+      { images: imageUrls },
+      {
+        headers: {
+          // Cache for 1 hour, then revalidate in background
+          "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200",
+        },
+      }
+    );
   } catch (error) {
     devError("Error fetching hero images:", error);
     return NextResponse.json(

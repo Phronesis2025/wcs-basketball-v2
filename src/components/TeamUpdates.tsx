@@ -362,7 +362,11 @@ export default function TeamUpdates({
             className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center p-4 z-[9999]"
             role="dialog"
             aria-labelledby="modal-title"
-            onClick={() => setSelectedUpdate(null)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSelectedUpdate(null);
+            }}
           >
             <motion.div
               className="bg-[#0A0A0A] border border-white/10 rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-xl"
@@ -402,9 +406,14 @@ export default function TeamUpdates({
 
               <div className="flex-shrink-0 mt-4">
                 <button
-                  onClick={() => setSelectedUpdate(null)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setSelectedUpdate(null);
+                  }}
                   className="w-full bg-gradient-to-b from-[#003d70] to-[#002C51] text-white font-medium py-2 px-4 rounded-lg hover:opacity-90 transition-opacity font-inter shadow-lg shadow-[#002C51]/50"
                   aria-label="Close modal"
+                  type="button"
                 >
                   Close
                 </button>
@@ -627,7 +636,11 @@ export default function TeamUpdates({
             className="fixed inset-0 backdrop-blur-md bg-black/30 flex items-center justify-center p-4 z-[9999]"
             role="dialog"
             aria-labelledby="modal-title"
-            onClick={() => setSelectedUpdate(null)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSelectedUpdate(null);
+            }}
           >
             <motion.div
               className="bg-black border border-red-500/50 rounded-lg p-6 w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl"
@@ -667,7 +680,11 @@ export default function TeamUpdates({
 
               <div className="flex-shrink-0 mt-4">
                 <button
-                  onClick={() => setSelectedUpdate(null)}
+                  onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSelectedUpdate(null);
+            }}
                   className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
                   aria-label="Close modal"
                 >

@@ -49,7 +49,8 @@ export default function FlipCard({ images, interval, className = "", alt }: Flip
               alt={alt}
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-contain grayscale"
+              className="object-contain"
+              style={{ filter: 'grayscale(85%)' }}
               priority={false}
               unoptimized={images[currentIndex]?.startsWith('http')}
             />

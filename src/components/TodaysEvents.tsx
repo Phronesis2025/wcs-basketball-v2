@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
+import { motion } from "framer-motion";
+import { useInView } from "react-intersection-observer";
 import { Schedule, Team } from "@/types/supabase";
 import { devError, devLog } from "@/lib/security";
 import { eventTypeToColor } from "@/lib/calendarColors";
@@ -22,6 +24,7 @@ export default function TodaysEvents({
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { ref: titleRef, inView: titleInView } = useInView({ triggerOnce: true, threshold: 0.1 });
 
   // Fetch events and teams
   useEffect(() => {
@@ -284,10 +287,22 @@ export default function TodaysEvents({
 
   return (
     <section
-      className="bg-[#0A0A0A] py-2 w-full relative z-40 border-y border-white/5"
+      className="pt-8 md:pt-12 pb-2 px-6 bg-[#030303] border-t border-white/5"
       aria-label="Today's Events"
     >
-      <div className="w-full">
+      <div className="max-w-7xl mx-auto">
+        {/* Title */}
+        <motion.h2
+          ref={titleRef}
+          initial={{ opacity: 0, y: 20 }}
+          animate={titleInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-3xl md:text-5xl font-semibold tracking-tighter text-white mb-8 md:mb-12 font-inter"
+        >
+          Today's Events
+        </motion.h2>
+      </div>
+      <div className="w-full bg-[#0A0A0A] py-2 relative z-40 border-y border-white/5">
         {/* Horizontal Scroll Container */}
         <div className="bg-[#0A0A0A] w-full relative">
           <div className="flex h-[80px]">

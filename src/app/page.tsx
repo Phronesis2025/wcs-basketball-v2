@@ -36,7 +36,7 @@ export default async function Home() {
       <div className="h-12 md:h-16" /> {/* Reduced spacing */}
       <StatsSection />
       <TodaysEvents />
-      <div className="h-8 md:h-32 lg:h-40" />
+      <div className="h-4 md:h-16 lg:h-20" />
       <ProgramsSection />
       <div className="h-24 md:h-32 lg:h-40" />
       <LogoMarquee />

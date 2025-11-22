@@ -624,7 +624,11 @@ export default function Navbar() {
               <div className="hidden md:flex items-center gap-3">
                 {isHome && user && (
                   <Link
-                    href="/dashboard"
+                    href={
+                      userRole === "coach" || userRole === "admin"
+                        ? "/admin/club-management"
+                        : "/parent/profile"
+                    }
                     className="text-xs font-medium text-neutral-400 hover:text-white px-3 py-2 transition-colors font-inter"
                   >
                     Dashboard
