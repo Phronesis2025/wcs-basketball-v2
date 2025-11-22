@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET() {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Fetch schedules
@@ -19,11 +17,7 @@ export async function GET() {
       .order("date_time", { ascending: true });
 
     if (schedulesError) {
-      devError("Schedules fetch error:", schedulesError);
-      return NextResponse.json(
-        { error: "Failed to fetch schedules" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch schedules", schedulesError);
     }
 
     // Fetch updates with date_time
@@ -35,11 +29,7 @@ export async function GET() {
       .order("date_time", { ascending: true });
 
     if (updatesError) {
-      devError("Updates fetch error:", updatesError);
-      return NextResponse.json(
-        { error: "Failed to fetch updates" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch updates", updatesError);
     }
 
     // Fetch teams for team name lookup
@@ -48,11 +38,7 @@ export async function GET() {
       .select("id, name");
 
     if (teamsError) {
-      devError("Teams fetch error:", teamsError);
-      return NextResponse.json(
-        { error: "Failed to fetch teams" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch teams", teamsError);
     }
 
     // Combine schedules and updates, converting updates to schedule format
@@ -103,10 +89,6 @@ export async function GET() {
       }
     );
   } catch (error) {
-    devError("Server-side schedules error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

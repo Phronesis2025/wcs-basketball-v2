@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { generateInvoicePDFFromHTML } from "@/lib/pdf/puppeteer-invoice";
 import { fetchTeamById } from "@/lib/actions";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // Helper functions for email template (matching emailTemplates.ts pattern)
 function getEmailBaseUrl(): string {
@@ -49,19 +50,13 @@ const RESEND_FROM = process.env.RESEND_FROM || "WCS Basketball <onboarding@resen
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const { email } = await request.json();
 
     if (!email) {
-      return NextResponse.json(
-        { error: "Email is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Email is required");
     }
 
     devLog("send-parent-invoice: Generating combined invoice for parent", { email });
@@ -74,11 +69,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (parentError || !parent) {
-      devError("send-parent-invoice: Failed to fetch parent", parentError);
-      return NextResponse.json(
-        { error: "Failed to fetch parent data" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Failed to fetch parent data");
     }
 
     // Fetch all children for this parent
@@ -90,18 +81,11 @@ export async function POST(request: NextRequest) {
       .order("created_at", { ascending: true });
 
     if (childrenError) {
-      devError("send-parent-invoice: Failed to fetch children", childrenError);
-      return NextResponse.json(
-        { error: "Failed to fetch children data" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch children data", childrenError);
     }
 
     if (!children || children.length === 0) {
-      return NextResponse.json(
-        { error: "No children found for this parent" },
-        { status: 404 }
-      );
+      throw new NotFoundError("No children found for this parent");
     }
 
     // Fetch all payments for all children
@@ -672,10 +656,7 @@ export async function POST(request: NextRequest) {
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
       devError("send-parent-invoice: Failed to send email after retries", errorText);
-      return NextResponse.json(
-        { error: "Failed to send email. Please try again later." },
-        { status: 500 }
-      );
+      throw new ApiError("Failed to send email. Please try again later.", 500);
     }
 
     const emailData = await emailResponse.json();
@@ -686,28 +667,40 @@ export async function POST(request: NextRequest) {
       resendId: emailData.id,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Combined invoice sent successfully",
       email: recipientEmail,
     });
   } catch (error: any) {
-    devError("send-parent-invoice: Exception", error);
-    
     // Provide more specific error messages based on error type
-    let errorMessage = "Failed to send invoice";
     if (error.name === 'AbortError' || error.message?.includes('timeout')) {
-      errorMessage = "Request timed out. The email service may be experiencing delays. Please try again later.";
+      return handleApiError(
+        new ApiError(
+          "Request timed out. The email service may be experiencing delays. Please try again later.",
+          500,
+          undefined,
+          error
+        ),
+        request
+      );
     } else if (error.code === 'UND_ERR_SOCKET' || error.message?.includes('fetch failed')) {
-      errorMessage = "Connection error. Please check your internet connection and try again.";
+      return handleApiError(
+        new ApiError(
+          "Connection error. Please check your internet connection and try again.",
+          500,
+          undefined,
+          error
+        ),
+        request
+      );
     } else if (error.message?.includes('Resend API error')) {
-      errorMessage = "Email service error. Please try again later.";
+      return handleApiError(
+        new ApiError("Email service error. Please try again later.", 500, undefined, error),
+        request
+      );
     }
-    
-    return NextResponse.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+
+    return handleApiError(error, request);
   }
 }
 

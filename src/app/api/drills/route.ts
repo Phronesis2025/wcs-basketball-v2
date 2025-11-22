@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError, sanitizeInput } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, AuthorizationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
     const { drillData, userId } = await request.json();
     if (!drillData || !userId) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      throw new ValidationError("Missing fields");
     }
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const payload = {
@@ -47,16 +45,11 @@ export async function POST(request: NextRequest) {
       .select()
       .single();
     if (error) {
-      devError("[API] Create drill failed:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new DatabaseError("Failed to create practice drill", error);
     }
-    return NextResponse.json(data);
+    return formatSuccessResponse(data);
   } catch (err) {
-    devError("[API] Unexpected error creating drill:", err);
-    return NextResponse.json(
-      { error: "Failed to create practice drill" },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }
 
@@ -64,13 +57,10 @@ export async function PUT(request: NextRequest) {
   try {
     const { drillId, drillData, userId, isAdmin } = await request.json();
     if (!drillId || !drillData || !userId) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      throw new ValidationError("Missing fields");
     }
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Fetch existing to authorize
@@ -80,12 +70,11 @@ export async function PUT(request: NextRequest) {
       .eq("id", drillId)
       .single();
     if (fetchErr) {
-      devError("[API] Fetch drill for update failed:", fetchErr);
-      return NextResponse.json({ error: "Drill not found" }, { status: 404 });
+      throw new NotFoundError("Drill not found");
     }
     const isAuthor = existing?.created_by === userId;
     if (!isAuthor && !isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     const updateData: Record<string, unknown> = {};
@@ -130,16 +119,11 @@ export async function PUT(request: NextRequest) {
       .select()
       .single();
     if (error) {
-      devError("[API] Update drill failed:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new DatabaseError("Failed to update practice drill", error);
     }
-    return NextResponse.json(data);
+    return formatSuccessResponse(data);
   } catch (err) {
-    devError("[API] Unexpected error updating drill:", err);
-    return NextResponse.json(
-      { error: "Failed to update practice drill" },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }
 
@@ -147,13 +131,10 @@ export async function DELETE(request: NextRequest) {
   try {
     const { drillId, userId, isAdmin } = await request.json();
     if (!drillId || !userId) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      throw new ValidationError("Missing fields");
     }
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const { data: existing, error: fetchErr } = await supabaseAdmin
@@ -162,12 +143,11 @@ export async function DELETE(request: NextRequest) {
       .eq("id", drillId)
       .single();
     if (fetchErr) {
-      devError("[API] Fetch drill for delete failed:", fetchErr);
-      return NextResponse.json({ error: "Drill not found" }, { status: 404 });
+      throw new NotFoundError("Drill not found");
     }
     const isAuthor = existing?.created_by === userId;
     if (!isAuthor && !isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     const { error } = await supabaseAdmin
@@ -175,15 +155,10 @@ export async function DELETE(request: NextRequest) {
       .delete()
       .eq("id", drillId);
     if (error) {
-      devError("[API] Delete drill failed:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new DatabaseError("Failed to delete practice drill", error);
     }
-    return NextResponse.json({ success: true });
+    return formatSuccessResponse({ success: true });
   } catch (err) {
-    devError("[API] Unexpected error deleting drill:", err);
-    return NextResponse.json(
-      { error: "Failed to delete practice drill" },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { AuthenticationError, AuthorizationError, ValidationError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // PUT - Update a coach
 export async function PUT(
@@ -10,10 +11,7 @@ export async function PUT(
   try {
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
@@ -24,10 +22,7 @@ export async function PUT(
       .single();
 
     if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     const requestData = await request.json();
@@ -37,10 +32,7 @@ export async function PUT(
       requestData;
 
     if (!firstName || !lastName || !email) {
-      return NextResponse.json(
-        { error: "First name, last name, and email are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("First name, last name, and email are required");
     }
 
     const { id: coachId } = await params;
@@ -93,29 +85,20 @@ export async function PUT(
             .single();
 
         if (coachRetryError) {
-          devError("Failed to update coach:", coachRetryError);
-          return NextResponse.json(
-            { error: "Failed to update coach" },
-            { status: 500 }
-          );
+          throw new DatabaseError("Failed to update coach", coachRetryError);
         }
 
         devLog(
           "Coach updated successfully (without is_active):",
           coachRetry.id
         );
-        return NextResponse.json({
-          success: true,
+        return formatSuccessResponse({
           message: "Coach updated successfully",
           data: coachRetry,
         });
       }
 
-      devError("Failed to update coach:", coachError);
-      return NextResponse.json(
-        { error: "Failed to update coach" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update coach", coachError);
     }
 
     // Update user email if it changed
@@ -145,20 +128,12 @@ export async function PUT(
 
     devLog("Coach updated successfully:", coach.id);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Coach updated successfully",
       data: coach,
     });
   } catch (error) {
-    devError("Update coach API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to update coach",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
@@ -170,10 +145,7 @@ export async function DELETE(
   try {
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
@@ -184,10 +156,7 @@ export async function DELETE(
       .single();
 
     if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     const { id: coachId } = await params;
@@ -202,7 +171,7 @@ export async function DELETE(
       .single();
 
     if (coachError || !coach) {
-      return NextResponse.json({ error: "Coach not found" }, { status: 404 });
+      throw new NotFoundError("Coach not found");
     }
 
     // Soft delete coach
@@ -212,27 +181,15 @@ export async function DELETE(
       .eq("id", coachId);
 
     if (deleteCoachError) {
-      devError("Failed to delete coach:", deleteCoachError);
-      return NextResponse.json(
-        { error: "Failed to delete coach" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to delete coach", deleteCoachError);
     }
 
     devLog("Coach deleted successfully:", coachId);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Coach deleted successfully",
     });
   } catch (error) {
-    devError("Delete coach API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to delete coach",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

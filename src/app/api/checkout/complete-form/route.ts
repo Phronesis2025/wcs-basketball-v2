@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 function validatePassword(password: string): string[] {
   const errors: string[] = [];
@@ -44,10 +45,7 @@ export async function POST(req: Request) {
     } = body || {};
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Database connection unavailable" },
-        { status: 500 }
-      );
+      throw new ApiError("Database connection unavailable", 500);
     }
 
     // Step 1: Get parent record
@@ -62,18 +60,11 @@ export async function POST(req: Request) {
         .maybeSingle();
 
       if (parentError) {
-        devError("checkout complete-form parent lookup error", parentError);
-        return NextResponse.json(
-          { error: "Failed to find parent record" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to find parent record", parentError);
       }
 
       if (!parent) {
-        return NextResponse.json(
-          { error: "Parent record not found. Please complete initial registration first." },
-          { status: 404 }
-        );
+        throw new NotFoundError("Parent record not found. Please complete initial registration first.");
       }
 
       parentRecord = parent;
@@ -86,10 +77,7 @@ export async function POST(req: Request) {
         .single();
 
       if (!existingPlayer || !existingPlayer.parent_id) {
-        return NextResponse.json(
-          { error: "Player not found or has no parent" },
-          { status: 404 }
-        );
+        throw new NotFoundError("Player not found or has no parent");
       }
 
       const { data: parent } = await supabaseAdmin
@@ -99,25 +87,16 @@ export async function POST(req: Request) {
         .single();
 
       if (!parent) {
-        return NextResponse.json(
-          { error: "Parent not found" },
-          { status: 404 }
-        );
+        throw new NotFoundError("Parent not found");
       }
 
       parentRecord = parent;
     } else {
-      return NextResponse.json(
-        { error: "Missing player_id or user_email" },
-        { status: 400 }
-      );
+      throw new ValidationError("Missing player_id or user_email");
     }
 
     if (!parentRecord) {
-      return NextResponse.json(
-        { error: "Could not find parent record" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Could not find parent record");
     }
 
     // Step 2: Update parent record with detailed information
@@ -148,11 +127,7 @@ export async function POST(req: Request) {
       .single();
 
     if (parentUpdateError) {
-      devError("checkout complete-form parent update error", parentUpdateError);
-      return NextResponse.json(
-        { error: "Failed to update parent information" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update parent information", parentUpdateError);
     }
 
     // Step 3: Create new player OR update existing player
@@ -188,11 +163,7 @@ export async function POST(req: Request) {
         .single();
 
       if (playerCreateError) {
-        devError("checkout complete-form player create error", playerCreateError);
-        return NextResponse.json(
-          { error: "Failed to create player" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to create player", playerCreateError);
       }
 
       finalPlayerId = newPlayer.id;
@@ -218,11 +189,7 @@ export async function POST(req: Request) {
           .eq("id", player_id);
 
         if (playerUpdateError) {
-          devError("checkout complete-form player update error", playerUpdateError);
-          return NextResponse.json(
-            { error: "Failed to update player information" },
-            { status: 500 }
-          );
+          throw new DatabaseError("Failed to update player information", playerUpdateError);
         }
       }
 
@@ -234,12 +201,9 @@ export async function POST(req: Request) {
       // Validate password
       const passwordValidationErrors = validatePassword(password);
       if (passwordValidationErrors.length > 0) {
-        return NextResponse.json(
-          { 
-            error: "Password does not meet requirements", 
-            details: passwordValidationErrors 
-          },
-          { status: 400 }
+        throw new ValidationError(
+          `Password does not meet requirements: ${passwordValidationErrors.join(", ")}`,
+          "password"
         );
       }
 
@@ -271,14 +235,12 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       player_id: finalPlayerId,
       parent_id: parentRecord.id,
     });
   } catch (e) {
-    devError("checkout complete-form exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e);
   }
 }
 

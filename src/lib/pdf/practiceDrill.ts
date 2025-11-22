@@ -1,6 +1,6 @@
-import { PDFDocument, rgb } from "pdf-lib";
+import { PDFDocument, rgb, PDFPage, PDFFont, PDFImage, RGB } from "pdf-lib";
 import { PracticeDrill } from "@/types/supabase";
-import { sanitizeInput } from "@/lib/security";
+import { sanitizeInput, devError } from "@/lib/security";
 import fs from "fs";
 import path from "path";
 import fontkit from "fontkit";
@@ -12,7 +12,7 @@ function wrapText(
   text: string,
   maxWidth: number,
   fontSize: number,
-  font: any
+  font: PDFFont
 ): string[] {
   const words = text.split(" ");
   const lines: string[] = [];
@@ -42,14 +42,14 @@ function wrapText(
  * Note: pdf-lib doesn't have native rounded rectangle support, so we approximate it
  */
 function drawRoundedBadge(
-  page: any,
+  page: PDFPage,
   x: number,
   y: number,
   width: number,
   height: number,
   radius: number,
-  fillColor: any,
-  borderColor: any
+  fillColor: RGB,
+  borderColor: RGB
 ) {
   // For pdf-lib, we'll draw a regular rectangle
   // The rounded appearance will be handled by the PDF viewer
@@ -92,9 +92,9 @@ export async function generatePracticeDrillPDF(
   const equipIconPath = path.join(process.cwd(), "public", "images", "equip.png");
   const timeIconPath = path.join(process.cwd(), "public", "images", "time.png");
   
-  let skillIcon: any = null;
-  let equipIcon: any = null;
-  let timeIcon: any = null;
+  let skillIcon: PDFImage | null = null;
+  let equipIcon: PDFImage | null = null;
+  let timeIcon: PDFImage | null = null;
   
   try {
     if (fs.existsSync(skillIconPath)) {
@@ -102,7 +102,7 @@ export async function generatePracticeDrillPDF(
       skillIcon = await pdfDoc.embedPng(skillIconBytes);
     }
   } catch (e) {
-    console.warn("Could not load skill icon:", e);
+    devError("Could not load skill icon:", e);
   }
   
   try {
@@ -111,7 +111,7 @@ export async function generatePracticeDrillPDF(
       equipIcon = await pdfDoc.embedPng(equipIconBytes);
     }
   } catch (e) {
-    console.warn("Could not load equip icon:", e);
+    devError("Could not load equip icon:", e);
   }
   
   try {
@@ -120,7 +120,7 @@ export async function generatePracticeDrillPDF(
       timeIcon = await pdfDoc.embedPng(timeIconBytes);
     }
   } catch (e) {
-    console.warn("Could not load time icon:", e);
+    devError("Could not load time icon:", e);
   }
 
   // Add a new page (Letter size: 8.5 x 11 inches)

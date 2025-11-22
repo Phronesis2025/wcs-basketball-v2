@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Team } from "@/types/supabase";
-import { validateInput } from "@/lib/security";
+import { validateInput, devLog, devError } from "@/lib/security";
 import Image from "next/image";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import ManageDeleteConfirmModal from "./ManageDeleteConfirmModal";
@@ -57,11 +57,13 @@ export default function AddTeamModal({
   // Lock scroll when modal is open
   useScrollLock(isOpen);
 
-  // Initialize form when editing
+  // Initialize form when editing or when modal opens
   useEffect(() => {
-    console.log("AddTeamModal useEffect - editingTeam:", editingTeam);
+    if (!isOpen) return; // Only run when modal is open
+    
+    devLog("AddTeamModal useEffect - editingTeam:", editingTeam);
     if (editingTeam) {
-      console.log("Populating form with team data:", {
+      devLog("Populating form with team data:", {
         name: editingTeam.name,
         ageGroup: editingTeam.age_group,
         is_active: editingTeam.is_active,
@@ -88,7 +90,7 @@ export default function AddTeamModal({
       setLogoPreview("");
       setImagePreview("");
     }
-  }, [editingTeam]);
+  }, [editingTeam, isOpen]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -148,7 +150,7 @@ export default function AddTeamModal({
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    console.log("🖼️ Team Image File Selected:", file);
+    devLog("🖼️ Team Image File Selected:", file);
     if (file) {
       // Validate file type
       if (!file.type.startsWith("image/")) {
@@ -190,16 +192,18 @@ export default function AddTeamModal({
     });
 
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "Failed to upload logo");
+      const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+      const errorMessage = await extractApiErrorMessage(response);
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
+    const { extractApiResponseData } = await import("@/lib/errorHandler");
+    const data = await extractApiResponseData<{ url: string }>(response);
     return data.url;
   };
 
   const uploadImage = async (file: File, teamName: string): Promise<string> => {
-    console.log("🖼️ uploadImage function called with:", {
+    devLog("🖼️ uploadImage function called with:", {
       fileName: file.name,
       fileSize: file.size,
       teamName,
@@ -209,23 +213,25 @@ export default function AddTeamModal({
     formData.append("file", file);
     formData.append("teamName", teamName);
 
-    console.log("🖼️ Making API call to /api/upload/team-image");
+    devLog("🖼️ Making API call to /api/upload/team-image");
     const response = await fetch("/api/upload/team-image", {
       method: "POST",
       body: formData,
     });
 
-    console.log("🖼️ API response status:", response.status);
-    console.log("🖼️ API response ok:", response.ok);
+    devLog("🖼️ API response status:", response.status);
+    devLog("🖼️ API response ok:", response.ok);
 
     if (!response.ok) {
-      const errorData = await response.json();
-      console.error("🖼️ API error response:", errorData);
-      throw new Error(errorData.error || "Failed to upload team image");
+      const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+      const errorMessage = await extractApiErrorMessage(response);
+      devError("🖼️ API error response:", errorMessage);
+      throw new Error(errorMessage);
     }
 
-    const data = await response.json();
-    console.log("🖼️ API success response:", data);
+    const { extractApiResponseData } = await import("@/lib/errorHandler");
+    const data = await extractApiResponseData<{ url: string }>(response);
+    devLog("🖼️ API success response:", data);
     return data.url;
   };
 
@@ -307,17 +313,17 @@ export default function AddTeamModal({
       }
 
       // Upload team image if a new file is selected
-      console.log("🖼️ Checking for team image upload:", {
+      devLog("🖼️ Checking for team image upload:", {
         selectedImageFile,
         hasFile: !!selectedImageFile,
         existingImage: editingTeam?.team_image,
       });
       if (selectedImageFile) {
-        console.log("🖼️ Uploading team image...");
+        devLog("🖼️ Uploading team image...");
         imageUrl = await uploadImage(selectedImageFile, formData.name.trim());
-        console.log("🖼️ Team image uploaded successfully:", imageUrl);
+        devLog("🖼️ Team image uploaded successfully:", imageUrl);
       } else {
-        console.log("🖼️ No team image file selected, preserving existing image:", imageUrl);
+        devLog("🖼️ No team image file selected, preserving existing image:", imageUrl);
       }
 
       // Add cache-busting param to avoid stale cached images after overwrite
@@ -348,7 +354,7 @@ export default function AddTeamModal({
 
       onSubmit(teamData);
     } catch (error) {
-      console.error("Error uploading files:", error);
+      devError("Error uploading files:", error);
       setErrors((prev) => ({
         ...prev,
         logo: "Failed to upload files. Please try again.",
@@ -367,7 +373,7 @@ export default function AddTeamModal({
       await onDelete(editingTeam);
       setShowDeleteConfirm(false);
     } catch (error) {
-      console.error("Delete error:", error);
+      devError("Delete error:", error);
     } finally {
       setDeleting(false);
     }

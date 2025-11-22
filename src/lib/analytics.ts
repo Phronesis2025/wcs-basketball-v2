@@ -27,16 +27,14 @@ export async function trackLogin(
   }
 ): Promise<void> {
   try {
-    console.log("🔍 trackLogin called for user:", userId);
     devLog("🔍 trackLogin called for user:", userId);
 
     if (!supabaseAdmin) {
-      console.error("❌ Admin client not available for login tracking");
-      devError("Admin client not available for login tracking");
+      devError("❌ Admin client not available for login tracking");
       return;
     }
 
-    console.log("🔍 Inserting login log entry...");
+    devLog("🔍 Inserting login log entry...");
     // Log the login event
     const { error: logError } = await supabaseAdmin.from("login_logs").insert({
       user_id: userId,
@@ -47,15 +45,14 @@ export async function trackLogin(
     });
 
     if (logError) {
-      console.error("❌ Failed to log login event:", logError);
-      devError("Failed to log login event:", logError);
+      devError("❌ Failed to log login event:", logError);
       return;
     }
 
-    console.log("✅ Login log entry inserted successfully");
+    devLog("✅ Login log entry inserted successfully");
 
     // First get current login count
-    console.log("🔍 Fetching current login count for user:", userId);
+    devLog("🔍 Fetching current login count for user:", userId);
     const { data: userData, error: fetchError } = await supabaseAdmin
       .from("users")
       .select("login_count")
@@ -63,8 +60,7 @@ export async function trackLogin(
       .single();
 
     if (fetchError) {
-      console.error("❌ Failed to fetch user data for login count update:", fetchError);
-      devError("Failed to fetch user data for login count update:", fetchError);
+      devError("❌ Failed to fetch user data for login count update:", fetchError);
       return;
     }
 
@@ -72,7 +68,7 @@ export async function trackLogin(
     const newLoginCount = (userData?.login_count || 0) + 1;
     const newLastLogin = new Date().toISOString();
 
-    console.log("🔍 Updating login stats:", {
+    devLog("🔍 Updating login stats:", {
       userId,
       currentCount: userData?.login_count,
       newCount: newLoginCount,
@@ -94,10 +90,9 @@ export async function trackLogin(
       .eq("id", userId);
 
     if (updateError) {
-      console.error("❌ Failed to update user login stats:", updateError);
-      devError("Failed to update user login stats:", updateError);
+      devError("❌ Failed to update user login stats:", updateError);
     } else {
-      console.log(
+      devLog(
         `✅ Login tracked successfully for user: ${userId} (count: ${newLoginCount})`
       );
       devLog(
@@ -105,8 +100,7 @@ export async function trackLogin(
       );
     }
   } catch (err) {
-    console.error("❌ Login tracking failed:", err);
-    devError("Login tracking failed:", err);
+    devError("❌ Login tracking failed:", err);
   }
 }
 

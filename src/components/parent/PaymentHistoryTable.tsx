@@ -30,12 +30,15 @@ function InvoiceEmailButton({
         body: JSON.stringify({ playerId }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        setMessage(`Error: ${data.error || "Failed to send invoice"}`);
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        setMessage(`Error: ${errorMessage}`);
         return;
       }
+
+      const { extractApiResponseData } = await import("@/lib/errorHandler");
+      const data = await extractApiResponseData(response);
 
       setMessage(`Invoice Sent`);
 
@@ -129,8 +132,6 @@ function CombinedInvoiceButton({ parentEmail }: { parentEmail?: string }) {
         body: JSON.stringify({ email: parentEmail }),
       });
 
-      const data = await response.json();
-
       // Stop progress counter
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
@@ -138,10 +139,15 @@ function CombinedInvoiceButton({ parentEmail }: { parentEmail?: string }) {
       }
 
       if (!response.ok) {
-        setError(data.error || "Failed to send invoice");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        setError(errorMessage);
         setModalProgress(0);
         return;
       }
+
+      const { extractApiResponseData } = await import("@/lib/errorHandler");
+      const data = await extractApiResponseData(response);
 
       // Complete progress
       setModalProgress(100);

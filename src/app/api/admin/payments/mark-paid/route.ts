@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { getUserRole } from "@/lib/actions";
+import { AuthenticationError, AuthorizationError, ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,35 +10,23 @@ export async function POST(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
     const userData = await getUserRole(userId);
     if (!userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const { paymentIds } = await request.json();
 
     if (!paymentIds || !Array.isArray(paymentIds) || paymentIds.length === 0) {
-      return NextResponse.json(
-        { error: "Payment IDs are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Payment IDs are required");
     }
 
     devLog("Marking payments as paid:", paymentIds);
@@ -50,28 +39,23 @@ export async function POST(request: NextRequest) {
       .select();
 
     if (updateError) {
-      devError("Error updating payments:", updateError);
-      return NextResponse.json(
-        { error: "Failed to update payment status" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update payment status", updateError);
     }
 
     devLog("Successfully marked payments as paid:", updatedPayments?.length);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Payments marked as paid successfully",
       updatedCount: updatedPayments?.length || 0,
     });
   } catch (error) {
-    devError("Mark as paid API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
+
+
+
+
 
 
 

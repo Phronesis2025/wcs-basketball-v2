@@ -2,52 +2,35 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { coachResetTokens } from "@/lib/coachResetTokens";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
     const { token, newPassword } = await request.json();
 
     if (!token || !newPassword) {
-      return NextResponse.json(
-        { error: "Token and new password are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Token and new password are required");
     }
 
     // Validate password requirements
+    const passwordErrors: string[] = [];
     if (newPassword.length < 8) {
-      return NextResponse.json(
-        { error: "Password must be at least 8 characters" },
-        { status: 400 }
-      );
+      passwordErrors.push("Password must be at least 8 characters");
     }
-
     if (!/[A-Z]/.test(newPassword)) {
-      return NextResponse.json(
-        { error: "Password must contain at least one uppercase letter" },
-        { status: 400 }
-      );
+      passwordErrors.push("Password must contain at least one uppercase letter");
     }
-
     if (!/[a-z]/.test(newPassword)) {
-      return NextResponse.json(
-        { error: "Password must contain at least one lowercase letter" },
-        { status: 400 }
-      );
+      passwordErrors.push("Password must contain at least one lowercase letter");
     }
-
     if (!/[0-9]/.test(newPassword)) {
-      return NextResponse.json(
-        { error: "Password must contain at least one number" },
-        { status: 400 }
-      );
+      passwordErrors.push("Password must contain at least one number");
     }
-
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(newPassword)) {
-      return NextResponse.json(
-        { error: "Password must contain at least one special character" },
-        { status: 400 }
-      );
+      passwordErrors.push("Password must contain at least one special character");
+    }
+    if (passwordErrors.length > 0) {
+      throw new ValidationError(passwordErrors.join(". "), "newPassword");
     }
 
     devLog("Coach password reset request for token:", token.substring(0, 10) + "...");
@@ -55,19 +38,11 @@ export async function POST(request: NextRequest) {
     // Verify token from database
     const tokenData = await coachResetTokens.get(token);
     if (!tokenData) {
-      devError("Invalid or expired reset token");
-      return NextResponse.json(
-        { error: "Invalid or expired reset token. Please request a new password reset." },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid or expired reset token. Please request a new password reset.", "token");
     }
 
     if (!supabaseAdmin) {
-      devError("Supabase admin client not available");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Verify user exists in auth.users before updating password
@@ -94,11 +69,7 @@ export async function POST(request: NextRequest) {
         );
 
         if (updateError) {
-          devError("Failed to update password:", updateError);
-          return NextResponse.json(
-            { error: "Failed to reset password. Please try again." },
-            { status: 500 }
-          );
+          throw new ApiError("Failed to reset password. Please try again.", 500, undefined, updateError);
         }
 
         // Update the users table with the correct ID if it's different
@@ -123,11 +94,7 @@ export async function POST(request: NextRequest) {
         });
 
         if (createError || !newAuthUser?.user) {
-          devError("Failed to create auth user:", createError);
-          return NextResponse.json(
-            { error: "Failed to reset password. Please contact an administrator." },
-            { status: 500 }
-          );
+          throw new ApiError("Failed to reset password. Please contact an administrator.", 500, undefined, createError);
         }
 
         devLog("Created new auth user for password reset:", newAuthUser.user.id);
@@ -142,11 +109,7 @@ export async function POST(request: NextRequest) {
       );
 
       if (updateError) {
-        devError("Failed to update password:", updateError);
-        return NextResponse.json(
-          { error: "Failed to reset password. Please try again." },
-          { status: 500 }
-        );
+        throw new ApiError("Failed to reset password. Please try again.", 500, undefined, updateError);
       }
     }
 
@@ -169,16 +132,11 @@ export async function POST(request: NextRequest) {
 
     devLog("Password reset successful for user:", tokenData.userId);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Password reset successfully",
     });
   } catch (err) {
-    devError("Unexpected error in coach password reset:", err);
-    return NextResponse.json(
-      { error: "An error occurred. Please try again." },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }
 

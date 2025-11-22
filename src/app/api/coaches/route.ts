@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError } from "@/lib/security";
+import { DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(_request: NextRequest) {
   try {
@@ -38,22 +39,14 @@ export async function GET(_request: NextRequest) {
           .order("first_name", { ascending: true });
 
       if (fallbackError) {
-        devError("Failed to fetch coaches:", fallbackError);
-        return NextResponse.json(
-          { error: "Failed to fetch coaches" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to fetch coaches", fallbackError);
       }
 
       // Add default is_active: true to all coaches
       coaches =
         coachesFallback?.map((coach) => ({ ...coach, is_active: true })) || [];
     } else if (error) {
-      devError("Failed to fetch coaches:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch coaches" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch coaches", error);
     }
 
     // Transform the data to include role information
@@ -66,15 +59,8 @@ export async function GET(_request: NextRequest) {
       role: coach.users?.role || "coach",
     }));
 
-    return NextResponse.json(transformedCoaches);
+    return formatSuccessResponse(transformedCoaches);
   } catch (error) {
-    devError("Coaches GET API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch coaches",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, _request);
   }
 }

@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Get the user ID from the request headers
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 });
+      throw new ValidationError("User ID required");
     }
 
     devLog("Checking user role for:", userId);
@@ -32,26 +30,17 @@ export async function GET(request: NextRequest) {
         devLog("User not in users table (may be a parent user)", error.message);
       }
       // Return null role for users not in the users table (like parent users)
-      return NextResponse.json({
-        success: true,
+      return formatSuccessResponse({
         role: null,
         password_reset: null,
       });
     }
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       role: data.role,
       password_reset: data.password_reset,
     });
   } catch (error) {
-    devError("Check role API error:", error);
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

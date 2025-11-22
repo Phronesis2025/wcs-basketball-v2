@@ -5,6 +5,7 @@ import { Player, Team } from "@/types/supabase";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { validateInputForProfanity } from "@/lib/profanityFilter";
 import { isGradeCompatible } from "@/lib/ageValidation";
+import { devError } from "@/lib/security";
 
 interface PlayerPaymentModalProps {
   isOpen: boolean;
@@ -142,7 +143,7 @@ export default function PlayerPaymentModal({
         if (fetchManagementData) await fetchManagementData();
         onClose();
       } catch (error) {
-        console.error("Error approving player:", error);
+        devError("Error approving player:", error);
       } finally {
         setLoading(false);
       }
@@ -169,7 +170,7 @@ export default function PlayerPaymentModal({
           await fetchManagementData();
         }
       } catch (error) {
-        console.error("Error rejecting player:", error);
+        devError("Error rejecting player:", error);
         // Don't close on error - let user see the error message
       } finally {
         setLoading(false);
@@ -185,7 +186,7 @@ export default function PlayerPaymentModal({
         if (fetchManagementData) await fetchManagementData();
         onClose();
       } catch (error) {
-        console.error("Error moving player to pending:", error);
+        devError("Error moving player to pending:", error);
       } finally {
         setLoading(false);
       }
@@ -225,7 +226,7 @@ export default function PlayerPaymentModal({
             await fetchManagementData();
           }
         } catch (error) {
-          console.error("Error placing player on hold:", error);
+          devError("Error placing player on hold:", error);
           // Don't close on error - let user see the error message
         } finally {
           setLoading(false);
@@ -249,7 +250,7 @@ export default function PlayerPaymentModal({
             await fetchManagementData();
           }
         } catch (error) {
-          console.error("Error placing player on hold:", error);
+          devError("Error placing player on hold:", error);
           // Don't close on error - let user see the error message
         } finally {
           setLoading(false);

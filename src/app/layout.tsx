@@ -24,6 +24,7 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
+      { url: "/web-app-manifest-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
       { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
     ],
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     ],
     other: [
       {
-        url: "/android-chrome-192x192.png",
+        url: "/web-app-manifest-192x192.png",
         sizes: "192x192",
         type: "image/png",
       },
@@ -65,8 +66,8 @@ export default function RootLayout({
         <link
           rel="icon"
           type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
+          sizes="192x192"
+          href="/web-app-manifest-192x192.png"
         />
         <link
           rel="icon"
@@ -75,15 +76,15 @@ export default function RootLayout({
           href="/favicon-32x32.png"
         />
         <link
+          rel="icon"
+          type="image/png"
+          sizes="16x16"
+          href="/favicon-16x16.png"
+        />
+        <link
           rel="apple-touch-icon"
           sizes="180x180"
           href="/apple-touch-icon.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="192x192"
-          href="/android-chrome-192x192.png"
         />
 
         {/* iOS specific favicon support */}
@@ -97,7 +98,7 @@ export default function RootLayout({
         {/* Windows/Android specific */}
         <meta
           name="msapplication-TileImage"
-          content="/android-chrome-192x192.png"
+          content="/web-app-manifest-192x192.png"
         />
         <meta name="msapplication-TileColor" content="#1e40af" />
 
@@ -111,7 +112,7 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#1e40af" />
         <meta
           name="msapplication-TileImage"
-          content="/android-chrome-192x192.png"
+          content="/web-app-manifest-192x192.png"
         />
 
         {/* Web App Manifest */}
@@ -133,7 +134,10 @@ export default function RootLayout({
         {/* Note: Hero image is used as CSS background and video poster, 
              so preloading is not necessary and can cause warnings */}
       </head>
-      <body>
+      <body 
+        className="overflow-x-hidden"
+        style={{ overscrollBehavior: 'none' }}
+      >
         <QueryProvider>
           <SignOutLoader>
             <Suspense fallback={null}>

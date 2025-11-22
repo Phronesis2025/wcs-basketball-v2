@@ -468,15 +468,42 @@ function ClubManagementContent() {
           headers: { "x-user-id": user.id },
         });
         if (roleResponse.ok) {
-          const roleData = await roleResponse.json();
-          devLog("User role:", roleData.role);
-          setUserRole(roleData.role);
+          const roleResponseData = await roleResponse.json();
+          devLog("Role API response:", roleResponseData);
+          
+          // Handle response format - could be { data: { role: ... } } or { role: ... }
+          const roleData = roleResponseData.data || roleResponseData;
+          const roleFromApi = roleData?.role;
+          
+          devLog("Role from API:", roleFromApi);
+          
+          // Handle null role - check user_metadata as fallback
+          let finalRole = roleFromApi;
+          if (!finalRole && user.user_metadata?.role) {
+            finalRole = user.user_metadata.role;
+            devLog("Using role from user_metadata:", finalRole);
+          }
+          
+          // If still no role, default to "coach" for authenticated users
+          if (!finalRole) {
+            devLog("No role found, defaulting to 'coach'");
+            finalRole = "coach";
+          }
+          
+          devLog("Final role set to:", finalRole);
+          setUserRole(finalRole);
           // Update isAdmin based on the actual database role
-          setIsAdmin(roleData.role === "admin");
-          devLog("isAdmin set to:", roleData.role === "admin");
+          const isAdminValue = finalRole === "admin";
+          setIsAdmin(isAdminValue);
+          devLog("isAdmin set to:", isAdminValue);
           // Set authorized flag AFTER we have all required data
           setIsAuthorized(true);
-          devLog("User data loaded successfully - page authorized");
+          devLog("User data loaded successfully - page authorized", {
+            userId: user.id,
+            userRole: finalRole,
+            isAdmin: isAdminValue,
+            isAuthorized: true,
+          });
         } else {
           devError("Failed to fetch user role - response not ok");
           router.push("/coaches/login");
@@ -504,20 +531,46 @@ function ClubManagementContent() {
     setManagementDataLoading(true);
     try {
       // Fetch teams first
-      const teamsResponse = await fetch(
-        userRole === "admin" && userId
-          ? "/api/admin/teams"
-          : userId
-          ? `/api/teams/by-coach?userId=${userId}`
-          : "/api/teams"
-      );
       let fetchedTeams: any[] = [];
-      if (teamsResponse.ok) {
-        const teamsData = await teamsResponse.json();
-        fetchedTeams = Array.isArray(teamsData)
-          ? teamsData
-          : teamsData.teams || [];
-        setTeams(fetchedTeams);
+      try {
+        const teamsResponse = await fetch(
+          userRole === "admin" && userId
+            ? "/api/admin/teams"
+            : userId
+            ? `/api/teams/by-coach?userId=${userId}`
+            : "/api/teams"
+        );
+        
+        if (teamsResponse.ok) {
+          try {
+            const teamsData = await teamsResponse.json();
+            devLog("Teams API response:", teamsData);
+            // Handle {success: true, data: [...]} format from formatSuccessResponse
+            if (teamsData?.success && Array.isArray(teamsData.data)) {
+              fetchedTeams = teamsData.data;
+            } else if (Array.isArray(teamsData)) {
+              fetchedTeams = teamsData;
+            } else if (teamsData?.data && Array.isArray(teamsData.data)) {
+              fetchedTeams = teamsData.data;
+            } else if (teamsData?.teams && Array.isArray(teamsData.teams)) {
+              fetchedTeams = teamsData.teams;
+            } else {
+              devError("Unexpected teams data format:", teamsData);
+              fetchedTeams = [];
+            }
+            devLog("Parsed teams:", fetchedTeams.length);
+            setTeams(fetchedTeams);
+          } catch (jsonError) {
+            devError("Error parsing teams JSON:", jsonError);
+            setTeams([]);
+          }
+        } else {
+          devError("Failed to fetch teams:", teamsResponse.status, teamsResponse.statusText);
+          setTeams([]);
+        }
+      } catch (fetchError) {
+        devError("Network error fetching teams:", fetchError);
+        setTeams([]);
       }
 
       // Fetch players (admins via API, coaches load all then filter by coach teams)
@@ -526,10 +579,26 @@ function ClubManagementContent() {
           headers: { "x-user-id": userId },
         });
         if (playersResponse.ok) {
-          const playersData = await playersResponse.json();
-          setPlayers(
-            Array.isArray(playersData) ? playersData : playersData.players || []
-          );
+          try {
+            const playersData = await playersResponse.json();
+            devLog("Players API response:", playersData);
+            // Handle {success: true, data: [...]} format from createSecureResponse/formatSuccessResponse
+            let playersArray: any[] = [];
+            if (playersData?.success && Array.isArray(playersData.data)) {
+              playersArray = playersData.data;
+            } else if (Array.isArray(playersData)) {
+              playersArray = playersData;
+            } else if (playersData?.data && Array.isArray(playersData.data)) {
+              playersArray = playersData.data;
+            } else if (playersData?.players && Array.isArray(playersData.players)) {
+              playersArray = playersData.players;
+            }
+            devLog("Parsed players:", playersArray.length);
+            setPlayers(playersArray);
+          } catch (jsonError) {
+            devError("Error parsing players JSON:", jsonError);
+            setPlayers([]);
+          }
         }
       } else {
         // For coaches: fetch players for their assigned teams
@@ -537,11 +606,16 @@ function ClubManagementContent() {
           headers: { "x-user-id": userId || "" },
         });
         if (playersResp.ok) {
-          const playersData = await playersResp.json();
-          const coachPlayers = Array.isArray(playersData)
-            ? playersData
-            : playersData.players || [];
-          setPlayers(coachPlayers);
+          try {
+            const playersData = await playersResp.json();
+            const coachPlayers = Array.isArray(playersData)
+              ? playersData
+              : playersData?.players || [];
+            setPlayers(coachPlayers);
+          } catch (jsonError) {
+            devError("Error parsing coach players JSON:", jsonError);
+            setPlayers([]);
+          }
         } else {
           devError(
             `Failed to fetch coach players: ${playersResp.status} ${playersResp.statusText}`
@@ -551,27 +625,40 @@ function ClubManagementContent() {
 
       // Fetch coaches
       if (userRole === "admin") {
-        console.log("Fetching coaches for admin...");
+        devLog("Fetching coaches for admin...");
         const coachesResponse = await fetch("/api/admin/coaches");
-        console.log("Coaches response status:", coachesResponse.status);
+        devLog("Coaches response status:", coachesResponse.status);
         if (coachesResponse.ok) {
-          const coachesData = await coachesResponse.json();
-          console.log("Coaches data received:", coachesData);
-          const coachesArray = Array.isArray(coachesData)
-            ? coachesData
-            : coachesData.coaches || [];
-          console.log("Setting coaches array:", coachesArray);
-          console.log(
-            "Coach image URLs:",
-            coachesArray.map((c: any) => ({
-              id: c.id,
-              name: `${c.first_name} ${c.last_name}`,
-              image_url: c.image_url,
-            }))
-          );
-          setCoaches(coachesArray);
+          try {
+            const coachesData = await coachesResponse.json();
+            devLog("Coaches data received:", coachesData);
+            // Handle {success: true, data: [...]} format from formatSuccessResponse
+            let coachesArray: any[] = [];
+            if (coachesData?.success && Array.isArray(coachesData.data)) {
+              coachesArray = coachesData.data;
+            } else if (Array.isArray(coachesData)) {
+              coachesArray = coachesData;
+            } else if (coachesData?.data && Array.isArray(coachesData.data)) {
+              coachesArray = coachesData.data;
+            } else if (coachesData?.coaches && Array.isArray(coachesData.coaches)) {
+              coachesArray = coachesData.coaches;
+            }
+            devLog("Setting coaches array:", coachesArray.length);
+            devLog(
+              "Coach image URLs:",
+              coachesArray.map((c: any) => ({
+                id: c.id,
+                name: `${c.first_name} ${c.last_name}`,
+                image_url: c.image_url,
+              }))
+            );
+            setCoaches(coachesArray);
+          } catch (jsonError) {
+            devError("Error parsing coaches JSON:", jsonError);
+            setCoaches([]);
+          }
         } else {
-          console.error(
+          devError(
             "Failed to fetch coaches:",
             coachesResponse.status,
             coachesResponse.statusText
@@ -680,8 +767,13 @@ function ClubManagementContent() {
         throw new Error("Failed to fetch volunteers");
       }
 
-      const data = await response.json();
-      setVolunteers(Array.isArray(data) ? data : []);
+      try {
+        const data = await response.json();
+        setVolunteers(Array.isArray(data) ? data : []);
+      } catch (jsonError) {
+        devError("Error parsing volunteers JSON:", jsonError);
+        setVolunteers([]);
+      }
     } catch (error) {
       devError("Error fetching volunteers:", error);
       toast.error("Failed to load volunteers");
@@ -704,8 +796,13 @@ function ClubManagementContent() {
         throw new Error("Failed to fetch parent payment data");
       }
 
-      const data = await response.json();
-      setParentPaymentData(Array.isArray(data) ? data : []);
+      try {
+        const data = await response.json();
+        setParentPaymentData(Array.isArray(data) ? data : []);
+      } catch (jsonError) {
+        devError("Error parsing parent payment data JSON:", jsonError);
+        setParentPaymentData([]);
+      }
     } catch (error) {
       devError("Error fetching parent payments:", error);
       toast.error("Failed to load parent payment data");
@@ -753,7 +850,22 @@ function ClubManagementContent() {
     if (activeTab === "overview") {
       fetchManagementData();
     } else if (activeTab === "coaches-dashboard") {
-      if (teams.length === 0) fetchManagementData();
+      // Always ensure teams are loaded for coach dashboard
+      if (teams.length === 0) {
+        fetchManagementData();
+      }
+    } else if (activeTab === "profile") {
+      // Load messages for profile tab (message board)
+      // Note: CoachProfile component uses its own useMentions hook to fetch messages
+      // This is just for consistency
+      (async () => {
+        try {
+          const messagesData = await getMessages();
+          setMessages(messagesData || []);
+        } catch (error) {
+          devError("Error loading messages for profile tab:", error);
+        }
+      })();
     } else if (activeTab === "payments") {
       // Always ensure teams and players are loaded for Payment tab
       if (teams.length === 0 || players.length === 0) {
@@ -783,7 +895,9 @@ function ClubManagementContent() {
     } else if (activeTab === "analytics") {
       fetchAnalyticsData();
     }
-  }, [activeTab, isAuthorized, userId, userRole, teams.length, players.length]);
+    // Removed teams.length and players.length from dependencies to prevent infinite loops
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, isAuthorized, userId, userRole]);
 
   // Activity heartbeat for admins/coaches using this page
   useEffect(() => {
@@ -807,7 +921,16 @@ function ClubManagementContent() {
   // Auto-select a team when teams load on Coach tab
   useEffect(() => {
     if (!isAuthorized || activeTab !== "coaches-dashboard") return;
-    if (selectedTeamId || teams.length === 0) return;
+    // Wait for teams to be loaded before auto-selecting
+    if (teams.length === 0) {
+      // Teams not loaded yet, fetch them if we have userId and userRole
+      if (userId && userRole) {
+        fetchManagementData();
+      }
+      return;
+    }
+    // If a team is already selected, don't auto-select
+    if (selectedTeamId) return;
 
     // If admin, default to "All Teams"
     if (userRole === "admin") {
@@ -825,14 +948,15 @@ function ClubManagementContent() {
       setSelectedTeamId(defaultTeam.id);
       setSelectedTeam(defaultTeam);
     }
-  }, [teams, activeTab, isAuthorized, userRole, userEmail, selectedTeamId]);
+  }, [teams, activeTab, isAuthorized, userRole, userEmail, selectedTeamId, userId]);
 
   // Load coach data when team changes
   useEffect(() => {
+    if (!isAuthorized || !userId || !userRole) return;
     if (selectedTeamId && activeTab === "coaches-dashboard") {
       fetchCoachData();
     }
-  }, [selectedTeamId, activeTab]);
+  }, [selectedTeamId, activeTab, isAuthorized, userId, userRole]);
 
   // Fetch unread mention count
   useEffect(() => {
@@ -874,13 +998,13 @@ function ClubManagementContent() {
   };
 
   const handleEditCoach = (coach: any) => {
-    console.log("Edit coach clicked, coach data:", coach);
+    devLog("Edit coach clicked, coach data:", coach);
     setEditingCoach(coach);
     setShowEditCoachModal(true);
   };
 
   const handleViewCoach = async (coach: any) => {
-    console.log("View coach clicked, coach data:", coach);
+    devLog("View coach clicked, coach data:", coach);
     setSelectedCoach(coach);
 
     // Fetch login statistics for this coach
@@ -901,28 +1025,28 @@ function ClubManagementContent() {
   };
 
   const handleEditTeam = (team: Team) => {
-    console.log("Edit team clicked, team data:", team);
+    devLog("Edit team clicked, team data:", team);
     setEditingTeam(team);
     setShowEditTeamModal(true);
   };
 
   const handleViewTeam = (team: Team) => {
-    console.log("View team clicked, team data:", team);
+    devLog("View team clicked, team data:", team);
     // Find the latest team data from the teams array to ensure fresh data
     const latestTeamData = teams.find((t) => t.id === team.id) || team;
-    console.log("Using latest team data for modal:", latestTeamData);
+    devLog("Using latest team data for modal:", latestTeamData);
     setSelectedTeamForModal(latestTeamData);
     setShowTeamDetailModal(true);
   };
 
   const handleEditPlayer = (player: Player) => {
-    console.log("Edit player clicked, player data:", player);
+    devLog("Edit player clicked, player data:", player);
     setEditingPlayer(player);
     setShowEditPlayerModal(true);
   };
 
   const handleViewPlayer = (player: Player) => {
-    console.log("View player clicked, player data:", player);
+    devLog("View player clicked, player data:", player);
     setSelectedPlayerForModal(player);
     setShowPlayerDetailModal(true);
   };
@@ -1499,14 +1623,14 @@ function ClubManagementContent() {
   // Coach, Team, Player handlers
   const handleCoachSubmit = async (coachData: any) => {
     try {
-      console.log("Saving coach data:", coachData);
-      console.log("Editing coach ID:", editingCoach?.id);
+      devLog("Saving coach data:", coachData);
+      devLog("Editing coach ID:", editingCoach?.id);
 
       let coachId: string;
 
       if (editingCoach) {
         // Update existing coach using API route
-        console.log("Updating coach with ID:", editingCoach.id);
+        devLog("Updating coach with ID:", editingCoach.id);
         const requestBody = {
           firstName: coachData.first_name,
           lastName: coachData.last_name,
@@ -1516,7 +1640,7 @@ function ClubManagementContent() {
           quote: coachData.quote,
           is_active: coachData.is_active,
         };
-        console.log("Sending coach update data:", requestBody);
+        devLog("Sending coach update data:", requestBody);
         const response = await fetch(`/api/admin/coaches/${editingCoach.id}`, {
           method: "PUT",
           headers: {
@@ -1529,16 +1653,16 @@ function ClubManagementContent() {
         const result = await response.json();
 
         if (!response.ok) {
-          console.error("Error updating coach:", result.error);
+          devError("Error updating coach:", result.error);
           throw new Error(result.error || "Failed to update coach");
         }
 
-        console.log("Coach updated successfully:", result);
+        devLog("Coach updated successfully:", result);
         coachId = editingCoach.id;
         toast.success("Coach updated successfully");
       } else {
         // Create new coach using API route
-        console.log("Creating new coach via API");
+        devLog("Creating new coach via API");
         const response = await fetch("/api/admin/create-coach", {
           method: "POST",
           headers: {
@@ -1558,18 +1682,18 @@ function ClubManagementContent() {
         const result = await response.json();
 
         if (!response.ok) {
-          console.error("Error creating coach:", result.error);
+          devError("Error creating coach:", result.error);
           throw new Error(result.error || "Failed to create coach");
         }
 
-        console.log("Coach created successfully:", result);
+        devLog("Coach created successfully:", result);
         coachId = result.id;
         toast.success("Coach added successfully");
       }
 
       // Handle team assignment
       if (coachData.selectedTeamId) {
-        console.log("Assigning coach to team:", coachData.selectedTeamId);
+        devLog("Assigning coach to team:", coachData.selectedTeamId);
 
         // Remove any existing team assignment for this coach
         await supabase.from("team_coaches").delete().eq("coach_id", coachId);
@@ -1583,7 +1707,7 @@ function ClubManagementContent() {
           });
 
         if (assignError) {
-          console.error("Error assigning coach to team:", assignError);
+          devError("Error assigning coach to team:", assignError);
           toast.error("Coach saved but team assignment failed");
         } else {
           toast.success("Coach assigned to team successfully");
@@ -1604,12 +1728,12 @@ function ClubManagementContent() {
 
   const handleTeamSubmit = async (teamData: any) => {
     try {
-      console.log("Saving team data:", teamData);
-      console.log("Editing team ID:", editingTeam?.id);
+      devLog("Saving team data:", teamData);
+      devLog("Editing team ID:", editingTeam?.id);
 
       if (editingTeam) {
         // Update existing team using API route
-        console.log("Updating team with ID:", editingTeam.id);
+        devLog("Updating team with ID:", editingTeam.id);
         const response = await fetch(`/api/admin/teams/${editingTeam.id}`, {
           method: "PUT",
           headers: {
@@ -1632,18 +1756,18 @@ function ClubManagementContent() {
         const result = await response.json();
 
         if (!response.ok) {
-          console.error("Error updating team:", result.error);
+          devError("Error updating team:", result.error);
           throw new Error(result.error || "Failed to update team");
         }
 
-        console.log("Team updated successfully:", result);
+        devLog("Team updated successfully:", result);
         toast.success("Team updated successfully");
         setShowEditTeamModal(false); // Close the modal
         setEditingTeam(null); // Clear the editing team
         await fetchManagementData(); // Refresh the data
       } else {
         // Create new team using API route
-        console.log("Creating new team via API");
+        devLog("Creating new team via API");
         const response = await fetch("/api/admin/create-team", {
           method: "POST",
           headers: {
@@ -1666,14 +1790,14 @@ function ClubManagementContent() {
         const result = await response.json();
 
         if (!response.ok) {
-          console.error("Error creating team:", result.error);
+          devError("Error creating team:", result.error);
           const errorMessage =
             result.error || result.details || "Failed to create team";
           toast.error(errorMessage);
           throw new Error(errorMessage);
         }
 
-        console.log("Team created successfully:", result);
+        devLog("Team created successfully:", result);
         toast.success("Team added successfully");
         setShowEditTeamModal(false); // Close the modal
         setEditingTeam(null); // Clear editing state
@@ -1692,12 +1816,12 @@ function ClubManagementContent() {
 
   const handlePlayerSubmit = async (playerData: any) => {
     try {
-      console.log("Saving player data:", playerData);
-      console.log("Editing player ID:", editingPlayer?.id);
+      devLog("Saving player data:", playerData);
+      devLog("Editing player ID:", editingPlayer?.id);
 
       if (editingPlayer) {
         // Update existing player using API route
-        console.log("Updating player with ID:", editingPlayer.id);
+        devLog("Updating player with ID:", editingPlayer.id);
         const response = await fetch(`/api/admin/players/${editingPlayer.id}`, {
           method: "PUT",
           headers: {
@@ -1723,18 +1847,18 @@ function ClubManagementContent() {
         const result = await response.json();
 
         if (!response.ok) {
-          console.error("Error updating player:", result.error);
+          devError("Error updating player:", result.error);
           throw new Error(result.error || "Failed to update player");
         }
 
-        console.log("Player updated successfully:", result);
+        devLog("Player updated successfully:", result);
         toast.success("Player updated successfully");
         setShowEditPlayerModal(false); // Close the modal
         setEditingPlayer(null); // Clear the editing player
         await fetchManagementData(); // Refresh the data
       } else {
         // Create new player using API route
-        console.log("Creating new player via API");
+        devLog("Creating new player via API");
         const response = await fetch("/api/admin/create-player", {
           method: "POST",
           headers: {
@@ -1760,12 +1884,15 @@ function ClubManagementContent() {
         const result = await response.json();
 
         if (!response.ok) {
-          console.error("Error creating player:", result.error);
+          devError("Error creating player:", result.error);
           throw new Error(result.error || "Failed to create player");
         }
 
-        console.log("Player created successfully:", result);
+        devLog("Player created successfully:", result);
         toast.success("Player added successfully");
+        setShowEditPlayerModal(false); // Close the modal
+        setEditingPlayer(null); // Clear editing state
+        await fetchManagementData(); // Refresh the data
       }
     } catch (e) {
       devError("Failed to save player", e);
@@ -1790,11 +1917,11 @@ function ClubManagementContent() {
 
   // Mock handlers for components
   const mockHandler = (item: any) => {
-    console.log("Mock handler called with:", item);
+    devLog("Mock handler called with:", item);
   };
 
   const mockSetState = (value: any) => {
-    console.log("Mock setState called with:", value);
+    devLog("Mock setState called with:", value);
   };
 
   if (!isAuthorized || !userId || !userRole) {
@@ -2239,11 +2366,11 @@ function ClubManagementContent() {
                 id="team-select"
                 value={selectedTeamId}
                 onChange={(e) => {
-                  console.log("Team selection changed:", e.target.value);
+                  devLog("Team selection changed:", e.target.value);
                   setSelectedTeamId(e.target.value);
                   const team = teams.find((t) => t.id === e.target.value);
-                  console.log("Found team:", team);
-                  console.log("Team logo URL:", team?.logo_url);
+                  devLog("Found team:", team);
+                  devLog("Team logo URL:", team?.logo_url);
                   setSelectedTeam(team || null);
                 }}
                 className="w-full p-3 bg-white text-gray-900 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -2562,7 +2689,7 @@ function ClubManagementContent() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        console.log(
+                                        devLog(
                                           "[DEBUG] Setting editing schedule:",
                                           schedule
                                         );
@@ -2729,7 +2856,7 @@ function ClubManagementContent() {
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        console.log(
+                                        devLog(
                                           "[DEBUG] Setting editing practice:",
                                           schedule
                                         );

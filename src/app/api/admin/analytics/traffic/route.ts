@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserRole } from "@/lib/actions";
 import { devLog, devError } from "@/lib/security";
+import { AuthenticationError, AuthorizationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,19 +9,13 @@ export async function GET(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
     const userData = await getUserRole(userId);
     if (!userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     devLog("Fetching traffic data for admin:", userId);
@@ -59,19 +54,11 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       data: trafficData,
       note: "Traffic data is currently placeholder. For detailed analytics, visit the Vercel Analytics dashboard.",
     });
   } catch (error) {
-    devError("Traffic data API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to fetch traffic data",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

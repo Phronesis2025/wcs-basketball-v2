@@ -3,6 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { trackPerformance } from "./performance-tracker";
+import { devError } from "./security";
 
 /**
  * Wrapper function to track API route performance
@@ -47,9 +48,7 @@ export async function withPerformanceTracking<T>(
     }).catch((trackError) => {
       // Silently fail - performance tracking should never break the API
       // Log only in development
-      if (process.env.NODE_ENV === "development") {
-        console.error("Performance tracking failed:", trackError);
-      }
+      devError("Performance tracking failed:", trackError);
     });
 
     return response;
@@ -64,9 +63,7 @@ export async function withPerformanceTracking<T>(
       status_code: 500,
     }).catch((trackError) => {
       // Silently fail - performance tracking should never break error handling
-      if (process.env.NODE_ENV === "development") {
-        console.error("Performance tracking failed on error:", trackError);
-      }
+      devError("Performance tracking failed on error:", trackError);
     });
 
     // Re-throw the original error to maintain error handling flow

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(
   _req: NextRequest,
@@ -12,14 +13,11 @@ export async function GET(
       : (context.params as { playerId: string });
     const playerId = resolved?.playerId;
     if (!playerId) {
-      return NextResponse.json({ error: "playerId required" }, { status: 400 });
+      throw new ValidationError("playerId required");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const { data, error } = await supabaseAdmin
@@ -29,18 +27,12 @@ export async function GET(
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch payments" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch payments", error);
     }
 
-    return NextResponse.json({ payments: data || [] });
+    return formatSuccessResponse({ payments: data || [] });
   } catch (e) {
-    return NextResponse.json(
-      { error: "Unexpected server error" },
-      { status: 500 }
-    );
+    return handleApiError(e, _req);
   }
 }
 

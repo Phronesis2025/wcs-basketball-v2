@@ -47,7 +47,7 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
       onClick={onClose}
     >
       <motion.div
-        className="bg-navy border border-red-500/50 rounded-lg p-4 sm:p-5 md:p-6 w-full max-w-[calc(100vw-1.5rem)] sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto max-h-[85vh] sm:max-h-[90vh] md:max-h-[calc(100vh-3rem)] overflow-y-auto"
+        className="bg-[#0A0A0A] border border-white/10 rounded-lg p-4 sm:p-5 md:p-6 w-full max-w-[calc(100vw-1.5rem)] sm:max-w-sm md:max-w-md lg:max-w-lg mx-auto max-h-[85vh] sm:max-h-[90vh] md:max-h-[calc(100vh-3rem)] overflow-y-auto shadow-xl"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
@@ -59,7 +59,7 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
       >
         <div className="space-y-4">
           <div className="mb-4">
-            <h2 id="start-now-modal-title" className="text-2xl font-bebas text-white text-center">
+            <h2 id="start-now-modal-title" className="text-2xl font-inter font-semibold text-white text-center">
               {isAuthenticated ? "Continue Your Journey" : "Get Started with WCS Basketball"}
             </h2>
           </div>
@@ -67,7 +67,7 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
           <div className="space-y-4">
             {isAuthenticated ? (
               <>
-                <p className="text-gray-300 text-center">
+                <p className="text-neutral-400 text-center font-inter">
                   You're already signed in. Continue to your profile or register another child.
                 </p>
                 <div className="flex flex-col gap-3">
@@ -76,7 +76,7 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
                       onClose();
                       router.push("/parent/profile");
                     }}
-                    className="w-full bg-red text-white font-bold py-3 rounded hover:bg-red/90 transition-colors min-h-[48px]"
+                    className="w-full bg-gradient-to-b from-[#003d70] to-[#002C51] text-white font-medium py-3 rounded-lg hover:opacity-90 transition-opacity min-h-[48px] font-inter shadow-lg shadow-[#002C51]/50"
                   >
                     Go to Profile
                   </button>
@@ -85,7 +85,7 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
                       onClose();
                       router.push("/register?fromProfile=true");
                     }}
-                    className="w-full bg-gray-700 text-white font-bold py-3 rounded hover:bg-gray-600 transition-colors min-h-[48px]"
+                    className="w-full bg-white/5 border border-white/10 text-white font-medium py-3 rounded-lg hover:bg-white/10 transition-colors min-h-[48px] font-inter"
                   >
                     Add Another Child
                   </button>
@@ -93,7 +93,7 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
               </>
             ) : (
               <>
-                <p className="text-gray-300 text-center">
+                <p className="text-neutral-400 text-center font-inter">
                   Choose how you'd like to get started
                 </p>
 
@@ -107,28 +107,28 @@ export default function StartNowModal({ isOpen, onClose }: StartNowModalProps) {
                 {/* Divider */}
                 <div className="relative my-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-600"></div>
+                    <div className="w-full border-t border-white/10"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-navy text-gray-400">or</span>
+                    <span className="px-4 bg-[#0A0A0A] text-neutral-500 font-inter">or</span>
                   </div>
                 </div>
 
                 {/* Email Sign Up */}
                 <button
                   onClick={handleEmailSignUp}
-                  className="w-full bg-gray-700 text-white font-bold py-3 rounded hover:bg-gray-600 transition-colors min-h-[48px]"
+                  className="w-full bg-white/5 border border-white/10 text-white font-medium py-3 rounded-lg hover:bg-white/10 transition-colors min-h-[48px] font-inter"
                 >
                   Continue with Email
                 </button>
 
                 {/* Login Link */}
                 <div className="text-center pt-2">
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-neutral-400 font-inter">
                     Already have an account?{" "}
                     <button
                       onClick={handleLogin}
-                      className="text-red hover:underline font-bold"
+                      className="text-blue-400 hover:text-blue-300 hover:underline font-medium"
                     >
                       Sign in
                     </button>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError } from "@/lib/security";
+import { ValidationError, ApiError, AuthenticationError, AuthorizationError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 async function isAdmin(userId?: string | null): Promise<boolean> {
   if (!userId || !supabaseAdmin) return false;
@@ -32,32 +33,30 @@ export async function GET(request: NextRequest) {
       : await query.eq("is_published", true);
 
     if (error) {
-      devError("changelog GET error", error);
-      return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+      throw new DatabaseError("Failed to fetch changelog", error);
     }
 
-    return NextResponse.json(data || []);
+    return formatSuccessResponse(data || []);
   } catch (e) {
-    devError("changelog GET exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e, request);
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+      throw new ApiError("Server misconfigured", 500);
     }
 
     const userId = request.headers.get("x-user-id");
     if (!(await isAdmin(userId))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     const body = await request.json();
     const { version, release_date, category, description, is_published = true } = body || {};
     if (!version || !release_date || !category || !description) {
-      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+      throw new ValidationError("Missing required fields: version, release_date, category, description");
     }
 
     const { data, error } = await supabaseAdmin
@@ -76,32 +75,30 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      devError("changelog POST error", error);
-      return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+      throw new DatabaseError("Failed to create changelog entry", error);
     }
 
-    return NextResponse.json(data);
+    return formatSuccessResponse(data);
   } catch (e) {
-    devError("changelog POST exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e, request);
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+      throw new ApiError("Server misconfigured", 500);
     }
 
     const userId = request.headers.get("x-user-id");
     if (!(await isAdmin(userId))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     const body = await request.json();
     const { id, ...updates } = body || {};
     if (!id) {
-      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+      throw new ValidationError("Missing id");
     }
 
     const { data, error } = await supabaseAdmin
@@ -112,32 +109,30 @@ export async function PUT(request: NextRequest) {
       .single();
 
     if (error) {
-      devError("changelog PUT error", error);
-      return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+      throw new DatabaseError("Failed to update changelog entry", error);
     }
 
-    return NextResponse.json(data);
+    return formatSuccessResponse(data);
   } catch (e) {
-    devError("changelog PUT exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e, request);
   }
 }
 
 export async function DELETE(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+      throw new ApiError("Server misconfigured", 500);
     }
 
     const userId = request.headers.get("x-user-id");
     if (!(await isAdmin(userId))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {
-      return NextResponse.json({ error: "Missing id" }, { status: 400 });
+      throw new ValidationError("Missing id");
     }
 
     // Soft delete by unpublishing
@@ -147,14 +142,12 @@ export async function DELETE(request: NextRequest) {
       .eq("id", id);
 
     if (error) {
-      devError("changelog DELETE error", error);
-      return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+      throw new DatabaseError("Failed to delete changelog entry", error);
     }
 
-    return NextResponse.json({ success: true });
+    return formatSuccessResponse({ success: true });
   } catch (e) {
-    devError("changelog DELETE exception", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return handleApiError(e, request);
   }
 }
 

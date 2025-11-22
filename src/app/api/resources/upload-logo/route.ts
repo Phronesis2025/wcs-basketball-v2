@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, AuthenticationError, AuthorizationError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 async function isAdmin(userId?: string | null): Promise<boolean> {
   if (!userId || !supabaseAdmin) return false;
@@ -15,27 +16,18 @@ async function isAdmin(userId?: string | null): Promise<boolean> {
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Check if user is admin
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json(
-        { error: "User ID required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("User ID required");
     }
 
     const adminCheck = await isAdmin(userId);
     if (!adminCheck) {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Unauthorized - Admin access required");
     }
 
     const formData = await request.formData();
@@ -45,30 +37,21 @@ export async function POST(request: NextRequest) {
     const overwrite = formData.get("overwrite") === "true"; // Whether to overwrite existing file
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      throw new ValidationError("No file provided");
     }
 
     if (!logoType || !["team", "club"].includes(logoType)) {
-      return NextResponse.json(
-        { error: "Invalid logo type. Must be 'team' or 'club'" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid logo type. Must be 'team' or 'club'");
     }
 
     // Validate file type (images only)
     if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        { error: "File must be an image" },
-        { status: 400 }
-      );
+      throw new ValidationError("File must be an image");
     }
 
     // Validate file size (5MB limit for images)
     if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File size must be less than 5MB" },
-        { status: 400 }
-      );
+      throw new ValidationError("File size must be less than 5MB");
     }
 
     let fileName: string;
@@ -106,10 +89,7 @@ export async function POST(request: NextRequest) {
         : `club-logo-${timestamp}.${fileExt}`;
       filePath = `logos/${fileName}`;
     } else {
-      return NextResponse.json(
-        { error: "Team name required for team logos" },
-        { status: 400 }
-      );
+      throw new ValidationError("Team name required for team logos");
     }
 
     // Check if file exists (only for team logos, club logos have timestamps so won't conflict)
@@ -120,6 +100,7 @@ export async function POST(request: NextRequest) {
 
       const fileExists = existingFiles?.some((f) => f.name === fileName);
       if (fileExists) {
+        // Return special error response for file exists (client needs to handle this)
         return NextResponse.json(
           {
             error: "FILE_EXISTS",
@@ -127,7 +108,7 @@ export async function POST(request: NextRequest) {
             fileName,
             path: filePath,
           },
-          { status: 409 } // Conflict status
+          { status: 409 } // Conflict status - preserve special handling
         );
       }
     }
@@ -154,21 +135,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      devError("Failed to upload logo:", error);
-      devError("Upload error details:", {
-        message: error.message,
-        statusCode: error.statusCode,
-        error: error.error,
-        path: filePath,
-        fileName,
-      });
-      return NextResponse.json(
-        { 
-          error: "Failed to upload logo",
-          details: error.message || "Storage upload failed",
-        },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to upload logo", error);
     }
 
     // Get the public URL
@@ -182,22 +149,14 @@ export async function POST(request: NextRequest) {
       url: urlData.publicUrl,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       url: urlData.publicUrl,
       path: filePath,
       fileName: fileName,
       size: file.size,
     });
   } catch (error) {
-    devError("Upload logo API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to upload logo",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

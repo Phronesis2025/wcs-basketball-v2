@@ -81,7 +81,7 @@ export default function TeamPage({ params }: TeamPageProps) {
         });
 
         // Additional debugging for team image
-        console.log("🔍 Team Detail Page - Team Image Debug:", {
+        devLog("🔍 Team Detail Page - Team Image Debug:", {
           teamId: teamData.id,
           teamName: teamData.name,
           teamImageUrl: teamData.team_image,

@@ -1,9 +1,12 @@
 import React from "react";
 import Hero from "../components/Hero";
 import QuoteSection from "../components/QuoteSection";
+import StatsSection from "../components/StatsSection";
+import ProgramsSection from "../components/ProgramsSection";
 import LogoMarquee from "../components/LogoMarquee";
-import FanZone from "../components/FanZone";
-import AdSection from "../components/AdSection";
+import PlayerTestimonials from "../components/PlayerTestimonials";
+import TodaysEvents from "../components/TodaysEvents";
+// import AdSection from "../components/AdSection"; // Removed from homepage but not deleted
 import TeamUpdates from "../components/TeamUpdates";
 import { fetchTeams } from "../lib/actions";
 
@@ -28,17 +31,25 @@ export default async function Home() {
   const coachesError = null;
 
   return (
-    <div className="bg-[#F6F6F6] min-h-screen">
+    <div className="bg-[#030303] bg-grain min-h-screen">
       <Hero />
-      <QuoteSection />
-      <FanZone teamsError={teamsError} coachesError={coachesError} />
-      <AdSection />
+      <div className="h-12 md:h-16" /> {/* Reduced spacing */}
+      <StatsSection />
+      <TodaysEvents />
+      <div className="h-8 md:h-32 lg:h-40" />
+      <ProgramsSection />
+      <div className="h-24 md:h-32 lg:h-40" />
+      <LogoMarquee />
+      <div className="h-24 md:h-32 lg:h-40" />
+      <PlayerTestimonials />
+      <div className="h-24 md:h-32 lg:h-40" />
       <TeamUpdates
         maxUpdates={8}
         variant="compact-list"
         showViewMoreText={true}
       />
-      <LogoMarquee />
+      <div className="h-8 md:h-32 lg:h-40" />
+      <QuoteSection />
     </div>
   );
 }

@@ -52,25 +52,26 @@ export default function QuoteSection() {
 
   return (
     <section
-      className="w-full bg-black py-2 text-white overflow-hidden border-t-4 border-b-4 border-red"
+      className="w-full bg-[#0A0A0A] py-8 sm:py-10 text-white overflow-hidden border-t border-white/5"
       aria-label="Motivational quotes"
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-3xl mx-auto px-6">
         <div className="text-center min-h-[80px] flex items-center justify-center relative">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentIndex}
-              initial={{ opacity: 0, x: 100 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -100 }}
-              transition={{ duration: 0.5 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6 }}
+              className="max-w-2xl"
             >
               {/* Quote Text */}
-              <blockquote className="font-bebas-bold-italic text-lg sm:text-2xl leading-tight mb-2 line-clamp-2">
-                {currentQuote.quote_text}
+              <blockquote className="font-inter font-medium text-lg sm:text-xl md:text-2xl leading-relaxed mb-3 text-white tracking-tight">
+                "{currentQuote.quote_text}"
               </blockquote>
               {/* Author */}
-              <p className="font-bebas-light text-sm sm:text-base line-clamp-1">
+              <p className="font-inter text-xs sm:text-sm text-neutral-400 uppercase tracking-widest">
                 — {currentQuote.author}
               </p>
             </motion.div>

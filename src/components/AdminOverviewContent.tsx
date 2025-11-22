@@ -14,6 +14,59 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 import { Player, Team, Coach } from "@/types/supabase";
 import BasketballLoader from "./BasketballLoader";
+import { devError } from "@/lib/security";
+
+// Type for coach login statistics
+interface CoachLoginStats {
+  total_logins: number;
+  last_login_at: string | null;
+  last_active_at?: string | null;
+  first_login_at: string | null;
+  is_active: boolean;
+}
+
+// Type for coach form data
+interface CoachFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  bio: string;
+  imageUrl: string;
+  quote: string;
+  is_active: boolean;
+}
+
+// Type for team form data
+interface TeamFormData {
+  name: string;
+  age_group: string;
+  gender: string;
+  grade_level: string;
+  season: string;
+  logo_url: string | null;
+  team_image: string | null;
+  is_active: boolean;
+}
+
+// Type for player form data
+interface PlayerFormData {
+  name: string;
+  team_id: string | null;
+  jersey_number: number | null;
+  grade: string | null;
+  date_of_birth: string | null;
+  gender: string | null;
+  status: "pending" | "approved" | "active" | "on_hold" | "rejected";
+}
+
+// Type for team with coaches relation
+interface TeamWithCoaches extends Team {
+  team_coaches?: Array<{
+    coaches?: {
+      email: string;
+    } | null;
+  }>;
+}
 
 // Helper function to format player name as "FirstName L."
 const formatPlayerName = (fullName: string): string => {
@@ -50,10 +103,10 @@ interface AdminOverviewContentProps {
   setShowEditCoachModal: (show: boolean) => void;
   setShowEditTeamModal: (show: boolean) => void;
   setShowEditPlayerModal: (show: boolean) => void;
-  setCoachForm: (form: any) => void;
-  setTeamForm: (form: any) => void;
-  setPlayerForm: (form: any) => void;
-  getCoachLoginStats: (coachId: string) => Promise<any>;
+  setCoachForm: (form: CoachFormData) => void;
+  setTeamForm: (form: TeamFormData) => void;
+  setPlayerForm: (form: PlayerFormData) => void;
+  getCoachLoginStats: (coachId: string) => Promise<CoachLoginStats>;
   handleEditCoach: (coach: Coach) => void;
   handleViewCoach: (coach: Coach) => void;
   handleEditTeam: (team: Team) => void;
@@ -100,7 +153,7 @@ export default function AdminOverviewContent({
   handleDeletePlayer,
 }: AdminOverviewContentProps) {
   // State to store login stats for each coach
-  const [coachLoginStats, setCoachLoginStats] = useState<Record<string, any>>(
+  const [coachLoginStats, setCoachLoginStats] = useState<Record<string, CoachLoginStats>>(
     {}
   );
   const [isLoadingStats, setIsLoadingStats] = useState(false);
@@ -114,7 +167,7 @@ export default function AdminOverviewContent({
     if (coaches.length > 0 && expandedSections.coaches && !isLoadingStats) {
       const fetchLoginStats = async () => {
         setIsLoadingStats(true);
-        const stats: Record<string, any> = { ...coachLoginStats }; // Start with existing stats
+        const stats: Record<string, CoachLoginStats> = { ...coachLoginStats }; // Start with existing stats
 
         // Filter coaches that need stats fetched
         const coachesToFetch = coaches.filter((coach) => !stats[coach.id]);
@@ -132,7 +185,7 @@ export default function AdminOverviewContent({
                 const loginStats = await getCoachLoginStats(coach.id);
                 return { coachId: coach.id, stats: loginStats };
               } catch (error) {
-                console.error(
+                devError(
                   `Error fetching login stats for coach ${coach.id}:`,
                   error
                 );
@@ -259,7 +312,7 @@ export default function AdminOverviewContent({
             {coaches.map((coach, index) => {
               // ONLY use coach.is_active from database (manual admin setting)
               // Do NOT base this on login activity
-              const isActive = (coach as any).is_active ?? true;
+              const isActive = coach.is_active ?? true;
               const isInactive = isActive === false;
 
               const loginStats = coachLoginStats[coach.id];
@@ -279,9 +332,9 @@ export default function AdminOverviewContent({
                 : false;
 
               // Get teams assigned to this coach
-              const assignedTeams = teams.filter((team: any) =>
+              const assignedTeams = teams.filter((team: TeamWithCoaches) =>
                 team.team_coaches?.some(
-                  (teamCoach: any) => teamCoach.coaches?.email === coach.email
+                  (teamCoach) => teamCoach.coaches?.email === coach.email
                 )
               );
 
@@ -323,15 +376,15 @@ export default function AdminOverviewContent({
                       <div className="text-white font-medium">
                         {coach.first_name} {coach.last_name}
                       </div>
-                      {(coach as any).role && (
+                      {coach.role && (
                         <span
                           className={`px-2 py-1 rounded text-xs font-bold mt-1 ${
-                            (coach as any).role === "admin"
+                            coach.role === "admin"
                               ? "bg-black text-white"
                               : "bg-blue-600 text-white"
                           }`}
                         >
-                          {(coach as any).role.toUpperCase()}
+                          {coach.role.toUpperCase()}
                         </span>
                       )}
                     </div>
@@ -550,11 +603,11 @@ export default function AdminOverviewContent({
         {expandedSections.teams && (
           <div className="max-h-96 overflow-y-auto">
             {teams.map((team, index) => {
-              const isActive = (team as any).is_active;
+              const isActive = team.is_active;
               const isInactive = isActive === false;
               // Count players for this specific team
               const playerCount = players.filter(
-                (player: any) =>
+                (player: Player) =>
                   player.team_id === team.id && !player.is_deleted
               ).length;
 
@@ -613,11 +666,11 @@ export default function AdminOverviewContent({
 
                     {/* Coaches */}
                     <div className="text-gray-400 text-sm text-center">
-                      {(team as any).team_coaches?.length ||
+                      {(team as TeamWithCoaches).team_coaches?.length ||
                         team.coaches?.length ||
                         0}{" "}
                       coach
-                      {((team as any).team_coaches?.length ||
+                      {((team as TeamWithCoaches).team_coaches?.length ||
                         team.coaches?.length ||
                         0) !== 1
                         ? "es"
@@ -684,11 +737,11 @@ export default function AdminOverviewContent({
                           {playerCount} player{playerCount !== 1 ? "s" : ""}
                         </div>
                         <div>
-                          {(team as any).team_coaches?.length ||
+                          {(team as TeamWithCoaches).team_coaches?.length ||
                             team.coaches?.length ||
                             0}{" "}
                           coach
-                          {((team as any).team_coaches?.length ||
+                          {((team as TeamWithCoaches).team_coaches?.length ||
                             team.coaches?.length ||
                             0) !== 1
                             ? "es"
@@ -840,7 +893,7 @@ export default function AdminOverviewContent({
                 const playerTeam = teams.find(
                   (team) => team.id === player.team_id
                 );
-                const isActive = (player as any).is_active;
+                const isActive = player.is_active ?? true;
                 const isInactive = isActive === false;
 
                 return (

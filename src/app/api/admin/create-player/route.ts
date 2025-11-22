@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { AuthenticationError, AuthorizationError, ValidationError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dateOfBirth: string | null) => {
@@ -24,10 +25,7 @@ export async function POST(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
@@ -38,10 +36,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     const {
@@ -61,10 +56,7 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!name || !dateOfBirth || !gender) {
-      return NextResponse.json(
-        { error: "Player name, date of birth, and gender are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Player name, date of birth, and gender are required");
     }
 
     // Calculate age
@@ -130,46 +122,29 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (playerRetryError) {
-          devError("Failed to create player (retry):", playerRetryError);
-          return NextResponse.json(
-            { error: "Failed to create player" },
-            { status: 500 }
-          );
+          throw new DatabaseError("Failed to create player", playerRetryError);
         }
 
         devLog(
           "Player created successfully (without is_active):",
           playerRetry.id
         );
-        return NextResponse.json({
-          success: true,
+        return formatSuccessResponse({
           message: "Player created successfully",
           player: playerRetry,
         });
       }
 
-      devError("Failed to create player:", playerError);
-      return NextResponse.json(
-        { error: "Failed to create player" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to create player", playerError);
     }
 
     devLog("Player created successfully:", player.id);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Player created successfully",
       player: player,
     });
   } catch (error) {
-    devError("Create player API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to create player",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

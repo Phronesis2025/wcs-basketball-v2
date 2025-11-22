@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { devError } from "@/lib/security";
 
 // Generic interface for modal data - customize based on your needs
 interface ModalData {
@@ -294,14 +295,16 @@ export default function ModalTemplate({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to upload image");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
+      const { extractApiResponseData } = await import("@/lib/errorHandler");
+      const result = await extractApiResponseData<{ url: string }>(response);
       return result.url;
     } catch (error) {
-      console.error("Image upload error:", error);
+      devError("Image upload error:", error);
       throw new Error("Failed to upload image. Please try again.");
     }
   };
@@ -324,14 +327,16 @@ export default function ModalTemplate({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to upload document");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
+      const { extractApiResponseData } = await import("@/lib/errorHandler");
+      const result = await extractApiResponseData<{ url: string }>(response);
       return result.url;
     } catch (error) {
-      console.error("Document upload error:", error);
+      devError("Document upload error:", error);
       throw new Error("Failed to upload document. Please try again.");
     }
   };
@@ -432,7 +437,7 @@ export default function ModalTemplate({
 
       onSubmit(submitData);
     } catch (error) {
-      console.error("Error uploading files:", error);
+      devError("Error uploading files:", error);
       setErrors((prev) => ({
         ...prev,
         general: "Failed to upload files. Please try again.",
@@ -451,7 +456,7 @@ export default function ModalTemplate({
       await onDelete(editingData);
       setShowDeleteConfirm(false);
     } catch (error) {
-      console.error("Delete error:", error);
+      devError("Delete error:", error);
     } finally {
       setDeleting(false);
     }

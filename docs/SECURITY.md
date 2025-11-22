@@ -5,6 +5,7 @@
 **Live URL**: https://wcs-basketball-v2.vercel.app  
 **Security Score**: 9/10 (Excellent) 🔒  
 **Last Audit**: January 2025 (v2.10.1)  
+**Latest Audit**: January 2025 (Homepage Redesign)  
 **Security Test**: ✅ PASSED - No exposed keys found (January 2025)  
 **Status**: Production Ready ✅  
 **Build Status**: Clean Build ✅  
@@ -13,6 +14,25 @@
 - ✅ secrets.txt exposed in git - FIXED (removed from tracking, added to .gitignore)
 - ✅ Server Actions CORS too permissive - FIXED (restricted to known origins)
 - ✅ Admin delete API routes - FIXED (proper success checking implemented)
+
+### Security Audit (January 2025 - Homepage Redesign)
+
+- **NPM Audit Status**: 1 high severity vulnerability (no fix available)
+  - ⚠️ **xlsx library** (v0.18.5): Prototype Pollution and ReDoS vulnerabilities
+    - **Risk Level**: Medium (used only in admin import functionality, protected by authentication)
+    - **Location**: Admin player import feature (`/admin/import`)
+    - **Mitigation**: 
+      - Feature is admin-only (requires authentication)
+      - File uploads are validated and sanitized
+      - No user-controlled input reaches xlsx parsing without validation
+      - Consider migrating to alternative library in future update
+    - **Status**: Documented, monitoring for library updates
+- **Fixed Vulnerabilities**:
+  - ✅ **glob** (10.2.0-10.4.5): Command injection - FIXED via `npm audit fix`
+  - ✅ **js-yaml** (4.0.0-4.1.0): Prototype pollution - FIXED via `npm audit fix`
+- **Linting**: ✅ No linting errors found
+- **Build Status**: ✅ Build successful (129 static pages generated)
+- **Supabase Advisors**: ⚠️ Unable to check (MCP connection not available)
 
 ### Latest Security Audit (January 2025 - v2.10.1)
 

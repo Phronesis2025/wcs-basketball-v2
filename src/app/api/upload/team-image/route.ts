@@ -1,45 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("🖼️ Team Image Upload API - Starting upload process");
+    devLog("🖼️ Team Image Upload API - Starting upload process");
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const teamName = formData.get("teamName") as string;
 
-    console.log("🖼️ Team Image Upload API - Received:", {
+    devLog("🖼️ Team Image Upload API - Received:", {
       fileName: file?.name,
       fileSize: file?.size,
       teamName,
     });
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      throw new ValidationError("No file provided");
     }
 
     if (!teamName) {
-      return NextResponse.json(
-        { error: "Team name is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Team name is required");
     }
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        { error: "File must be an image" },
-        { status: 400 }
-      );
+      throw new ValidationError("File must be an image");
     }
 
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File size must be less than 5MB" },
-        { status: 400 }
-      );
+      throw new ValidationError("File size must be less than 5MB");
     }
 
     // Generate filename following the pattern: <team-name>.png
@@ -60,7 +52,7 @@ export async function POST(request: NextRequest) {
     const fileBuffer = await file.arrayBuffer();
 
     // Upload to Supabase storage using admin client (bypasses RLS)
-    console.log("🖼️ Team Image Upload API - About to upload to Supabase:", {
+    devLog("🖼️ Team Image Upload API - About to upload to Supabase:", {
       filePath,
       fileSize: fileBuffer.byteLength,
       contentType: file.type,
@@ -74,17 +66,13 @@ export async function POST(request: NextRequest) {
         upsert: true, // Allow overwriting existing files
       });
 
-    console.log("🖼️ Team Image Upload API - Supabase upload result:", {
+    devLog("🖼️ Team Image Upload API - Supabase upload result:", {
       data,
       error,
     });
 
     if (error) {
-      devError("Failed to upload team image:", error);
-      return NextResponse.json(
-        { error: "Failed to upload team image" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to upload team image", error);
     }
 
     // Get the public URL
@@ -93,25 +81,17 @@ export async function POST(request: NextRequest) {
     } = supabaseAdmin.storage.from("images").getPublicUrl(filePath);
 
     devLog("Successfully uploaded team image:", { fileName, publicUrl });
-    console.log("🖼️ Team Image Upload API - Upload successful:", {
+    devLog("🖼️ Team Image Upload API - Upload successful:", {
       fileName,
       publicUrl,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       url: publicUrl,
       path: filePath,
       fileName: fileName,
     });
   } catch (error) {
-    devError("Unexpected error uploading team image:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to upload team image",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

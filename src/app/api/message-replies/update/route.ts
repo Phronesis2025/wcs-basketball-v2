@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin, supabase } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { sanitizeInput } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, AuthorizationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
     const { replyId, content, requesterId, isAdmin } = await request.json();
     
     if (!replyId || !content) {
-      return NextResponse.json(
-        { error: "replyId and content are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("replyId and content are required");
     }
 
     devLog("[API] Updating reply:", {
@@ -26,17 +24,11 @@ export async function POST(request: NextRequest) {
     const sanitizedContent = sanitizeInput(content.trim());
 
     if (sanitizedContent.length > 500) {
-      return NextResponse.json(
-        { error: "Reply content cannot exceed 500 characters" },
-        { status: 400 }
-      );
+      throw new ValidationError("Reply content cannot exceed 500 characters", "content");
     }
 
     if (sanitizedContent.length === 0) {
-      return NextResponse.json(
-        { error: "Reply content cannot be empty" },
-        { status: 400 }
-      );
+      throw new ValidationError("Reply content cannot be empty", "content");
     }
 
     // Fetch reply to check author and permissions
@@ -48,18 +40,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (fetchErr) {
-      devError("[API] Update reply fetch failed:", fetchErr);
-      return NextResponse.json({ error: "Reply not found" }, { status: 404 });
+      throw new NotFoundError("Reply not found");
     }
 
     if (existing?.deleted_at) {
-      return NextResponse.json({ error: "Reply has been deleted" }, { status: 404 });
+      throw new NotFoundError("Reply has been deleted");
     }
 
     // Authorization: allow author or admin
     const isAuthor = requesterId && existing?.author_id === requesterId;
     if (!isAuthor && !isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     // Attempt admin update first if admin client exists
@@ -75,7 +66,7 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (!adminErr && data) {
-        return NextResponse.json({ success: true, data });
+        return formatSuccessResponse(data);
       }
 
       devError(
@@ -99,25 +90,15 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (!rlsErr && data) {
-        return NextResponse.json({ success: true, data });
+        return formatSuccessResponse(data);
       }
 
-      devError("[API] RLS fallback reply update failed:", rlsErr);
-      return NextResponse.json(
-        { error: rlsErr?.message || "Update failed" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update reply", rlsErr);
     }
 
-    return NextResponse.json(
-      { error: "Update failed: no valid path" },
-      { status: 500 }
-    );
+    throw new ApiError("Update failed: no valid path", 500);
   } catch (err: unknown) {
-    devError("[API] Update reply error:", err);
-    const errorMessage =
-      err instanceof Error ? err.message : "Failed to update reply";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleApiError(err, request);
   }
 }
 

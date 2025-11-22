@@ -10,6 +10,7 @@ import {
 import { fetchTeamDataForEmail } from "@/lib/emailHelpers";
 import { generateInvoicePDF } from "@/lib/pdf/invoice";
 import { fetchTeamById } from "@/lib/actions";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const ADMIN_NOTIFICATIONS_TO = (process.env.ADMIN_NOTIFICATIONS_TO || "")
@@ -223,10 +224,7 @@ export async function GET(req: Request) {
     const playerId = searchParams.get("player_id");
 
     if (!sessionId && !playerId) {
-      return NextResponse.json(
-        { error: "Either session_id or player_id is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Either session_id or player_id is required");
     }
 
     let paymentRow;
@@ -244,15 +242,11 @@ export async function GET(req: Request) {
         .maybeSingle();
 
       if (payErr) {
-        devError("verify-session: payment lookup error", payErr);
-        return NextResponse.json({ error: "Database error" }, { status: 500 });
+        throw new DatabaseError("Failed to lookup payment", payErr);
       }
 
       if (!payment || !payment.stripe_payment_id) {
-        return NextResponse.json(
-          { error: "No pending payment found for this player" },
-          { status: 404 }
-        );
+        throw new NotFoundError("No pending payment found for this player");
       }
 
       paymentRow = payment;
@@ -266,30 +260,22 @@ export async function GET(req: Request) {
         .maybeSingle();
 
       if (payErr) {
-        devError("verify-session: payment lookup error", payErr);
-        return NextResponse.json({ error: "Database error" }, { status: 500 });
+        throw new DatabaseError("Failed to lookup payment", payErr);
       }
 
       if (!payment) {
-        return NextResponse.json(
-          { error: "No payment found with this session ID" },
-          { status: 404 }
-        );
+        throw new NotFoundError("No payment found with this session ID");
       }
 
       paymentRow = payment;
       sessionIdToVerify = sessionId;
     } else {
-      return NextResponse.json(
-        { error: "Invalid parameters" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid parameters");
     }
 
     // If already paid, return success
     if (paymentRow.status === "paid") {
-      return NextResponse.json({
-        success: true,
+      return formatSuccessResponse({
         already_updated: true,
         payment_id: paymentRow.id,
         player_id: paymentRow.player_id,
@@ -316,11 +302,7 @@ export async function GET(req: Request) {
         .eq("id", paymentRow.id);
 
       if (payUpdErr) {
-        devError("verify-session: update payment failed", payUpdErr);
-        return NextResponse.json(
-          { error: "Failed to update payment status" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to update payment status", payUpdErr);
       }
 
       // Update player status to active
@@ -642,8 +624,7 @@ export async function GET(req: Request) {
         }
       }
 
-      return NextResponse.json({
-        success: true,
+      return formatSuccessResponse({
         updated: true,
         payment_id: paymentRow.id,
         player_id: paymentRow.player_id,
@@ -651,7 +632,7 @@ export async function GET(req: Request) {
       });
     } else {
       // Payment not completed yet
-      return NextResponse.json({
+      return formatSuccessResponse({
         success: false,
         payment_status: session.payment_status,
         session_status: session.status,
@@ -659,10 +640,6 @@ export async function GET(req: Request) {
       });
     }
   } catch (error: any) {
-    devError("verify-session: exception", error);
-    return NextResponse.json(
-      { error: "Server error verifying session", details: error.message },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

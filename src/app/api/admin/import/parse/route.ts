@@ -6,6 +6,7 @@ import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError, devLog } from "@/lib/security";
 import * as XLSX from "xlsx";
 import { ParsedPlayerRow, ValidationError } from "@/lib/excel-parser";
+import { AuthenticationError, AuthorizationError, ValidationError as ApiValidationError, ApiError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 async function isAdmin(userId?: string | null): Promise<boolean> {
   if (!userId || !supabaseAdmin) return false;
@@ -257,12 +258,12 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check admin role
     if (!(await isAdmin(userId))) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      throw new AuthorizationError("Admin access required");
     }
 
     // Get file from form data
@@ -270,7 +271,7 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      throw new ApiValidationError("No file provided");
     }
 
     // Validate file type
@@ -279,10 +280,7 @@ export async function POST(request: NextRequest) {
       !file.name.endsWith(".xls") &&
       !file.type.includes("spreadsheet")
     ) {
-      return NextResponse.json(
-        { error: "File must be an Excel file (.xlsx or .xls)" },
-        { status: 400 }
-      );
+      throw new ApiValidationError("File must be an Excel file (.xlsx or .xls)");
     }
 
     // Convert File to ArrayBuffer for server-side parsing
@@ -298,10 +296,7 @@ export async function POST(request: NextRequest) {
     ) || workbook.SheetNames[0];
 
     if (!sheetName) {
-      return NextResponse.json(
-        { error: "No sheets found in Excel file" },
-        { status: 400 }
-      );
+      throw new ApiValidationError("No sheets found in Excel file");
     }
 
     const worksheet = workbook.Sheets[sheetName];
@@ -383,21 +378,13 @@ export async function POST(request: NextRequest) {
 
     devLog(`Parsed ${rows.length} rows from Excel file`);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       rows,
       errors,
       warnings,
     });
   } catch (error) {
-    devError("Excel parse error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to parse Excel file",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

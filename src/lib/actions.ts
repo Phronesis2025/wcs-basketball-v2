@@ -220,15 +220,23 @@ export async function fetchAllTeams(): Promise<Team[]> {
           )
           .eq("team_id", team.id);
 
+        // Type for team_coaches relation with coaches
+        interface TeamCoachRelation {
+          coaches: {
+            first_name: string;
+            last_name: string;
+          } | null;
+        }
+
         const coachNames =
-          coachData
-            ?.map((tc: any) => {
+          (coachData as TeamCoachRelation[] | null)
+            ?.map((tc: TeamCoachRelation) => {
               if (!tc.coaches) {
                 return null;
               }
               return `${tc.coaches.first_name} ${tc.coaches.last_name}`;
             })
-            .filter(Boolean) || [];
+            .filter((name): name is string => name !== null) || [];
 
         return {
           ...team,
@@ -296,15 +304,23 @@ export async function fetchTeams(): Promise<Team[]> {
           )
           .eq("team_id", team.id);
 
+        // Type for team_coaches relation with coaches
+        interface TeamCoachRelation {
+          coaches: {
+            first_name: string;
+            last_name: string;
+          } | null;
+        }
+
         const coachNames =
-          coachData
-            ?.map((tc: any) => {
+          (coachData as TeamCoachRelation[] | null)
+            ?.map((tc: TeamCoachRelation) => {
               if (!tc.coaches) {
                 return null;
               }
               return `${tc.coaches.first_name} ${tc.coaches.last_name}`;
             })
-            .filter(Boolean) || [];
+            .filter((name): name is string => name !== null) || [];
 
         return {
           ...team,
@@ -358,7 +374,7 @@ export async function fetchTeamById(id: string): Promise<Team | null> {
     }
 
     // Debug team image fetch
-    console.log("🔍 fetchTeamById - Image Debug:", {
+    devLog("🔍 fetchTeamById - Image Debug:", {
       teamId: id,
       teamName: team.name,
       teamImageUrl: team.team_image,
@@ -379,15 +395,23 @@ export async function fetchTeamById(id: string): Promise<Team | null> {
       )
       .eq("team_id", id);
 
+    // Type for team_coaches relation with coaches
+    interface TeamCoachRelation {
+      coaches: {
+        first_name: string;
+        last_name: string;
+      } | null;
+    }
+
     const coachNames =
-      coachData
-        ?.map((tc: any) => {
+      (coachData as TeamCoachRelation[] | null)
+        ?.map((tc: TeamCoachRelation) => {
           if (!tc.coaches) {
             return null;
           }
           return `${tc.coaches.first_name} ${tc.coaches.last_name}`;
         })
-        .filter(Boolean) || [];
+        .filter((name): name is string => name !== null) || [];
 
     return {
       ...team,
@@ -427,9 +451,13 @@ export async function fetchCoachesByTeamId(teamId: string): Promise<Coach[]> {
 
     // Extract coaches from the nested structure
     // The data structure is: [{ coaches: { id, first_name, last_name, ... } }]
-    const coaches = data
-      .map((item: any) => item.coaches)
-      .filter((coach: any) => coach !== null && coach !== undefined);
+    interface TeamCoachItem {
+      coaches: Coach | null;
+    }
+
+    const coaches = (data as TeamCoachItem[])
+      .map((item: TeamCoachItem) => item.coaches)
+      .filter((coach): coach is Coach => coach !== null && coach !== undefined);
 
     const activeCoaches = coaches.filter(
       (coach: Coach) => coach.is_active !== false

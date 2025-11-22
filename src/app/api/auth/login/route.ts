@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, AuthenticationError, ApiError, handleApiError } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   devLog("🔐 [SERVER DEBUG] Login API called");
@@ -12,19 +13,13 @@ export async function POST(request: NextRequest) {
 
     if (!email || !password) {
       devLog("🔐 [SERVER DEBUG] ❌ Missing email or password");
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Email and password are required");
     }
 
     // Use admin client to bypass CORS issues
     if (!supabaseAdmin) {
       devLog("🔐 [SERVER DEBUG] ❌ Supabase admin client not available");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     devLog("🔐 [SERVER DEBUG] Attempting Supabase authentication...");
@@ -86,18 +81,12 @@ export async function POST(request: NextRequest) {
       }
 
       devError("Server-side login error:", error);
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Invalid email or password");
     }
 
     if (!data.user) {
       devLog("🔐 [SERVER DEBUG] ❌ No user data returned");
-      return NextResponse.json(
-        { error: "Authentication failed" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication failed");
     }
 
     devLog("🔐 [SERVER DEBUG] ✅ Login successful for user:", data.user.id);
@@ -108,9 +97,9 @@ export async function POST(request: NextRequest) {
 
     // Track login event for analytics
     try {
-      console.log("🔍 Login API - About to call trackLogin for user:", data.user.id);
+      devLog("🔍 Login API - About to call trackLogin for user:", data.user.id);
       const { trackLogin } = await import("@/lib/analytics");
-      console.log("🔍 Login API - trackLogin function imported successfully");
+      devLog("🔍 Login API - trackLogin function imported successfully");
       await trackLogin(data.user.id, {
         ipAddress:
           request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -119,10 +108,9 @@ export async function POST(request: NextRequest) {
         userAgent: request.headers.get("user-agent") || undefined,
         success: true,
       });
-      console.log("🔍 Login API - trackLogin completed successfully");
+      devLog("🔍 Login API - trackLogin completed successfully");
     } catch (trackingError) {
-      console.error("❌ Login API - Failed to track login event:", trackingError);
-      devError("Failed to track login event:", trackingError);
+      devError("❌ Login API - Failed to track login event:", trackingError);
       // Don't fail the login if tracking fails
     }
 
@@ -137,11 +125,16 @@ export async function POST(request: NextRequest) {
       session: data.session,
     });
   } catch (error) {
-    devLog("🔐 [SERVER DEBUG] ❌ Unexpected error:", error);
-    devError("Server-side login error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    // Special handling for password reset requirement
+    if (error instanceof Error && error.message.includes("requiresPasswordReset")) {
+      return NextResponse.json(
+        { 
+          error: "Your account needs password setup. Please use 'Forgot Password' to set your password.",
+          requiresPasswordReset: true 
+        },
+        { status: 401 }
+      );
+    }
+    return handleApiError(error, request);
   }
 }

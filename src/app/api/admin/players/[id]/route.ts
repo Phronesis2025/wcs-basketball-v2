@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { AuthenticationError, AuthorizationError, ValidationError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // Helper function to calculate age from date of birth
 const calculateAge = (dateOfBirth: string | null) => {
@@ -26,10 +27,7 @@ export async function PUT(
     // Get user ID from request headers
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
@@ -40,10 +38,7 @@ export async function PUT(
       .single();
 
     if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     const {
@@ -62,10 +57,7 @@ export async function PUT(
     } = await request.json();
 
     if (!name) {
-      return NextResponse.json(
-        { error: "Player name is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Player name is required");
     }
 
     const { id: playerId } = await params;
@@ -132,47 +124,30 @@ export async function PUT(
             .single();
 
         if (playerRetryError) {
-          devError("Failed to update player:", playerRetryError);
-          return NextResponse.json(
-            { error: "Failed to update player" },
-            { status: 500 }
-          );
+          throw new DatabaseError("Failed to update player", playerRetryError);
         }
 
         devLog(
           "Player updated successfully (without is_active):",
           playerRetry.id
         );
-        return NextResponse.json({
-          success: true,
+        return formatSuccessResponse({
           message: "Player updated successfully",
           data: playerRetry,
         });
       }
 
-      devError("Failed to update player:", playerError);
-      return NextResponse.json(
-        { error: "Failed to update player" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update player", playerError);
     }
 
     devLog("Player updated successfully:", player.id);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Player updated successfully",
       data: player,
     });
   } catch (error) {
-    devError("Update player API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to update player",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 
@@ -215,27 +190,15 @@ export async function DELETE(
       .eq("id", playerId);
 
     if (deletePlayerError) {
-      devError("Failed to delete player:", deletePlayerError);
-      return NextResponse.json(
-        { error: "Failed to delete player" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to delete player", deletePlayerError);
     }
 
     devLog("Player deleted successfully:", playerId);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Player deleted successfully",
     });
   } catch (error) {
-    devError("Delete player API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to delete player",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "../../../../lib/supabaseClient";
 import { devError } from "../../../../lib/security";
+import { DatabaseError, ApiError, handleApiError, formatSuccessResponse } from "../../../../lib/errorHandler";
 
 export async function GET() {
   try {
@@ -44,30 +45,18 @@ export async function GET() {
           .order("first_name", { ascending: true });
 
       if (fallbackError) {
-        devError("Error fetching coaches:", fallbackError);
-        return NextResponse.json(
-          { error: "Failed to fetch coaches" },
-          { status: 500 }
-        );
+        throw new DatabaseError("Failed to fetch coaches", fallbackError);
       }
 
-      return NextResponse.json(coachesFallback || []);
+      return formatSuccessResponse(coachesFallback || []);
     }
 
     if (error) {
-      devError("Error fetching coaches:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch coaches" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch coaches", error);
     }
 
-    return NextResponse.json(coaches || []);
+    return formatSuccessResponse(coaches || []);
   } catch (error) {
-    devError("Unexpected error in /api/admin/coaches:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch coaches" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }

@@ -104,7 +104,7 @@ export default function About() {
               MidWest region of the U.S. World Class started by sponsoring two
               youth basketball teams. From these two teams, a basketball club
               was formed in the city of Salina, thus giving more youth the
-              opportunity to play. Now since it's formation in 2000, the World
+              opportunity to play. Now since it&apos;s formation in 2000, the World
               Class Basketball Club has sponsored over 32 different teams
               encompassing over 300 kids ranging in levels from 2nd grade to 8th
               grade boys and girls.

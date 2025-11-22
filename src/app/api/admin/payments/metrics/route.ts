@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError, devLog } from "@/lib/security";
+import { ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // Returns summarized payment metrics based on the payments table, which is
 // synchronized via Stripe webhooks. Values represent what actually cleared.
 export async function GET(_req: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Sum of successful payments (membership fees) and capture unique player_ids
@@ -20,8 +18,7 @@ export async function GET(_req: NextRequest) {
       .eq("status", "paid");
 
     if (paidErr) {
-      devError("metrics: failed to fetch paid payments", paidErr);
-      return NextResponse.json({ error: "Failed to load metrics" }, { status: 500 });
+      throw new DatabaseError("Failed to fetch paid payments", paidErr);
     }
 
     const membershipFees = (paidRows || []).reduce(
@@ -38,8 +35,7 @@ export async function GET(_req: NextRequest) {
       .eq("status", "pending");
 
     if (pendingPlayersErr) {
-      devError("metrics: failed to fetch pending players", pendingPlayersErr);
-      return NextResponse.json({ error: "Failed to load metrics" }, { status: 500 });
+      throw new DatabaseError("Failed to fetch pending players", pendingPlayersErr);
     }
 
     // From the pending players list, exclude those who have already PAID
@@ -82,7 +78,7 @@ export async function GET(_req: NextRequest) {
       pendingDues,
     });
 
-    return NextResponse.json({
+    return formatSuccessResponse({
       membershipFees,
       tournamentFees,
       merch,
@@ -92,11 +88,7 @@ export async function GET(_req: NextRequest) {
       pendingPlayersCount,
     });
   } catch (error) {
-    devError("metrics route error", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 

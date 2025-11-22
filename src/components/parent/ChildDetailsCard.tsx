@@ -213,7 +213,8 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
         cache: "no-store",
       });
       if (resp.ok) {
-        const json = await resp.json();
+        const { extractApiResponseData } = await import("@/lib/errorHandler");
+        const json = await extractApiResponseData<{ payments: any[] }>(resp);
         setPayments(json.payments || []);
       }
     } finally {
@@ -290,11 +291,14 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
         }),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        throw new Error(result.error || "Failed to update player information");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
+
+      const { extractApiResponseData } = await import("@/lib/errorHandler");
+      const result = await extractApiResponseData(response);
 
       toast.success("Player information updated successfully!");
       setShowEditModal(false);

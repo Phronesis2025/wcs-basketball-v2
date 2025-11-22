@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { AuthenticationError, AuthorizationError, ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,10 +9,7 @@ export async function POST(request: NextRequest) {
     const userId = request.headers.get("x-user-id");
 
     if (!userId) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is admin
@@ -22,10 +20,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (userError || !userData || userData.role !== "admin") {
-      return NextResponse.json(
-        { error: "Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Admin access required");
     }
 
     const { firstName, lastName, email, bio, imageUrl, quote } =
@@ -33,19 +28,13 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!firstName || !lastName || !email) {
-      return NextResponse.json(
-        { error: "First name, last name, and email are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("First name, last name, and email are required");
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid email format", "email");
     }
 
     devLog("Creating new coach:", { firstName, lastName, email });
@@ -58,10 +47,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (existingCoach) {
-      return NextResponse.json(
-        { error: "Coach with this email already exists" },
-        { status: 409 }
-      );
+      throw new ApiError("Coach with this email already exists", 409);
     }
 
     // Create auth user with default password
@@ -73,18 +59,11 @@ export async function POST(request: NextRequest) {
       });
 
     if (authError) {
-      devError("Failed to create auth user:", authError);
-      return NextResponse.json(
-        { error: "Failed to create user account" },
-        { status: 500 }
-      );
+      throw new ApiError("Failed to create user account", 500, undefined, authError);
     }
 
     if (!authUser.user) {
-      return NextResponse.json(
-        { error: "Failed to create user account" },
-        { status: 500 }
-      );
+      throw new ApiError("Failed to create user account", 500);
     }
 
     const authUserId = authUser.user.id;
@@ -101,13 +80,9 @@ export async function POST(request: NextRequest) {
       });
 
     if (userInsertError) {
-      devError("Failed to create user entry:", userInsertError);
       // Clean up auth user if user table insert fails
       await supabaseAdmin!.auth.admin.deleteUser(authUserId);
-      return NextResponse.json(
-        { error: "Failed to create user profile" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to create user profile", userInsertError);
     }
 
     // Create coach entry
@@ -129,20 +104,15 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (coachError) {
-      devError("Failed to create coach entry:", coachError);
       // Clean up auth user and user entry if coach insert fails
       await supabaseAdmin!.auth.admin.deleteUser(authUserId);
       await supabaseAdmin!.from("users").delete().eq("id", authUserId);
-      return NextResponse.json(
-        { error: "Failed to create coach profile" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to create coach profile", coachError);
     }
 
     devLog("Coach created successfully:", coach.id);
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Coach created successfully",
       data: {
         coachId: coach.id,
@@ -156,13 +126,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    devError("Create coach API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to create coach",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, AuthenticationError, AuthorizationError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 async function isAdmin(userId?: string | null): Promise<boolean> {
   if (!userId || !supabaseAdmin) return false;
@@ -15,27 +16,18 @@ async function isAdmin(userId?: string | null): Promise<boolean> {
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Check if user is admin
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json(
-        { error: "User ID required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("User ID required");
     }
 
     const adminCheck = await isAdmin(userId);
     if (!adminCheck) {
-      return NextResponse.json(
-        { error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Unauthorized - Admin access required");
     }
 
     const formData = await request.formData();
@@ -44,7 +36,7 @@ export async function POST(request: NextRequest) {
     const customFileName = formData.get("fileName") as string | null; // Optional custom filename
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      throw new ValidationError("No file provided");
     }
 
     // Validate file type - allow PDF, DOC, DOCX, and other document formats
@@ -65,21 +57,14 @@ export async function POST(request: NextRequest) {
       !allowedTypes.includes(file.type) &&
       !allowedExtensions.includes(fileExtension)
     ) {
-      return NextResponse.json(
-        {
-          error:
-            "File type not allowed. Allowed types: PDF, DOC, DOCX, XLS, XLSX, TXT, CSV",
-        },
-        { status: 400 }
+      throw new ValidationError(
+        "File type not allowed. Allowed types: PDF, DOC, DOCX, XLS, XLSX, TXT, CSV"
       );
     }
 
     // Validate file size (10MB limit for documents)
     if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File size must be less than 10MB" },
-        { status: 400 }
-      );
+      throw new ValidationError("File size must be less than 10MB");
     }
 
     // Generate filename
@@ -105,6 +90,7 @@ export async function POST(request: NextRequest) {
 
       const fileExists = existingFiles?.some((f) => f.name === fileName);
       if (fileExists) {
+        // Return a special error response for file exists (client needs to handle this)
         return NextResponse.json(
           {
             error: "FILE_EXISTS",
@@ -129,11 +115,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      devError("Failed to upload document:", error);
-      return NextResponse.json(
-        { error: "Failed to upload document" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to upload document", error);
     }
 
     // Get the public URL
@@ -143,22 +125,14 @@ export async function POST(request: NextRequest) {
 
     devLog("Successfully uploaded document:", { fileName, url: urlData.publicUrl });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       url: urlData.publicUrl,
       path: fileName,
       fileName: fileName,
       size: file.size,
     });
   } catch (error) {
-    devError("Upload document API error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to upload document",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

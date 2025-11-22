@@ -30,9 +30,18 @@ export default function ChangelogTable({ userId, isAdmin }: Props) {
     let mounted = true;
     (async () => {
       setLoading(true);
-      const data = await fetchChangelog(userId || undefined);
-      if (mounted) setEntries(data);
-      setLoading(false);
+      try {
+        const data = await fetchChangelog(userId || undefined);
+        if (mounted) {
+          // Ensure data is always an array
+          setEntries(Array.isArray(data) ? data : []);
+        }
+      } catch (error) {
+        console.error("Error fetching changelog:", error);
+        if (mounted) setEntries([]);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     })();
     return () => {
       mounted = false;
@@ -40,6 +49,8 @@ export default function ChangelogTable({ userId, isAdmin }: Props) {
   }, [userId]);
 
   const filtered = useMemo(() => {
+    // Ensure entries is an array before filtering
+    if (!Array.isArray(entries)) return [];
     return entries.filter((e) => {
       const catOk = category === "all" || e.category === category;
       const q = search.trim().toLowerCase();

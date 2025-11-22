@@ -125,11 +125,10 @@ export default function ChangePasswordModal({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        devError("Failed to update password:", errorData);
-        setError(
-          errorData.error || "Failed to update password. Please try again."
-        );
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        devError("Failed to update password:", errorMessage);
+        setError(errorMessage);
         setLoading(false);
         return;
       }

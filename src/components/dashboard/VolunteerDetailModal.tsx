@@ -121,8 +121,9 @@ export default function VolunteerDetailModal({
       });
 
       if (!response.ok) {
-        const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to save notes");
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
       toast.dismiss(loadingToast);

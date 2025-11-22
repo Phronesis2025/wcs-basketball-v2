@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export const dynamic = "force-dynamic";
 
@@ -32,10 +33,7 @@ export async function GET(request: Request) {
     const sessionId = searchParams.get("session_id");
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: "session_id query parameter required" },
-        { status: 400 }
-      );
+      throw new ValidationError("session_id query parameter required");
     }
 
     devLog("Test webhook lookup", { sessionId });
@@ -48,24 +46,11 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (payFetchErr) {
-      return NextResponse.json(
-        {
-          error: "Database query failed",
-          details: payFetchErr,
-        },
-        { status: 500 }
-      );
+      throw new DatabaseError("Database query failed", payFetchErr);
     }
 
     if (!paymentRow) {
-      return NextResponse.json(
-        {
-          found: false,
-          message: "No payment found with this session ID",
-          sessionId,
-        },
-        { status: 404 }
-      );
+      throw new NotFoundError("No payment found with this session ID");
     }
 
     // Get player info
@@ -78,19 +63,13 @@ export async function GET(request: Request) {
       .single();
 
     if (playerErr) {
-      return NextResponse.json(
-        {
-          error: "Player lookup failed",
-          details: playerErr,
-        },
-        { status: 500 }
-      );
+      throw new DatabaseError("Player lookup failed", playerErr);
     }
 
     const { firstName: playerFirstName, lastName: playerLastName } =
       splitFullName(player.name);
 
-    return NextResponse.json({
+    return formatSuccessResponse({
       found: true,
       payment: {
         id: paymentRow.id,
@@ -111,11 +90,7 @@ export async function GET(request: Request) {
       message: "Payment record found - webhook should be able to process this",
     });
   } catch (e: any) {
-    devError("Test endpoint error", e);
-    return NextResponse.json(
-      { error: "Test failed", details: e.message },
-      { status: 500 }
-    );
+    return handleApiError(e, request);
   }
 }
 

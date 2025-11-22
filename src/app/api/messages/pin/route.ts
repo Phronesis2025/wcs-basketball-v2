@@ -1,30 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, AuthorizationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
     const { messageId, requesterId, isAdmin } = await request.json();
 
     if (!messageId || !requesterId) {
-      return NextResponse.json(
-        { error: "Missing required fields" },
-        { status: 400 }
-      );
+      throw new ValidationError("Missing required fields");
     }
 
     if (!isAdmin) {
-      return NextResponse.json(
-        { error: "Only admins can pin/unpin messages" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only admins can pin/unpin messages");
     }
 
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     devLog("[API] Pinning/unpinning message", {
@@ -41,12 +33,11 @@ export async function POST(request: NextRequest) {
       .is("deleted_at", null);
 
     if (fetchError) {
-      devError("[API] Error fetching message for pin:", fetchError);
-      return NextResponse.json({ error: "Message not found" }, { status: 404 });
+      throw new NotFoundError("Message not found");
     }
 
     if (!currentMessages || currentMessages.length === 0) {
-      return NextResponse.json({ error: "Message not found" }, { status: 404 });
+      throw new NotFoundError("Message not found");
     }
 
     const currentMessage = currentMessages[0];
@@ -61,24 +52,16 @@ export async function POST(request: NextRequest) {
       .select();
 
     if (error) {
-      devError("[API] Error pinning/unpinning message:", error);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      throw new DatabaseError("Failed to pin/unpin message", error);
     }
 
     if (!data || data.length === 0) {
-      return NextResponse.json(
-        { error: "Message not found or update failed" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Message not found or update failed");
     }
 
     devLog("[API] Successfully toggled pin status for message:", messageId);
-    return NextResponse.json(data[0]);
+    return formatSuccessResponse(data[0]);
   } catch (err) {
-    devError("[API] Unexpected error pinning message:", err);
-    return NextResponse.json(
-      { error: "Failed to pin/unpin message" },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }

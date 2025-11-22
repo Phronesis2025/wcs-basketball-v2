@@ -2,16 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateDrillPDFFromHTML } from "@/lib/pdf/puppeteer-drill";
 import { PracticeDrill } from "@/types/supabase";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, handleApiError } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
     const drill: PracticeDrill = await request.json();
 
     if (!drill || !drill.id) {
-      return NextResponse.json(
-        { error: "Drill data is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Drill data is required");
     }
 
     devLog("generate-drill-pdf: Generating PDF", { drillId: drill.id });
@@ -35,11 +33,10 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    devError("generate-drill-pdf: Exception", error);
-    return NextResponse.json(
-      { error: "Failed to generate PDF" },
-      { status: 500 }
-    );
+    // For PDF generation errors, we need to return a JSON error response
+    // since we can't return a PDF error response
+    const errorResponse = handleApiError(error, request);
+    return errorResponse;
   }
 }
 

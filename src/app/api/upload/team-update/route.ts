@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
     const folder = (formData.get("folder") as string) || "team_updates";
 
     if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+      throw new ValidationError("No file provided");
     }
 
     devLog("API route received file:", {
@@ -21,18 +22,12 @@ export async function POST(request: NextRequest) {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        { error: "File must be an image" },
-        { status: 400 }
-      );
+      throw new ValidationError("File must be an image");
     }
 
     // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "File size must be less than 5MB" },
-        { status: 400 }
-      );
+      throw new ValidationError("File size must be less than 5MB");
     }
 
     // Generate unique filename
@@ -61,11 +56,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (error) {
-      devError("Failed to upload to Supabase:", error);
-      return NextResponse.json(
-        { error: "Failed to upload image" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to upload image", error);
     }
 
     // Get the public URL
@@ -78,16 +69,11 @@ export async function POST(request: NextRequest) {
       publicUrl: urlData.publicUrl,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       url: urlData.publicUrl,
       path: filePath,
     });
   } catch (error) {
-    devError("Unexpected error uploading image:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

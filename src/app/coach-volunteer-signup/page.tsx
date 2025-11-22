@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { fetchTeams } from "@/lib/actions";
 import type { Team } from "@/types/supabase";
 import Input from "@/components/ui/input";
-import { validateInput } from "@/lib/security";
+import { validateInput, devError } from "@/lib/security";
 import LocationGate from "@/components/LocationGate";
 
 export default function CoachVolunteerSignupPage() {
@@ -58,7 +58,7 @@ export default function CoachVolunteerSignupPage() {
         const fetchedTeams = await fetchTeams();
         setTeams(fetchedTeams);
       } catch (error) {
-        console.error("Failed to fetch teams:", error);
+        devError("Failed to fetch teams:", error);
       } finally {
         setTeamsLoading(false);
       }
@@ -150,7 +150,7 @@ export default function CoachVolunteerSignupPage() {
         });
       }
     } catch (err) {
-      console.error("Real-time zip validation error:", err);
+      devError("Real-time zip validation error:", err);
       // Don't show error on API failure
       setZipValidationError(null);
     } finally {
@@ -300,7 +300,7 @@ export default function CoachVolunteerSignupPage() {
           return;
         }
       } catch (err) {
-        console.error("Zip code verification error:", err);
+        devError("Zip code verification error:", err);
         const errorMsg = "Unable to verify location. Please try again.";
         setErrors({
           zip: errorMsg
@@ -349,7 +349,7 @@ export default function CoachVolunteerSignupPage() {
 
       setSubmitted(true);
     } catch (error) {
-      console.error("Submission error:", error);
+      devError("Submission error:", error);
       setErrors({
         submit:
           error instanceof Error

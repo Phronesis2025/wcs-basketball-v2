@@ -90,17 +90,21 @@ export default function UploadLogoModal({
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const { extractApiErrorMessage } = await import("@/lib/errorHandler");
         
         // Check if file exists and needs overwrite confirmation
-        if (response.status === 409 && errorData.error === "FILE_EXISTS") {
-          setPendingUpload({ file, teamName: inputTeamName.trim() });
-          setShowOverwriteConfirm(true);
-          setUploading(false);
-          return;
+        if (response.status === 409) {
+          const errorMessage = await extractApiErrorMessage(response);
+          if (errorMessage.includes("FILE_EXISTS") || errorMessage.includes("already exists")) {
+            setPendingUpload({ file, teamName: inputTeamName.trim() });
+            setShowOverwriteConfirm(true);
+            setUploading(false);
+            return;
+          }
         }
         
-        throw new Error(errorData.error || "Failed to upload logo");
+        const errorMessage = await extractApiErrorMessage(response);
+        throw new Error(errorMessage);
       }
 
       toast.success("Logo uploaded successfully!");

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError } from "@/lib/security";
+import { ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 /**
  * GET /api/basketball-facts
@@ -9,10 +10,7 @@ import { devError } from "@/lib/security";
 export async function GET() {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Fetch all basketball facts
@@ -22,27 +20,19 @@ export async function GET() {
       .order("created_at", { ascending: true });
 
     if (error) {
-      devError("Failed to fetch basketball facts", error);
-      return NextResponse.json(
-        { error: "Failed to fetch facts" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to fetch facts", error);
     }
 
     if (!facts || facts.length === 0) {
-      return NextResponse.json({ facts: [] });
+      return formatSuccessResponse({ facts: [] });
     }
 
     // Shuffle the facts array for random order
     const shuffled = [...facts].sort(() => Math.random() - 0.5);
 
-    return NextResponse.json({ facts: shuffled });
+    return formatSuccessResponse({ facts: shuffled });
   } catch (error) {
-    devError("Error in basketball-facts API", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 

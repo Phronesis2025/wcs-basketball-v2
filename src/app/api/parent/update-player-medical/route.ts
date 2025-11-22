@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError, devLog } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,18 +16,11 @@ export async function POST(request: NextRequest) {
     } = body;
 
     if (!player_id) {
-      return NextResponse.json(
-        { error: "Player ID is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Player ID is required");
     }
 
     if (!supabaseAdmin) {
-      devError("update-player-medical: supabaseAdmin not initialized");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     // Update player medical information
@@ -44,11 +38,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      devError("update-player-medical: Database error", error);
-      return NextResponse.json(
-        { error: "Failed to update medical information" },
-        { status: 500 }
-      );
+      throw new DatabaseError("Failed to update medical information", error);
     }
 
     devLog("update-player-medical: Successfully updated", {
@@ -58,13 +48,9 @@ export async function POST(request: NextRequest) {
       has_medications: !!medical_medications,
     });
 
-    return NextResponse.json({ success: true, data });
+    return formatSuccessResponse(data);
   } catch (error) {
-    devError("update-player-medical: Exception", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

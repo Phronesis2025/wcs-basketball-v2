@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devError, devLog } from "@/lib/security";
 import { ParsedPlayerRow } from "@/lib/excel-parser";
+import { ValidationError, AuthenticationError, AuthorizationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 async function isAdmin(userId?: string | null): Promise<boolean> {
   if (!userId || !supabaseAdmin) return false;
@@ -62,21 +63,18 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const userId = request.headers.get("x-user-id");
     if (!userId) {
-      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check admin role
     if (!(await isAdmin(userId))) {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      throw new AuthorizationError("Admin access required");
     }
 
     const { rows } = await request.json() as { rows: ParsedPlayerRow[] };
 
     if (!rows || !Array.isArray(rows)) {
-      return NextResponse.json(
-        { error: "Invalid data format" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid data format");
     }
 
     const previewRows: PreviewRow[] = [];
@@ -217,8 +215,7 @@ export async function POST(request: NextRequest) {
       previewRows.push(previewRow);
     }
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       preview: previewRows,
       summary: {
         total: previewRows.length,
@@ -229,14 +226,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    devError("Preview error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to generate preview",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

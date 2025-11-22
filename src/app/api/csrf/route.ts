@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateCSRFToken, createCSRFCookie, devError } from "@/lib/security";
+import { ValidationError, ApiError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 /**
  * API endpoint to generate and return CSRF tokens
@@ -19,9 +20,8 @@ export async function GET() {
     });
 
     // Return the token in JSON response
-    const response = NextResponse.json({
+    const response = formatSuccessResponse({
       csrfToken,
-      success: true,
     });
 
     // Set the CSRF token cookie
@@ -29,11 +29,7 @@ export async function GET() {
 
     return response;
   } catch (error) {
-    devError("Error generating CSRF token:", error);
-    return NextResponse.json(
-      { error: "Failed to generate CSRF token" },
-      { status: 500 }
-    );
+    return handleApiError(error);
   }
 }
 
@@ -46,41 +42,28 @@ export async function POST(request: NextRequest) {
     const { csrfToken } = await request.json();
 
     if (!csrfToken) {
-      return NextResponse.json(
-        { error: "CSRF token is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("CSRF token is required");
     }
 
     // Get the expected token from cookies
     const expectedToken = request.cookies.get("csrf-token")?.value;
 
     if (!expectedToken) {
-      return NextResponse.json(
-        { error: "No CSRF token found in cookies" },
-        { status: 400 }
-      );
+      throw new ValidationError("No CSRF token found in cookies");
     }
 
     // Validate the token
     const isValid = csrfToken === expectedToken;
 
     if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid CSRF token" },
-        { status: 403 }
-      );
+      throw new ApiError("Invalid CSRF token", 403);
     }
 
-    return NextResponse.json({
+    return formatSuccessResponse({
       valid: true,
       message: "CSRF token is valid",
     });
   } catch (error) {
-    devError("Error validating CSRF token:", error);
-    return NextResponse.json(
-      { error: "Failed to validate CSRF token" },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }

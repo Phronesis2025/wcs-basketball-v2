@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
 import { generateInvoicePDFFromHTML } from "@/lib/pdf/puppeteer-invoice";
 import { fetchTeamById } from "@/lib/actions";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // Helper functions for email template (matching emailTemplates.ts pattern)
 function getEmailBaseUrl(): string {
@@ -51,19 +52,13 @@ const RESEND_FROM =
 export async function POST(request: NextRequest) {
   try {
     if (!supabaseAdmin) {
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
+      throw new ApiError("Server configuration error", 500);
     }
 
     const { playerId } = await request.json();
 
     if (!playerId) {
-      return NextResponse.json(
-        { error: "Player ID is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Player ID is required");
     }
 
     devLog("send-invoice: Generating invoice for player", { playerId });
@@ -76,11 +71,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (playerError || !player) {
-      devError("send-invoice: Failed to fetch player", playerError);
-      return NextResponse.json(
-        { error: "Failed to fetch player data" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Failed to fetch player data");
     }
 
     // Fetch parent data
@@ -641,10 +632,7 @@ export async function POST(request: NextRequest) {
     if (!emailResponse.ok) {
       const errorText = await emailResponse.text();
       devError("send-invoice: Failed to send email after retries", errorText);
-      return NextResponse.json(
-        { error: "Failed to send email. Please try again later." },
-        { status: 500 }
-      );
+      throw new ApiError("Failed to send email. Please try again later.", 500);
     }
 
     const emailData = await emailResponse.json();
@@ -654,29 +642,42 @@ export async function POST(request: NextRequest) {
       resendId: emailData.id,
     });
 
-    return NextResponse.json({
-      success: true,
+    return formatSuccessResponse({
       message: "Invoice sent successfully",
       email: recipientEmail,
     });
   } catch (error: any) {
-    devError("send-invoice: Exception", error);
-
     // Provide more specific error messages based on error type
-    let errorMessage = "Failed to send invoice";
     if (error.name === "AbortError" || error.message?.includes("timeout")) {
-      errorMessage =
-        "Request timed out. The email service may be experiencing delays. Please try again later.";
+      return handleApiError(
+        new ApiError(
+          "Request timed out. The email service may be experiencing delays. Please try again later.",
+          500,
+          undefined,
+          error
+        ),
+        request
+      );
     } else if (
       error.code === "UND_ERR_SOCKET" ||
       error.message?.includes("fetch failed")
     ) {
-      errorMessage =
-        "Connection error. Please check your internet connection and try again.";
+      return handleApiError(
+        new ApiError(
+          "Connection error. Please check your internet connection and try again.",
+          500,
+          undefined,
+          error
+        ),
+        request
+      );
     } else if (error.message?.includes("Resend API error")) {
-      errorMessage = "Email service error. Please try again later.";
+      return handleApiError(
+        new ApiError("Email service error. Please try again later.", 500, undefined, error),
+        request
+      );
     }
 
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    return handleApiError(error, request);
   }
 }

@@ -2,15 +2,14 @@ import { NextResponse } from "next/server";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { supabase } from "@/lib/supabaseClient";
+import { ApiError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function GET(request: Request) {
-  // Security: Additional validation for production
-  if (process.env.NODE_ENV === "production") {
-    return NextResponse.json(
-      { error: "API endpoint not available in production" },
-      { status: 403 }
-    );
-  }
+  try {
+    // Security: Additional validation for production
+    if (process.env.NODE_ENV === "production") {
+      throw new ApiError("API endpoint not available in production", 403);
+    }
 
   // Extract IP address from request headers
   const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
@@ -47,7 +46,7 @@ export async function GET(request: Request) {
         reset,
         remaining,
       },
-      { status: 429 }
+      { status: 429 } // Preserve rate limit response format
     );
   }
 
@@ -58,14 +57,17 @@ export async function GET(request: Request) {
     .limit(5);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    throw new DatabaseError("Failed to fetch teams", error);
   }
 
-  // Return data with rate limit info
-  return NextResponse.json({
-    teams: data,
-    limit,
-    reset,
-    remaining,
-  });
+    // Return data with rate limit info
+    return formatSuccessResponse({
+      teams: data,
+      limit,
+      reset,
+      remaining,
+    });
+  } catch (error) {
+    return handleApiError(error, request);
+  }
 }

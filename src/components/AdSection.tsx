@@ -136,7 +136,7 @@ export default function AdSection() {
 
   return (
     <section
-      className="bg-[#F6F6F6] py-2 sm:py-3"
+      className="bg-[#050505] py-2 sm:py-3 border-t border-white/5"
       aria-label="Promotional advertisements"
     >
       <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">

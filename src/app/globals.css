@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth scroll behavior layer */
+@layer base {
+  * {
+    scroll-behavior: smooth;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
 /* Global Responsive Scaling - Viewport-based scaling for fonts and images */
 :root {
   /* Scale factor: 65% on mobile (375px) to 100% at 1920px+ */
@@ -14,28 +30,59 @@ html {
   scroll-behavior: smooth;
   /* Apply font scaling globally - all rem/em units will scale proportionally */
   font-size: calc(16px * var(--scale-factor));
+  /* Enhanced smooth scrolling on webkit browsers */
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-top: 80px; /* Account for fixed navbar */
 }
 
-/* Marquee animation for logo carousel */
-@keyframes marquee {
+/* Smooth scrolling for body */
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth infinite scroll animation for logo marquee */
+@keyframes scroll {
   0% {
-    transform: translateX(0%);
+    transform: translateX(0);
   }
   100% {
-    /* Move by half the track width when content is duplicated for seamless loop */
     transform: translateX(-50%);
   }
 }
 
-.marquee-track {
-  animation: marquee 45s linear infinite;
-  will-change: transform; /* Optimize for animations */
+@keyframes scrollReverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
-/* Speed up marquee on small screens (mobile) */
-@media (max-width: 640px) {
-  .marquee-track {
-    animation-duration: 8s;
+.animate-scroll {
+  animation: scroll 60s linear infinite;
+  will-change: transform;
+  display: flex;
+}
+
+.animate-scroll-reverse {
+  animation: scrollReverse 60s linear infinite;
+  will-change: transform;
+  display: flex;
+}
+
+/* Animation continues on hover - no pause */
+
+/* Speed up on mobile */
+@media (max-width: 768px) {
+  .animate-scroll {
+    animation-duration: 40s;
+  }
+  .animate-scroll-reverse {
+    animation-duration: 40s;
   }
 }
 
@@ -195,6 +242,9 @@ html {
   animation: stepPulse 2s ease-in-out infinite;
 }
 
+/* Import Inter from Google Fonts for better weight coverage */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
 @font-face {
   font-family: "Inter";
   src: url("/fonts/Inter-Regular.ttf") format("truetype");
@@ -248,6 +298,71 @@ html {
   display: none; /* For Chrome, Safari, and Opera */
 }
 
+/* Hide Scrollbar (Alternative naming for reference compatibility) */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Grain Texture Background - Subtle noise effect */
+.bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+}
+
+/* Glass Panel Effect */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Text Balance Utility */
+.text-balance {
+  text-wrap: balance;
+}
+
+/* Fade Enter Animations - For scroll-triggered content */
+.fade-enter {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fade-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Delay utilities for staggered animations */
+.delay-100 {
+  transition-delay: 100ms;
+}
+
+.delay-200 {
+  transition-delay: 200ms;
+}
+
+.delay-300 {
+  transition-delay: 300ms;
+}
+
+/* Parallax Layer Optimization */
+.parallax-layer {
+  will-change: transform;
+}
+
+/* Story Card Hover Effect (Taboo-style) */
+.story-card:hover img {
+  transform: scale(1.03);
+}
+
+.story-card img {
+  transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
 /* Global Image Scaling - Scale all images proportionally */
 /* Images scale visually using transform to preserve layout flow */
 /* This applies to both regular img tags and Next.js Image components */
@@ -279,5 +394,123 @@ img[style*="object-fit"],
 @media print {
   .invoice-footer {
     display: none !important;
+  }
+}
+
+/* Hero Flip Card Animation */
+.flip-card-container {
+  perspective: 1000px;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.6s ease-in-out;
+}
+
+.flip-card-inner.flipping {
+  animation: cardFlip 0.6s ease-in-out;
+}
+
+@keyframes cardFlip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  50% {
+    transform: rotateY(90deg);
+  }
+  100% {
+    transform: rotateY(0deg);
+  }
+}
+
+/* Shimmer Animation for CTA Button */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(200%) skewX(-12deg);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+
+.flip-card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Testimonial Card Flip */
+.flip-card-face-testimonial {
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Shining Text Effect for Hero Title - WCS Blue */
+.hero-shine {
+  background: white -webkit-gradient(linear, left top, right top, from(white), to(white), color-stop(0.5, #0088ff)) 0 0 no-repeat;
+  background-image: -webkit-linear-gradient(-40deg, white 0%, white 30%, #0088ff 45%, #0066ff 50%, #0088ff 55%, white 70%, white 100%);
+  -webkit-background-size: 200px;
+  background-size: 200px;
+  color: white;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-animation-name: heroShine;
+  animation-name: heroShine;
+  -webkit-animation-duration: 5s;
+  animation-duration: 5s;
+  -webkit-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+  text-shadow: 0 0px 0px rgba(0, 136, 255, 0.5);
+}
+
+@-webkit-keyframes heroShine {
+  0%, 10% {
+    background-position: -1000px;
+  }
+  20% {
+    background-position: top left;
+  }
+  90% {
+    background-position: top right;
+  }
+  100% {
+    background-position: 1000px;
+  }
+}
+
+@keyframes heroShine {
+  0%, 10% {
+    background-position: -1000px;
+  }
+  20% {
+    background-position: top left;
+  }
+  90% {
+    background-position: top right;
+  }
+  100% {
+    background-position: 1000px;
   }
 }

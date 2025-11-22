@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, NotFoundError, DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 // --- Env + Stripe setup ---
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -57,10 +58,7 @@ export async function POST(req: Request) {
     const { player_id, payment_type, custom_amount, from } = body || {};
 
     if (!player_id || !payment_type) {
-      return NextResponse.json(
-        { error: "player_id and payment_type are required" },
-        { status: 400 }
-      );
+      throw new ValidationError("player_id and payment_type are required");
     }
 
     // Fetch player (only fields we actually use)
@@ -71,15 +69,11 @@ export async function POST(req: Request) {
       .single();
 
     if (playerErr || !player) {
-      devError("create-checkout-session: player fetch error", playerErr);
-      return NextResponse.json({ error: "Player not found" }, { status: 404 });
+      throw new NotFoundError("Player not found");
     }
 
     if (!player.parent_email) {
-      return NextResponse.json(
-        { error: "Player is missing parent_email" },
-        { status: 400 }
-      );
+      throw new ValidationError("Player is missing parent_email", "parent_email");
     }
 
     // Create or reuse Stripe Customer
@@ -133,10 +127,7 @@ export async function POST(req: Request) {
     } else if (payment_type === "quarterly") {
       // Quarterly payment - check if price is configured
       if (!PRICE_QUARTERLY) {
-        return NextResponse.json(
-          { error: "Quarterly payment option is not configured" },
-          { status: 400 }
-        );
+        throw new ApiError("Quarterly payment option is not configured", 400);
       }
       // Check if quarterly is a subscription or one-time payment
       // We'll fetch the price to determine this
@@ -156,10 +147,7 @@ export async function POST(req: Request) {
     } else if (payment_type === "custom") {
       const cents = Math.round(Number(custom_amount || 0) * 100);
       if (!cents || cents < 50) {
-        return NextResponse.json(
-          { error: "custom_amount must be at least $0.50" },
-          { status: 400 }
-        );
+        throw new ValidationError("custom_amount must be at least $0.50", "custom_amount");
       }
 
       // Note: We do NOT set receipt_email - we send emails via Resend in the webhook
@@ -181,10 +169,7 @@ export async function POST(req: Request) {
         // receipt_email removed - we use Resend instead
       });
     } else {
-      return NextResponse.json(
-        { error: "Invalid payment_type. Use 'annual' | 'monthly' | 'quarterly' | 'custom'." },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid payment_type. Use 'annual' | 'monthly' | 'quarterly' | 'custom'.", "payment_type");
     }
 
     // Record pending payment
@@ -226,12 +211,8 @@ export async function POST(req: Request) {
       payment_type,
       session: session.id,
     });
-    return NextResponse.json({ url: session.url });
+    return formatSuccessResponse({ url: session.url });
   } catch (e: any) {
-    devError("create-checkout-session exception", e);
-    return NextResponse.json(
-      { error: "Server error creating checkout session" },
-      { status: 500 }
-    );
+    return handleApiError(e);
   }
 }

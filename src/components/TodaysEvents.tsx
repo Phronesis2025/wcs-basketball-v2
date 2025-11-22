@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Image from "next/image";
 import { Schedule, Team } from "@/types/supabase";
 import { devError, devLog } from "@/lib/security";
@@ -19,6 +19,9 @@ export default function TodaysEvents({
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Fetch events and teams
   useEffect(() => {
@@ -54,8 +57,9 @@ export default function TodaysEvents({
           throw new Error(`Failed to fetch schedules: ${eventsResponse.status}`);
         }
 
-        const eventsData = await eventsResponse.json();
-        const teamsData = await teamsResponse.json();
+        const { extractApiResponseData } = await import("@/lib/errorHandler");
+        const eventsData = await extractApiResponseData(eventsResponse);
+        const teamsData = await extractApiResponseData(teamsResponse);
 
         if (!isMounted) return;
 
@@ -210,17 +214,51 @@ export default function TodaysEvents({
     }
   };
 
+  // Check scroll position and update arrow visibility
+  const checkScrollPosition = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const { scrollLeft, scrollWidth, clientWidth } = container;
+    setShowLeftArrow(scrollLeft > 10);
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+  };
+
+  // Scroll handler
+  const scroll = (direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const scrollAmount = direction === 'left' ? -300 : 300;
+    container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
+
+  // Check if arrows should be shown based on number of events and screen size
+  useEffect(() => {
+    checkScrollPosition();
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', checkScrollPosition);
+    window.addEventListener('resize', checkScrollPosition);
+
+    return () => {
+      container.removeEventListener('scroll', checkScrollPosition);
+      window.removeEventListener('resize', checkScrollPosition);
+    };
+  }, [todayEvents]);
+
   // Show minimal loading state instead of returning null
   if (isLoading) {
     return (
       <section
-        className="bg-gray-100 py-1 w-full"
+        className="bg-[#0A0A0A] py-1 w-full border-b border-white/10"
         aria-label="Today's Events"
       >
         <div className="w-full">
-          <div className="bg-gray-100 border-t border-gray-300 w-full">
+          <div className="bg-[#0A0A0A] w-full">
             <div className="flex overflow-x-auto scrollbar-hide h-[80px] items-center justify-center">
-              <div className="text-gray-500 text-xs">Loading events...</div>
+              <div className="text-neutral-500 text-xs font-inter">Loading events...</div>
             </div>
           </div>
         </div>
@@ -246,27 +284,30 @@ export default function TodaysEvents({
 
   return (
     <section
-      className="bg-gray-100 py-1 w-full relative z-40"
+      className="bg-[#0A0A0A] py-2 w-full relative z-40 border-y border-white/5"
       aria-label="Today's Events"
     >
       <div className="w-full">
         {/* Horizontal Scroll Container */}
-        <div className="bg-gray-100 border-t border-gray-300 w-full relative">
+        <div className="bg-[#0A0A0A] w-full relative">
           <div className="flex h-[80px]">
             {/* Date Column - Fixed on Left (Not Scrollable) */}
-            <div className="flex-shrink-0 w-16 sm:w-20 px-2 py-1 flex flex-col items-center justify-center border-r border-gray-300 bg-gray-100 z-10">
+            <div className="flex-shrink-0 w-16 sm:w-20 px-2 py-1 flex flex-col items-center justify-center border-r border-white/10 bg-[#0A0A0A] z-10">
               <div className="text-center">
-                <div className="text-gray-700 font-bold text-xs uppercase leading-tight">
+                <div className="text-white font-bold text-xs uppercase leading-tight font-inter">
                   {dateInfo.dayAbbrev}
                 </div>
-                <div className="text-gray-700 font-normal text-[10px] uppercase leading-tight">
+                <div className="text-neutral-400 font-normal text-[10px] uppercase leading-tight font-inter">
                   {dateInfo.monthDay}
                 </div>
               </div>
             </div>
 
             {/* Events Cards - Horizontal Scroll Only */}
-            <div className="flex-1 overflow-x-auto scrollbar-hide">
+            <div 
+              ref={scrollContainerRef}
+              className="flex-1 overflow-x-auto scrollbar-hide"
+            >
               <div className="flex gap-1.5 md:gap-2 px-1.5 md:px-2 h-full items-center">
               {todayEvents.map((event) => {
                 const team = getTeam(event);
@@ -281,17 +322,19 @@ export default function TodaysEvents({
                 return (
                   <div
                     key={`${event.id}-${event.date_time}`}
-                    className="flex-shrink-0 w-48 md:w-52 lg:w-64 bg-white rounded border border-gray-200 p-1.5 md:p-2.5 lg:p-3 flex gap-1.5 md:gap-2.5 lg:gap-3"
+                    className="flex-shrink-0 w-48 md:w-52 lg:w-64 bg-[#030303] rounded-lg border border-white/10 p-1.5 md:p-2.5 lg:p-3 flex gap-1.5 md:gap-2.5 lg:gap-3 hover:border-white/20 transition-colors"
                   >
-                    {/* Large Logo on Left */}
-                    <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16 flex items-center justify-center">
+                    {/* Large Logo on Left - Centered horizontally */}
+                    <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-white/5 rounded-lg self-center relative overflow-hidden">
+                      {/* Dark gradient overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/40 pointer-events-none z-10"></div>
                       {logoUrl ? (
                         <Image
                           src={logoUrl}
                           alt={`${teamName} logo`}
                           width={64}
                           height={64}
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-contain relative z-0"
                           sizes="(max-width: 768px) 48px, (max-width: 1024px) 56px, 64px"
                           onError={(e) => {
                             // Only fallback if image fails to load
@@ -304,7 +347,7 @@ export default function TodaysEvents({
                           alt={`${teamName} logo`}
                           width={64}
                           height={64}
-                          className="w-full h-full object-contain"
+                          className="w-full h-full object-contain relative z-0"
                           sizes="(max-width: 768px) 48px, (max-width: 1024px) 56px, 64px"
                         />
                       )}
@@ -312,41 +355,65 @@ export default function TodaysEvents({
 
                     {/* Event Details on Right */}
                     <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      {/* Time and Location - Stacked vertically */}
-                      <div className="mb-0.5 md:mb-1">
-                        <div className="text-gray-800 font-bold text-xs md:text-sm">
-                          {time} CT
+                      {/* Top Row: Time (left) and Event Type Badge (right) */}
+                      <div className="flex items-center justify-between mb-0.5 md:mb-1">
+                        <div className="text-white font-normal text-xs md:text-sm font-inter">
+                          {time}
                         </div>
-                        {event.location && event.location !== "N/A" && (
-                          <div className="text-gray-600 text-[10px] md:text-xs mt-0.5">
-                            {event.location}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Event Type Badge and Team Name - Horizontal layout */}
-                      <div className="flex items-center gap-1.5 md:gap-2">
-                        <span className={`inline-block ${bg} ${text} font-bold text-[9px] md:text-[10px] px-1.5 md:px-2 py-0.5 md:py-1 rounded uppercase flex-shrink-0`}>
+                        <span className={`inline-block ${bg} ${text} font-medium text-[9px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded uppercase flex-shrink-0 font-inter`}>
                           {eventType}
                         </span>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-gray-800 font-bold text-xs md:text-sm truncate">
-                            {event.opponent && event.event_type === "Game" ? (
-                              <>
-                                {teamName} vs {event.opponent}
-                              </>
-                            ) : (
-                              teamName
-                            )}
-                          </div>
+                      </div>
+
+                      {/* Second Row: Team Name with Opponent (truncate if too long) */}
+                      <div className="mb-0.5 md:mb-1">
+                        <div className="text-white font-bold text-xs md:text-sm font-inter truncate">
+                          {event.opponent && event.event_type === "Game" ? (
+                            <>
+                              {teamName} vs {event.opponent}
+                            </>
+                          ) : (
+                            teamName
+                          )}
                         </div>
                       </div>
+
+                      {/* Third Row: Location */}
+                      {event.location && event.location !== "N/A" && (
+                        <div className="text-neutral-400 text-[10px] md:text-xs font-inter truncate">
+                          {event.location}
+                        </div>
+                      )}
                     </div>
                   </div>
                 );
               })}
               </div>
             </div>
+
+            {/* Navigation Arrows */}
+            {showLeftArrow && (
+              <button
+                onClick={() => scroll('left')}
+                className="hidden md:flex absolute left-20 top-1/2 -translate-y-1/2 w-8 h-8 items-center justify-center bg-white/10 hover:bg-white/20 rounded-full border border-white/20 text-white transition-all z-20"
+                aria-label="Scroll left"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+            {showRightArrow && (
+              <button
+                onClick={() => scroll('right')}
+                className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 items-center justify-center bg-white/10 hover:bg-white/20 rounded-full border border-white/20 text-white transition-all z-20"
+                aria-label="Scroll right"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>

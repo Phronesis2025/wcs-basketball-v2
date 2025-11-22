@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase, supabaseAdmin } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
+import { ValidationError, ApiError, DatabaseError, NotFoundError, AuthorizationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
     const { messageId, requesterId, isAdmin } = await request.json();
     if (!messageId) {
-      return NextResponse.json(
-        { error: "messageId is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("messageId is required");
     }
 
     devLog("[API] Deleting message (admin):", {
@@ -30,18 +28,17 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (fetchErr) {
-      devError("[API] Delete fetch failed:", fetchErr);
-      return NextResponse.json({ error: "Message not found" }, { status: 404 });
+      throw new NotFoundError("Message not found");
     }
 
     if (existing?.deleted_at) {
-      return NextResponse.json({ success: true });
+      return formatSuccessResponse({ success: true });
     }
 
     // Authorization: allow author or admin
     const isAuthor = requesterId && existing?.author_id === requesterId;
     if (!isAuthor && !isAdmin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     // Check if message has replies (for non-admin users)
@@ -53,12 +50,8 @@ export async function POST(request: NextRequest) {
         .is("deleted_at", null);
 
       if (!replyError && count && count > 0) {
-        return NextResponse.json(
-          { 
-            error: `Cannot delete message with ${count} ${count === 1 ? "reply" : "replies"}. Only admins can delete messages that have replies.`,
-            replyCount: count 
-          },
-          { status: 400 }
+        throw new ValidationError(
+          `Cannot delete message with ${count} ${count === 1 ? "reply" : "replies"}. Only admins can delete messages that have replies.`
         );
       }
     }
@@ -72,7 +65,7 @@ export async function POST(request: NextRequest) {
 
       if (!adminErr) {
         // Admin delete succeeded
-        return NextResponse.json({ success: true });
+        return formatSuccessResponse({ success: true });
       }
 
       devError("[API] Admin delete failed:", adminErr);
@@ -88,34 +81,23 @@ export async function POST(request: NextRequest) {
         .eq("author_id", requesterId);
 
       if (!rlsErr) {
-        return NextResponse.json({ success: true });
+        return formatSuccessResponse({ success: true });
       }
 
-      devError("[API] Fallback delete message failed:", rlsErr);
-      return NextResponse.json({ error: rlsErr.message }, { status: 500 });
+      throw new DatabaseError("Failed to delete message", rlsErr);
     }
 
     // If we reach here and isAdmin is true but admin client failed or doesn't exist
     if (isAdmin) {
       if (!adminClient) {
-        return NextResponse.json(
-          { error: "Admin delete failed - admin client not configured" },
-          { status: 500 }
-        );
+        throw new ApiError("Admin delete failed - admin client not configured", 500);
       }
       // Admin client exists but delete failed
-      return NextResponse.json(
-        { error: "Admin delete failed - please try again" },
-        { status: 500 }
-      );
+      throw new ApiError("Admin delete failed - please try again", 500);
     }
 
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+    throw new AuthorizationError("Unauthorized");
   } catch (err) {
-    devError("[API] Unexpected error deleting message:", err);
-    return NextResponse.json(
-      { error: "Failed to delete message" },
-      { status: 500 }
-    );
+    return handleApiError(err, request);
   }
 }

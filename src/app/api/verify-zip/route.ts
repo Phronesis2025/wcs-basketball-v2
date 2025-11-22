@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyZipCodeInRadius } from "@/lib/zipCodeVerification";
+import { ValidationError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 export async function POST(request: NextRequest) {
   try {
@@ -7,24 +8,14 @@ export async function POST(request: NextRequest) {
     const { zipCode } = body;
 
     if (!zipCode || typeof zipCode !== "string") {
-      return NextResponse.json(
-        { error: "Zip code is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Zip code is required", "zipCode");
     }
 
     const result = await verifyZipCodeInRadius(zipCode.trim());
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Zip code verification API error:", error);
-    return NextResponse.json(
-      {
-        allowed: false,
-        error: "Unable to verify location. Please try again.",
-      },
-      { status: 500 }
-    );
+    return handleApiError(error, request);
   }
 }
 

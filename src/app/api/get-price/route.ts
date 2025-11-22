@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { ValidationError, ApiError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const PRICE_QUARTERLY = process.env.STRIPE_PRICE_QUARTERLY;
@@ -19,10 +20,7 @@ export async function GET(req: Request) {
 
     if (type === "quarterly") {
       if (!PRICE_QUARTERLY) {
-        return NextResponse.json(
-          { error: "Quarterly price not configured" },
-          { status: 404 }
-        );
+        throw new NotFoundError("Quarterly price not configured");
       }
 
       // Fetch the price from Stripe
@@ -31,18 +29,12 @@ export async function GET(req: Request) {
       // Convert from cents to dollars
       const amount = (price.unit_amount || 0) / 100;
 
-      return NextResponse.json({ amount });
+      return formatSuccessResponse({ amount });
     }
 
-    return NextResponse.json(
-      { error: "Invalid price type" },
-      { status: 400 }
-    );
-  } catch (error: any) {
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch price" },
-      { status: 500 }
-    );
+    throw new ValidationError("Invalid price type. Use 'quarterly'.");
+  } catch (error) {
+    return handleApiError(error);
   }
 }
 

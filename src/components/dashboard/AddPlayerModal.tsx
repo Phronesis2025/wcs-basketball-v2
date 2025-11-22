@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { Player, Team } from "@/types/supabase";
-import { validateInput } from "@/lib/security";
+import { validateInput, devLog, devError } from "@/lib/security";
 import {
   isGradeCompatible,
   isGenderCompatible,
   validateDateOfBirth,
   getCompatibleTeamsByGrade,
+  calculateAge,
 } from "@/lib/ageValidation";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import ManageDeleteConfirmModal from "./ManageDeleteConfirmModal";
@@ -63,16 +64,19 @@ export default function AddPlayerModal({
       message: string;
     }>
   >([]);
-  const [gradeValidationWarning, setGradeValidationWarning] = useState<string>("");
+  const [gradeValidationWarning, setGradeValidationWarning] =
+    useState<string>("");
 
   // Lock scroll when modal is open
   useScrollLock(isOpen);
 
-  // Initialize form when editing
+  // Initialize form when editing or when modal opens
   useEffect(() => {
-    console.log("AddPlayerModal useEffect - editingPlayer:", editingPlayer);
+    if (!isOpen) return; // Only run when modal is open
+
+    devLog("AddPlayerModal useEffect - editingPlayer:", editingPlayer);
     if (editingPlayer) {
-      console.log("Populating form with player data:", {
+      devLog("Populating form with player data:", {
         name: editingPlayer.name,
         jerseyNumber: editingPlayer.jersey_number,
         grade: editingPlayer.grade,
@@ -128,7 +132,7 @@ export default function AddPlayerModal({
       setCompatibleTeams([]);
       setGradeValidationWarning("");
     }
-  }, [editingPlayer, teams]);
+  }, [editingPlayer, teams, isOpen]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -334,18 +338,12 @@ export default function AddPlayerModal({
         : null,
       grade: formData.grade.trim() || null,
       date_of_birth: formData.dateOfBirth || null,
-      age: playerAge, // Include calculated age
+      age: calculateAge(formData.dateOfBirth || "2000-01-01 ") || null,
       gender: formData.gender.trim() || null,
       team_id: formData.teamId === "unassigned" ? undefined : formData.teamId,
-      parent_name: formData.parentName.trim() || null,
-      parent_phone: formData.parentPhone.trim() || null,
-      parent_email: formData.parentEmail.trim() || null,
-      emergency_contact: formData.emergencyContact.trim() || null,
-      emergency_phone: formData.emergencyPhone.trim() || null,
-      is_active: formData.is_active,
     };
 
-    onSubmit(playerData);
+    onSubmit(playerData as Partial<Player>);
   };
 
   const handleDeleteConfirm = async () => {
@@ -356,7 +354,7 @@ export default function AddPlayerModal({
       await onDelete(editingPlayer);
       setShowDeleteConfirm(false);
     } catch (error) {
-      console.error("Delete error:", error);
+      devError("Delete error:", error);
     } finally {
       setDeleting(false);
     }
