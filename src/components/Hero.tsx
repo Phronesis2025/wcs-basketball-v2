@@ -8,27 +8,40 @@ export default function Hero() {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      setScrollY(window.scrollY);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  const parallaxStyle = (speed: number) => ({
+    transform: `translate3d(0, ${scrollY * speed}px, 0)`,
+    willChange: 'transform',
+  });
+
   return (
     <section
       id="home"
-      className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden min-h-[90vh] flex flex-col justify-center bg-[#030303]"
+      className="relative pt-32 pb-20 md:pt-48 md:pb-32 px-6 overflow-hidden min-h-screen flex flex-col justify-center bg-[#030303]"
       aria-label="Hero"
     >
       {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-900/[0.05] blur-[120px] rounded-full pointer-events-none -z-10" />
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto text-center flex flex-col items-center z-10 relative">
+      <div className="max-w-5xl mx-auto text-center flex flex-col items-center z-20 relative">
         {/* Badge with pulsing dot */}
-        <div className="fade-enter inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-500 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
@@ -39,7 +52,7 @@ export default function Hero() {
         </div>
 
         {/* Main Headline */}
-        <h1 className="fade-enter delay-100 text-6xl md:text-8xl lg:text-9xl font-semibold tracking-tighter text-white leading-[0.9] text-balance mb-8 font-inter">
+        <h1 className="text-6xl md:text-8xl lg:text-9xl font-semibold tracking-tighter text-white leading-[0.9] text-balance mb-8 font-inter">
           BUILT FOR
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">
@@ -48,13 +61,13 @@ export default function Hero() {
         </h1>
 
         {/* Subtitle */}
-        <p className="fade-enter delay-200 text-neutral-400 text-lg leading-relaxed max-w-xl mb-10 text-balance font-light font-inter">
+        <p className="text-neutral-400 text-lg leading-relaxed max-w-xl mb-10 text-balance font-light font-inter">
           The premier destination for youth basketball development, competitive
           tournaments, and elite training.
         </p>
 
         {/* CTA Button */}
-        <div className="fade-enter delay-300 flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <Link
             href="/register"
             className="w-full sm:w-auto h-12 px-8 rounded-full bg-white text-black font-medium text-sm hover:bg-neutral-200 transition-colors flex items-center justify-center gap-2 font-inter"
@@ -65,7 +78,7 @@ export default function Hero() {
       </div>
 
       {/* Parallax Image Grid */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
+      <div className="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         {/* Left Column */}
         <div
           className="absolute left-[5%] md:left-[10%] top-[20%] w-48 md:w-64 aspect-[3/4] rounded-lg overflow-hidden opacity-30"
@@ -78,7 +91,8 @@ export default function Hero() {
             alt="Team"
             fill
             sizes="(max-width: 768px) 192px, 256px"
-            className="w-full h-full object-cover grayscale"
+            className="object-cover grayscale"
+            priority={false}
           />
         </div>
         <div
@@ -92,7 +106,8 @@ export default function Hero() {
             alt="Play"
             fill
             sizes="(max-width: 768px) 160px, 224px"
-            className="w-full h-full object-cover grayscale"
+            className="object-cover grayscale"
+            priority={false}
           />
         </div>
 
@@ -108,7 +123,8 @@ export default function Hero() {
             alt="Hoop"
             fill
             sizes="(max-width: 768px) 224px, 288px"
-            className="w-full h-full object-cover grayscale"
+            className="object-cover grayscale"
+            priority={false}
           />
         </div>
         <div
@@ -122,7 +138,8 @@ export default function Hero() {
             alt="Coach"
             fill
             sizes="(max-width: 768px) 176px, 240px"
-            className="w-full h-full object-cover grayscale"
+            className="object-cover grayscale"
+            priority={false}
           />
         </div>
       </div>

@@ -2,6 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Smooth scroll behavior layer */
+@layer base {
+  * {
+    scroll-behavior: smooth;
+  }
+  
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
 /* Global Responsive Scaling - Viewport-based scaling for fonts and images */
 :root {
   /* Scale factor: 65% on mobile (375px) to 100% at 1920px+ */
@@ -14,6 +30,17 @@ html {
   scroll-behavior: smooth;
   /* Apply font scaling globally - all rem/em units will scale proportionally */
   font-size: calc(16px * var(--scale-factor));
+  /* Enhanced smooth scrolling on webkit browsers */
+  -webkit-overflow-scrolling: touch;
+  scroll-padding-top: 80px; /* Account for fixed navbar */
+}
+
+/* Smooth scrolling for body */
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Marquee animation for logo carousel */

@@ -134,7 +134,10 @@ export default function RootLayout({
         {/* Note: Hero image is used as CSS background and video poster, 
              so preloading is not necessary and can cause warnings */}
       </head>
-      <body>
+      <body 
+        className="overflow-x-hidden"
+        style={{ overscrollBehavior: 'none' }}
+      >
         <QueryProvider>
           <SignOutLoader>
             <Suspense fallback={null}>

@@ -1,9 +1,11 @@
 import React from "react";
 import Hero from "../components/Hero";
+import QuoteSection from "../components/QuoteSection";
 import StatsSection from "../components/StatsSection";
 import ProgramsSection from "../components/ProgramsSection";
 import LogoMarquee from "../components/LogoMarquee";
-import AdSection from "../components/AdSection";
+import PlayerTestimonials from "../components/PlayerTestimonials";
+// import AdSection from "../components/AdSection"; // Removed from homepage but not deleted
 import TeamUpdates from "../components/TeamUpdates";
 import { fetchTeams } from "../lib/actions";
 
@@ -32,13 +34,14 @@ export default async function Home() {
       <Hero />
       <StatsSection />
       <ProgramsSection />
-      <AdSection />
       <LogoMarquee />
+      <PlayerTestimonials />
       <TeamUpdates
         maxUpdates={8}
         variant="compact-list"
         showViewMoreText={true}
       />
+      <QuoteSection />
     </div>
   );
 }

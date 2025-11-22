@@ -259,12 +259,15 @@ export default function TeamUpdates({
         className="bg-[#030303] mt-8 mb-12 pt-6 sm:pt-8 pb-12 sm:pb-16 px-6 border-t border-white/5"
       >
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2
+          <motion.h2
             id="team-updates-title"
-            className="text-3xl sm:text-4xl font-inter font-semibold tracking-tighter text-center text-white mb-6 sm:mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6 }}
+            className="text-4xl sm:text-5xl md:text-6xl font-inter font-semibold tracking-tighter text-center text-white mb-10 sm:mb-12 uppercase"
           >
-            Team News
-          </h2>
+            Around the WCS
+          </motion.h2>
           <div className="bg-[#0A0A0A] border border-white/10 rounded-lg p-6 sm:p-8">
           {isLoading ? (
             <div className="bg-black/50 border border-white/10 rounded-lg p-4 text-center">
@@ -289,7 +292,7 @@ export default function TeamUpdates({
                       e.preventDefault();
                       setSelectedUpdate(update);
                     }}
-                    className={`flex gap-3 pb-6 border-b border-white/10 hover:opacity-90 transition-opacity focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black rounded ${
+                    className={`group relative flex gap-3 pb-6 border-b border-white/10 hover:opacity-90 transition-all focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-black rounded overflow-hidden ${
                       index < displayUpdates.length - 1 ? "" : "border-b-0"
                     } ${
                       // On desktop, add bottom border if not in last row of each column
@@ -297,22 +300,25 @@ export default function TeamUpdates({
                     }`}
                     aria-label={`Read update: ${update.title}`}
                   >
-                    {/* Thumbnail */}
+                    {/* Thumbnail with gradient overlay */}
                     {update.image_url ? (
-                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded overflow-hidden bg-black/50">
+                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded overflow-hidden bg-black/50 relative">
                         <Image
                           src={update.image_url}
                           alt={update.title}
                           width={80}
                           height={80}
-                          className="w-full h-full object-cover"
+                          className="w-full h-full object-cover transition-opacity duration-300"
                           sizes="(max-width: 640px) 64px, 80px"
                           loading="lazy"
                         />
+                        {/* Very dark gradient overlay that lightens on hover */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-black/90 group-hover:from-black/60 group-hover:via-black/40 group-hover:to-black/60 transition-all duration-300" />
                       </div>
                     ) : (
-                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded bg-black/50 flex items-center justify-center">
-                        <span className="text-neutral-500 text-xs">No Image</span>
+                      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded bg-black/50 flex items-center justify-center relative">
+                        <span className="text-neutral-500 text-xs z-10">No Image</span>
+                        <div className="absolute inset-0 bg-gradient-to-br from-black/90 via-black/70 to-black/90 group-hover:from-black/60 group-hover:via-black/40 group-hover:to-black/60 transition-all duration-300" />
                       </div>
                     )}
 

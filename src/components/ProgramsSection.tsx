@@ -186,59 +186,6 @@ export default function ProgramsSection() {
           })}
         </div>
 
-        {/* Additional Quick Links Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-6">
-          <Link
-            href="/coaches/login"
-            className="relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] p-6 flex items-center gap-4 hover:bg-white/5 transition-colors"
-          >
-            <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white flex-shrink-0">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-1 tracking-tight font-inter">
-                Coach Login
-              </h3>
-              <p className="text-neutral-500 text-xs font-inter">Manage teams and schedules</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/parent/login"
-            className="relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] p-6 flex items-center gap-4 hover:bg-white/5 transition-colors"
-          >
-            <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white flex-shrink-0">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-1 tracking-tight font-inter">
-                Parent Login
-              </h3>
-              <p className="text-neutral-500 text-xs font-inter">View team information</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/tournament-signup"
-            className="relative group rounded-xl overflow-hidden border border-white/10 bg-[#0A0A0A] p-6 flex items-center gap-4 hover:bg-white/5 transition-colors"
-          >
-            <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white flex-shrink-0">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-              </svg>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-1 tracking-tight font-inter">
-                Tournament Info
-              </h3>
-              <p className="text-neutral-500 text-xs font-inter">Upcoming competitions</p>
-            </div>
-          </Link>
-        </div>
       </div>
     </section>
   );

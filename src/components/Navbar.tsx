@@ -536,11 +536,11 @@ export default function Navbar() {
       </Suspense>
       {/* Regular Navbar for all pages (including club management) */}
       <motion.nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-out ${
+        className={`fixed top-0 left-0 right-0 transition-all duration-300 ease-out ${
           // Home page: dark with border; Other pages: white with shadow
           isHome
-            ? "bg-[#030303]/80 backdrop-blur-md border-b border-white/5"
-            : "bg-white/95 backdrop-blur-md shadow-lg"
+            ? "bg-[#030303]/80 backdrop-blur-md border-b border-white/5 z-40"
+            : "bg-white/95 backdrop-blur-md shadow-lg z-50"
         }`}
       >
           <div className="max-w-7xl mx-auto px-6">
