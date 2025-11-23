@@ -131,6 +131,63 @@ This file was being tracked in git, which means these credentials were exposed i
 
 ---
 
+## January 2025 Review
+
+**Date**: January 13, 2025  
+**Version**: 2.10.19+  
+**Status**: ✅ Review Complete - No New Issues Found
+
+### Security Findings
+
+#### 1. Leaked Password Protection Disabled ⚠️
+
+**Level**: WARN  
+**Category**: SECURITY  
+**Status**: Manual Action Required (No Change)
+
+**Issue:**  
+Supabase Auth can check user passwords against the HaveIBeenPwned.org database to prevent users from using compromised passwords. This feature is currently **disabled** in your project.
+
+**Impact:**  
+- Users can currently choose passwords that have been exposed in data breaches
+- Increased risk of credential stuffing attacks
+- Reduced overall account security
+
+**Solution:**  
+Enable leaked password protection in Supabase Dashboard:
+1. Navigate to **Authentication** → **Providers** → **Email**
+2. Find **"Password Strength"** section
+3. Enable **"Leaked Password Protection"** toggle
+4. Save changes
+
+**Note**: This feature requires Pro Plan or above on Supabase.
+
+**Documentation**: See `docs/enable_leaked_password_protection.md` for detailed instructions.
+
+**Priority**: Medium (recommended but not critical)
+
+**Status**: No change from previous review - still requires manual dashboard configuration.
+
+### Performance Findings
+
+#### 1. Unused Indexes (INFO Level) ℹ️
+
+**Level**: INFO  
+**Category**: PERFORMANCE  
+**Status**: Low Priority - No Action Required
+
+**Issue:**  
+24 indexes have been identified as unused. These are informational only and do not require immediate action.
+
+**Recommendation**:  
+- Monitor these indexes for future use
+- Consider removing only if storage is a concern
+- Keep indexes that may be used by future queries
+
+**Action**: No immediate action required.
+
+---
+
 ## November 2025 Review
 
 **Date**: November 4, 2025  

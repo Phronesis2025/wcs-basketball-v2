@@ -9,31 +9,47 @@ interface FlipCardProps {
   interval: number;
   className?: string;
   alt: string;
+  hasEdgeBlur?: boolean; // For non-logo/equip images
 }
 
-export default function FlipCard({ images, interval, className = "", alt }: FlipCardProps) {
+export default function FlipCard({ images, interval, className = "", alt, hasEdgeBlur = false }: FlipCardProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipping, setIsFlipping] = useState(false);
+  const [isFading, setIsFading] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     if (images.length === 0) return;
     
-    const flipInterval = setInterval(() => {
-      setIsFlipping(true);
-      
-      // Change image at halfway point of flip
+    // Use the interval prop to calculate timing
+    // interval = total cycle time (display + fade out + fade in)
+    const fadeOutDuration = 500; // 0.5s fade out
+    const fadeInDuration = 500; // 0.5s fade in
+    const displayDuration = interval - fadeOutDuration - fadeInDuration; // Remaining time for display
+    
+    // Start with first image fading in
+    setIsFading(true);
+    setTimeout(() => {
+      setIsFading(false);
+    }, fadeInDuration);
+    
+    const fadeInterval = setInterval(() => {
+      // After display duration, start fade out
       setTimeout(() => {
-        setCurrentIndex((prev) => (prev + 1) % images.length);
-      }, 300);
-      
-      // Reset flip state
-      setTimeout(() => {
-        setIsFlipping(false);
-      }, 600);
+        setIsFading(true);
+        
+        // After fade out completes, change image and fade in
+        setTimeout(() => {
+          setCurrentIndex((prev) => (prev + 1) % images.length);
+          
+          // Start fade in for new image
+          setTimeout(() => {
+            setIsFading(false);
+          }, 10);
+        }, fadeOutDuration);
+      }, displayDuration);
     }, interval);
 
-    return () => clearInterval(flipInterval);
+    return () => clearInterval(fadeInterval);
   }, [images.length, interval]);
 
   // Handle image load errors
@@ -75,23 +91,21 @@ export default function FlipCard({ images, interval, className = "", alt }: Flip
   }
 
   return (
-    <div className={`flip-card-container ${className}`}>
-      <div className={`flip-card-inner ${isFlipping ? 'flipping' : ''}`}>
-        <div className="flip-card-face relative">
-          <div className="relative w-full h-full">
-            <Image
-              src={currentImageUrl}
-              alt={alt}
-              fill
-              sizes="(max-width: 768px) 50vw, 25vw"
-              className="object-contain"
-              style={{ filter: 'grayscale(85%)' }}
-              priority={false}
-              unoptimized={currentImageUrl?.startsWith('http')}
-              onError={() => handleImageError(displayIndex, currentImageUrl)}
-              onLoad={() => devLog(`Successfully loaded image: ${currentImageUrl}`)}
-            />
-          </div>
+    <div className={`hero-image-fade-container ${className}`}>
+      <div className={`hero-image-fade ${isFading ? 'fading-out' : 'fading-in'}`}>
+        <div className={`relative w-full h-full ${hasEdgeBlur ? 'hero-image-edge-blur' : ''}`}>
+          <Image
+            src={currentImageUrl}
+            alt={alt}
+            fill
+            sizes="(max-width: 768px) 50vw, 25vw"
+            className={`object-contain ${hasEdgeBlur ? 'hero-image-blurred' : ''}`}
+            style={{ filter: 'grayscale(85%)' }}
+            priority={false}
+            unoptimized={currentImageUrl?.startsWith('http')}
+            onError={() => handleImageError(displayIndex, currentImageUrl)}
+            onLoad={() => devLog(`Successfully loaded image: ${currentImageUrl}`)}
+          />
         </div>
       </div>
     </div>

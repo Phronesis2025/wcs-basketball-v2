@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
@@ -11,7 +12,11 @@ interface Team {
   logo_url?: string;
 }
 
-export default function LogoMarquee() {
+interface LogoMarqueeProps {
+  middleContent?: React.ReactNode;
+}
+
+export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -211,6 +216,13 @@ export default function LogoMarquee() {
           ))}
         </div>
       </div>
+
+      {/* Middle Content (e.g., AdSection) */}
+      {middleContent && (
+        <div className="my-6">
+          {middleContent}
+        </div>
+      )}
 
       {/* Second Row - Scrolling Right (reverse direction) */}
       <div className="overflow-hidden">

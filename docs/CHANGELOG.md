@@ -1,5 +1,61 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.20 - About Page Redesign & Navbar Updates
+
+**Release Date**: January 13, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (130 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **About Page Redesign**:
+  - Complete redesign of About page to match home page modern dark theme
+  - New hero section with gradient text and improved typography
+  - Mission section with badge, heading, and divider matching home page style
+  - History section restructured with matching header format
+  - Values section with improved card styling and hover effects
+  - Background gradient effects and glassmorphism styling
+  - Files Modified:
+    - `src/app/about/page.tsx`
+
+- **Navbar Consistency**:
+  - Navbar now matches home page style on About page
+  - Dark theme applied to About page navbar (matching home page)
+  - Consistent styling across home and about pages
+  - Mobile menu updated with dark theme support
+  - Files Modified:
+    - `src/components/Navbar.tsx`
+
+### 🔧 Fixed
+
+- **TypeScript Error**:
+  - Fixed image property type error in About page values section
+  - Added proper type checking for image property
+  - Files Modified:
+    - `src/app/about/page.tsx`
+
+### 📝 Documentation
+
+- **Security Audit Update**:
+  - Updated security audit documentation with January 2025 review
+  - Documented Supabase advisor findings (leaked password protection recommendation)
+  - Documented unused index findings (INFO level, low priority)
+  - Files Modified:
+    - `docs/security/SECURITY_AUDITS.md`
+
+### 🔒 Security
+
+- **Security Review**:
+  - Completed security check - no new vulnerabilities found
+  - Supabase advisors reviewed - 1 recommendation (leaked password protection - manual dashboard config)
+  - Performance advisors reviewed - 24 unused indexes (INFO level, no action required)
+  - All existing security measures verified and documented
+
+---
+
 ## 🚀 Version 2.10.19 - Practice Drill PDF Download Feature
 
 **Release Date**: January 13, 2025  

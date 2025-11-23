@@ -530,6 +530,8 @@ export default function Navbar() {
 
 
   const isHome = pathname === "/";
+  // Pages that should use the dark navbar style (matching home page)
+  const isDarkPage = pathname === "/" || pathname === "/about";
 
   return (
     <>
@@ -539,9 +541,9 @@ export default function Navbar() {
       {/* Regular Navbar for all pages (including club management) */}
       <motion.nav
         className={`fixed top-0 left-0 right-0 transition-all duration-300 ease-out ${
-          // Home page: dark with border; Other pages: white with shadow
-          isHome
-            ? "bg-[#030303]/80 backdrop-blur-md border-b border-white/5 z-40"
+          // Dark pages (home, about): dark with border; Other pages: white with shadow
+          isDarkPage
+            ? "bg-[#030711]/80 backdrop-blur-md border-b border-white/5 z-40"
             : "bg-white/95 backdrop-blur-md shadow-lg z-50"
         }`}
       >
@@ -569,7 +571,7 @@ export default function Navbar() {
                 </div>
                 <span
                   className={`md:hidden font-bebas text-base sm:text-lg transition-colors duration-300 ease-out ${
-                    isHome
+                    isDarkPage
                       ? "text-white"
                       : "text-navy"
                   }`}
@@ -578,7 +580,7 @@ export default function Navbar() {
                 </span>
                 <span
                   className={`hidden md:inline font-bebas text-lg transition-colors duration-300 ease-out ${
-                    isHome
+                    isDarkPage
                       ? "text-white"
                       : "text-navy"
                   }`}
@@ -605,14 +607,20 @@ export default function Navbar() {
                 </div>
               )}
 
-              {/* Regular right-aligned links for other pages */}
+              {/* Regular right-aligned links for other pages (not home) */}
               {!isHome && (
                 <div className="hidden md:flex items-center gap-6">
                   {navLinks.map((link) => (
                     <Link
                       key={link.name}
                       href={link.href}
-                      className="font-inter font-medium text-sm transition-all duration-300 ease-out hover:text-red text-navy"
+                      className={`font-inter font-medium text-sm transition-all duration-300 ease-out ${
+                        isDarkPage
+                          ? pathname === link.href
+                            ? "text-white"
+                            : "text-slate-400 hover:text-white"
+                          : "hover:text-red text-navy"
+                      }`}
                     >
                       {link.name}
                     </Link>
@@ -622,7 +630,7 @@ export default function Navbar() {
 
               {/* Auth buttons */}
               <div className="hidden md:flex items-center gap-3">
-                {isHome && user && (
+                {isDarkPage && user && (
                   <Link
                     href={
                       userRole === "coach" || userRole === "admin"
@@ -638,7 +646,7 @@ export default function Navbar() {
                   <button
                     onClick={handleSignOut}
                     className={`font-bold px-4 py-2 rounded transition duration-300 text-sm font-inter ${
-                      isHome
+                      isDarkPage
                         ? "bg-white text-black rounded-full hover:bg-neutral-200 hover:scale-[1.02]"
                         : "bg-navy text-white hover:bg-opacity-90"
                     }`}
@@ -647,7 +655,7 @@ export default function Navbar() {
                   </button>
                 ) : (
                   <div className="flex items-center gap-3">
-                    {isHome && (
+                    {isDarkPage && (
                       <Link
                         href="/parent/login"
                         className="text-xs font-medium text-neutral-400 hover:text-white px-3 py-2 transition-colors font-inter"
@@ -658,7 +666,7 @@ export default function Navbar() {
                     <button
                       onClick={() => setIsRegisterModalOpen(true)}
                       className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-medium transition-all font-inter ${
-                        isHome
+                        isDarkPage
                           ? "bg-white text-black hover:bg-neutral-200 hover:scale-[1.02]"
                           : "bg-navy text-white hover:bg-opacity-90"
                       }`}
@@ -671,7 +679,7 @@ export default function Navbar() {
               <button
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 className={`md:hidden p-2 rounded-md transition-all duration-300 ease-out ${
-                  isHome
+                  isDarkPage
                     ? "text-white hover:bg-white/10"
                     : "text-navy hover:bg-gray-100"
                 }`}
@@ -706,13 +714,19 @@ export default function Navbar() {
             : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="bg-white shadow-lg">
+        <div className={isDarkPage ? "bg-[#030711]/95 backdrop-blur-md border-b border-white/10 shadow-lg" : "bg-white shadow-lg"}>
           <div className="max-w-7xl mx-auto px-4 py-6">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
+                className={`block font-inter font-medium text-base rounded-md px-4 py-3 transition-all duration-200 text-center ${
+                  isDarkPage
+                    ? pathname === link.href
+                      ? "text-white bg-white/10"
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                    : "text-navy hover:text-red hover:bg-gray-100"
+                }`}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {link.name}
@@ -724,13 +738,21 @@ export default function Navbar() {
                   setIsMobileMenuOpen(false);
                   handleSignOut();
                 }}
-                className="w-full text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
+                className={`w-full font-inter font-medium text-base rounded-md px-4 py-3 transition-all duration-200 text-center ${
+                  isDarkPage
+                    ? "text-slate-300 hover:text-white hover:bg-white/5"
+                    : "text-navy hover:text-red hover:bg-gray-100"
+                }`}
               >
                 Sign Out
               </button>
             ) : (
               <div 
-                className="block text-navy font-inter font-medium text-base hover:text-red hover:bg-gray-100 rounded-md px-4 py-3 transition-all duration-200 text-center"
+                className={`block font-inter font-medium text-base rounded-md px-4 py-3 transition-all duration-200 text-center ${
+                  isDarkPage
+                    ? "text-slate-300 hover:text-white hover:bg-white/5"
+                    : "text-navy hover:text-red hover:bg-gray-100"
+                }`}
               >
                 <StartNowButton 
                   variant="navbar" 

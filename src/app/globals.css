@@ -473,6 +473,54 @@ img[style*="object-fit"],
   overflow: hidden;
 }
 
+/* Hero Image Fade In/Out Effect */
+.hero-image-fade-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-image-fade {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.hero-image-fade.fading-out {
+  opacity: 0;
+}
+
+.hero-image-fade.fading-in {
+  opacity: 1;
+}
+
+/* Edge blur effect for non-logo/equip images - more aggressive blur */
+.hero-image-edge-blur {
+  position: relative;
+  overflow: visible;
+  mask-image: radial-gradient(ellipse 70% 70% at center, black 50%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, black 50%, transparent 85%);
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+}
+
+.hero-image-blurred {
+  mask-image: radial-gradient(ellipse 70% 70% at center, black 50%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, black 50%, transparent 85%);
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+  mask-position: center;
+  -webkit-mask-position: center;
+}
+
 /* Testimonial Card Flip - CodePen Style */
 .testimonial-card-wrapper {
   width: 100%;

@@ -6,7 +6,7 @@ import ProgramsSection from "../components/ProgramsSection";
 import LogoMarquee from "../components/LogoMarquee";
 import PlayerTestimonials from "../components/PlayerTestimonials";
 import TodaysEvents from "../components/TodaysEvents";
-// import AdSection from "../components/AdSection"; // Removed from homepage but not deleted
+import AdSection from "../components/AdSection";
 import TeamUpdates from "../components/TeamUpdates";
 import ParallaxSection from "../components/ParallaxSection";
 import { fetchTeams } from "../lib/actions";
@@ -42,7 +42,7 @@ export default async function Home() {
       <div className="h-4 md:h-8" />
       <ProgramsSection />
       <div className="h-8 md:h-16" />
-      <LogoMarquee />
+      <LogoMarquee middleContent={<AdSection />} />
       <div className="h-8 md:h-16" />
       <PlayerTestimonials />
       <div className="h-8 md:h-16" />
