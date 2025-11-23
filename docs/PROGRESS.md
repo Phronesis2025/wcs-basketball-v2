@@ -2,13 +2,23 @@
 
 ## Last Updated
 
-January 2025, Current Status - Homepage Redesign (Reference Style) - Scroll Jump Fix
+January 2025, Current Status - Parallax Section & Stats Animation Updates
 
 ## 🚀 Current Status Summary
 
 **Homepage Redesign Complete**: Modern dark-themed homepage matching reference design
 
-### January 2025 - Homepage Redesign (Reference Style) - Scroll Jump Fix
+### January 2025 - Parallax Section & Stats Animation Updates (v2.10.13)
+
+- ✅ **Parallax Section**: Created continuous parallax background with hoop-silhouette image spanning entire homepage
+- ✅ **Stats Animation**: Implemented count-up animation effect for all statistics (300+ Players, Teams count, 7 Championships)
+- ✅ **Team Count API**: Created API route to fetch actual team count from Supabase database
+- ✅ **Image Distribution**: Updated hero background images to use logo/equip images in top-left/bottom-right, other images in top-right/bottom-left
+- ✅ **Cache Version**: Updated cache version to 2.2 for immediate refresh of hero images
+- ✅ **Spacing Optimization**: Reduced spacing between homepage sections for more compact layout
+- ✅ **Hero Background**: Removed hoop-silhouette from hero section, moved to continuous parallax background
+
+### Previous Update - January 2025 - Homepage Redesign (Reference Style) - Scroll Jump Fix
 
 - ✅ **Hero Section**: Redesigned with "BUILT FOR THE GAME" styling, dark theme, parallax background images with flip animations
 - ✅ **Stats Section**: New section displaying "300+ Players", "20 Teams", "7 State Championships"

@@ -28,29 +28,90 @@ export default function Hero() {
         // Check localStorage cache first
         const cacheKey = 'hero-images-cache';
         const cacheTimestampKey = 'hero-images-cache-timestamp';
+        const cacheVersionKey = 'hero-images-cache-version';
         const cacheExpiry = 3600000; // 1 hour in milliseconds
+        const currentCacheVersion = '2.2'; // Increment this when file structure changes (force refresh for new images)
         
         const cachedData = typeof window !== 'undefined' ? localStorage.getItem(cacheKey) : null;
         const cachedTimestamp = typeof window !== 'undefined' ? localStorage.getItem(cacheTimestampKey) : null;
+        const cachedVersion = typeof window !== 'undefined' ? localStorage.getItem(cacheVersionKey) : null;
         
-        if (cachedData && cachedTimestamp) {
+        // Only use cache if version matches and it's less than 1 hour old
+        if (cachedData && cachedTimestamp && cachedVersion === currentCacheVersion) {
           const timestamp = parseInt(cachedTimestamp, 10);
           const now = Date.now();
           
-          // Use cached data if it's less than 1 hour old
           if (now - timestamp < cacheExpiry) {
             const { images: imageUrls } = JSON.parse(cachedData);
             devLog("Using cached hero images");
             
-            // Process cached images
-            if (imageUrls && imageUrls.length > 0) {
-              const shuffled = [...imageUrls].sort(() => Math.random() - 0.5);
-              const poolSize = Math.ceil(shuffled.length / 4);
+            // Validate cached URLs - filter out any that might reference deleted files
+            // Only filter known invalid patterns (files that definitely don't exist)
+            const validImageUrls = imageUrls?.filter((url: string) => {
+              if (!url || typeof url !== 'string') return false;
+              const urlLower = url.toLowerCase();
+              
+              // Only filter out files we know for certain don't exist
+              // ChatGPT files and old teams-card (but allow values-card)
+              if (urlLower.includes('chatgpt')) {
+                devLog(`Filtering out invalid cached URL: ${url} (ChatGPT file)`);
+                return false;
+              }
+              if (urlLower.includes('teams-card') && !urlLower.includes('values-card')) {
+                devLog(`Filtering out invalid cached URL: ${url} (old teams-card file)`);
+                return false;
+              }
+              
+              return true;
+            }) || [];
+            
+            // If we filtered out URLs, clear cache and fetch fresh
+            if (validImageUrls.length < imageUrls.length) {
+              devLog(`Clearing cache due to invalid URLs. Had ${imageUrls.length}, now ${validImageUrls.length}`);
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem(cacheKey);
+                localStorage.removeItem(cacheTimestampKey);
+                localStorage.removeItem(cacheVersionKey);
+              }
+              // Continue to fetch fresh data below - don't return
+            } else if (validImageUrls.length > 0) {
+              // Process cached images - use validImageUrls, not imageUrls
+              // Separate images by prefix: logo/equip vs all others
+              const logoEquipImages: string[] = [];
+              const otherImages: string[] = [];
+              
+              for (const url of validImageUrls) {
+                const urlLower = url.toLowerCase();
+                const filenameMatch = urlLower.match(/\/hero\/([^/?]+)/);
+                if (filenameMatch) {
+                  const filename = filenameMatch[1];
+                  if (filename.startsWith('logo-') || filename.startsWith('equip-')) {
+                    logoEquipImages.push(url);
+                  } else {
+                    otherImages.push(url);
+                  }
+                }
+              }
+              
+              // Shuffle each group separately
+              const shuffledLogoEquip = [...logoEquipImages].sort(() => Math.random() - 0.5);
+              const shuffledOther = [...otherImages].sort(() => Math.random() - 0.5);
+              
+              // Distribute logo/equip to top left and bottom right
+              const logoEquipPoolSize = Math.ceil(shuffledLogoEquip.length / 2);
+              const leftTop = shuffledLogoEquip.slice(0, logoEquipPoolSize);
+              const rightBottom = shuffledLogoEquip.slice(logoEquipPoolSize);
+              
+              // Distribute other images to top right and bottom left
+              const otherPoolSize = Math.ceil(shuffledOther.length / 2);
+              const rightTop = shuffledOther.slice(0, otherPoolSize);
+              const leftBottom = shuffledOther.slice(otherPoolSize);
+              
               const pools = {
-                leftTop: shuffled.slice(0, poolSize),
-                leftBottom: shuffled.slice(poolSize, Math.min(poolSize * 2, shuffled.length)),
-                rightTop: shuffled.slice(poolSize * 2, Math.min(poolSize * 3, shuffled.length)),
-                rightBottom: shuffled.slice(poolSize * 3),
+                leftTop,
+                leftBottom,
+                rightTop,
+                rightBottom,
               };
               
               const ensureMinimumImages = (pool: string[]) => {
@@ -66,7 +127,7 @@ export default function Hero() {
                 rightBottom: ensureMinimumImages(pools.rightBottom),
               });
               setIsLoadingImages(false);
-              return;
+              return; // Exit early if using valid cached data
             }
           }
         }
@@ -90,26 +151,75 @@ export default function Hero() {
 
         const { images: imageUrls } = await response.json();
         
-        // Cache the response
-        if (typeof window !== 'undefined' && imageUrls && imageUrls.length > 0) {
-          localStorage.setItem(cacheKey, JSON.stringify({ images: imageUrls }));
+        // Validate API response URLs - filter out any invalid ones
+        // Only filter known invalid patterns (files that definitely don't exist)
+        const validApiUrls = imageUrls?.filter((url: string) => {
+          if (!url || typeof url !== 'string') return false;
+          const urlLower = url.toLowerCase();
+          
+          // Only filter out files we know for certain don't exist
+          // ChatGPT files and old teams-card (but allow values-card)
+          if (urlLower.includes('chatgpt')) {
+            devLog(`Filtering out invalid API URL: ${url} (ChatGPT file)`);
+            return false;
+          }
+          if (urlLower.includes('teams-card') && !urlLower.includes('values-card')) {
+            devLog(`Filtering out invalid API URL: ${url} (old teams-card file)`);
+            return false;
+          }
+          
+          return true;
+        }) || [];
+        
+        // Cache the validated response with version
+        if (typeof window !== 'undefined' && validApiUrls && validApiUrls.length > 0) {
+          localStorage.setItem(cacheKey, JSON.stringify({ images: validApiUrls }));
           localStorage.setItem(cacheTimestampKey, Date.now().toString());
+          localStorage.setItem(cacheVersionKey, currentCacheVersion);
         }
 
-        if (imageUrls && imageUrls.length > 0) {
-          devLog(`Total image URLs received: ${imageUrls.length}`);
+        if (validApiUrls && validApiUrls.length > 0) {
+          devLog(`Total image URLs received: ${imageUrls.length}, valid after filtering: ${validApiUrls.length}`);
 
-          // Distribute images into 4 unique pools ensuring no duplicates across pools
-          // Shuffle array to randomize distribution
-          const shuffled = [...imageUrls].sort(() => Math.random() - 0.5);
+          // Separate images by prefix:
+          // - logo- and equip- files go to top left and bottom right
+          // - All other files go to top right and bottom left
+          const logoEquipImages: string[] = [];
+          const otherImages: string[] = [];
           
-          // Split into 4 pools with unique images (no overlap)
-          const poolSize = Math.ceil(shuffled.length / 4);
+          for (const url of validApiUrls) {
+            const urlLower = url.toLowerCase();
+            // Extract filename from URL (after /hero/)
+            const filenameMatch = urlLower.match(/\/hero\/([^/?]+)/);
+            if (filenameMatch) {
+              const filename = filenameMatch[1];
+              if (filename.startsWith('logo-') || filename.startsWith('equip-')) {
+                logoEquipImages.push(url);
+              } else {
+                otherImages.push(url);
+              }
+            }
+          }
+          
+          // Shuffle each group separately
+          const shuffledLogoEquip = [...logoEquipImages].sort(() => Math.random() - 0.5);
+          const shuffledOther = [...otherImages].sort(() => Math.random() - 0.5);
+          
+          // Distribute logo/equip images to top left and bottom right
+          const logoEquipPoolSize = Math.ceil(shuffledLogoEquip.length / 2);
+          const leftTop = shuffledLogoEquip.slice(0, logoEquipPoolSize);
+          const rightBottom = shuffledLogoEquip.slice(logoEquipPoolSize);
+          
+          // Distribute other images to top right and bottom left
+          const otherPoolSize = Math.ceil(shuffledOther.length / 2);
+          const rightTop = shuffledOther.slice(0, otherPoolSize);
+          const leftBottom = shuffledOther.slice(otherPoolSize);
+          
           const pools = {
-            leftTop: shuffled.slice(0, poolSize),
-            leftBottom: shuffled.slice(poolSize, Math.min(poolSize * 2, shuffled.length)),
-            rightTop: shuffled.slice(poolSize * 2, Math.min(poolSize * 3, shuffled.length)),
-            rightBottom: shuffled.slice(poolSize * 3),
+            leftTop,
+            leftBottom,
+            rightTop,
+            rightBottom,
           };
 
           // Ensure each pool has at least 2 images for rotation (duplicate within pool if needed)
@@ -141,7 +251,9 @@ export default function Hero() {
             rightBottom: ensureMinimumImages(pools.rightBottom),
           });
 
-          devLog(`Loaded ${imageUrls.length} hero images from storage, distributed into 4 pools`);
+          devLog(`Loaded ${validApiUrls.length} hero images from storage, distributed into 4 pools`);
+          devLog(`Logo/Equip images: ${logoEquipImages.length} (leftTop=${pools.leftTop.length}, rightBottom=${pools.rightBottom.length})`);
+          devLog(`Other images: ${otherImages.length} (rightTop=${pools.rightTop.length}, leftBottom=${pools.leftBottom.length})`);
           devLog(`Pool sizes: leftTop=${pools.leftTop.length}, leftBottom=${pools.leftBottom.length}, rightTop=${pools.rightTop.length}, rightBottom=${pools.rightBottom.length}`);
         } else {
           devLog("No hero images found in storage bucket images/hero");
@@ -192,17 +304,6 @@ export default function Hero() {
       className="relative pt-20 pb-20 md:pt-32 md:pb-32 px-6 overflow-hidden min-h-screen flex flex-col justify-center bg-[#030303]"
       aria-label="Hero"
     >
-      {/* Background Image - Barely Visible */}
-      <div 
-        className="absolute inset-0 w-full h-full pointer-events-none -z-10 opacity-[0.15]"
-        style={{
-          backgroundImage: 'url(/hoop-silhouette.jpg)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
-      
       {/* Background Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-900/[0.05] blur-[120px] rounded-full pointer-events-none -z-10" />
 
@@ -213,8 +314,8 @@ export default function Hero() {
                   <p className="hero-aurora-text text-3xl md:text-4xl lg:text-5xl font-normal">
                     WORLD CLASS SPORTS
                   </p>
-                </div>
-                
+      </div>
+
                 {/* Badge with pulsing dot */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm mb-8">
                   <span className="relative flex h-2 w-2">
@@ -223,7 +324,7 @@ export default function Hero() {
                   </span>
                   <span className="text-[11px] font-medium uppercase tracking-widest text-neutral-300 font-inter">
                     COACH NATE CLASSIC REGISTRATION OPEN
-                  </span>
+            </span>
                 </div>
 
         {/* Main Headline */}
@@ -232,8 +333,8 @@ export default function Hero() {
           <br />
           <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40">
             THE GAME.
-          </span>
-        </h1>
+            </span>
+          </h1>
 
         {/* Subtitle */}
         <p className="text-neutral-400 text-lg leading-relaxed max-w-xl mb-10 text-balance font-light font-inter">
@@ -254,7 +355,7 @@ export default function Hero() {
                     <div className="absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 group-hover:translate-x-full transition-transform duration-700 ease-in-out"></div>
                   </Link>
                 </div>
-      </div>
+        </div>
 
       {/* Parallax Image Grid with Flip Cards */}
       {!isLoadingImages && (imagePools.leftTop.length > 0 || imagePools.leftBottom.length > 0 || imagePools.rightTop.length > 0 || imagePools.rightBottom.length > 0) && (
@@ -287,8 +388,8 @@ export default function Hero() {
                 images={imagePools.leftBottom} 
                 interval={14000} 
                 alt="Play"
-              />
-            </div>
+          />
+        </div>
           )}
 
           {/* Image 3 - Top Right */}
@@ -320,9 +421,9 @@ export default function Hero() {
                 interval={16000} 
                 alt="Coach"
               />
-            </div>
-          )}
         </div>
+          )}
+      </div>
       )}
     </section>
   );

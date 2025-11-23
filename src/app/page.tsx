@@ -8,6 +8,7 @@ import PlayerTestimonials from "../components/PlayerTestimonials";
 import TodaysEvents from "../components/TodaysEvents";
 // import AdSection from "../components/AdSection"; // Removed from homepage but not deleted
 import TeamUpdates from "../components/TeamUpdates";
+import ParallaxSection from "../components/ParallaxSection";
 import { fetchTeams } from "../lib/actions";
 
 export default async function Home() {
@@ -32,23 +33,25 @@ export default async function Home() {
 
   return (
     <div className="bg-[#030303] bg-grain min-h-screen">
+      <ParallaxSection />
       <Hero />
-      <div className="h-12 md:h-16" /> {/* Reduced spacing */}
+      <div className="h-8 md:h-12" />
       <StatsSection />
+      <div className="h-4 md:h-8" />
       <TodaysEvents />
-      <div className="h-4 md:h-16 lg:h-20" />
+      <div className="h-4 md:h-8" />
       <ProgramsSection />
-      <div className="h-24 md:h-32 lg:h-40" />
+      <div className="h-8 md:h-16" />
       <LogoMarquee />
-      <div className="h-24 md:h-32 lg:h-40" />
+      <div className="h-8 md:h-16" />
       <PlayerTestimonials />
-      <div className="h-24 md:h-32 lg:h-40" />
+      <div className="h-8 md:h-16" />
       <TeamUpdates
         maxUpdates={8}
         variant="compact-list"
         showViewMoreText={true}
       />
-      <div className="h-8 md:h-32 lg:h-40" />
+      <div className="h-4 md:h-16" />
       <QuoteSection />
     </div>
   );

@@ -90,7 +90,7 @@ export default function Footer() {
               <li>
                 <Link href="/drills" className="hover:text-white transition-colors font-inter">
                   Drills
-                </Link>
+            </Link>
               </li>
             </ul>
           </div>
@@ -112,7 +112,7 @@ export default function Footer() {
               <li>
                 <Link href="/tournament-signup" className="hover:text-white transition-colors font-inter">
                   Tournaments
-                </Link>
+              </Link>
               </li>
             </ul>
           </div>
@@ -123,17 +123,17 @@ export default function Footer() {
         <p className="font-inter">© {currentYear} WCS Basketball. All rights reserved.</p>
         <div className="flex gap-6">
           <Link href="/privacy" className="hover:text-white transition-colors font-inter">
-            Privacy
-          </Link>
+                Privacy
+              </Link>
           <Link href="/terms" className="hover:text-white transition-colors font-inter">
-            Terms
-          </Link>
+                Terms
+              </Link>
           <Link href="/code-of-conduct" className="hover:text-white transition-colors font-inter">
-            Code of Conduct
-          </Link>
+                Code of Conduct
+              </Link>
           <Link href="/refund-policy" className="hover:text-white transition-colors font-inter">
-            Refunds
-          </Link>
+                Refunds
+              </Link>
         </div>
       </div>
     </footer>

@@ -66,12 +66,12 @@ export default function LogoMarquee() {
         }
 
         // 2. Fetch team logos from database
-        try {
+      try {
           const { data: teamData, error: teamError } = await supabase
-            .from("teams")
-            .select("id, name, logo_url")
-            .eq("is_active", true)
-            .order("name");
+          .from("teams")
+          .select("id, name, logo_url")
+          .eq("is_active", true)
+          .order("name");
 
           if (!teamError && teamData) {
             for (const team of teamData) {
@@ -169,10 +169,10 @@ export default function LogoMarquee() {
         <div className="flex items-center gap-4 animate-scroll">
           {/* First set */}
           {firstRow.map((logo, index) => (
-            <div
+          <div
               key={`first-row-1-${logo.id}-${index}`}
               className="flex-shrink-0 w-[140px] h-[100px] bg-white/5 rounded-xl py-6 px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
-            >
+          >
               {/* Dark gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none"></div>
               <Image
@@ -255,8 +255,8 @@ export default function LogoMarquee() {
                   target.src = "/images/basketball icon.png";
                 }}
               />
-            </div>
-          ))}
+          </div>
+        ))}
         </div>
       </div>
     </section>

@@ -54,15 +54,33 @@ export async function GET() {
     // Get public URLs for each image
     const imageUrls: string[] = [];
     for (const file of imageFiles) {
-      const { data } = supabaseAdmin.storage
-        .from('images')
-        .getPublicUrl(`hero/${file.name}`);
-      
-      if (data.publicUrl) {
-        imageUrls.push(data.publicUrl);
-        devLog(`Added hero image: ${file.name} -> ${data.publicUrl}`);
-      } else {
-        devError(`Failed to get public URL for: ${file.name}`);
+      try {
+        // Construct the path - file.name from list('hero') should be just the filename
+        // Handle both cases: if file.name already includes 'hero/', use it as-is; otherwise prepend 'hero/'
+        let filePath: string;
+        if (file.name.startsWith('hero/')) {
+          filePath = file.name; // Already has the path
+        } else {
+          filePath = `hero/${file.name}`; // Just the filename, prepend path
+        }
+        
+        const { data, error } = supabaseAdmin.storage
+          .from('images')
+          .getPublicUrl(filePath);
+        
+        if (error) {
+          devError(`Error getting public URL for ${file.name} (path: ${filePath}):`, error);
+          continue;
+        }
+        
+        if (data?.publicUrl) {
+          imageUrls.push(data.publicUrl);
+          devLog(`Added hero image: ${file.name} (path: ${filePath}) -> ${data.publicUrl}`);
+        } else {
+          devError(`Failed to get public URL for: ${file.name} (path: ${filePath}) - no URL returned`);
+        }
+      } catch (err) {
+        devError(`Exception getting URL for ${file.name}:`, err);
       }
     }
     
