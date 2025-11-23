@@ -1,5 +1,6 @@
 import { supabase, supabaseAdmin } from "@/lib/supabaseClient";
 import { devError } from "@/lib/security";
+import { extractApiResponseData } from "@/lib/errorHandler";
 import { ChangelogEntry } from "@/types/supabase";
 
 export async function fetchChangelog(userId?: string): Promise<ChangelogEntry[]> {
@@ -7,8 +8,12 @@ export async function fetchChangelog(userId?: string): Promise<ChangelogEntry[]>
     const headers: Record<string, string> = {};
     if (userId) headers["x-user-id"] = userId;
     const resp = await fetch("/api/admin/changelog", { headers });
-    if (!resp.ok) throw new Error(await resp.text());
-    return (await resp.json()) as ChangelogEntry[];
+    if (!resp.ok) {
+      const errorText = await resp.text();
+      throw new Error(errorText);
+    }
+    const data = await extractApiResponseData<ChangelogEntry[]>(resp);
+    return Array.isArray(data) ? data : [];
   } catch (e) {
     devError("fetchChangelog error", e);
     return [];

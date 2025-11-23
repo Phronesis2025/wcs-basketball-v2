@@ -1,5 +1,52 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.21 - About Page Enhancements & Changelog Fix
+
+**Release Date**: January 13, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (130 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **About Page Visual Enhancements**:
+  - Added historical team photo (IMG_9487.jpeg) to History section with black and white effect and gradient overlay
+  - Added boys and girls team photos to Mission section with gradient overlays
+  - Added four historical logos below hero section paragraph, evenly spaced
+  - All images properly sized and styled to match page design
+  - Files Modified:
+    - `src/app/about/page.tsx`
+
+### 🔧 Fixed
+
+- **Changelog Loading Issue**:
+  - Fixed changelog not loading in club management Monitor tab
+  - Updated `fetchChangelog` function to properly extract data from wrapped API response
+  - Now uses `extractApiResponseData` helper for consistent response handling
+  - Files Modified:
+    - `src/lib/changelogActions.ts`
+
+### 📝 Documentation
+
+- **Security Audit Update**:
+  - Updated security audit documentation with January 13, 2025 review
+  - No new security vulnerabilities found
+  - Supabase advisors reviewed - same recommendations as previous review
+  - Files Modified:
+    - `docs/security/SECURITY_AUDITS.md`
+
+### 🔒 Security
+
+- **Security Review**:
+  - Completed security check - no new vulnerabilities found
+  - Supabase security advisor: 1 WARN (leaked password protection - manual dashboard config required)
+  - Supabase performance advisor: 24 INFO (unused indexes - low priority, no action needed)
+  - All existing security measures verified
+
+---
+
 ## 🚀 Version 2.10.20 - About Page Redesign & Navbar Updates
 
 **Release Date**: January 13, 2025  

@@ -81,15 +81,54 @@ export default function About() {
           About World Class Sports
         </h1>
         <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-400 md:text-xl font-inter">
-          At World Class Sports (WCS), we’re all about serious, high-level
+          At World Class Sports (WCS), we're all about serious, high-level
           competitive basketball. If your child has the drive to compete at the
-          top tournament level, you’ve found the right program. Since 2000,
+          top tournament level, you've found the right program. Since 2000,
           World Class Sports has built a reputation across the Midwest for
           putting talented, fundamentally sound, and exceptionally well-coached
-          teams on the floor year after year. When you join WCS, you’re joining
+          teams on the floor year after year. When you join WCS, you're joining
           a proven travel basketball program that parents and players trust to
           take their game to the next level.
         </p>
+        {/* Logo Section */}
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-12 md:gap-16 lg:gap-20">
+          <div className="relative h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 opacity-80 hover:opacity-100 transition-opacity">
+            <Image
+              src="/WCS-old1.png"
+              alt="World Class Sports logo"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 96px, (max-width: 1024px) 128px, 160px"
+            />
+          </div>
+          <div className="relative h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 opacity-80 hover:opacity-100 transition-opacity">
+            <Image
+              src="/World_Class_Logo 23.png"
+              alt="World Class Sports logo"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 96px, (max-width: 1024px) 128px, 160px"
+            />
+          </div>
+          <div className="relative h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 opacity-80 hover:opacity-100 transition-opacity">
+            <Image
+              src="/logo3.png"
+              alt="World Class Sports logo"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 96px, (max-width: 1024px) 128px, 160px"
+            />
+          </div>
+          <div className="relative h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 opacity-80 hover:opacity-100 transition-opacity">
+            <Image
+              src="/WCSold2.png"
+              alt="World Class Sports logo"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 96px, (max-width: 1024px) 128px, 160px"
+            />
+          </div>
+        </div>
       </section>
 
       {/* Mission Section */}
@@ -105,7 +144,32 @@ export default function About() {
             <h2 className="mb-6 text-3xl font-semibold tracking-tight text-white md:text-4xl font-inter">
               Developing the next generation of athletes.
             </h2>
-            <div className="h-1 w-20 rounded-full bg-blue-600"></div>
+            <div className="h-1 w-20 rounded-full bg-blue-600 mb-6"></div>
+            {/* Team Images */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-white/10">
+                <Image
+                  src="/boys-about.jpg"
+                  alt="World Class Sports boys team"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+                {/* Slight gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/30" />
+              </div>
+              <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-white/10">
+                <Image
+                  src="/girls-about.jpg"
+                  alt="World Class Sports girls team"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
+                {/* Slight gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/30" />
+              </div>
+            </div>
           </div>
           <div className="text-lg leading-relaxed text-slate-400 font-inter">
             <p>
@@ -141,7 +205,19 @@ export default function About() {
             <h2 className="mb-6 text-3xl font-semibold tracking-tight text-white md:text-4xl font-inter">
               Building a legacy since 2000.
             </h2>
-            <div className="h-1 w-20 rounded-full bg-blue-600"></div>
+            <div className="h-1 w-20 rounded-full bg-blue-600 mb-6"></div>
+            <div className="relative w-full rounded-xl overflow-hidden border border-white/10">
+              <Image
+                src="/IMG_9487.jpeg"
+                alt="World Class Sports team photo from early years"
+                width={800}
+                height={600}
+                className="w-full h-auto grayscale object-cover"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              {/* Slight gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/30" />
+            </div>
           </div>
           <div className="text-lg leading-relaxed text-slate-400 font-inter">
             <p>
