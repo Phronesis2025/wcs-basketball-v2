@@ -64,28 +64,31 @@ const TestimonialCard: React.FC<{ testimonials: Testimonial[]; delay: number; in
   glimmerDelay
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFlipping, setIsFlipping] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(false);
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
 
   useEffect(() => {
+    // Start with front side showing
+    setIsFlipped(false);
+    
     const flipInterval = setInterval(() => {
-      setIsFlipping(true);
+      // Flip to back side (keep same testimonial)
+      setIsFlipped(true);
       
-      // Change testimonial at halfway point of flip
+      // After half the interval, flip back to front and change testimonial
       setTimeout(() => {
+        setIsFlipped(false);
         setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-      }, 300);
-      
-      // Reset flip state
-      setTimeout(() => {
-        setIsFlipping(false);
-      }, 600);
+      }, interval / 2);
     }, interval);
 
     return () => clearInterval(flipInterval);
   }, [testimonials.length, interval]);
 
   const currentTestimonial = testimonials[currentIndex];
+  // Back side always shows a different testimonial than the front
+  const backTestimonial = testimonials[(currentIndex + 1) % testimonials.length];
 
   return (
     <motion.div
@@ -93,44 +96,91 @@ const TestimonialCard: React.FC<{ testimonials: Testimonial[]; delay: number; in
       initial={{ opacity: 0, y: 30 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, delay }}
-      className="bg-[#0A0A0A] border border-white/10 rounded-xl p-6 md:p-8 flex flex-col justify-between hover:border-white/20 transition-colors perspective-1000"
+      className="testimonial-card-wrapper"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`flip-card-inner ${isFlipping ? 'flipping' : ''}`}>
-        <div className="flip-card-face-testimonial">
-          {/* Star Rating */}
-          <div className="flex gap-1 mb-4">
-            {[...Array(currentTestimonial.rating)].map((_, i) => (
-              <svg
-                key={i}
-                className="w-4 h-4 star-glimmer"
-                style={{
-                  animationDelay: `${glimmerDelay + i * 0.2}s`,
-                }}
-                viewBox="0 0 20 20"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
-              </svg>
-            ))}
-          </div>
-
-          {/* Quote */}
-          <p className="text-neutral-300 text-sm md:text-base leading-relaxed mb-6 font-inter">
-            &ldquo;{currentTestimonial.quote}&rdquo;
-          </p>
-
-          {/* Author */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-              <span className="text-white text-xs font-medium font-inter">
-                {currentTestimonial.initials}
-              </span>
+      <div className={`testimonial-card-container ${isHovered || isFlipped ? 'hover' : ''}`}>
+        {/* Front Side - Dark Gray - Full Testimonial */}
+        <div className="testimonial-card-front">
+          <div className="testimonial-card-inner">
+            {/* Star Rating */}
+            <div className="flex gap-1 mb-4 justify-center">
+              {[...Array(currentTestimonial.rating)].map((_, i) => (
+                <svg
+                  key={i}
+                  className="w-4 h-4 star-glimmer"
+                  style={{
+                    animationDelay: `${glimmerDelay + i * 0.2}s`,
+                  }}
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                </svg>
+              ))}
             </div>
-            <div>
-              <p className="text-white text-sm font-medium font-inter">
-                {currentTestimonial.name}
-              </p>
-              <p className="text-neutral-500 text-xs font-inter">{currentTestimonial.role}</p>
+
+            {/* Quote */}
+            <p className="text-neutral-200 text-xs md:text-sm leading-relaxed mb-6 font-inter font-normal">
+              &ldquo;{currentTestimonial.quote}&rdquo;
+            </p>
+
+            {/* Author */}
+            <div className="flex items-center gap-3 justify-center">
+              <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                <span className="text-white text-xs font-medium font-inter">
+                  {currentTestimonial.initials}
+                </span>
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium font-inter">
+                  {currentTestimonial.name}
+                </p>
+                <p className="text-neutral-400 text-xs font-normal font-inter">{currentTestimonial.role}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Back Side - Darker Blue - Another Testimonial */}
+        <div className="testimonial-card-back">
+          <div className="testimonial-card-inner">
+            {/* Star Rating */}
+            <div className="flex gap-1 mb-4 justify-center">
+              {[...Array(backTestimonial.rating)].map((_, i) => (
+                <svg
+                  key={i}
+                  className="w-4 h-4 star-glimmer"
+                  style={{
+                    animationDelay: `${glimmerDelay + i * 0.2}s`,
+                  }}
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                </svg>
+              ))}
+            </div>
+
+            {/* Quote */}
+            <p className="text-neutral-200 text-xs md:text-sm leading-relaxed mb-6 font-inter font-normal">
+              &ldquo;{backTestimonial.quote}&rdquo;
+            </p>
+
+            {/* Author */}
+            <div className="flex items-center gap-3 justify-center">
+              <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                <span className="text-white text-xs font-medium font-inter">
+                  {backTestimonial.initials}
+                </span>
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium font-inter">
+                  {backTestimonial.name}
+                </p>
+                <p className="text-neutral-400 text-xs font-normal font-inter">{backTestimonial.role}</p>
+              </div>
             </div>
           </div>
         </div>
