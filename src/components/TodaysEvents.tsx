@@ -255,7 +255,7 @@ export default function TodaysEvents({
   if (isLoading) {
     return (
       <section
-        className="bg-[#0A0A0A] py-1 w-full border-b border-white/10"
+        className="bg-black py-1 w-full"
         aria-label="Today's Events"
       >
         <div className="w-full">
@@ -287,7 +287,7 @@ export default function TodaysEvents({
 
   return (
     <section
-      className="pt-8 md:pt-12 pb-2 px-6 bg-[#030303] border-t border-white/5"
+      className="pt-8 md:pt-12 pb-2 px-6 bg-black"
       aria-label="Today's Events"
     >
       <div className="max-w-7xl mx-auto">
@@ -302,7 +302,7 @@ export default function TodaysEvents({
           Today's Events
         </motion.h2>
       </div>
-      <div className="w-full bg-[#0A0A0A] py-2 relative z-40 border-y border-white/5">
+      <div className="w-full bg-black py-2 relative z-40">
         {/* Horizontal Scroll Container */}
         <div className="bg-[#0A0A0A] w-full relative">
           <div className="flex h-[80px]">

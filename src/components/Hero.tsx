@@ -117,11 +117,10 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative pt-20 pb-20 md:pt-32 md:pb-32 px-6 overflow-hidden min-h-screen flex flex-col justify-center bg-[#030303]"
+      className="relative pt-20 pb-20 md:pt-32 md:pb-32 px-6 overflow-hidden min-h-screen flex flex-col justify-center bg-black"
       aria-label="Hero"
     >
-      {/* Background Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-blue-900/[0.05] blur-[120px] rounded-full pointer-events-none -z-10" />
+      {/* Background Glow - Removed for pure black background */}
 
       {/* Main Content */}
       <div className="max-w-5xl mx-auto text-center flex flex-col items-center z-20 relative">

@@ -130,7 +130,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
   if (loading) {
     return (
       <section
-        className="bg-navy/80 py-3 overflow-hidden"
+        className="bg-black py-3 overflow-hidden"
         aria-label="Team Logos"
       >
         <div className="flex items-center justify-center">
@@ -162,12 +162,12 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
 
   return (
     <section
-      className="bg-[#030303] py-2 sm:py-3 md:py-4 overflow-hidden border-t border-white/5 relative"
+      className="bg-black py-2 sm:py-3 md:py-4 overflow-hidden relative"
       aria-label="Team Logos"
     >
       {/* Gradient Masks */}
-      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-[#030303] to-transparent z-10 pointer-events-none"></div>
-      <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#030303] to-transparent z-10 pointer-events-none"></div>
+      <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
+      <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
       
       {/* First Row - Scrolling Left */}
       <div className="overflow-hidden mb-3 sm:mb-4 md:mb-6">

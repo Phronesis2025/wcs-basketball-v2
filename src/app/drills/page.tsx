@@ -13,6 +13,7 @@ import {
   getYouTubeThumbnailUrl,
   getYouTubeEmbedUrl,
 } from "@/lib/youtubeUtils";
+import AdSection from "@/components/AdSection";
 
 const modalVariants: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -215,18 +216,23 @@ export default function DrillsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-navy text-white">
-      <section className="pt-20 pb-12 sm:pt-24" aria-label="Practice Drills">
-        <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
+    <main className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen">
+      {/* Background Gradients */}
+      <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+        <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
+      </div>
+      
+      <section className="relative z-10" aria-label="Practice Drills">
+        <div className="max-w-7xl mx-auto px-6">
           <h1
-            className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase"
+            className="text-5xl md:text-7xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 mb-8 text-center uppercase font-inter relative z-20"
             aria-label="Practice Drills"
           >
             Practice Drills
           </h1>
           {error && (
-            <div className="mb-8 p-4 bg-gray-900/50 border border-red-500/50 rounded-lg">
-              <p className="text-red font-inter">
+            <div className="mb-8 p-4 bg-black/50 border border-white/10 rounded-lg">
+              <p className="text-red-500 font-inter">
                 Failed to load drills. Please try again.
               </p>
             </div>
@@ -237,7 +243,7 @@ export default function DrillsPage() {
               <div>
                 <label
                   htmlFor="time-filter"
-                  className="text-white font-inter text-sm mb-2 block"
+                  className="text-slate-300 font-inter text-sm mb-2 block"
                 >
                   Time
                 </label>
@@ -245,7 +251,7 @@ export default function DrillsPage() {
                   id="time-filter"
                   value={timeFilter}
                   onChange={(e) => setTimeFilter(e.target.value)}
-                  className="w-full bg-gray-900 text-white border border-red-500/50 rounded p-2"
+                  className="w-full bg-black/50 text-slate-300 border border-white/10 rounded p-2 font-inter"
                 >
                   {timeCategories.map((category) => (
                     <option key={category.value} value={category.value}>
@@ -257,7 +263,7 @@ export default function DrillsPage() {
               <div>
                 <label
                   htmlFor="skill-filter"
-                  className="text-white font-inter text-sm mb-2 block"
+                  className="text-slate-300 font-inter text-sm mb-2 block"
                 >
                   Skill
                 </label>
@@ -265,7 +271,7 @@ export default function DrillsPage() {
                   id="skill-filter"
                   value={skillFilter}
                   onChange={(e) => setSkillFilter(e.target.value)}
-                  className="w-full bg-gray-900 text-white border border-red-500/50 rounded p-2"
+                  className="w-full bg-black/50 text-slate-300 border border-white/10 rounded p-2 font-inter"
                 >
                   <option value="all">All Skills</option>
                   {uniqueSkills.map((skill) => (
@@ -286,7 +292,7 @@ export default function DrillsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
-                    className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 cursor-pointer hover:bg-gray-800/50 transition-colors"
+                    className="group bg-white/5 border border-white/10 rounded-lg overflow-hidden cursor-pointer hover:border-white/20 transition-all duration-300"
                     onClick={() => setSelectedDrill(drill)}
                     role="button"
                     tabIndex={0}
@@ -298,84 +304,102 @@ export default function DrillsPage() {
                     }}
                     aria-label={`View ${drill.title} drill details`}
                   >
-                    <div className="flex-shrink-0">
-                      <h4 className="text-red-600 font-bebas uppercase text-base border-b border-red-500/50 pb-1">
-                        {drill.category} • {drill.skills.join(", ")}
-                      </h4>
-                      <h3 className="text-2xl font-bebas mt-2 text-white line-clamp-1 leading-tight overflow-hidden">
-                        {sanitizeInput(drill.title)}
-                      </h3>
-                      <p
-                        className="text-gray-300 font-inter leading-tight mt-4 text-sm lg:text-base overflow-hidden"
-                        style={{
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          lineHeight: "1.2em",
-                          maxHeight: "2.4em",
-                        }}
-                      >
-                        Equipment: {drill.equipment.join(", ")}
-                      </p>
-                    </div>
-
-                    <div className="flex-1 flex flex-col justify-between mt-4">
-                      <div className="flex-shrink-0 mb-4">
-                        {(() => {
-                          // Check for YouTube URL first
-                          if (drill.youtube_url) {
-                            const videoId = extractYouTubeVideoId(
-                              drill.youtube_url
-                            );
-                            if (videoId) {
-                              const thumbnailUrl =
-                                getYouTubeThumbnailUrl(videoId);
-                              return (
+                    {/* Image Section - Top */}
+                    <div className="relative w-full h-48 md:h-56 lg:h-64 overflow-hidden bg-black/50">
+                      {(() => {
+                        // Check for YouTube URL first
+                        if (drill.youtube_url) {
+                          const videoId = extractYouTubeVideoId(
+                            drill.youtube_url
+                          );
+                          if (videoId) {
+                            const thumbnailUrl =
+                              getYouTubeThumbnailUrl(videoId);
+                            return (
+                              <>
                                 <Image
                                   src={thumbnailUrl}
                                   alt={drill.title}
                                   width={400}
-                                  height={192}
-                                  className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
-                                  style={{ aspectRatio: "400/192" }}
+                                  height={256}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                 />
-                              );
-                            }
+                                {/* Dark gradient overlay - lighter on hover */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30 group-hover:from-black/40 group-hover:via-black/20 group-hover:to-black/10 transition-all duration-300" />
+                                {/* Play button overlay */}
+                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                  <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                                    <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                  </div>
+                                </div>
+                              </>
+                            );
                           }
-                          // Fallback to image_url if no YouTube URL
-                          if (drill.image_url) {
-                            return (
+                        }
+                        // Fallback to image_url if no YouTube URL
+                        if (drill.image_url) {
+                          return (
+                            <>
                               <Image
                                 src={drill.image_url}
                                 alt={drill.title}
                                 width={400}
-                                height={192}
-                                className="w-full h-32 md:h-40 lg:h-48 object-cover rounded-md"
-                                style={{ aspectRatio: "400/192" }}
+                                height={256}
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                               />
-                            );
-                          }
-                          // No image or YouTube URL
-                          return (
-                            <div className="w-full h-32 md:h-40 lg:h-48 bg-gray-800/50 rounded-md flex items-center justify-center">
-                              <span className="text-gray-500 text-sm">
-                                No Image
-                              </span>
-                            </div>
+                              {/* Dark gradient overlay - lighter on hover */}
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/50 to-black/30 group-hover:from-black/40 group-hover:via-black/20 group-hover:to-black/10 transition-all duration-300" />
+                            </>
                           );
-                        })()}
+                        }
+                        // No image or YouTube URL
+                        return (
+                          <div className="w-full h-full bg-gradient-to-br from-black/80 to-black/50 flex items-center justify-center">
+                            <span className="text-slate-500 text-sm">
+                              No Image
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Content Section - Bottom */}
+                    <div className="p-6 flex flex-col gap-4 min-h-[200px]">
+                      {/* Category Badge */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-blue-500 font-inter text-xs uppercase tracking-wider">
+                          {drill.category}
+                        </span>
+                        <span className="text-slate-500">•</span>
+                        <span className="text-slate-400 font-inter text-xs">
+                          {drill.skills[0]}
+                        </span>
                       </div>
 
-                      <div className="flex-shrink-0 py-2">
+                      {/* Title */}
+                      <h3 className="text-xl font-inter font-semibold text-white line-clamp-2 leading-tight group-hover:text-blue-400 transition-colors min-h-[3.5rem]">
+                        {sanitizeInput(drill.title)}
+                      </h3>
+
+                      {/* Equipment */}
+                      <p className="text-slate-400 font-inter text-sm line-clamp-2 leading-relaxed flex-grow">
+                        Equipment: {drill.equipment.slice(0, 3).join(", ")}
+                        {drill.equipment.length > 3 && "..."}
+                      </p>
+
+                      {/* Button - Always at bottom */}
+                      <div className="mt-auto pt-2">
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             setSelectedDrill(drill);
                           }}
-                          className="w-full bg-red text-white font-bebas uppercase py-2 px-4 rounded-lg hover:bg-red-600 transition-colors"
+                          className="w-full bg-blue-600 text-white font-inter text-sm font-medium py-2.5 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                           aria-label={`View details for ${drill.title}`}
                           type="button"
                         >
@@ -386,8 +410,8 @@ export default function DrillsPage() {
                   </motion.div>
                 ))
               ) : (
-                <div className="col-span-full bg-gray-900/50 border border-red-500/50 rounded-lg p-4 text-center">
-                  <p className="text-gray-300 font-inter">
+                <div className="col-span-full bg-white/5 border border-white/10 rounded-lg p-4 text-center">
+                  <p className="text-slate-300 font-inter">
                     No drills available.
                   </p>
                 </div>
@@ -653,6 +677,11 @@ export default function DrillsPage() {
           </motion.div>
         </motion.div>
       )}
-    </div>
+      
+      {/* Ad Section */}
+      <div className="relative z-10 mt-16">
+        <AdSection />
+      </div>
+    </main>
   );
 }

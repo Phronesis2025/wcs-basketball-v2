@@ -84,7 +84,7 @@ export default function ProgramsSection() {
     <section
       ref={ref}
       id="around-wcs"
-      className="pt-12 pb-12 px-6 border-t border-white/5 bg-[#030303]"
+      className="pt-12 pb-12 px-6 bg-black"
       aria-label="Programs"
     >
       <div className="max-w-7xl mx-auto">

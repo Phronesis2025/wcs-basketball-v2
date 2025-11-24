@@ -256,7 +256,7 @@ export default function TeamUpdates({
       <section
         ref={sectionRef}
         aria-labelledby="team-updates-title"
-        className="bg-[#030303] mt-8 mb-12 pt-6 sm:pt-8 pb-6 sm:pb-8 px-6 border-t border-white/5"
+        className="bg-black mt-8 mb-12 pt-6 sm:pt-8 pb-6 sm:pb-8 px-6"
       >
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h2
@@ -268,7 +268,7 @@ export default function TeamUpdates({
           >
             Around the WCS
           </motion.h2>
-          <div className="bg-[#0A0A0A] border border-white/10 rounded-lg p-6 sm:p-8">
+          <div className="bg-black border border-white/10 rounded-lg p-6 sm:p-8">
           {isLoading ? (
             <div className="bg-black/50 border border-white/10 rounded-lg p-4 text-center">
               <p className="text-neutral-400 font-inter">Loading updates…</p>

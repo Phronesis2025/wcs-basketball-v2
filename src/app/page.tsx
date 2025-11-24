@@ -8,7 +8,6 @@ import PlayerTestimonials from "../components/PlayerTestimonials";
 import TodaysEvents from "../components/TodaysEvents";
 import AdSection from "../components/AdSection";
 import TeamUpdates from "../components/TeamUpdates";
-import ParallaxSection from "../components/ParallaxSection";
 import { fetchTeams } from "../lib/actions";
 
 export default async function Home() {
@@ -32,8 +31,7 @@ export default async function Home() {
   const coachesError = null;
 
   return (
-    <div className="bg-[#030303] bg-grain min-h-screen">
-      <ParallaxSection />
+    <div className="bg-black min-h-screen">
       <Hero />
       <div className="h-8 md:h-12" />
       <StatsSection />

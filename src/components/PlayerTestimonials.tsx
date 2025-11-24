@@ -195,7 +195,7 @@ export default function PlayerTestimonials() {
   return (
     <section
       ref={ref}
-      className="pt-8 md:pt-12 pb-16 md:pb-24 px-6 bg-[#030303] border-t border-white/5"
+      className="pt-8 md:pt-12 pb-16 md:pb-24 px-6 bg-black"
       aria-label="Player Testimonials"
     >
       <div className="max-w-7xl mx-auto">

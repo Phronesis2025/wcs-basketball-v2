@@ -141,7 +141,7 @@ export default function StatsSection() {
   return (
     <section
       id="metrics"
-      className="py-16 border-y border-white/5 bg-[#0A0A0A] relative z-20"
+      className="py-16 bg-black relative z-20"
       aria-label="Key Statistics"
     >
       <div className="max-w-7xl mx-auto px-6">

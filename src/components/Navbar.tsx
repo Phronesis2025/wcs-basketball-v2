@@ -531,7 +531,7 @@ export default function Navbar() {
 
   const isHome = pathname === "/";
   // Pages that should use the dark navbar style (matching home page)
-  const isDarkPage = pathname === "/" || pathname === "/about";
+  const isDarkPage = pathname === "/" || pathname === "/about" || pathname === "/drills";
 
   return (
     <>
