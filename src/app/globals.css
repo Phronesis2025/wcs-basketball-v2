@@ -244,6 +244,8 @@ body {
 
 /* Import Inter from Google Fonts for better weight coverage */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* Import Fredoka One for CNC Ad */
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap');
 
 @font-face {
   font-family: "Inter";
@@ -708,3 +710,4 @@ img[style*="object-fit"],
     background-position: 200% 0%, 250% 0%;
   }
 }
+

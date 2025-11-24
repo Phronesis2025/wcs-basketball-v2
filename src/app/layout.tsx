@@ -130,6 +130,13 @@ export default function RootLayout({
         />
 
         {/* Fonts are loaded via @font-face in globals.css */}
+        {/* Fredoka One font for CNC Ad */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap"
+          rel="stylesheet"
+        />
 
         {/* Note: Hero image is used as CSS background and video poster, 
              so preloading is not necessary and can cause warnings */}

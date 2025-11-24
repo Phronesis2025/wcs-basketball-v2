@@ -162,7 +162,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
 
   return (
     <section
-      className="bg-[#030303] py-4 overflow-hidden border-t border-white/5 relative"
+      className="bg-[#030303] py-2 sm:py-3 md:py-4 overflow-hidden border-t border-white/5 relative"
       aria-label="Team Logos"
     >
       {/* Gradient Masks */}
@@ -170,13 +170,13 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
       <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#030303] to-transparent z-10 pointer-events-none"></div>
       
       {/* First Row - Scrolling Left */}
-      <div className="overflow-hidden mb-6">
-        <div className="flex items-center gap-4 animate-scroll">
+      <div className="overflow-hidden mb-3 sm:mb-4 md:mb-6">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4 animate-scroll">
           {/* First set */}
           {firstRow.map((logo, index) => (
           <div
               key={`first-row-1-${logo.id}-${index}`}
-              className="flex-shrink-0 w-[140px] h-[100px] bg-white/5 rounded-xl py-6 px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
+              className="flex-shrink-0 w-[100px] h-[70px] sm:w-[120px] sm:h-[85px] md:w-[140px] md:h-[100px] bg-white/5 rounded-xl py-3 px-2 sm:py-4 sm:px-3 md:py-6 md:px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
           >
               {/* Dark gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none"></div>
@@ -185,7 +185,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
                 alt={`${logo.name} logo`}
                 width={120}
                 height={70}
-                className="object-contain grayscale relative z-10"
+                className="object-contain grayscale relative z-10 w-[75px] h-[50px] sm:w-[95px] sm:h-[60px] md:w-[120px] md:h-[70px]"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/images/basketball icon.png";
@@ -197,7 +197,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
           {firstRow.map((logo, index) => (
             <div
               key={`first-row-2-${logo.id}-${index}`}
-              className="flex-shrink-0 w-[140px] h-[100px] bg-white/5 rounded-xl py-6 px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
+              className="flex-shrink-0 w-[100px] h-[70px] sm:w-[120px] sm:h-[85px] md:w-[140px] md:h-[100px] bg-white/5 rounded-xl py-3 px-2 sm:py-4 sm:px-3 md:py-6 md:px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
             >
               {/* Dark gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none"></div>
@@ -206,7 +206,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
                 alt={`${logo.name} logo`}
                 width={120}
                 height={70}
-                className="object-contain grayscale relative z-10"
+                className="object-contain grayscale relative z-10 w-[75px] h-[50px] sm:w-[95px] sm:h-[60px] md:w-[120px] md:h-[70px]"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/images/basketball icon.png";
@@ -219,7 +219,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
 
       {/* Middle Content (e.g., AdSection) */}
       {middleContent && (
-        <div className="my-6">
+        <div className="my-3 sm:my-4 md:my-6">
           {middleContent}
         </div>
       )}
@@ -231,7 +231,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
           {secondRow.map((logo, index) => (
             <div
               key={`second-row-1-${logo.id}-${index}`}
-              className="flex-shrink-0 w-[140px] h-[100px] bg-white/5 rounded-xl py-6 px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
+              className="flex-shrink-0 w-[100px] h-[70px] sm:w-[120px] sm:h-[85px] md:w-[140px] md:h-[100px] bg-white/5 rounded-xl py-3 px-2 sm:py-4 sm:px-3 md:py-6 md:px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
             >
               {/* Dark gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none"></div>
@@ -240,7 +240,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
                 alt={`${logo.name} logo`}
                 width={120}
                 height={70}
-                className="object-contain grayscale relative z-10"
+                className="object-contain grayscale relative z-10 w-[75px] h-[50px] sm:w-[95px] sm:h-[60px] md:w-[120px] md:h-[70px]"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/images/basketball icon.png";
@@ -252,7 +252,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
           {secondRow.map((logo, index) => (
             <div
               key={`second-row-2-${logo.id}-${index}`}
-              className="flex-shrink-0 w-[140px] h-[100px] bg-white/5 rounded-xl py-6 px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
+              className="flex-shrink-0 w-[100px] h-[70px] sm:w-[120px] sm:h-[85px] md:w-[140px] md:h-[100px] bg-white/5 rounded-xl py-3 px-2 sm:py-4 sm:px-3 md:py-6 md:px-4 flex items-center justify-center hover:bg-white/10 transition-all relative overflow-hidden"
             >
               {/* Dark gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20 pointer-events-none"></div>
@@ -261,7 +261,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
                 alt={`${logo.name} logo`}
                 width={120}
                 height={70}
-                className="object-contain grayscale relative z-10"
+                className="object-contain grayscale relative z-10 w-[75px] h-[50px] sm:w-[95px] sm:h-[60px] md:w-[120px] md:h-[70px]"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.src = "/images/basketball icon.png";

@@ -13,9 +13,9 @@ const isDev = process.env.NODE_ENV !== "production";
 const cspDev = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allows dev tools and Vercel Analytics
-  "style-src 'self' 'unsafe-inline'", // Allows Tailwind CSS
-  "font-src 'self' data:",
-  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co https://img.youtube.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Allows Tailwind CSS and Google Fonts
+  "font-src 'self' data: https://fonts.gstatic.com", // Allows Google Fonts
+  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co https://img.youtube.com https://images.unsplash.com", // Allows Unsplash images
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com",
   "frame-src 'self' https://tourneymachine.com https://*.tourneymachine.com https://www.youtube.com https://*.youtube.com", // Allow Tourneymachine iframes and YouTube embeds
   "object-src 'none'",
@@ -29,9 +29,9 @@ const cspDev = [
 const cspProd = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics with inline scripts
-  "style-src 'self' 'unsafe-inline'", // Allows Tailwind CSS
-  "font-src 'self' data:",
-  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co https://img.youtube.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com", // Allows Tailwind CSS and Google Fonts
+  "font-src 'self' data: https://fonts.gstatic.com", // Allows Google Fonts
+  "img-src 'self' data: blob: https://htgkddahhgugesktujds.supabase.co https://img.youtube.com https://images.unsplash.com", // Allows Unsplash images
   "connect-src 'self' https://htgkddahhgugesktujds.supabase.co wss://htgkddahhgugesktujds.supabase.co https://*.vercel-analytics.com https://*.vercel-speed-insights.com https://va.vercel-scripts.com", // Allow Vercel Analytics connections
   "frame-src 'self' https://tourneymachine.com https://*.tourneymachine.com https://www.youtube.com https://*.youtube.com", // Allow Tourneymachine iframes and YouTube embeds
   "object-src 'none'",

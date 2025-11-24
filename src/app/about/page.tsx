@@ -77,9 +77,21 @@ export default function About() {
 
       {/* Hero Section */}
       <section className="relative mx-auto max-w-4xl px-6 text-center">
-        <h1 className="mb-8 text-5xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-7xl font-inter">
+        <h1 className="mb-8 text-5xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-7xl font-inter relative z-20">
           About World Class Sports
         </h1>
+        {/* Logo3 */}
+        <div className="mb-8 flex justify-center relative z-10">
+          <div className="relative h-48 w-48 md:h-64 md:w-64 lg:h-80 lg:w-80 xl:h-96 xl:w-96">
+            <Image
+              src="/logo3.png"
+              alt="World Class Sports logo"
+              fill
+              className="object-contain drop-shadow-2xl relative z-10"
+              sizes="(max-width: 768px) 192px, (max-width: 1024px) 256px, (max-width: 1280px) 320px, 384px"
+            />
+          </div>
+        </div>
         <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-400 md:text-xl font-inter">
           At World Class Sports (WCS), we're all about serious, high-level
           competitive basketball. If your child has the drive to compete at the
@@ -101,27 +113,18 @@ export default function About() {
               sizes="(max-width: 768px) 96px, (max-width: 1024px) 128px, 160px"
             />
           </div>
+          <div className="relative h-32 w-32 md:h-48 md:w-48 lg:h-56 lg:w-56 opacity-80 hover:opacity-100 transition-opacity">
+            <Image
+              src="/WCSold2.png"
+              alt="World Class Sports logo"
+              fill
+              className="object-contain"
+              sizes="(max-width: 768px) 128px, (max-width: 1024px) 192px, 224px"
+            />
+          </div>
           <div className="relative h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 opacity-80 hover:opacity-100 transition-opacity">
             <Image
               src="/World_Class_Logo 23.png"
-              alt="World Class Sports logo"
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 96px, (max-width: 1024px) 128px, 160px"
-            />
-          </div>
-          <div className="relative h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 opacity-80 hover:opacity-100 transition-opacity">
-            <Image
-              src="/logo3.png"
-              alt="World Class Sports logo"
-              fill
-              className="object-contain"
-              sizes="(max-width: 768px) 96px, (max-width: 1024px) 128px, 160px"
-            />
-          </div>
-          <div className="relative h-24 w-24 md:h-32 md:w-32 lg:h-40 lg:w-40 opacity-80 hover:opacity-100 transition-opacity">
-            <Image
-              src="/WCSold2.png"
               alt="World Class Sports logo"
               fill
               className="object-contain"

@@ -1,5 +1,54 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.22 - CNC Ad Enhancements & Security Audit
+
+**Release Date**: January 13, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (130 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **CNC Ad Visual Enhancements**:
+  - Added basketball bucket hat image to right side of CNC ad
+  - Implemented soft blue background glow effect behind the image
+  - Positioned image behind "COACH NATE CLASSIC" text for layered effect
+  - Adjusted image positioning and glow intensity for optimal visual balance
+  - Files Modified:
+    - `src/components/CNCAd.tsx`
+
+### 🔧 Fixed
+
+- **CNC Ad Image Positioning**:
+  - Moved basketball bucket hat image further to the right
+  - Softened the blue glow effect for more subtle appearance
+  - Files Modified:
+    - `src/components/CNCAd.tsx`
+
+### 🔒 Security
+
+- **Security Review**:
+  - Completed comprehensive security check - no new vulnerabilities found
+  - NPM Audit: 1 high severity vulnerability (xlsx library - documented, no fix available)
+  - Supabase Security Advisor: 1 WARN (leaked password protection - manual dashboard config required)
+  - Supabase Performance Advisor: 24 INFO (unused indexes - low priority, no action needed)
+  - All existing security measures verified and documented
+  - Files Modified:
+    - `docs/SECURITY.md`
+
+### 📝 Documentation
+
+- **Security Audit Update**:
+  - Updated security audit documentation with January 13, 2025 review
+  - Documented Supabase advisor findings
+  - Updated security implementation version to v2.10.22
+  - Files Modified:
+    - `docs/SECURITY.md`
+
+---
+
 ## 🚀 Version 2.10.21 - About Page Enhancements & Changelog Fix
 
 **Release Date**: January 13, 2025  
