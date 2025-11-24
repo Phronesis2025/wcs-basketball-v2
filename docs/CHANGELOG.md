@@ -1,5 +1,76 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.23 - About Page Values Cards Redesign & Mobile Optimization
+
+**Release Date**: January 13, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (130 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **About Page Values Cards Redesign**:
+  - Redesigned values cards with CodePen-style sliding text animation
+  - Cards display value title as main text with description sliding in from bottom on hover/click
+  - Added black background to bottom section on hover/click for better text readability
+  - Cards display in 2 columns on mobile, 4 columns on desktop
+  - Added border styling matching WCS Fanzone cards
+  - Files Modified:
+    - `src/app/about/page.tsx`
+
+- **Mobile-Specific Features**:
+  - Click-to-reveal animation for mobile (replaces hover on desktop)
+  - Reduced font sizes for mobile to ensure all text fits
+  - Optimized card heights and padding for mobile viewport
+  - Files Modified:
+    - `src/app/about/page.tsx`
+
+- **AdSection on About Page**:
+  - Added AdSection component to bottom of About page above footer
+  - Displays rotating banner ads (CNC Ad and Animated Banner Ad)
+  - Files Modified:
+    - `src/app/about/page.tsx`
+
+### 🔧 Fixed
+
+- **About Page Styling**:
+  - Changed background color to pure black
+  - Reduced navbar blur effect for cleaner appearance
+  - Files Modified:
+    - `src/app/about/page.tsx`
+    - `src/components/Navbar.tsx`
+
+- **Values Cards Mobile Behavior**:
+  - Fixed click-triggered animations on mobile
+  - Ensured filler text slides in correctly with black background
+  - Fixed image overlay lightening on mobile click
+  - Files Modified:
+    - `src/app/about/page.tsx`
+
+### 🔒 Security
+
+- **Security Review**:
+  - Completed comprehensive security check - no new vulnerabilities found
+  - NPM Audit: 1 high severity vulnerability (xlsx library - documented, no fix available)
+  - Supabase Security Advisor: 1 WARN (leaked password protection - manual dashboard config required)
+  - Supabase Performance Advisor: 24 INFO (unused indexes - low priority, no action needed)
+  - All existing security measures verified and documented
+  - Files Modified:
+    - `docs/SECURITY.md`
+
+### 📝 Documentation
+
+- **Security Audit Update**:
+  - Updated security audit documentation with January 13, 2025 review
+  - Documented Supabase advisor findings
+  - Updated security implementation version to v2.10.23
+  - Files Modified:
+    - `docs/SECURITY.md`
+
+---
+
 ## 🚀 Version 2.10.22 - CNC Ad Enhancements & Security Audit
 
 **Release Date**: January 13, 2025  

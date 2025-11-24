@@ -1,6 +1,8 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import AdSection from "@/components/AdSection";
 
 /**
  * Core values data for the About page
@@ -11,55 +13,47 @@ const values = [
     title: "Fundamentals First",
     description:
       "Mastering ball-handling, shooting, passing, defense, and footwork.",
-    image: "/images/fundamentalsfirst.png",
-    hasImage: true,
+    image: "/fundamentalfirst.png",
   },
   {
     title: "Basketball IQ",
     description:
       "Understanding the game, reading situations, and making smart decisions.",
-    image: "/images/basketballiq.png",
-    hasImage: true,
+    image: "/Basketball IQ.png",
   },
   {
     title: "Work Ethic",
     description:
       "Committing to consistent practice and striving for excellence.",
-    image: "/images/workethic.png",
-    hasImage: true,
+    image: "/work_ethic.png",
   },
   {
     title: "Teamwork",
     description:
       "Playing unselfishly and supporting others on and off the court.",
-    image: "/images/placeholder-news-1.webp",
-    hasImage: true,
+    image: "/team_work.png",
   },
   {
     title: "Leadership",
     description:
       "Leading by example with humility, communication, and accountability.",
-    icon: "flag",
-    hasImage: false,
+    image: "/leadership (2).png",
   },
   {
     title: "Discipline",
     description:
       "Training the mind and body to stay focused, resilient, and coachable.",
-    icon: "target",
-    hasImage: false,
+    image: "/discipline (2).png",
   },
   {
     title: "Adaptability",
-    description: "Learning to adjust, improve, and overcome challenges.",
-    icon: "refresh-cw",
-    hasImage: false,
+    description: "Learning to adjust, improve,\n\nand overcome challenges.",
+    image: "/Adaptability (2).png",
   },
   {
     title: "Mental Toughness",
     description: "Competing with confidence and composure under pressure.",
-    icon: "brain-circuit",
-    hasImage: false,
+    image: "/mental_toughness.png",
   },
 ];
 
@@ -68,8 +62,40 @@ const values = [
  * Features responsive design matching the home page style
  */
 export default function About() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [openCards, setOpenCards] = useState<Set<number>>(new Set());
+
+  // Detect mobile viewport
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 640); // sm breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Handle card click on mobile
+  const handleCardClick = (index: number, e: React.MouseEvent) => {
+    // Check if mobile on click (in case state hasn't updated)
+    const isMobileView = window.innerWidth < 640;
+    if (!isMobileView) return;
+
+    e.stopPropagation();
+    setOpenCards((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
   return (
-    <main className="relative pt-32 pb-24 bg-[#030711] text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen">
+    <main className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen">
       {/* Background Gradients */}
       <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
         <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
@@ -261,104 +287,91 @@ export default function About() {
           </p>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {values.map((value) => (
-            <div
-              key={value.title}
-              className="group relative overflow-hidden rounded-xl border border-white/10 bg-white/[0.02] transition duration-300 hover:border-white/20 hover:bg-white/[0.04]"
-            >
-              {value.hasImage && value.image ? (
-                <div className="aspect-video w-full overflow-hidden">
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {values.map((value, index) => {
+            const isOpen = openCards.has(index);
+            return (
+              <div
+                key={value.title}
+                onClick={(e) => handleCardClick(index, e)}
+                className="group relative overflow-hidden rounded-xl aspect-[4/5] cursor-pointer border border-white/10"
+              >
+                {/* Background Image */}
+                <div className="absolute inset-0">
                   <Image
                     src={value.image}
                     alt={value.title}
-                    width={600}
-                    height={400}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105 opacity-80"
+                    fill
+                    className={`object-cover ${
+                      value.title === "Discipline"
+                        ? "scale-x-[-1]"
+                        : `transition-transform duration-700 ${
+                            isMobile && isOpen
+                              ? "scale-110"
+                              : "sm:group-hover:scale-110"
+                          }`
+                    }`}
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = "/images/placeholder-value.png";
+                      target.src = "/images/basketball icon.png";
                     }}
                   />
+                  {/* Dark overlay - darker by default, lighter on hover (desktop) or click (mobile) */}
+                  <div
+                    className={`absolute inset-0 transition-colors duration-300 ${
+                      isMobile && isOpen
+                        ? "bg-black/50"
+                        : "bg-black/80 sm:group-hover:bg-black/50"
+                    }`}
+                  />
                 </div>
-              ) : (
-                <div className="flex aspect-video w-full items-center justify-center bg-white/5">
-                  {/* Icon placeholder - using simple SVG icons */}
-                  {value.icon === "flag" && (
-                    <svg
-                      className="h-10 w-10 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 0112.313 12.313L3 15zM18 4.5V21m0 0l-1.772-.886a9 9 0 00-1.228 1.228L18 21z"
-                      />
-                    </svg>
-                  )}
-                  {value.icon === "target" && (
-                    <svg
-                      className="h-10 w-10 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.311-.06m-2.699 2.7a14.988 14.988 0 005.84-7.38m0 0a14.98 14.98 0 00-5.84-7.38m5.84 7.38H9.75"
-                      />
-                    </svg>
-                  )}
-                  {value.icon === "refresh-cw" && (
-                    <svg
-                      className="h-10 w-10 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-                      />
-                    </svg>
-                  )}
-                  {value.icon === "brain-circuit" && (
-                    <svg
-                      className="h-10 w-10 text-blue-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z"
-                      />
-                    </svg>
-                  )}
+
+                {/* Content Container - Centered at bottom with fixed height */}
+                <div className="relative h-full flex flex-col justify-end">
+                  {/* Fixed height container for text to ensure consistent positioning - black background on hover (desktop) or click (mobile) */}
+                  <div
+                    className={`relative h-40 sm:h-48 md:h-52 p-3 sm:p-6 flex flex-col justify-end bg-transparent sm:group-hover:bg-black transition-colors duration-300 ${
+                      isMobile && isOpen ? "bg-black" : ""
+                    }`}
+                  >
+                    {/* Main Title - Always Visible */}
+                    <div className="relative overflow-hidden text-center h-20 sm:h-24 md:h-28 flex items-end justify-center">
+                      <h3
+                        className={`text-lg sm:text-2xl md:text-3xl font-bold text-white font-inter tracking-tight transform transition-transform duration-500 sm:group-hover:-translate-y-full ${
+                          isMobile && isOpen ? "-translate-y-full" : ""
+                        }`}
+                      >
+                        {value.title}
+                      </h3>
+                    </div>
+
+                    {/* Description - Slides in on hover (desktop) or click (mobile) */}
+                    <div className="relative overflow-hidden text-center h-20 sm:h-24 md:h-28 flex items-start justify-center">
+                      <div
+                        className={`w-full px-2 sm:px-4 py-2 transition-transform duration-500 ${
+                          isMobile && isOpen
+                            ? "translate-y-0 bg-black"
+                            : "translate-y-full sm:group-hover:translate-y-0"
+                        }`}
+                      >
+                        <p className="text-[10px] sm:text-xs md:text-sm text-white/90 font-inter leading-relaxed whitespace-pre-line">
+                          {value.description}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div className="p-6">
-                <h3 className="mb-2 text-lg font-semibold text-white font-inter">
-                  {value.title}
-                </h3>
-                <p className="text-base text-slate-400 font-inter">
-                  {value.description}
-                </p>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
+
+      {/* Ad Section - Above Footer */}
+      <div className="mt-16 md:mt-24">
+        <AdSection />
+      </div>
     </main>
   );
 }
