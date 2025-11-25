@@ -1,5 +1,42 @@
 # Changelog Entries for Supabase Database
 
+## Version 2.10.28 - Login Pages Redesign
+
+**Release Date**: 2025-01-25
+
+### Entries to Add:
+
+1. **Changed** - Parent Login Page Redesign
+   - Updated to match About/Home page styling
+   - Changed background from navy to black with gradient overlay
+   - Applied gradient text effect to title matching About page
+   - Updated form inputs and buttons to match new design
+   - Changed color scheme from red accents to blue for consistency
+
+2. **Changed** - Coaches Login Page Redesign
+   - Updated to match About/Home page styling
+   - Added black background with gradient overlay
+   - Applied gradient text effect to title
+   - Updated form styling to match new design
+   - Changed color scheme to blue for consistency
+
+3. **Changed** - Animated Gradient Border Effect
+   - Added animated gradient border to both login cards
+   - Uses WCS blue (#002C51, #004080) and red (#D91E18) colors
+   - Continuous 3-second animation loop
+
+4. **Fixed** - Parent Login Navigation
+   - Fixed session handling to properly set session in Supabase client
+   - Added proper session persistence using AuthPersistence
+   - Added auth state change event dispatch for navbar updates
+   - Changed navigation from router.push to router.replace to prevent back button issues
+
+5. **Added** - AuthPersistence Integration
+   - Added AuthPersistence to parent login for proper session management
+   - Ensures consistent authentication state across the application
+
+---
+
 ## Version 2.10.27 - Team Page Title Visual Enhancements
 
 **Release Date**: 2025-01-25

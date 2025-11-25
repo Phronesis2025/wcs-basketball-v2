@@ -4,6 +4,8 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AuthPersistence } from "@/lib/authPersistence";
+import { devLog, devError } from "@/lib/security";
 
 export default function ParentLogin() {
   const router = useRouter();
@@ -21,31 +23,71 @@ export default function ParentLogin() {
     setLoading(true);
 
     try {
+      devLog("🔐 [PARENT LOGIN] Starting login process...");
+      devLog("🔐 [PARENT LOGIN] Email:", email);
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        devError("🔐 [PARENT LOGIN] Login failed:", error);
         setMessage("Invalid email or password");
         setLoading(false);
         return;
       }
 
       if (data.session) {
-        // Store session
-        localStorage.setItem(
-          "supabase.auth.token",
-          JSON.stringify(data.session)
-        );
-        localStorage.setItem("auth.authenticated", "true");
+        devLog("🔐 [PARENT LOGIN] ✅ Login successful!");
+        
+        // IMPORTANT: Set the session in Supabase's auth client
+        // This ensures Supabase knows about the authenticated state
+        devLog("🔐 [PARENT LOGIN] Setting session in Supabase client...");
+        const { data: sessionData, error: sessionError } =
+          await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          });
 
-        // Redirect to profile page
-        router.push("/parent/profile");
+        if (sessionError) {
+          devError("🔐 [PARENT LOGIN] ⚠️ Error setting session:", sessionError);
+        } else {
+          devLog("🔐 [PARENT LOGIN] ✅ Session set in Supabase client successfully");
+        }
+
+        // Store session using AuthPersistence for proper persistence
+        devLog("🔐 [PARENT LOGIN] Storing session in localStorage...");
+        await AuthPersistence.storeSession(data.session);
+
+        devLog("🔐 [PARENT LOGIN] Dispatching auth state change event...");
+        // Dispatch custom event to notify navbar of auth state change
+        window.dispatchEvent(
+          new CustomEvent("authStateChanged", {
+            detail: { authenticated: true, user: data.user },
+          })
+        );
+        devLog("🔐 [PARENT LOGIN] Auth state change event dispatched");
+
+        // Proceed to profile page with a small delay to ensure localStorage is set
+        devLog("🔐 [PARENT LOGIN] Setting timeout for navigation to profile...");
+        setTimeout(() => {
+          devLog("🔐 [PARENT LOGIN] Navigating to profile...");
+          devLog(
+            "🔐 [PARENT LOGIN] localStorage auth.authenticated:",
+            localStorage.getItem("auth.authenticated")
+          );
+          // Use replace instead of push to prevent back button issues
+          router.replace("/parent/profile");
+        }, 100);
+      } else {
+        devError("🔐 [PARENT LOGIN] ⚠️ No session data in auth response");
+        setMessage("Login failed. Please try again.");
+        setLoading(false);
       }
     } catch (err: any) {
+      devError("🔐 [PARENT LOGIN] Login error:", err);
       setMessage(err.message || "Login failed. Please try again.");
-    } finally {
       setLoading(false);
     }
   };
@@ -81,22 +123,27 @@ export default function ParentLogin() {
   };
 
   return (
-    <div className="bg-navy min-h-screen text-white">
-      <section className="pt-20 pb-12 sm:pt-24" aria-label="Parent Login">
-        <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl mx-auto">
-            <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-6 text-center uppercase">
-              Account login
-            </h1>
+    <main className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen">
+      {/* Background Gradients */}
+      <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+        <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
+      </div>
 
-            <p className="text-center text-gray-300 mb-8">
-              Sign in to view your profile and manage your player's registration
-            </p>
+      <section className="relative mx-auto max-w-4xl px-6 text-center" aria-label="Parent Login">
+        <h1 className="mb-8 text-5xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-7xl font-inter relative z-20">
+          Account Login
+        </h1>
 
-            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-8 mb-8">
+        <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-400 md:text-xl font-inter mb-12">
+          Sign in to view your profile and manage your player's registration
+        </p>
+
+        <div className="max-w-md mx-auto">
+          <div className="login-card-border-effect mb-8">
+            <div className="p-8">
               <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
+            <label className="block text-sm font-medium text-slate-300 mb-2 font-inter">
               Email
             </label>
             <input
@@ -104,14 +151,14 @@ export default function ParentLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-lg px-4 py-3 bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-inter"
               placeholder="your.email@example.com"
             />
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-300">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-slate-300 font-inter">
                 Password
               </label>
               <button
@@ -120,7 +167,7 @@ export default function ParentLogin() {
                   setShowForgotPassword(!showForgotPassword);
                   setMessage("");
                 }}
-                className="text-sm text-red hover:text-red/80 hover:underline font-medium"
+                className="text-sm text-blue-400 hover:text-blue-300 hover:underline font-medium font-inter transition-colors"
               >
                 Forgot Password?
               </button>
@@ -132,12 +179,12 @@ export default function ParentLogin() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full rounded px-3 py-2 pr-10 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg px-4 py-3 pr-12 bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors font-inter"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -178,15 +225,15 @@ export default function ParentLogin() {
                 </button>
               </div>
             ) : (
-              <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-                <p className="text-sm text-gray-300 mb-3">
+              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                <p className="text-sm text-slate-300 mb-3 font-inter">
                   Enter your email address and we'll send you a link to reset your password.
                 </p>
                 <button
                   type="button"
                   onClick={handleForgotPassword}
                   disabled={forgotPasswordLoading || !email}
-                  className="w-full bg-red text-white font-bold py-2 px-4 rounded hover:bg-red/90 transition disabled:opacity-60 disabled:cursor-not-allowed text-sm"
+                  className="w-full bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed text-sm font-inter"
                 >
                   {forgotPasswordLoading ? "Sending..." : "Send Reset Link"}
                 </button>
@@ -196,7 +243,7 @@ export default function ParentLogin() {
                     setShowForgotPassword(false);
                     setMessage("");
                   }}
-                  className="w-full mt-2 text-gray-400 hover:text-white text-sm underline"
+                  className="w-full mt-2 text-slate-400 hover:text-white text-sm underline font-inter transition-colors"
                 >
                   Back to login
                 </button>
@@ -206,7 +253,7 @@ export default function ParentLogin() {
 
           {message && (
             <div
-              className={`p-3 rounded text-sm ${
+              className={`p-3 rounded-lg text-sm font-inter ${
                 message.includes("Invalid") || message.includes("Failed") || message.includes("error")
                   ? "bg-red-900/40 text-red-200 border border-red-500/40"
                   : message.includes("sent") || message.includes("successfully")
@@ -221,16 +268,16 @@ export default function ParentLogin() {
           <button
             type="submit"
             disabled={loading || showForgotPassword}
-            className="w-full bg-red text-white font-bold py-3 rounded hover:bg-red/90 transition disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-60 disabled:cursor-not-allowed font-inter"
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
 
-          <p className="text-center text-sm text-gray-300">
+          <p className="text-center text-sm text-slate-400 font-inter mt-6">
             Don't have an account?{" "}
             <Link
               href="/register"
-              className="text-red font-semibold hover:underline"
+              className="text-blue-400 font-semibold hover:text-blue-300 hover:underline transition-colors"
             >
               Register here
             </Link>
@@ -240,6 +287,6 @@ export default function ParentLogin() {
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

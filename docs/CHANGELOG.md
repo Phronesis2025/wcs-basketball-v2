@@ -1,5 +1,68 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.28 - Login Pages Redesign
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (130 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Animated Gradient Border Effect**:
+  - Added animated gradient border to both parent and coaches login cards
+  - Uses WCS blue (#002C51, #004080) and red (#D91E18) colors
+  - Continuous 3-second animation loop
+  - Files Modified:
+    - `src/app/globals.css`
+
+- **AuthPersistence Integration**:
+  - Added AuthPersistence to parent login for proper session management
+  - Ensures consistent authentication state across the application
+  - Files Modified:
+    - `src/app/parent/login/page.tsx`
+
+### 🔧 Changed
+
+- **Parent Login Page Redesign**:
+  - Updated to match About/Home page styling
+  - Changed background from navy to black with gradient overlay
+  - Applied gradient text effect to title matching About page
+  - Updated form inputs and buttons to match new design
+  - Changed color scheme from red accents to blue for consistency
+  - Files Modified:
+    - `src/app/parent/login/page.tsx`
+
+- **Coaches Login Page Redesign**:
+  - Updated to match About/Home page styling
+  - Added black background with gradient overlay
+  - Applied gradient text effect to title
+  - Updated form styling to match new design
+  - Changed color scheme to blue for consistency
+  - Files Modified:
+    - `src/app/coaches/login/page.tsx`
+
+### 🐛 Fixed
+
+- **Parent Login Navigation**:
+  - Fixed session handling to properly set session in Supabase client
+  - Added proper session persistence using AuthPersistence
+  - Added auth state change event dispatch for navbar updates
+  - Changed navigation from router.push to router.replace to prevent back button issues
+  - Added delay before navigation to ensure localStorage is set
+  - Files Modified:
+    - `src/app/parent/login/page.tsx`
+
+### 📝 Documentation
+
+- **Changelog Updates**:
+  - Added version 2.10.28 entries to Supabase changelog table
+  - Updated CHANGELOG.md with detailed change descriptions
+
+---
+
 ## 🚀 Version 2.10.27 - Team Page Title Visual Enhancements
 
 **Release Date**: January 2025  

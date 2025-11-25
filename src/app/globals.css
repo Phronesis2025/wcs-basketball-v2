@@ -793,6 +793,42 @@ img[style*="object-fit"],
   }
 }
 
+/* Animated Gradient Border Effect for Login Cards */
+.login-card-border-effect {
+  position: relative;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background: linear-gradient(135deg, #002C51, #004080, #D91E18, #002C51);
+  background-size: 300% 300%;
+  animation: gradientShift 3s ease infinite;
+}
+
+.login-card-border-effect::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 0.625rem;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 0;
+}
+
+.login-card-border-effect > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* Team Identity Overlap - Positions team name/logo to overlap banner image */
 .team-identity-overlap {
   /* Mobile: banner is 200px, position center of title above bottom */
