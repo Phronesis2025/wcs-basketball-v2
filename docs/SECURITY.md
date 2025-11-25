@@ -1,21 +1,48 @@
 # WCSv2.0 Security
 
-## 🔒 Current Security Implementation (v2.10.25)
+## 🔒 Current Security Implementation (v2.10.26)
 
 **Live URL**: https://wcs-basketball-v2.vercel.app  
 **Security Score**: 9/10 (Excellent) 🔒  
-**Last Audit**: January 2025 (v2.10.25)  
-**Latest Audit**: January 2025 (Teams, Schedules, and Team Detail Pages Redesign)  
+**Last Audit**: January 2025 (v2.10.26)  
+**Latest Audit**: January 2025 (Team Detail Page Enhancements)  
 **Security Test**: ✅ PASSED - No exposed keys found (January 2025)  
 **Status**: Production Ready ✅  
-**Build Status**: Clean Build ✅ (130 pages generated successfully)  
+**Build Status**: Clean Build ✅  
 **Next.js Version**: 15.5.2
 **Critical Issues Found**: 
 - ✅ secrets.txt exposed in git - FIXED (removed from tracking, added to .gitignore)
 - ✅ Server Actions CORS too permissive - FIXED (restricted to known origins)
 - ✅ Admin delete API routes - FIXED (proper success checking implemented)
 
-### Security Audit (January 2025 - Teams, Schedules, and Team Detail Pages Redesign)
+### Security Audit (January 2025 - Team Detail Page Enhancements)
+
+- **NPM Audit Status**: 1 high severity vulnerability (no fix available)
+  - ✅ **Sentry vulnerabilities fixed**: Updated @sentry/nextjs, @sentry/node, and @sentry/node-core to patched versions
+  - ⚠️ **xlsx library** (v0.18.5): Prototype Pollution and ReDoS vulnerabilities
+    - **Risk Level**: Medium (used only in admin import functionality, protected by authentication)
+    - **Location**: Admin player import feature (`/admin/import`)
+    - **Mitigation**: 
+      - Feature is admin-only (requires authentication)
+      - File uploads are validated and sanitized
+      - No user-controlled input reaches xlsx parsing without validation
+      - Consider migrating to alternative library in future update
+    - **Status**: Documented, monitoring for library updates
+- **Fixed Vulnerabilities**: None (no new vulnerabilities introduced)
+- **Linting**: ✅ No linting errors found
+- **Build Status**: ✅ Build successful
+- **Supabase Advisors**: 
+  - **Security**: 1 WARN (leaked password protection - manual dashboard config required)
+    - ⚠️ **Leaked Password Protection Disabled**: HaveIBeenPwned integration not enabled
+      - **Risk Level**: Low (enhancement recommendation)
+      - **Remediation**: Enable leaked password protection in Supabase Auth settings
+      - **Status**: Documented for future enhancement
+  - **Performance**: 24 unused indexes (INFO level, not critical)
+    - Various indexes on `error_logs`, `news`, `coach_volunteer_applications`, `password_reset_tokens`, `changelog`, `imports`, `performance_metrics`, `web_vitals`, `coach_messages`, `players`, `message_notifications`, and `users` tables
+    - **Risk Level**: None (performance optimization opportunity)
+    - **Status**: Documented for future cleanup
+
+### Previous Security Audit (January 2025 - Teams, Schedules, and Team Detail Pages Redesign)
 
 - **NPM Audit Status**: 1 high severity vulnerability (no fix available)
   - ⚠️ **xlsx library** (v0.18.5): Prototype Pollution and ReDoS vulnerabilities

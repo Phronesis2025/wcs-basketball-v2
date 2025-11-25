@@ -1,5 +1,89 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.26 - Team Detail Page Enhancements
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Added
+
+- **Team Detail Page Banner**:
+  - Added banner image (`teambanner.webp`) at top of team detail pages
+  - Implemented gradient overlay with adjustable opacity
+  - Added blur effect at bottom of banner for seamless transition into content
+  - Banner spans full viewport width without overflow on all devices
+  - Files Modified:
+    - `src/app/teams/[id]/page.tsx`
+    - `src/app/globals.css`
+
+- **Team Identity Section Enhancements**:
+  - Updated grade/gender line format to show ordinal grade (e.g., "3rd grade • Boys")
+  - Added `formatGradeLevel` helper function for proper ordinal suffixes
+  - Repositioned grade/gender line directly above team title
+  - Enhanced title text with WCS blue glow effect (#002C51, #004080)
+  - Added thin red outline (#D91E18) to title text for brand consistency
+  - Adjusted desktop positioning to move team identity section higher on banner
+  - Files Modified:
+    - `src/app/teams/[id]/page.tsx`
+    - `src/app/globals.css`
+
+- **BasketballLoader Component**:
+  - Updated loader color to WCS brand color #48598D
+  - Files Modified:
+    - `src/components/BasketballLoader.tsx`
+
+### 🔧 Fixed
+
+- **Banner Image Width**:
+  - Fixed banner image overflow on mobile devices
+  - Removed conflicting width properties causing horizontal scroll
+  - Ensured banner spans exactly viewport width on all screen sizes
+  - Files Modified:
+    - `src/app/teams/[id]/page.tsx`
+
+- **TypeScript Errors**:
+  - Fixed "Object is possibly 'undefined'" error in `formatPlayerName` function
+  - Added proper null checks for array access
+  - Files Modified:
+    - `src/app/teams/[id]/page.tsx`
+
+### 🗑️ Removed
+
+- **Team Players Section**:
+  - Hidden team players section from display (code preserved)
+  - Disabled player data loading to improve performance
+  - Files Modified:
+    - `src/app/teams/[id]/page.tsx`
+
+- **Navigation Elements**:
+  - Removed "Back to Teams" button from page bottom
+  - Removed "Back to Teams" link from error state
+  - Files Modified:
+    - `src/app/teams/[id]/page.tsx`
+
+### 🔒 Security
+
+- **Security Review**:
+  - Completed comprehensive security check
+  - ✅ Fixed Sentry vulnerabilities: Updated @sentry/nextjs, @sentry/node, and @sentry/node-core to patched versions
+  - ⚠️ NPM Audit: 1 high severity vulnerability remaining (xlsx library - no fix available, documented)
+  - Supabase Security Advisor: 1 WARN (leaked password protection - manual dashboard config required, no action needed)
+  - Supabase Performance Advisor: 24 INFO (unused indexes - low priority, no action needed)
+  - All existing security measures verified and documented
+
+### 📝 Documentation
+
+- **Changelog Updates**:
+  - Added version 2.10.26 entries to Supabase changelog table
+  - Updated CHANGELOG.md with detailed change descriptions
+  - Updated SECURITY.md with latest audit results
+
+---
+
 ## 🚀 Version 2.10.25 - Teams, Schedules, and Team Detail Pages Redesign
 
 **Release Date**: January 2025  

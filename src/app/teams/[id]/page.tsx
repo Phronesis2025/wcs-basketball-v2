@@ -7,12 +7,7 @@ import {
   fetchCoachesByTeamId,
   fetchSchedulesByTeamId,
 } from "../../../lib/actions";
-import {
-  Team,
-  Coach,
-  Schedule,
-  Player,
-} from "../../../types/supabase";
+import { Team, Coach, Schedule, Player } from "../../../types/supabase";
 import * as Sentry from "@sentry/nextjs";
 import { motion, Variants } from "framer-motion";
 import Image from "next/image";
@@ -95,17 +90,17 @@ export default function TeamPage({ params }: TeamPageProps) {
           fetchSchedulesByTeamId(resolvedParams.id),
         ]);
 
-        // Fetch players for this team
-        const { data: playersData, error: playersError } = await supabase
-          .from("players")
-          .select("*")
-          .eq("team_id", resolvedParams.id)
-          .eq("is_deleted", false)
-          .order("name", { ascending: true });
+        // DISABLED: Fetch players for this team
+        // const { data: playersData, error: playersError } = await supabase
+        //   .from("players")
+        //   .select("*")
+        //   .eq("team_id", resolvedParams.id)
+        //   .eq("is_deleted", false)
+        //   .order("name", { ascending: true });
 
-        if (!playersError && playersData) {
-          setPlayers(playersData);
-        }
+        // if (!playersError && playersData) {
+        //   setPlayers(playersData);
+        // }
 
         // Debug: Log coaches (development only)
         devLog(
@@ -184,12 +179,6 @@ export default function TeamPage({ params }: TeamPageProps) {
           <p className="text-lg font-inter text-red-400 mb-4">
             {error || "Team not found"}
           </p>
-          <Link
-            href="/teams"
-            className="text-blue-400 hover:text-blue-300 hover:underline text-lg font-inter transition-colors"
-          >
-            ← Back to Teams
-          </Link>
         </div>
       </main>
     );
@@ -198,12 +187,18 @@ export default function TeamPage({ params }: TeamPageProps) {
   // Filter and sort games/practices, then take only the next 3 upcoming ones
   const allGames = schedules
     .filter((s) => s.event_type === "Game" || s.event_type === "Tournament")
-    .sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
+    .sort(
+      (a, b) =>
+        new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+    )
     .filter((s) => new Date(s.date_time) >= new Date()); // Only future events
 
   const allPractices = schedules
     .filter((s) => s.event_type === "Practice")
-    .sort((a, b) => new Date(a.date_time).getTime() - new Date(b.date_time).getTime())
+    .sort(
+      (a, b) =>
+        new Date(a.date_time).getTime() - new Date(b.date_time).getTime()
+    )
     .filter((s) => new Date(s.date_time) >= new Date()); // Only future events
 
   const games = allGames.slice(0, 3);
@@ -213,10 +208,32 @@ export default function TeamPage({ params }: TeamPageProps) {
   const formatPlayerName = (fullName: string): string => {
     const parts = fullName.trim().split(" ");
     if (parts.length === 0) return fullName;
-    if (parts.length === 1) return parts[0];
-    const firstName = parts[0];
-    const lastInitial = parts[parts.length - 1][0]?.toUpperCase() || "";
+    if (parts.length === 1) return parts[0] || "";
+    const firstName = parts[0] || "";
+    const lastPart = parts[parts.length - 1];
+    const lastInitial = lastPart?.[0]?.toUpperCase() || "";
     return `${firstName} ${lastInitial}.`;
+  };
+
+  // Helper function to format grade level with ordinal suffix
+  const formatGradeLevel = (grade: number | string): string => {
+    const num = typeof grade === "string" ? parseInt(grade, 10) : grade;
+    if (isNaN(num)) return "";
+    const lastDigit = num % 10;
+    const lastTwoDigits = num % 100;
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
+      return `${num}th`;
+    }
+    switch (lastDigit) {
+      case 1:
+        return `${num}st`;
+      case 2:
+        return `${num}nd`;
+      case 3:
+        return `${num}rd`;
+      default:
+        return `${num}th`;
+    }
   };
 
   // Helper function to format date/time for Chicago timezone
@@ -235,7 +252,7 @@ export default function TeamPage({ params }: TeamPageProps) {
 
   return (
     <motion.main
-      className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen"
+      className="relative bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen overflow-x-hidden"
       variants={containerVariants}
       initial="hidden"
       animate={
@@ -248,47 +265,100 @@ export default function TeamPage({ params }: TeamPageProps) {
       }
       onAnimationComplete={() => setAnimationComplete(true)}
     >
+      {/* Background Banner Image - Full screen width, constrained to viewport */}
+      <div
+        className="absolute top-0 h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px] overflow-hidden"
+        style={{
+          left: 0,
+          right: 0,
+        }}
+      >
+        <Image
+          src="/teambanner.webp"
+          alt="Team background banner"
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+        />
+        {/* Dark gradient overlay - darker at top, fading to transparent at bottom */}
+        <div
+          className="absolute inset-0 z-10"
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.7) 50%, rgba(0, 0, 0, 0.6) 100%)",
+          }}
+          aria-hidden="true"
+        />
+        {/* Blur overlay at bottom to blend into black section */}
+        <div
+          className="absolute bottom-0 left-0 right-0 z-10"
+          style={{
+            height: "25%",
+            background:
+              "linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.3) 50%, rgba(0, 0, 0, 0.8) 100%)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+          }}
+          aria-hidden="true"
+        />
+      </div>
+
       {/* Background Gradients */}
       <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
         <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-6">
-        {/* Team Identity (Logo and Name) - Side by Side, Centered */}
-        <section
-          className="mb-16 flex flex-col sm:flex-row items-center justify-center gap-6"
-          aria-label="Team Identity"
-        >
-          <div className="flex-shrink-0">
-            <Image
-              src={team.logo_url || "/logos/logo2.png"}
-              alt={`${team.name} logo`}
-              width={120}
-              height={120}
-              className="rounded-full object-cover"
-              priority
-              sizes="120px"
-              onError={(e) => {
-                devError(
-                  `Image load error for ${team.name} logo: ${team.logo_url}`
-                );
-                Sentry.captureMessage(
-                  `Failed to load team logo for ${team.name}: ${team.logo_url}`
-                );
-                e.currentTarget.src = "/logos/logo2.png";
-              }}
-            />
-          </div>
-          <div className="text-center sm:text-left">
-            <h1 className="mb-4 text-5xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-7xl font-inter relative z-20">
-              {team.name}
-            </h1>
-            <p className="text-lg font-inter text-slate-400">
-              {team.age_group} {team.gender} – Grade {team.grade_level}
+      {/* Team Identity (Name, Logo, and Info) - Overlaps banner image */}
+      <section
+        className="relative z-20 flex flex-col items-center justify-center mx-auto max-w-7xl px-6 mb-16 team-identity-overlap"
+        aria-label="Team Identity"
+      >
+        {/* Team Name - Centered */}
+        <div className="text-center w-full mb-6 px-2">
+          {/* Grade/Gender - Just Above Title, Centered, Smaller */}
+          <div className="text-center w-full mb-0">
+            <p className="text-sm sm:text-base font-inter text-slate-400 uppercase">
+              {formatGradeLevel(team.grade_level)} grade • {team.gender}
             </p>
           </div>
-        </section>
+          <h1
+            className="mb-0 text-8xl sm:text-6xl md:text-8xl relative z-20 team-name-animated uppercase tracking-tight mx-auto"
+            data-text={team.name}
+            style={{
+              fontSize: "clamp(2.5rem, 12vw, 6rem)",
+              lineHeight: "1.1",
+            }}
+          >
+            {team.name}
+          </h1>
+        </div>
 
+        {/* Logo - Below Title, Smaller, Centered */}
+        <div className="flex-shrink-0">
+          <Image
+            src={team.logo_url || "/logos/logo2.png"}
+            alt={`${team.name} logo`}
+            width={80}
+            height={80}
+            className="rounded-full object-cover"
+            priority
+            sizes="80px"
+            onError={(e) => {
+              devError(
+                `Image load error for ${team.name} logo: ${team.logo_url}`
+              );
+              Sentry.captureMessage(
+                `Failed to load team logo for ${team.name}: ${team.logo_url}`
+              );
+              e.currentTarget.src = "/logos/logo2.png";
+            }}
+          />
+        </div>
+      </section>
+
+      {/* Content container */}
+      <div className="relative mx-auto max-w-7xl px-6 pb-24">
         {/* Mobile Team Photo - Shows under logo and team name on mobile */}
         <div className="lg:hidden mb-12">
           <section aria-label="Team Photo">
@@ -428,9 +498,15 @@ export default function TeamPage({ params }: TeamPageProps) {
                   <table className="w-full bg-white/5 rounded-xl overflow-hidden">
                     <thead className="sticky top-0 bg-white/10 z-10">
                       <tr className="border-b border-white/10">
-                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Opponent</th>
-                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Date & Time</th>
-                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Location</th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
+                          Opponent
+                        </th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
+                          Date & Time
+                        </th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
+                          Location
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -474,9 +550,15 @@ export default function TeamPage({ params }: TeamPageProps) {
                   <table className="w-full bg-white/5 rounded-xl overflow-hidden">
                     <thead className="sticky top-0 bg-white/10 z-10">
                       <tr className="border-b border-white/10">
-                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Description</th>
-                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Date & Time</th>
-                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Location</th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
+                          Description
+                        </th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
+                          Date & Time
+                        </th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
+                          Location
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -521,8 +603,8 @@ export default function TeamPage({ params }: TeamPageProps) {
           </div>
         </section>
 
-        {/* Team Players - Full Width */}
-        <section className="mb-16 mt-32" aria-label="Team Players">
+        {/* Team Players - Full Width - HIDDEN */}
+        <section className="mb-16 mt-32 hidden" aria-label="Team Players">
           <div className="mb-16 text-center">
             <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl font-inter">
               Team Players
@@ -536,7 +618,9 @@ export default function TeamPage({ params }: TeamPageProps) {
               <table className="w-full bg-white/5 rounded-xl overflow-hidden">
                 <thead>
                   <tr className="border-b border-white/10">
-                    <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Name</th>
+                    <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
+                      Name
+                    </th>
                     <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
                       Jersey #
                     </th>
@@ -591,17 +675,6 @@ export default function TeamPage({ params }: TeamPageProps) {
             </div>
           )}
         </section>
-
-        {/* Back Link - Bottom of Page */}
-        <div className="text-center mt-12">
-          <Link
-            href="/teams"
-            className="text-blue-400 hover:text-blue-300 hover:underline text-lg font-inter inline-block transition-colors"
-            aria-label="Back to all teams"
-          >
-            ← Back to Teams
-          </Link>
-        </div>
       </div>
 
       {/* Ad Section - Above Footer */}

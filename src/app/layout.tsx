@@ -130,6 +130,14 @@ export default function RootLayout({
         />
 
         {/* Fonts are loaded via @font-face in globals.css */}
+        {/* Preload IntegralCF Bold Oblique for CNC Ad */}
+        <link
+          rel="preload"
+          href="/fonts/integralcf-boldoblique.otf"
+          as="font"
+          type="font/otf"
+          crossOrigin="anonymous"
+        />
         {/* Fredoka One font for CNC Ad */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

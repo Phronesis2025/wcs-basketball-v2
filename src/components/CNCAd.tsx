@@ -21,13 +21,6 @@ const CNCAd = () => {
       <style
         dangerouslySetInnerHTML={{
           __html: `
-        @font-face {
-          font-family: 'IntegralCF Bold Oblique';
-          src: url('/fonts/integralcf-boldoblique.otf') format('opentype');
-          font-weight: 700;
-          font-style: oblique;
-          font-display: swap;
-        }
         @keyframes spotlight {
           0% {
             background-position: 0% 50%;
