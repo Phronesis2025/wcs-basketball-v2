@@ -17,6 +17,7 @@ import * as Sentry from "@sentry/nextjs";
 import { motion, Variants } from "framer-motion";
 import Image from "next/image";
 import BasketballLoader from "@/components/BasketballLoader";
+import AdSection from "@/components/AdSection";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
@@ -160,29 +161,37 @@ export default function TeamPage({ params }: TeamPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-navy text-white py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="text-center">
+      <main className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen flex items-center justify-center">
+        {/* Background Gradients */}
+        <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+          <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
+        </div>
+        <div className="text-center relative z-10">
           <BasketballLoader size={80} />
         </div>
-      </div>
+      </main>
     );
   }
 
   if (error || !team) {
     return (
-      <div className="min-h-screen bg-navy text-white py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="text-center bg-gray-900/50 border border-red-500/50 rounded-lg p-4">
-          <p className="text-lg font-inter text-red mb-4">
+      <main className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen flex items-center justify-center">
+        {/* Background Gradients */}
+        <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+          <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
+        </div>
+        <div className="text-center bg-white/5 border border-white/10 rounded-xl p-6 relative z-10">
+          <p className="text-lg font-inter text-red-400 mb-4">
             {error || "Team not found"}
           </p>
           <Link
             href="/teams"
-            className="text-red hover:underline text-lg font-bebas"
+            className="text-blue-400 hover:text-blue-300 hover:underline text-lg font-inter transition-colors"
           >
             ← Back to Teams
           </Link>
         </div>
-      </div>
+      </main>
     );
   }
 
@@ -225,8 +234,8 @@ export default function TeamPage({ params }: TeamPageProps) {
   };
 
   return (
-    <motion.div
-      className="min-h-screen bg-navy text-white py-8 px-4 sm:px-6 lg:px-8"
+    <motion.main
+      className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen"
       variants={containerVariants}
       initial="hidden"
       animate={
@@ -239,10 +248,15 @@ export default function TeamPage({ params }: TeamPageProps) {
       }
       onAnimationComplete={() => setAnimationComplete(true)}
     >
-      <div className="max-w-7xl mx-auto">
+      {/* Background Gradients */}
+      <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+        <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
+      </div>
+
+      <div className="relative mx-auto max-w-7xl px-6">
         {/* Team Identity (Logo and Name) - Side by Side, Centered */}
         <section
-          className="pt-20 pb-8 sm:pt-24 mb-8 flex flex-col sm:flex-row items-center justify-center gap-6"
+          className="mb-16 flex flex-col sm:flex-row items-center justify-center gap-6"
           aria-label="Team Identity"
         >
           <div className="flex-shrink-0">
@@ -266,58 +280,67 @@ export default function TeamPage({ params }: TeamPageProps) {
             />
           </div>
           <div className="text-center sm:text-left">
-            <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
+            <h1 className="mb-4 text-5xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-7xl font-inter relative z-20">
               {team.name}
             </h1>
-            <p className="text-lg font-inter text-gray-300">
+            <p className="text-lg font-inter text-slate-400">
               {team.age_group} {team.gender} – Grade {team.grade_level}
             </p>
           </div>
         </section>
 
         {/* Mobile Team Photo - Shows under logo and team name on mobile */}
-        <div className="lg:hidden mb-8">
+        <div className="lg:hidden mb-12">
           <section aria-label="Team Photo">
-            <Image
-              src={
-                team.team_image
-                  ? `${team.team_image}?t=${Date.now()}`
-                  : "/logos/logo2.png"
-              }
-              alt={`${team.name} team photo`}
-              width={0}
-              height={0}
-              sizes="100vw"
-              className="w-full h-64 object-cover rounded-lg"
-              priority
-              onError={(e) => {
-                devError(
-                  `Image load error for ${team.name} photo: ${team.team_image}`
-                );
-                Sentry.captureMessage(
-                  `Failed to load team image for ${team.name}: ${team.team_image}`
-                );
-                e.currentTarget.src = "/logos/logo2.png";
-              }}
-            />
+            <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-white/10">
+              <Image
+                src={
+                  team.team_image
+                    ? `${team.team_image}?t=${Date.now()}`
+                    : "/logos/logo2.png"
+                }
+                alt={`${team.name} team photo`}
+                fill
+                className="object-cover"
+                sizes="100vw"
+                priority
+                onError={(e) => {
+                  devError(
+                    `Image load error for ${team.name} photo: ${team.team_image}`
+                  );
+                  Sentry.captureMessage(
+                    `Failed to load team image for ${team.name}: ${team.team_image}`
+                  );
+                  e.currentTarget.src = "/logos/logo2.png";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/30" />
+            </div>
           </section>
         </div>
 
         {/* Two Column Layout for Desktop - Coaches and Team Photo */}
-        <div className="lg:grid lg:grid-cols-2 lg:gap-8 mb-12 lg:items-center">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-16 mb-16 mt-32 lg:items-start">
           {/* Left Column - Coaches Only */}
           <div className="flex flex-col justify-center">
             {/* Coaches */}
             <section aria-label="Coaches">
-              <h2 className="text-2xl font-bebas uppercase mb-6 text-center">
-                Coaches
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+                <span className="text-xs font-medium uppercase tracking-wider text-blue-200 font-inter">
+                  Coaches
+                </span>
+              </div>
+              <h2 className="mb-6 text-3xl font-semibold tracking-tight text-white md:text-4xl font-inter">
+                Meet Our Coaches
               </h2>
+              <div className="h-1 w-20 rounded-full bg-blue-600 mb-6"></div>
               <div className="flex flex-col gap-4">
                 {coaches.length > 0 ? (
                   coaches.map((coach) => (
                     <div
                       key={coach.id}
-                      className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 flex items-start gap-4"
+                      className="bg-white/5 border border-white/10 rounded-xl p-6 flex items-start gap-4 hover:bg-white/10 transition-colors duration-300"
                     >
                       <Image
                         src={coach.image_url || "/logos/logo2.png"}
@@ -332,20 +355,20 @@ export default function TeamPage({ params }: TeamPageProps) {
                         }}
                       />
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-lg font-bebas text-white mb-2">
+                        <h3 className="text-lg font-semibold text-white mb-2 font-inter">
                           {coach.first_name} {coach.last_name}
                         </h3>
-                        <p className="text-gray-300 font-inter text-sm leading-relaxed mb-2">
+                        <p className="text-slate-400 font-inter text-sm leading-relaxed mb-2">
                           {coach.bio}
                         </p>
-                        <p className="text-red font-inter italic text-sm">
+                        <p className="text-blue-400 font-inter italic text-sm">
                           &ldquo;{coach.quote}&rdquo;
                         </p>
                       </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-gray-300 font-inter text-center">
+                  <p className="text-slate-400 font-inter text-center">
                     No coaches assigned.
                   </p>
                 )}
@@ -356,69 +379,75 @@ export default function TeamPage({ params }: TeamPageProps) {
           {/* Right Column - Team Photo (Desktop Only) */}
           <div className="lg:flex hidden justify-center">
             <section aria-label="Team Photo" className="w-full">
-              <Image
-                src={
-                  team.team_image
-                    ? `${team.team_image}?t=${Date.now()}`
-                    : "/logos/logo2.png"
-                }
-                alt={`${team.name} team photo`}
-                width={800}
-                height={384}
-                sizes="(max-width: 1024px) 0vw, 100vw"
-                className="w-full h-96 object-cover rounded-lg"
-                style={{ aspectRatio: "800/384" }}
-                priority
-                onError={(e) => {
-                  devError(
-                    `Image load error for ${team.name} photo: ${team.team_image}`
-                  );
-                  Sentry.captureMessage(
-                    `Failed to load team image for ${team.name}: ${team.team_image}`
-                  );
-                  e.currentTarget.src = "/logos/logo2.png";
-                }}
-              />
+              <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden border border-white/10">
+                <Image
+                  src={
+                    team.team_image
+                      ? `${team.team_image}?t=${Date.now()}`
+                      : "/logos/logo2.png"
+                  }
+                  alt={`${team.name} team photo`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 0vw, 50vw"
+                  priority
+                  onError={(e) => {
+                    devError(
+                      `Image load error for ${team.name} photo: ${team.team_image}`
+                    );
+                    Sentry.captureMessage(
+                      `Failed to load team image for ${team.name}: ${team.team_image}`
+                    );
+                    e.currentTarget.src = "/logos/logo2.png";
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-br from-black/30 via-transparent to-black/30" />
+              </div>
             </section>
           </div>
         </div>
 
         {/* Games & Practices - Side by Side */}
-        <section className="mb-12" aria-label="Schedules">
-          <h2 className="text-2xl font-bebas uppercase mb-6 text-center">
-            Team Schedule
-          </h2>
+        <section className="mb-16 mt-32" aria-label="Schedules">
+          <div className="mb-16 text-center">
+            <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl font-inter">
+              Team Schedule
+            </h2>
+            <p className="mt-4 text-lg text-slate-400 font-inter">
+              Upcoming games, tournaments, and practice sessions.
+            </p>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left Column - Games & Tournaments */}
             <div>
-              <h3 className="text-xl font-bebas uppercase mb-4 text-center">
+              <h3 className="text-xl font-semibold text-white mb-4 text-center font-inter">
                 Games & Tournaments
               </h3>
               {games.length > 0 ? (
-                <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-lg border border-red-500/50">
-                  <table className="w-full bg-gray-900/50 rounded-lg overflow-hidden">
-                    <thead className="sticky top-0 bg-gray-900/95 z-10">
-                      <tr className="border-b border-gray-700">
-                        <th className="text-left p-4 font-bebas uppercase">Opponent</th>
-                        <th className="text-left p-4 font-bebas uppercase">Date & Time</th>
-                        <th className="text-left p-4 font-bebas uppercase">Location</th>
+                <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-white/10">
+                  <table className="w-full bg-white/5 rounded-xl overflow-hidden">
+                    <thead className="sticky top-0 bg-white/10 z-10">
+                      <tr className="border-b border-white/10">
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Opponent</th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Date & Time</th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Location</th>
                       </tr>
                     </thead>
                     <tbody>
                       {games.map((game, index) => (
                         <tr
                           key={game.id}
-                          className={`border-b border-gray-800 hover:bg-gray-800/50 ${
+                          className={`border-b border-white/10 hover:bg-white/10 transition-colors ${
                             index === games.length - 1 ? "border-b-0" : ""
                           }`}
                         >
                           <td className="p-4 font-inter text-white">
                             vs {game.opponent || "TBD"}
                           </td>
-                          <td className="p-4 font-inter text-gray-300">
+                          <td className="p-4 font-inter text-slate-300">
                             {formatDateTimeChicago(game.date_time)}
                           </td>
-                          <td className="p-4 font-inter text-gray-300">
+                          <td className="p-4 font-inter text-slate-300">
                             {game.location || "TBD"}
                           </td>
                         </tr>
@@ -427,8 +456,8 @@ export default function TeamPage({ params }: TeamPageProps) {
                   </table>
                 </div>
               ) : (
-                <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
-                  <p className="text-gray-300 font-inter">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+                  <p className="text-slate-400 font-inter">
                     No games or tournaments scheduled.
                   </p>
                 </div>
@@ -437,34 +466,34 @@ export default function TeamPage({ params }: TeamPageProps) {
 
             {/* Right Column - Practices */}
             <div>
-              <h3 className="text-xl font-bebas uppercase mb-4 text-center">
+              <h3 className="text-xl font-semibold text-white mb-4 text-center font-inter">
                 Practices
               </h3>
               {practices.length > 0 ? (
-                <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-lg border border-red-500/50">
-                  <table className="w-full bg-gray-900/50 rounded-lg overflow-hidden">
-                    <thead className="sticky top-0 bg-gray-900/95 z-10">
-                      <tr className="border-b border-gray-700">
-                        <th className="text-left p-4 font-bebas uppercase">Description</th>
-                        <th className="text-left p-4 font-bebas uppercase">Date & Time</th>
-                        <th className="text-left p-4 font-bebas uppercase">Location</th>
+                <div className="overflow-x-auto max-h-96 overflow-y-auto rounded-xl border border-white/10">
+                  <table className="w-full bg-white/5 rounded-xl overflow-hidden">
+                    <thead className="sticky top-0 bg-white/10 z-10">
+                      <tr className="border-b border-white/10">
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Description</th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Date & Time</th>
+                        <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Location</th>
                       </tr>
                     </thead>
                     <tbody>
                       {practices.map((practice, index) => (
                         <tr
                           key={practice.id}
-                          className={`border-b border-gray-800 hover:bg-gray-800/50 ${
+                          className={`border-b border-white/10 hover:bg-white/10 transition-colors ${
                             index === practices.length - 1 ? "border-b-0" : ""
                           }`}
                         >
                           <td className="p-4 font-inter text-white">
                             {practice.description || "Practice Session"}
                           </td>
-                          <td className="p-4 font-inter text-gray-300">
+                          <td className="p-4 font-inter text-slate-300">
                             {formatDateTimeChicago(practice.date_time)}
                           </td>
-                          <td className="p-4 font-inter text-gray-300">
+                          <td className="p-4 font-inter text-slate-300">
                             {practice.location || "TBD"}
                           </td>
                         </tr>
@@ -473,41 +502,48 @@ export default function TeamPage({ params }: TeamPageProps) {
                   </table>
                 </div>
               ) : (
-                <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
-                  <p className="text-gray-300 font-inter">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+                  <p className="text-slate-400 font-inter">
                     No practices scheduled.
                   </p>
                 </div>
               )}
             </div>
           </div>
-          <Link
-            href="/schedules"
-            className="text-red hover:underline mt-4 inline-block text-center w-full"
-            aria-label="View all schedules"
-          >
-            View All Schedules
-          </Link>
+          <div className="text-center mt-6">
+            <Link
+              href="/schedules"
+              className="text-blue-400 hover:text-blue-300 hover:underline font-inter transition-colors"
+              aria-label="View all schedules"
+            >
+              View All Schedules →
+            </Link>
+          </div>
         </section>
 
         {/* Team Players - Full Width */}
-        <section className="mb-12" aria-label="Team Players">
-          <h2 className="text-2xl font-bebas uppercase mb-6 text-center">
-            Team Players
-          </h2>
+        <section className="mb-16 mt-32" aria-label="Team Players">
+          <div className="mb-16 text-center">
+            <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl font-inter">
+              Team Players
+            </h2>
+            <p className="mt-4 text-lg text-slate-400 font-inter">
+              Meet the players on this team.
+            </p>
+          </div>
           {players.length > 0 ? (
-            <div className="overflow-x-auto rounded-lg border border-red-500/50">
-              <table className="w-full bg-gray-900/50 rounded-lg overflow-hidden">
+            <div className="overflow-x-auto rounded-xl border border-white/10">
+              <table className="w-full bg-white/5 rounded-xl overflow-hidden">
                 <thead>
-                  <tr className="border-b border-gray-700">
-                    <th className="text-left p-4 font-bebas uppercase">Name</th>
-                    <th className="text-left p-4 font-bebas uppercase">
+                  <tr className="border-b border-white/10">
+                    <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">Name</th>
+                    <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
                       Jersey #
                     </th>
-                    <th className="text-left p-4 font-bebas uppercase">
+                    <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
                       Position
                     </th>
-                    <th className="text-left p-4 font-bebas uppercase">
+                    <th className="text-left p-4 font-semibold text-white font-inter uppercase text-sm">
                       Status
                     </th>
                   </tr>
@@ -516,25 +552,25 @@ export default function TeamPage({ params }: TeamPageProps) {
                   {players.map((player, index) => (
                     <tr
                       key={player.id}
-                      className={`border-b border-gray-800 hover:bg-gray-800/50 ${
+                      className={`border-b border-white/10 hover:bg-white/10 transition-colors ${
                         index === players.length - 1 ? "border-b-0" : ""
                       }`}
                     >
                       <td className="p-4 font-inter text-white">
                         {formatPlayerName(player.name)}
                       </td>
-                      <td className="p-4 font-inter text-gray-300">
+                      <td className="p-4 font-inter text-slate-300">
                         {(player as any).jersey_number || "N/A"}
                       </td>
-                      <td className="p-4 font-inter text-gray-300">
+                      <td className="p-4 font-inter text-slate-300">
                         {(player as any).position || "N/A"}
                       </td>
                       <td className="p-4">
                         <span
                           className={`px-2 py-1 rounded text-xs font-medium ${
                             (player as any).is_active !== false
-                              ? "bg-green-900 text-green-300"
-                              : "bg-red-900 text-red-300"
+                              ? "bg-green-900/50 text-green-300 border border-green-500/50"
+                              : "bg-red-900/50 text-red-300 border border-red-500/50"
                           }`}
                         >
                           {(player as any).is_active !== false
@@ -548,8 +584,8 @@ export default function TeamPage({ params }: TeamPageProps) {
               </table>
             </div>
           ) : (
-            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 text-center">
-              <p className="text-gray-300 font-inter">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+              <p className="text-slate-400 font-inter">
                 No players added to this team yet.
               </p>
             </div>
@@ -560,13 +596,18 @@ export default function TeamPage({ params }: TeamPageProps) {
         <div className="text-center mt-12">
           <Link
             href="/teams"
-            className="text-red hover:underline text-lg font-bebas inline-block"
+            className="text-blue-400 hover:text-blue-300 hover:underline text-lg font-inter inline-block transition-colors"
             aria-label="Back to all teams"
           >
             ← Back to Teams
           </Link>
         </div>
       </div>
-    </motion.div>
+
+      {/* Ad Section - Above Footer */}
+      <div className="mt-16 md:mt-24">
+        <AdSection />
+      </div>
+    </motion.main>
   );
 }

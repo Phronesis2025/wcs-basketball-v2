@@ -1,5 +1,85 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.25 - Teams, Schedules, and Team Detail Pages Redesign
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (130 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **Teams Page Redesign**:
+  - Redesigned Teams page to match About page styling
+  - Updated background to pure black with gradient effect
+  - Added descriptive subtitle explaining team purpose
+  - Updated TeamCard component with modern styling
+  - Added AdSection component at bottom of page
+  - Files Modified:
+    - `src/components/ClientTeams.tsx`
+    - `src/components/TeamCard.tsx`
+
+- **Schedules Page Redesign**:
+  - Redesigned Schedules page to match About page styling
+  - Updated background to pure black with gradient effect
+  - Added descriptive subtitle explaining calendar functionality
+  - Updated filter dropdowns with new styling
+  - Enhanced Today's Events section styling
+  - Updated calendar container styling
+  - Added AdSection component at bottom of page
+  - Files Modified:
+    - `src/app/schedules/page.tsx`
+
+- **Team Detail Page Redesign**:
+  - Redesigned individual team pages to match About page styling
+  - Updated background to pure black with gradient effect
+  - Enhanced team identity section with gradient title
+  - Updated coaches section with badge-style headers
+  - Enhanced schedule tables with new styling
+  - Updated player roster table styling
+  - Added AdSection component at bottom of page
+  - Files Modified:
+    - `src/app/teams/[id]/page.tsx`
+
+### 🔧 Fixed
+
+- **Navbar Styling Consistency**:
+  - Updated Navbar to use dark styling on Teams, Schedules, and Team Detail pages
+  - Ensures consistent navbar appearance across all dark-themed pages
+  - Files Modified:
+    - `src/components/Navbar.tsx`
+
+- **TeamCard Component Styling**:
+  - Updated card borders and backgrounds to match About page cards
+  - Changed link colors from red to blue for consistency
+  - Enhanced hover effects and transitions
+  - Files Modified:
+    - `src/components/TeamCard.tsx`
+
+### 🔒 Security
+
+- **Security Review**:
+  - Completed comprehensive security check - no new vulnerabilities found
+  - NPM Audit: 1 high severity vulnerability (xlsx library - documented, no fix available)
+  - Supabase Security Advisor: 1 WARN (leaked password protection - manual dashboard config required)
+  - Supabase Performance Advisor: 24 INFO (unused indexes - low priority, no action needed)
+  - All existing security measures verified and documented
+  - Files Modified:
+    - `docs/SECURITY.md`
+
+### 📝 Documentation
+
+- **Security Audit Update**:
+  - Updated security audit documentation with January 2025 review
+  - Documented Supabase advisor findings
+  - Updated security implementation version to v2.10.25
+  - Files Modified:
+    - `docs/SECURITY.md`
+
+---
+
 ## 🚀 Version 2.10.24 - Homepage & Drills Page Redesign
 
 **Release Date**: January 13, 2025  

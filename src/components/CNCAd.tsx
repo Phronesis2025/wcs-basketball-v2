@@ -22,10 +22,10 @@ const CNCAd = () => {
         dangerouslySetInnerHTML={{
           __html: `
         @font-face {
-          font-family: 'Fredoka One';
-          src: url('/fonts/FredokaOne-Regular.ttf') format('truetype');
-          font-weight: 400;
-          font-style: normal;
+          font-family: 'IntegralCF Bold Oblique';
+          src: url('/fonts/integralcf-boldoblique.otf') format('opentype');
+          font-weight: 700;
+          font-style: oblique;
           font-display: swap;
         }
         @keyframes spotlight {
@@ -58,7 +58,7 @@ const CNCAd = () => {
           color: #00a8ff !important;
           -webkit-text-stroke: 1px #00d4ff !important;
           text-stroke: 1px #00d4ff !important;
-          font-family: 'Fredoka One', cursive !important;
+          font-family: 'IntegralCF Bold Oblique', sans-serif !important;
           font-weight: 400 !important;
           letter-spacing: 0.05em !important;
           white-space: nowrap !important;
@@ -157,7 +157,7 @@ const CNCAd = () => {
               {/* Coach Nate Classic - One Line */}
               <h2
                 className="neon-outline-text text-glow text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl mb-2 sm:mb-3 md:mb-4 leading-tight"
-                style={{ fontFamily: "'Fredoka One', cursive" }}
+                style={{ fontFamily: "'IntegralCF Bold Oblique', sans-serif" }}
               >
                 Coach Nate Classic
               </h2>

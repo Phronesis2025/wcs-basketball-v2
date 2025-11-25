@@ -224,12 +224,18 @@ export default function DrillsPage() {
       
       <section className="relative z-10" aria-label="Practice Drills">
         <div className="max-w-7xl mx-auto px-6">
-          <h1
-            className="text-5xl md:text-7xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 mb-8 text-center uppercase font-inter relative z-20"
-            aria-label="Practice Drills"
-          >
-            Practice Drills
-          </h1>
+          {/* Hero Section */}
+          <div className="relative mx-auto max-w-4xl px-6 text-center mb-12">
+            <h1
+              className="mb-8 text-5xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-7xl font-inter relative z-20"
+              aria-label="Practice Drills"
+            >
+              Practice Drills
+            </h1>
+            <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-400 md:text-xl font-inter">
+              Browse our comprehensive library of practice drills designed to improve skills, conditioning, and team performance. Filter by time, skill, or category to find the perfect drill for your practice.
+            </p>
+          </div>
           {error && (
             <div className="mb-8 p-4 bg-black/50 border border-white/10 rounded-lg">
               <p className="text-red-500 font-inter">

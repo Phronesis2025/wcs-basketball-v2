@@ -11,6 +11,7 @@ import { devError } from "@/lib/security";
 
 import MobileMonth from "@/components/calendar/MobileMonth";
 import EventDetailsModal from "@/components/calendar/EventDetailsModal";
+import AdSection from "@/components/AdSection";
 import { eventTypeToColor } from "@/lib/calendarColors";
 
 export default function SchedulesPage() {
@@ -261,19 +262,31 @@ export default function SchedulesPage() {
   // Desktop now mirrors the mobile custom calendar, so no need to format for FullCalendar
 
   return (
-    <div className="bg-navy min-h-screen text-white">
-      <section className="pt-20 pb-12 sm:pt-24" aria-label="Schedules">
-        <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-8">
-            <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-8 text-center uppercase">
-              Schedules
-            </h1>
+    <main className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen">
+      {/* Background Gradients */}
+      <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+        <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
+      </div>
+
+      {/* Hero Section */}
+      <section className="relative mx-auto max-w-7xl px-6" aria-label="Schedules">
+        <div className="text-center mb-16">
+          <h1 className="mb-8 text-5xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-7xl font-inter relative z-20">
+            Schedules
+          </h1>
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-slate-400 md:text-xl font-inter">
+            View all upcoming games, practices, tournaments, and team updates in one comprehensive calendar. 
+            Filter by team or event type to find exactly what you&apos;re looking for.
+          </p>
+        </div>
+
+        <div className="space-y-8">
             {(error || teamsError) && (
-              <div className="bg-red-900/20 border border-red-500 rounded-lg p-4 mb-6">
+              <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-4 mb-6">
                 <p className="text-red-400 font-inter text-center mb-2">
                   {error || String(teamsError)}
                 </p>
-                <p className="text-sm text-gray-300 text-center">
+                <p className="text-sm text-slate-400 text-center">
                   If you&apos;re using a VPN, try switching servers or disabling
                   it temporarily. You can also try refreshing the page or
                   checking your internet connection.
@@ -285,7 +298,7 @@ export default function SchedulesPage() {
                 <div>
                   <label
                     htmlFor="team-filter"
-                    className="block text-sm font-inter"
+                    className="block text-sm font-inter text-slate-300 mb-2"
                   >
                     Filter by Team
                   </label>
@@ -293,7 +306,7 @@ export default function SchedulesPage() {
                     id="team-filter"
                     value={teamFilter}
                     onChange={(e) => setTeamFilter(e.target.value)}
-                    className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                    className="w-full mt-1 p-2 bg-white/5 text-slate-300 rounded-lg border border-white/10 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-colors"
                   >
                     <option value="all">All Teams</option>
                     {teamsData.map((team: Team) => (
@@ -306,7 +319,7 @@ export default function SchedulesPage() {
                 <div>
                   <label
                     htmlFor="type-filter"
-                    className="block text-sm font-inter"
+                    className="block text-sm font-inter text-slate-300 mb-2"
                   >
                     Filter by Type
                   </label>
@@ -314,7 +327,7 @@ export default function SchedulesPage() {
                     id="type-filter"
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value)}
-                    className="w-full mt-1 p-2 bg-gray-800 text-white rounded-md border border-gray-700"
+                    className="w-full mt-1 p-2 bg-white/5 text-slate-300 rounded-lg border border-white/10 focus:border-blue-500/50 focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-colors"
                   >
                     <option value="all">All Types</option>
                     <option value="Game">Games</option>
@@ -327,14 +340,16 @@ export default function SchedulesPage() {
               </div>
             </section>
             <section aria-label="Today's Events">
-              <h2 className="text-2xl font-bebas mb-4">Today&apos;s Events</h2>
-              <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 mb-8">
+              <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl font-inter mb-6">
+                Today&apos;s Events
+              </h2>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8">
                 {todayEvents.length > 0 ? (
-                  <ul className="space-y-2">
+                  <ul className="space-y-3">
                     {todayEvents.map((event) => (
                       <li
                         key={`${event.id}-${event.date_time}`}
-                        className="text-gray-300 font-inter"
+                        className="text-slate-300 font-inter"
                       >
                         <div className="space-y-1">
                           {/* First line: Event type and team name */}
@@ -345,14 +360,14 @@ export default function SchedulesPage() {
                               );
                               return (
                                 <span
-                                  className={`${bg} ${text} font-bebas uppercase font-bold text-lg px-3 py-1 rounded-md flex items-center justify-center`}
+                                  className={`${bg} ${text} font-inter uppercase font-semibold text-sm px-3 py-1 rounded-lg flex items-center justify-center`}
                                 >
                                   {event.event_type}
                                 </span>
                               );
                             })()}
-                            <span> | </span>
-                            <span className="text-white">
+                            <span className="text-slate-500"> | </span>
+                            <span className="text-white font-medium">
                               {event.is_global || !event.team_id
                                 ? "All Teams"
                                 : (
@@ -365,7 +380,7 @@ export default function SchedulesPage() {
                             </span>
                           </div>
                           {/* Second line: Date/time and location */}
-                          <div className="flex items-center space-x-2 text-sm text-gray-400">
+                          <div className="flex items-center space-x-2 text-sm text-slate-400">
                             <span>
                               {new Date(event.date_time).toLocaleString(
                                 "en-US",
@@ -376,7 +391,7 @@ export default function SchedulesPage() {
                                 }
                               )}
                             </span>
-                            <span> | </span>
+                            <span className="text-slate-600"> | </span>
                             <span>{event.location}</span>
                           </div>
                         </div>
@@ -384,13 +399,15 @@ export default function SchedulesPage() {
                     ))}
                   </ul>
                 ) : (
-                  <p className="text-gray-300 font-inter">No events today.</p>
+                  <p className="text-slate-400 font-inter">No events today.</p>
                 )}
               </div>
             </section>
             <section aria-label="Schedules Calendar">
-              <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4">
-                <h2 className="text-2xl font-bebas mb-4">Team Schedules</h2>
+              <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+                <h2 className="text-3xl font-semibold tracking-tight text-white md:text-4xl font-inter mb-6">
+                  Team Schedules
+                </h2>
                 {/* Mobile calendar */}
                 <div className="block md:hidden">
                   <MobileMonth
@@ -412,14 +429,19 @@ export default function SchedulesPage() {
               </div>
             </section>
           </div>
-        </div>
       </section>
+
+      {/* Ad Section - Above Footer */}
+      <div className="mt-16 md:mt-24">
+        <AdSection />
+      </div>
+
       <EventDetailsModal
         isOpen={!!selectedEvent}
         event={selectedEvent}
         teams={teamsData}
         onClose={() => setSelectedEvent(null)}
       />
-    </div>
+    </main>
   );
 }
