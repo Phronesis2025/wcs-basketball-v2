@@ -323,7 +323,7 @@ export default function TeamPage({ params }: TeamPageProps) {
             </p>
           </div>
           <h1
-            className="mb-0 text-8xl sm:text-6xl md:text-8xl relative z-20 team-name-animated uppercase tracking-tight mx-auto"
+            className="mb-0 text-8xl sm:text-6xl md:text-8xl relative z-20 team-name-animated uppercase tracking-tight mx-auto text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50"
             data-text={team.name}
             style={{
               fontSize: "clamp(2.5rem, 12vw, 6rem)",

@@ -732,6 +732,7 @@ img[style*="object-fit"],
   font-size: 1.15em;
   -webkit-text-stroke: 1px #D91E18;
   text-stroke: 1px #D91E18;
+  /* Desktop shadow - original values */
   text-shadow: 
     0.5px 0.5px 0.5px rgba(0, 44, 81, 0.8),
     0.5px 1px 0.5px rgba(0, 44, 81, 0.7),
@@ -747,6 +748,49 @@ img[style*="object-fit"],
     0.5px 11px 5px rgba(0, 64, 128, 0.4),
     0.5px 12.5px 17.5px rgba(0, 64, 128, 0.3),
     0.5px 15px 30px rgba(0, 64, 128, 0.5);
+}
+
+/* Spotlight effect behind the text - visible on all screen sizes */
+.team-name-animated::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120%;
+  height: 150%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.5) 0%,
+    rgba(255, 255, 255, 0.3) 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 70%
+  );
+  z-index: -1;
+  pointer-events: none;
+  filter: blur(20px);
+  opacity: 0.8;
+}
+
+/* Mobile: Reduced shadow offsets to bring shadow closer to text */
+@media (max-width: 767px) {
+  .team-name-animated {
+    text-shadow: 
+      0.3px 0.3px 0.3px rgba(0, 44, 81, 0.8),
+      0.3px 0.6px 0.3px rgba(0, 44, 81, 0.7),
+      0.3px 0.9px 0.3px rgba(0, 44, 81, 0.6),
+      0.3px 1.2px 0.3px rgba(0, 44, 81, 0.5),
+      0.3px 1.5px 0.3px rgba(0, 44, 81, 0.4),
+      0.3px 1.8px 0.3px rgba(0, 44, 81, 0.3),
+      0.3px 2.1px 0.3px rgba(0, 44, 81, 0.2),
+      0.3px 2.4px 0.3px rgba(0, 44, 81, 0.1),
+      0.3px 2.7px 0.3px rgba(0, 64, 128, 0.1),
+      0.3px 3px 0.3px rgba(0, 64, 128, 0.1),
+      0.3px 5px 2px rgba(0, 64, 128, 0.6),
+      0.3px 6px 3px rgba(0, 64, 128, 0.4),
+      0.3px 7px 10px rgba(0, 64, 128, 0.3),
+      0.3px 8px 18px rgba(0, 64, 128, 0.5);
+  }
 }
 
 /* Team Identity Overlap - Positions team name/logo to overlap banner image */

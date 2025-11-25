@@ -1,5 +1,30 @@
 # Changelog Entries for Supabase Database
 
+## Version 2.10.27 - Team Page Title Visual Enhancements
+
+**Release Date**: 2025-01-25
+
+### Entries to Add:
+
+1. **Changed** - Team Page Title Gradient Effect
+   - Applied same gradient effect from About page to team page title
+   - Gradient transitions from white to white/50 opacity (top to bottom)
+   - Works seamlessly with existing text-stroke and shadow effects
+
+2. **Changed** - Mobile Shadow Adjustments
+   - Reduced shadow offsets on mobile devices (screens ≤767px)
+   - Changed shadow offsets from 0.5px-15px to 0.3px-8px range
+   - Shadows now appear closer to text for better readability on mobile
+   - Desktop shadows remain unchanged
+
+3. **Added** - White Spotlight Effect
+   - Added white spotlight effect behind team page title
+   - Visible on both desktop and mobile devices
+   - Uses radial gradient with blur for soft glow effect
+   - Positioned absolutely behind text with z-index layering
+
+---
+
 ## Version 2.10.24 - Homepage & Drills Page Redesign
 
 **Release Date**: 2025-01-13

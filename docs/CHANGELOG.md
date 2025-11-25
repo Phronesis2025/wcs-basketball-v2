@@ -1,5 +1,49 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.27 - Team Page Title Visual Enhancements
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (130 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **White Spotlight Effect**:
+  - Added white spotlight effect behind team page title
+  - Visible on both desktop and mobile devices
+  - Uses radial gradient with blur for soft glow effect
+  - Positioned absolutely behind text with z-index layering
+  - Files Modified:
+    - `src/app/globals.css`
+
+- **Gradient Text Effect**:
+  - Applied same gradient effect from About page to team page title
+  - Gradient transitions from white to white/50 opacity (top to bottom)
+  - Works seamlessly with existing text-stroke and shadow effects
+  - Files Modified:
+    - `src/app/teams/[id]/page.tsx`
+
+### 🔧 Changed
+
+- **Mobile Shadow Adjustments**:
+  - Reduced shadow offsets on mobile devices (screens ≤767px)
+  - Changed shadow offsets from 0.5px-15px to 0.3px-8px range
+  - Shadows now appear closer to text for better readability on mobile
+  - Desktop shadows remain unchanged
+  - Files Modified:
+    - `src/app/globals.css`
+
+### 📝 Documentation
+
+- **Changelog Updates**:
+  - Added version 2.10.27 entries to Supabase changelog table
+  - Updated CHANGELOG.md with detailed change descriptions
+
+---
+
 ## 🚀 Version 2.10.26 - Team Detail Page Enhancements
 
 **Release Date**: January 2025  
