@@ -18,17 +18,17 @@ export default function StatCard({
 }: StatCardProps) {
   return (
     <div
-      className={`bg-white rounded-lg p-6 shadow-sm border border-gray-100 ${className}`}
+      className={`bg-white/5 border border-white/10 rounded-xl p-6 ${className}`}
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-bebas text-gray-600 uppercase tracking-wide">
+        <h3 className="text-xl font-semibold text-white font-inter">
           {title}
         </h3>
-        <div className="text-gray-400">{icon}</div>
+        <div className="text-slate-400">{icon}</div>
       </div>
       <div className="space-y-1">
-        <div className="text-3xl font-bold text-gray-900">{value}</div>
-        <div className="text-sm text-gray-500 font-inter">{subtitle}</div>
+        <div className="text-3xl font-bold text-white font-inter">{value}</div>
+        <div className="text-sm text-slate-400 font-inter">{subtitle}</div>
       </div>
     </div>
   );

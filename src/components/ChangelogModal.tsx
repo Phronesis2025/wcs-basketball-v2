@@ -54,8 +54,8 @@ export default function ChangelogModal({ isOpen, onClose, userId, editing, onSav
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 w-full max-w-xl">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center p-2 sm:p-4 z-50 overflow-y-auto pt-20 sm:pt-20">
+      <div className="bg-gray-900 border border-gray-700 rounded-lg p-6 w-full max-w-2xl max-h-[calc(100vh-5rem)] sm:max-h-[calc(100vh-5rem)] overflow-y-auto mx-1 sm:mx-0">
         <h3 className="text-xl font-bebas text-white mb-4">{editing ? "Edit" : "Add"} Changelog Entry</h3>
         <div className="grid grid-cols-1 gap-4">
           <div>

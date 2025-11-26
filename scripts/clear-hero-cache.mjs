@@ -5,13 +5,13 @@
 
 const clearHeroImageCache = () => {
   const keysToRemove = [
-    'hero-images-cache',
-    'hero-images-cache-timestamp',
-    'hero-images-cache-version'
+    "hero-images-cache",
+    "hero-images-cache-timestamp",
+    "hero-images-cache-version",
   ];
 
   let cleared = 0;
-  keysToRemove.forEach(key => {
+  keysToRemove.forEach((key) => {
     if (localStorage.getItem(key)) {
       localStorage.removeItem(key);
       cleared++;
@@ -20,14 +20,14 @@ const clearHeroImageCache = () => {
   });
 
   if (cleared === 0) {
-    console.log('No hero image cache found in localStorage');
+    console.log("No hero image cache found in localStorage");
   } else {
     console.log(`\n✓ Cleared ${cleared} cache entries`);
   }
 };
 
 // Export for use in browser console
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   window.clearHeroImageCache = clearHeroImageCache;
 }
 
@@ -40,7 +40,3 @@ Or manually remove these keys:
   - hero-images-cache-timestamp
   - hero-images-cache-version
 `);
-
-
-
-

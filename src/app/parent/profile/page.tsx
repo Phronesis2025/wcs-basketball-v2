@@ -222,7 +222,7 @@ function ParentProfilePageInner() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <BasketballLoader size={80} />
         </div>

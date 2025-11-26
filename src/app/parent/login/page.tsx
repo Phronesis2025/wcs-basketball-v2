@@ -139,8 +139,8 @@ export default function ParentLogin() {
         </p>
 
         <div className="max-w-md mx-auto">
-          <div className="login-card-border-effect mb-8">
-            <div className="p-8">
+          <div className="login-card-border mb-8">
+            <div className="login-card-border-inner">
               <form onSubmit={handleLogin} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2 font-inter">

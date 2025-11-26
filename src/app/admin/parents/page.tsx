@@ -7,7 +7,7 @@ import Link from "next/link";
 import BasketballLoader from "@/components/BasketballLoader";
 import { devError } from "@/lib/security";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface ParentSummary {
   email: string;
@@ -56,7 +56,7 @@ export default function AdminParentsPage() {
 
   if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center">
           <BasketballLoader size={80} />
         </div>

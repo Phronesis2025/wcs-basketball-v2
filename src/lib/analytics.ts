@@ -288,13 +288,13 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
       supabaseAdmin
         .from("users")
         .select("id", { count: "exact", head: true }),
-      // Get login logs for device breakdown and page views calculation
+      // Get login logs for device breakdown
       supabaseAdmin
         .from("login_logs")
         .select("user_agent, created_at")
         .eq("success", true)
         .order("created_at", { ascending: false })
-        .limit(1000), // Get recent logs for calculations
+        .limit(1000), // Get recent logs for device breakdown
       // Get average response time from performance metrics (last 24 hours)
       getAverageResponseTime(undefined, 24),
       // Fetch uptime data from UptimeRobot
@@ -305,12 +305,48 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
 
     const totalUsers = usersCount?.count || 0;
 
-    // Calculate device breakdown from login logs
+    // Fetch real website traffic data from web_vitals (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const { data: webVitalsTrafficData, error: webVitalsError } = await supabaseAdmin
+      .from("web_vitals")
+      .select("page, session_id, user_id, metric_name, created_at")
+      .gte("created_at", thirtyDaysAgo.toISOString())
+      .eq("metric_name", "LCP"); // Use LCP as it's always sent per page load
+
+    // Calculate real traffic metrics from web_vitals
+    let totalPageViews = 0;
+    let uniqueVisitors = 0;
+    const topPagesMap = new Map<string, number>();
+    const uniqueSessions = new Set<string>();
+
+    if (webVitalsTrafficData && !webVitalsError) {
+      // Count page views (each LCP entry = 1 page view)
+      totalPageViews = webVitalsTrafficData.length;
+
+      // Count unique visitors (distinct session_ids or user_ids)
+      webVitalsTrafficData.forEach((vital: any) => {
+        if (vital.session_id) {
+          uniqueSessions.add(vital.session_id);
+        } else if (vital.user_id) {
+          uniqueSessions.add(vital.user_id);
+        }
+
+        // Count page views per page
+        const page = vital.page || "/";
+        topPagesMap.set(page, (topPagesMap.get(page) || 0) + 1);
+      });
+
+      uniqueVisitors = uniqueSessions.size;
+    }
+
+    // Calculate device breakdown from login logs (fallback if no web_vitals data)
     let mobileCount = 0;
     let desktopCount = 0;
-    const uniqueUserIds = new Set<string>();
+    let mobilePercentage = 50; // Default 50/50 split
     
-    if (loginLogsData?.data) {
+    if (loginLogsData?.data && loginLogsData.data.length > 0) {
       loginLogsData.data.forEach((log: any) => {
         const userAgent = (log.user_agent || "").toLowerCase();
         if (userAgent.includes("mobile") || userAgent.includes("android") || userAgent.includes("iphone")) {
@@ -321,100 +357,25 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
       });
       
       const totalLogs = loginLogsData.data.length;
-      const mobilePercentage = totalLogs > 0 ? Math.round((mobileCount / totalLogs) * 100) : 0;
-      
-      // Calculate page views from login count (approximation)
-      // Each login represents at least one page view, multiply by average session pages
-      const totalPageViews = loginStats.reduce((sum, stat) => sum + (stat.total_logins || 0), 0) * 3;
-      
-      // Calculate performance metrics
-      const errorRatePercent = errorStats.total_errors > 0
-        ? (errorStats.unresolved_errors / errorStats.total_errors) * 100
-        : 0;
-      
-      // Use real average response time from performance metrics
-      // If no data available, fallback to 120ms
-      const realResponseTime = averageResponseTime || 120;
-      
-      // Check database health by attempting a simple query
-      let databaseHealth = "Healthy";
-      try {
-        const { error: healthCheckError } = await supabaseAdmin
-          .from("users")
-          .select("id")
-          .limit(1);
-        if (healthCheckError) {
-          databaseHealth = "Unhealthy";
-        }
-      } catch {
-        databaseHealth = "Unhealthy";
-      }
-
-      // Use real uptime data from UptimeRobot
-      const realUptime = uptimeData.uptime || 99.9;
-
-      const performanceMetrics = {
-        averagePageLoadTime: realResponseTime,
-        errorRate: errorRatePercent / 100, // Convert to decimal for consistency
-        uptime: realUptime,
-      };
-
-      const trafficMetrics = {
-        totalPageViews: totalPageViews || 0,
-        uniqueVisitors: totalUsers,
-        topPages: [
-          { page: "/", views: Math.round(totalPageViews * 0.35) },
-          { page: "/teams", views: Math.round(totalPageViews * 0.25) },
-          { page: "/schedules", views: Math.round(totalPageViews * 0.20) },
-          { page: "/coaches/login", views: Math.round(totalPageViews * 0.15) },
-        ],
-        deviceBreakdown: {
-          mobile: mobilePercentage,
-          desktop: 100 - mobilePercentage,
-        },
-      };
-
-      return {
-        errorStats,
-        loginStats,
-        performanceMetrics,
-        trafficMetrics,
-        systemHealth: {
-          uptime: realUptime,
-          responseTime: realResponseTime,
-          database: databaseHealth,
-        },
-        webVitals: webVitalsData,
-      };
+      mobilePercentage = totalLogs > 0 ? Math.round((mobileCount / totalLogs) * 100) : 50;
     }
 
-    // Fallback if no login logs
+    // Get top pages sorted by views
+    const topPages = Array.from(topPagesMap.entries())
+      .map(([page, views]) => ({ page, views }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 5); // Top 5 pages
+
+    // Calculate performance metrics
     const errorRatePercent = errorStats.total_errors > 0
       ? (errorStats.unresolved_errors / errorStats.total_errors) * 100
       : 0;
     
     // Use real average response time from performance metrics
+    // If no data available, fallback to 120ms
     const realResponseTime = averageResponseTime || 120;
-    // Use real uptime data from UptimeRobot
-    const realUptime = uptimeData.uptime || 99.9;
-
-    const performanceMetrics = {
-      averagePageLoadTime: realResponseTime,
-      errorRate: errorRatePercent / 100, // Convert to decimal for consistency
-      uptime: realUptime,
-    };
-
-    const trafficMetrics = {
-      totalPageViews: loginStats.reduce((sum, stat) => sum + (stat.total_logins || 0), 0) * 3 || 0,
-      uniqueVisitors: totalUsers,
-      topPages: [],
-      deviceBreakdown: {
-        mobile: 60,
-        desktop: 40,
-      },
-    };
-
-    // Check database health for fallback
+    
+    // Check database health by attempting a simple query
     let databaseHealth = "Healthy";
     try {
       const { error: healthCheckError } = await supabaseAdmin
@@ -427,6 +388,25 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
     } catch {
       databaseHealth = "Unhealthy";
     }
+
+    // Use real uptime data from UptimeRobot
+    const realUptime = uptimeData.uptime || 99.9;
+
+    const performanceMetrics = {
+      averagePageLoadTime: realResponseTime,
+      errorRate: errorRatePercent / 100, // Convert to decimal for consistency
+      uptime: realUptime,
+    };
+
+    const trafficMetrics = {
+      totalPageViews: totalPageViews || 0,
+      uniqueVisitors: uniqueVisitors || 0,
+      topPages: topPages.length > 0 ? topPages : [],
+      deviceBreakdown: {
+        mobile: mobilePercentage,
+        desktop: 100 - mobilePercentage,
+      },
+    };
 
     return {
       errorStats,

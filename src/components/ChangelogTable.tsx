@@ -76,18 +76,18 @@ export default function ChangelogTable({ userId, isAdmin }: Props) {
   }, [filtered]);
 
   return (
-    <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
+    <div className="bg-white/5 border border-white/10 rounded-xl p-6">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bebas text-white">Changelog</h2>
+        <h2 className="text-2xl font-semibold text-white font-inter">Changelog</h2>
         <div className="flex gap-2">
           <input
-            className="hidden md:block bg-gray-800 text-white border border-gray-600 rounded px-3 py-2 text-sm"
+            className="hidden md:block bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm font-inter placeholder-slate-400 focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
             placeholder="Search version or description"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
           <select
-            className="bg-gray-800 text-white border border-gray-600 rounded px-3 py-2 text-sm"
+            className="bg-white/5 text-white border border-white/10 rounded-lg px-3 py-2 text-sm font-inter focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
             value={category}
             onChange={(e) => setCategory(e.target.value as any)}
           >
@@ -101,27 +101,27 @@ export default function ChangelogTable({ userId, isAdmin }: Props) {
       </div>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-300">Loading changelog...</div>
+        <div className="text-center py-8 text-slate-300 font-inter">Loading changelog...</div>
       ) : grouped.length === 0 ? (
-        <div className="text-gray-400 text-sm">No changelog entries yet.</div>
+        <div className="text-slate-400 text-sm font-inter">No changelog entries yet.</div>
       ) : (
         <div className="space-y-6">
           {grouped.map((group) => (
-            <div key={`${group.version}-${group.release_date}`} className="bg-gray-800 rounded-lg border border-gray-700">
-              <div className="flex items-center justify-between p-4 border-b border-gray-700">
-                <div className="text-white font-bebas text-xl">Version {group.version}</div>
-                <div className="text-gray-300 text-sm">{new Date(group.release_date).toLocaleDateString()}</div>
+            <div key={`${group.version}-${group.release_date}`} className="bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
+                <div className="text-white font-semibold text-xl font-inter">Version {group.version}</div>
+                <div className="text-slate-300 text-sm font-inter">{new Date(group.release_date).toLocaleDateString()}</div>
               </div>
-              <div className="divide-y divide-gray-700">
+              <div className="divide-y divide-white/10">
                 {group.items.map((item) => (
                   <div key={item.id} className="p-4">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`${getCategoryColor(item.category)} text-xs uppercase tracking-wide`}>[{item.category}]</span>
                       {!item.is_published && (
-                        <span className="text-xs text-gray-400">(unpublished)</span>
+                        <span className="text-xs text-slate-400 font-inter">(unpublished)</span>
                       )}
                     </div>
-                    <div className="text-gray-100">{item.description}</div>
+                    <div className="text-white font-inter">{item.description}</div>
                   </div>
                 ))}
               </div>

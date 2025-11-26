@@ -71,7 +71,7 @@ function ResetPasswordContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
       <div className="max-w-lg w-full bg-gray-900 border border-gray-700 rounded-lg shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-700">
@@ -138,88 +138,240 @@ function ResetPasswordContent() {
                 )}
               </button>
             </div>
-            
+
             {/* Password Requirements */}
             <div className="mt-3 bg-gray-800/50 border border-gray-700 rounded-lg p-3">
-              <p className="text-xs font-inter text-gray-300 mb-2">Password Requirements:</p>
+              <p className="text-xs font-inter text-gray-300 mb-2">
+                Password Requirements:
+              </p>
               <ul className="space-y-1.5">
                 <li className="flex items-center text-xs">
-                  <span className={`mr-2 ${passwordRequirements.minLength ? "text-green-400" : "text-gray-500"}`}>
+                  <span
+                    className={`mr-2 ${
+                      passwordRequirements.minLength
+                        ? "text-green-400"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {passwordRequirements.minLength ? (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     )}
                   </span>
-                  <span className={passwordRequirements.minLength ? "text-gray-300" : "text-gray-500"}>
+                  <span
+                    className={
+                      passwordRequirements.minLength
+                        ? "text-gray-300"
+                        : "text-gray-500"
+                    }
+                  >
                     At least 8 characters
                   </span>
                 </li>
                 <li className="flex items-center text-xs">
-                  <span className={`mr-2 ${passwordRequirements.hasUpperCase ? "text-green-400" : "text-gray-500"}`}>
+                  <span
+                    className={`mr-2 ${
+                      passwordRequirements.hasUpperCase
+                        ? "text-green-400"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {passwordRequirements.hasUpperCase ? (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     )}
                   </span>
-                  <span className={passwordRequirements.hasUpperCase ? "text-gray-300" : "text-gray-500"}>
+                  <span
+                    className={
+                      passwordRequirements.hasUpperCase
+                        ? "text-gray-300"
+                        : "text-gray-500"
+                    }
+                  >
                     One uppercase letter
                   </span>
                 </li>
                 <li className="flex items-center text-xs">
-                  <span className={`mr-2 ${passwordRequirements.hasLowerCase ? "text-green-400" : "text-gray-500"}`}>
+                  <span
+                    className={`mr-2 ${
+                      passwordRequirements.hasLowerCase
+                        ? "text-green-400"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {passwordRequirements.hasLowerCase ? (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     )}
                   </span>
-                  <span className={passwordRequirements.hasLowerCase ? "text-gray-300" : "text-gray-500"}>
+                  <span
+                    className={
+                      passwordRequirements.hasLowerCase
+                        ? "text-gray-300"
+                        : "text-gray-500"
+                    }
+                  >
                     One lowercase letter
                   </span>
                 </li>
                 <li className="flex items-center text-xs">
-                  <span className={`mr-2 ${passwordRequirements.hasNumber ? "text-green-400" : "text-gray-500"}`}>
+                  <span
+                    className={`mr-2 ${
+                      passwordRequirements.hasNumber
+                        ? "text-green-400"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {passwordRequirements.hasNumber ? (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     )}
                   </span>
-                  <span className={passwordRequirements.hasNumber ? "text-gray-300" : "text-gray-500"}>
+                  <span
+                    className={
+                      passwordRequirements.hasNumber
+                        ? "text-gray-300"
+                        : "text-gray-500"
+                    }
+                  >
                     One number
                   </span>
                 </li>
                 <li className="flex items-center text-xs">
-                  <span className={`mr-2 ${passwordRequirements.hasSpecialChar ? "text-green-400" : "text-gray-500"}`}>
+                  <span
+                    className={`mr-2 ${
+                      passwordRequirements.hasSpecialChar
+                        ? "text-green-400"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {passwordRequirements.hasSpecialChar ? (
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     ) : (
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     )}
                   </span>
-                  <span className={passwordRequirements.hasSpecialChar ? "text-gray-300" : "text-gray-500"}>
+                  <span
+                    className={
+                      passwordRequirements.hasSpecialChar
+                        ? "text-gray-300"
+                        : "text-gray-500"
+                    }
+                  >
                     One special character (!@#$%^&* etc.)
                   </span>
                 </li>
@@ -310,7 +462,9 @@ function ResetPasswordContent() {
           <div className="flex space-x-4 pt-4">
             <button
               type="submit"
-              disabled={loading || !allRequirementsMet || password !== confirmPassword}
+              disabled={
+                loading || !allRequirementsMet || password !== confirmPassword
+              }
               className="flex-1 bg-red text-white font-bebas uppercase py-2 rounded-md hover:bg-red/90 disabled:bg-gray-600 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? "Resetting..." : "Reset Password"}
@@ -332,7 +486,7 @@ export default function ResetPasswordPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center">
             <BasketballLoader size={80} />
           </div>

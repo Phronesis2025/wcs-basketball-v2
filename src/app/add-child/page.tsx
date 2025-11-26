@@ -62,7 +62,7 @@ function AddChildInner() {
 
   if (authLoading) {
     return (
-      <div className="bg-navy min-h-screen text-white flex items-center justify-center">
+      <div className="bg-black min-h-screen text-white flex items-center justify-center">
         <div className="text-center">
           <BasketballLoader size={80} />
         </div>
@@ -112,7 +112,7 @@ function AddChildInner() {
 export default function AddChild() {
   return (
     <Suspense fallback={
-      <div className="bg-navy min-h-screen text-white flex items-center justify-center">
+      <div className="bg-black min-h-screen text-white flex items-center justify-center">
         <BasketballLoader size={80} />
       </div>
     }>

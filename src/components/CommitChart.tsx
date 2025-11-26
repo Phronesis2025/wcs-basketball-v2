@@ -6,11 +6,11 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
   ResponsiveContainer,
   Cell,
 } from "recharts";
 import { format, parseISO } from "date-fns";
+import CommitsModal from "./CommitsModal";
 
 interface CommitData {
   date: string;
@@ -32,6 +32,8 @@ export default function CommitChart({ userId }: CommitChartProps) {
   const [chartData, setChartData] = useState<CommitChartData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Determine chart height based on screen size
   const getChartHeight = () => {
@@ -118,58 +120,66 @@ export default function CommitChart({ userId }: CommitChartProps) {
     }
   };
 
-  // Format tooltip
-  const formatTooltip = (value: number, name: string, props: any) => {
-    const dateStr = props.payload.date;
-    let formattedDate = dateStr;
-
-    try {
-      if (viewMode === "month") {
-        const date = parseISO(`${dateStr}-01`);
-        formattedDate = format(date, "MMMM yyyy");
-      } else {
-        const date = parseISO(dateStr);
-        formattedDate = format(date, "MMMM d, yyyy");
-      }
-    } catch {
-      // Keep original if parsing fails
-    }
-
-    return [
-      `${value} update${value !== 1 ? "s" : ""}`,
-      formattedDate,
-    ];
+  // Handle bar click
+  const handleBarClick = (data: CommitData) => {
+    setSelectedDate(data.date);
+    setIsModalOpen(true);
   };
 
-  // Custom tooltip component
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload;
-      const dateStr = data.date;
-      let formattedDate = dateStr;
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedDate(null);
+  };
 
-      try {
-        if (viewMode === "month") {
-          const date = parseISO(`${dateStr}-01`);
-          formattedDate = format(date, "MMMM yyyy");
-        } else {
-          const date = parseISO(dateStr);
-          formattedDate = format(date, "MMMM d, yyyy");
-        }
-      } catch {
-        // Keep original if parsing fails
+  // Custom bar shape with click handler
+  const CustomBar = (props: any) => {
+    const { 
+      payload, 
+      tooltipPosition,
+      parentViewBox,
+      dataKey,
+      ...rest 
+    } = props;
+    
+    const handleClick = () => {
+      if (payload) {
+        handleBarClick(payload);
       }
-
-      return (
-        <div className="bg-gray-800 border border-gray-700 rounded-lg p-3 shadow-lg">
-          <p className="text-white font-semibold">{formattedDate}</p>
-          <p className="text-red-400">
-            {data.count} update{data.count !== 1 ? "s" : ""}
-          </p>
-        </div>
-      );
-    }
-    return null;
+    };
+    
+    // Extract only valid SVG rect attributes
+    const {
+      x,
+      y,
+      width,
+      height,
+      fill,
+      stroke,
+      strokeWidth,
+      opacity,
+      style,
+      className,
+      onMouseEnter,
+      onMouseLeave,
+    } = rest;
+    
+    return (
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+        opacity={opacity}
+        className={className}
+        onClick={handleClick}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        style={{ cursor: "pointer", ...style }}
+      />
+    );
   };
 
   if (loading) {
@@ -177,7 +187,7 @@ export default function CommitChart({ userId }: CommitChartProps) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-500 mb-4"></div>
-          <p className="text-gray-400 text-sm">Loading update history...</p>
+          <p className="text-slate-400 text-sm font-inter">Loading update history...</p>
         </div>
       </div>
     );
@@ -187,10 +197,10 @@ export default function CommitChart({ userId }: CommitChartProps) {
     return (
       <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
         <div className="text-center">
-          <p className="text-red-400 font-semibold mb-2">Error Loading Update History</p>
-          <p className="text-gray-400 text-sm">{error}</p>
+          <p className="text-red-400 font-semibold mb-2 font-inter">Error Loading Update History</p>
+          <p className="text-slate-400 text-sm font-inter">{error}</p>
           {error.includes("GITHUB_OWNER") && (
-            <p className="text-gray-500 text-xs mt-2">
+            <p className="text-slate-500 text-xs mt-2 font-inter">
               Please configure GITHUB_OWNER and GITHUB_REPO environment variables in Vercel.
             </p>
           )}
@@ -203,24 +213,24 @@ export default function CommitChart({ userId }: CommitChartProps) {
     return (
       <div className="bg-gray-800 border border-gray-700 rounded-lg p-6">
         <div className="text-center">
-          <p className="text-gray-400">No update history available</p>
+          <p className="text-slate-400 font-inter">No update history available</p>
         </div>
       </div>
     );
   }
 
-  // Color for bars (red theme matching app design)
-  const barColor = "#dc2626"; // red-600
+  // Color for bars (blue theme matching app design)
+  const barColor = "#3b82f6"; // blue-500
 
   return (
     <div className="space-y-4">
       {/* Header with toggle button */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-bebas text-white mb-1">
+          <h3 className="text-lg font-semibold text-white mb-1 font-inter">
             Development Activity
           </h3>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-slate-400 font-inter">
             Updates & improvements
           </p>
         </div>
@@ -229,8 +239,8 @@ export default function CommitChart({ userId }: CommitChartProps) {
             onClick={() => setViewMode("month")}
             className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
               viewMode === "month"
-                ? "bg-[red] text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10"
             }`}
           >
             By Month
@@ -239,8 +249,8 @@ export default function CommitChart({ userId }: CommitChartProps) {
             onClick={() => setViewMode("day")}
             className={`px-4 py-2 text-sm font-semibold rounded-md transition-colors ${
               viewMode === "day"
-                ? "bg-[red] text-white"
-                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                : "bg-white/5 text-slate-300 border border-white/10 hover:bg-white/10"
             }`}
           >
             By Day
@@ -249,7 +259,7 @@ export default function CommitChart({ userId }: CommitChartProps) {
       </div>
 
       {/* Chart */}
-      <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 sm:p-6">
+      <div className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-6">
         <ResponsiveContainer width="100%" height={chartHeight}>
           <BarChart
             data={chartData.data}
@@ -274,8 +284,12 @@ export default function CommitChart({ userId }: CommitChartProps) {
               width={40}
               label={{ value: "Updates", angle: -90, position: "insideLeft", fill: "#9ca3af", style: { textAnchor: "middle" } }}
             />
-            <Tooltip content={<CustomTooltip />} />
-            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+            <Bar 
+              dataKey="count" 
+              radius={[4, 4, 0, 0]}
+              shape={<CustomBar />}
+              style={{ cursor: "pointer" }}
+            >
               {chartData.data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={barColor} />
               ))}
@@ -285,12 +299,26 @@ export default function CommitChart({ userId }: CommitChartProps) {
       </div>
 
       {/* Summary */}
-      <div className="text-center text-sm text-gray-400">
-        <p>
-          Total: <span className="text-white font-semibold">{chartData.totalCommits}</span> update{chartData.totalCommits !== 1 ? "s" : ""} & improvement{chartData.totalCommits !== 1 ? "s" : ""}
+      <div className="text-center text-sm text-slate-400">
+        <p className="font-inter">
+          Total: <span className="text-white font-semibold font-inter">{chartData.totalCommits}</span> update{chartData.totalCommits !== 1 ? "s" : ""} & improvement{chartData.totalCommits !== 1 ? "s" : ""}
           {viewMode === "month" ? " (last 6 months)" : " (last 6 months)"}
         </p>
+        <p className="text-xs text-slate-500 mt-2 font-inter">
+          Click on a bar to view commits for that period
+        </p>
       </div>
+
+      {/* Commits Modal */}
+      {selectedDate && (
+        <CommitsModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          date={selectedDate}
+          viewMode={viewMode}
+          userId={userId}
+        />
+      )}
     </div>
   );
 }

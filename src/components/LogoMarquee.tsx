@@ -3,7 +3,6 @@
 import React from "react";
 import Image from "next/image";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { devError, devLog } from "@/lib/security";
 
 interface Team {
@@ -70,15 +69,12 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
           devError("Error accessing storage API:", storageError);
         }
 
-        // 2. Fetch team logos from database
+        // 2. Fetch team logos from database via API route (avoids CORS issues)
       try {
-          const { data: teamData, error: teamError } = await supabase
-          .from("teams")
-          .select("id, name, logo_url")
-          .eq("is_active", true)
-          .order("name");
-
-          if (!teamError && teamData) {
+          const response = await fetch("/api/teams");
+          if (response.ok) {
+            const { data: teamData } = await response.json();
+            if (teamData && Array.isArray(teamData)) {
             for (const team of teamData) {
               if (team.logo_url && !logoUrls.has(team.logo_url)) {
                 logoUrls.add(team.logo_url);
@@ -89,8 +85,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
                 });
               }
             }
-          } else if (teamError) {
-            devError("Error fetching teams:", teamError);
+            }
           }
         } catch (dbError) {
           devError("Error accessing database:", dbError);

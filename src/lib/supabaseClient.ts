@@ -34,6 +34,12 @@ export const supabase = createClient(
       autoRefreshToken: true,
       detectSessionInUrl: true,
     },
+    realtime: {
+      // Configure realtime to handle connection failures gracefully
+      params: {
+        eventsPerSecond: 10,
+      },
+    },
   }
 );
 

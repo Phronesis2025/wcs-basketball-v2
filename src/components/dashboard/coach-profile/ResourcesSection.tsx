@@ -43,7 +43,7 @@ export default function ResourcesSection({
   return (
     <div>
       <div className="mb-6">
-        <h3 className="text-2xl font-bebas text-white uppercase">
+        <h3 className="text-2xl font-semibold text-white font-inter">
           Resources & Tools
         </h3>
       </div>
@@ -52,13 +52,13 @@ export default function ResourcesSection({
         {/* Documents Section */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-xl font-bebas text-white uppercase">
+            <h4 className="text-xl font-semibold text-white font-inter">
               Documents
             </h4>
             {isAdmin && (
               <button
                 onClick={onShowUploadModal}
-                className="px-3 py-1.5 bg-[red] text-white font-bebas uppercase text-sm rounded-md hover:bg-[#b80000] transition-colors"
+                className="px-3 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 font-inter text-sm rounded-lg hover:bg-blue-500/30 transition-colors"
               >
                 + Upload
               </button>
@@ -89,8 +89,8 @@ export default function ResourcesSection({
               ))}
             </div>
           ) : (
-            <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
-              <p className="text-gray-400 font-inter">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+              <p className="text-slate-400 font-inter">
                 No documents available
               </p>
             </div>
@@ -100,13 +100,13 @@ export default function ResourcesSection({
         {/* Team Logos Section */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-xl font-bebas text-white uppercase">
+            <h4 className="text-xl font-semibold text-white font-inter">
               Team Logos
             </h4>
             {isAdmin && (
               <button
                 onClick={onShowTeamLogoModal}
-                className="px-3 py-1.5 bg-[red] text-white font-bebas uppercase text-sm rounded-md hover:bg-[#b80000] transition-colors"
+                className="px-3 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 font-inter text-sm rounded-lg hover:bg-blue-500/30 transition-colors"
               >
                 + Upload
               </button>
@@ -138,8 +138,8 @@ export default function ResourcesSection({
               ))}
             </div>
           ) : (
-            <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
-              <p className="text-gray-400 font-inter">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+              <p className="text-slate-400 font-inter">
                 No team logos available
               </p>
             </div>
@@ -149,13 +149,13 @@ export default function ResourcesSection({
         {/* Club Logos Section */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h4 className="text-xl font-bebas text-white uppercase">
+            <h4 className="text-xl font-semibold text-white font-inter">
               Club Logos
             </h4>
             {isAdmin && (
               <button
                 onClick={onShowClubLogoModal}
-                className="px-3 py-1.5 bg-[red] text-white font-bebas uppercase text-sm rounded-md hover:bg-[#b80000] transition-colors"
+                className="px-3 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 font-inter text-sm rounded-lg hover:bg-blue-500/30 transition-colors"
               >
                 + Upload
               </button>
@@ -186,8 +186,8 @@ export default function ResourcesSection({
               ))}
             </div>
           ) : (
-            <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
-              <p className="text-gray-400 font-inter">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
+              <p className="text-slate-400 font-inter">
                 No club logos available
               </p>
             </div>

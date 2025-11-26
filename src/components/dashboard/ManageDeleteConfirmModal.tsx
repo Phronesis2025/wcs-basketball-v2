@@ -99,8 +99,8 @@ export default function ManageDeleteConfirmModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg w-full max-w-md shadow-xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center p-2 sm:p-4 z-50 overflow-y-auto pt-20 sm:pt-20">
+      <div className="bg-white rounded-lg w-full max-w-2xl shadow-xl">
         <div className="p-6">
           {/* Header */}
           <div className="flex items-center mb-4">

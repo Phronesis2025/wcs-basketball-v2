@@ -143,7 +143,7 @@ export default function CoachProfile({
 
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-6">
             {/* Personal Information Section */}
             {activeSection === "personal" && (
               <PersonalInfoSection
@@ -181,15 +181,15 @@ export default function CoachProfile({
             {/* Schedule Section */}
             {activeSection === "schedule" && (
               <div>
-                <h3 className="text-2xl font-bebas text-white mb-6 uppercase">
+                <h3 className="text-2xl font-semibold text-white mb-6 font-inter">
                   Schedule & Availability
                 </h3>
-                <div className="bg-gray-800 border border-gray-600 rounded-lg p-6 text-center">
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
                   <div className="text-4xl mb-4">📅</div>
-                  <h4 className="text-lg font-bebas text-white mb-2">
+                  <h4 className="text-lg font-semibold text-white mb-2 font-inter">
                     Coming Soon
                   </h4>
-                  <p className="text-gray-400 font-inter">
+                  <p className="text-slate-400 font-inter">
                     Schedule management and availability features are in
                     development.
                   </p>
@@ -201,11 +201,11 @@ export default function CoachProfile({
             {activeSection === "messages" && (
               <div id="messages-section">
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-2xl font-bebas text-white uppercase">
+                  <h3 className="text-2xl font-semibold text-white font-inter">
                     Coach Message Board
                   </h3>
                   {mentionsHook.unreadMentions > 0 && (
-                    <div className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-inter">
+                    <div className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-full text-sm font-inter">
                       <span className="md:hidden">{mentionsHook.unreadMentions} unread</span>
                       <span className="hidden md:inline">
                         {mentionsHook.unreadMentions} unread mention{mentionsHook.unreadMentions !== 1 ? "s" : ""}

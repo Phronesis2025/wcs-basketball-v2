@@ -57,10 +57,10 @@ function PaymentSuccessInner() {
     // Load player name if present in query (?player=<id>)
     const pid = search?.get("player");
     const sessionId = search?.get("session_id");
-    
+
     if (!pid) return;
     setPlayerId(pid);
-    
+
     (async () => {
       // Load player name
       const { data } = await supabase
@@ -73,12 +73,14 @@ function PaymentSuccessInner() {
       // Verify payment session and update status (for localhost testing where webhooks don't work)
       try {
         const verifyUrl = sessionId
-          ? `/api/payment/verify-session?session_id=${encodeURIComponent(sessionId)}&player_id=${encodeURIComponent(pid)}`
+          ? `/api/payment/verify-session?session_id=${encodeURIComponent(
+              sessionId
+            )}&player_id=${encodeURIComponent(pid)}`
           : `/api/payment/verify-session?player_id=${encodeURIComponent(pid)}`;
-        
+
         const verifyResponse = await fetch(verifyUrl);
         const verifyResult = await verifyResponse.json();
-        
+
         if (verifyResult.success && verifyResult.updated) {
           devLog("Payment verified and updated successfully", verifyResult);
         } else if (verifyResult.success && verifyResult.already_updated) {
@@ -98,7 +100,9 @@ function PaymentSuccessInner() {
 
     setDownloadLoading(true);
     try {
-      const response = await fetch(`/api/generate-welcome-kit?player_id=${playerId}`);
+      const response = await fetch(
+        `/api/generate-welcome-kit?player_id=${playerId}`
+      );
       if (!response.ok) {
         throw new Error("Failed to generate welcome kit");
       }
@@ -134,8 +138,14 @@ function PaymentSuccessInner() {
                 animationDelay: particle.delay,
                 transform: `rotate(${particle.rotation}deg)`,
                 animationDuration: particle.duration,
-                width: particle.type === "basketball" ? particle.size * 1.5 : particle.size,
-                height: particle.type === "basketball" ? particle.size * 1.5 : particle.size,
+                width:
+                  particle.type === "basketball"
+                    ? particle.size * 1.5
+                    : particle.size,
+                height:
+                  particle.type === "basketball"
+                    ? particle.size * 1.5
+                    : particle.size,
               }}
             >
               {particle.type === "basketball" ? (
@@ -195,7 +205,8 @@ function PaymentSuccessInner() {
                   Thanks! Your payment has been applied to your account.
                 </p>
                 <p className="text-lg text-gray-200">
-                  You can view your updated balance and receipts in your profile.
+                  You can view your updated balance and receipts in your
+                  profile.
                 </p>
               </>
             ) : (
@@ -215,15 +226,21 @@ function PaymentSuccessInner() {
               <ul className="mt-2 text-gray-200 space-y-2 text-sm">
                 <li className="flex items-start">
                   <span className="text-blue-400 mr-2">✓</span>
-                  {from === "billing" ? "Your balance and due dates have been updated" : "Practice schedules and team information will be shared"}
+                  {from === "billing"
+                    ? "Your balance and due dates have been updated"
+                    : "Practice schedules and team information will be shared"}
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-400 mr-2">✓</span>
-                  {from === "billing" ? "A receipt has been emailed to you" : "You'll receive updates about games and tournaments"}
+                  {from === "billing"
+                    ? "A receipt has been emailed to you"
+                    : "You'll receive updates about games and tournaments"}
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-400 mr-2">✓</span>
-                  {from === "billing" ? "You can continue managing payments in your profile" : "Your coach will reach out with welcome information"}
+                  {from === "billing"
+                    ? "You can continue managing payments in your profile"
+                    : "Your coach will reach out with welcome information"}
                 </li>
               </ul>
             </div>
@@ -241,16 +258,21 @@ function PaymentSuccessInner() {
           {/* Welcome Kit Download (only show if not from billing) */}
           {from !== "billing" && playerId && (
             <div className="bg-gradient-to-r from-red to-navy rounded-lg p-6 mb-6">
-              <h3 className="text-lg font-semibold mb-2">📦 Download Your Welcome Kit</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                📦 Download Your Welcome Kit
+              </h3>
               <p className="text-sm text-white/90 mb-4">
-                Get your complete welcome package with all the information you need to get started!
+                Get your complete welcome package with all the information you
+                need to get started!
               </p>
               <button
                 onClick={handleDownloadWelcomeKit}
                 disabled={downloadLoading}
                 className="w-full md:w-auto bg-white text-red font-bold py-3 px-6 rounded hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px]"
               >
-                {downloadLoading ? "Generating PDF..." : "📥 Download Welcome Kit PDF"}
+                {downloadLoading
+                  ? "Generating PDF..."
+                  : "📥 Download Welcome Kit PDF"}
               </button>
             </div>
           )}
@@ -308,7 +330,13 @@ function PaymentSuccessInner() {
 
 export default function PaymentSuccess() {
   return (
-    <Suspense fallback={<div className="bg-navy min-h-screen text-white pt-20 px-4">Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="bg-navy min-h-screen text-white pt-20 px-4">
+          Loading...
+        </div>
+      }
+    >
       <PaymentSuccessInner />
     </Suspense>
   );

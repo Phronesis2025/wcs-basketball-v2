@@ -6,6 +6,7 @@ import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import BasketballLoader from "@/components/BasketballLoader";
 import LocationGate from "@/components/LocationGate";
+import Navbar from "@/components/Navbar";
 
 export const dynamic = 'force-dynamic';
 
@@ -30,15 +31,21 @@ function RegisterInner() {
   }
 
   return (
-    <div className="bg-navy min-h-screen text-white">
-      <section className="pt-20 pb-12 sm:pt-24" aria-label="Registration">
-        <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
+    <>
+      <Navbar />
+      <main className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white min-h-screen">
+        {/* Background Gradients */}
+        <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+          <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
+        </div>
+
+        <section className="relative mx-auto max-w-4xl px-6" aria-label="Registration">
           {/* Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold uppercase mb-4">
+          <div className="text-center mb-12 relative z-20">
+            <h1 className="mb-4 text-5xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-7xl font-inter">
               {fromProfile ? "Add Another Player" : "Register Your Player"}
             </h1>
-            <p className="text-gray-300 text-lg">
+            <p className="text-slate-400 text-lg md:text-xl font-inter max-w-2xl mx-auto">
               {fromProfile
                 ? "Complete the form below to register another player"
                 : "Join WCS Basketball and start your player's journey"}
@@ -48,7 +55,7 @@ function RegisterInner() {
           {/* Registration Wizard */}
           {!authLoading && (
             <LocationGate>
-              <div className="bg-gray-900 rounded-lg p-6 md:p-8 border border-gray-700">
+              <div className="relative z-10 bg-white/5 border border-white/10 rounded-xl p-6 md:p-8">
                 <RegistrationWizard
                   skipParentStep={fromProfile && isAuthenticated}
                   prefillData={prefillData}
@@ -58,20 +65,20 @@ function RegisterInner() {
           )}
 
           {authLoading && (
-            <div className="text-center py-12">
+            <div className="text-center py-12 relative z-10">
               <BasketballLoader size={80} />
             </div>
           )}
-        </div>
-      </section>
-    </div>
+        </section>
+      </main>
+    </>
   );
 }
 
 export default function Register() {
   return (
     <Suspense fallback={
-      <div className="bg-navy min-h-screen text-white flex items-center justify-center">
+      <div className="bg-black min-h-screen text-white flex items-center justify-center">
         <BasketballLoader size={80} />
       </div>
     }>

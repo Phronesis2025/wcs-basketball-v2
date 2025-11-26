@@ -117,30 +117,52 @@ export default function TeamPage({ params }: TeamPageProps) {
         setSchedules(schedulesData);
 
         // Subscriptions for real-time updates
-        const scheduleChannel = supabase
-          .channel("schedules")
-          .on(
-            "postgres_changes",
-            {
-              event: "INSERT",
-              schema: "public",
-              table: "schedules",
-              filter: `team_id=eq.${resolvedParams.id}`,
-            },
-            (payload) => {
-              setSchedules((prev) =>
-                [...prev, payload.new as Schedule].sort(
-                  (a, b) =>
-                    new Date(a.date_time).getTime() -
-                    new Date(b.date_time).getTime()
-                )
-              );
-            }
-          )
-          .subscribe();
+        let scheduleChannel: ReturnType<typeof supabase.channel> | null = null;
+        try {
+          scheduleChannel = supabase
+            .channel("schedules")
+            .on(
+              "postgres_changes",
+              {
+                event: "INSERT",
+                schema: "public",
+                table: "schedules",
+                filter: `team_id=eq.${resolvedParams.id}`,
+              },
+              (payload) => {
+                setSchedules((prev) =>
+                  [...prev, payload.new as Schedule].sort(
+                    (a, b) =>
+                      new Date(a.date_time).getTime() -
+                      new Date(b.date_time).getTime()
+                  )
+                );
+              }
+            )
+            .subscribe((status) => {
+              // Suppress WebSocket errors in production
+              if (
+                process.env.NODE_ENV === "development" &&
+                status === "CHANNEL_ERROR"
+              ) {
+                devError("Schedule subscription error");
+              }
+            });
+        } catch (error) {
+          // Silently fail - realtime is optional
+          if (process.env.NODE_ENV === "development") {
+            devError("Failed to set up schedule subscription:", error);
+          }
+        }
 
         return () => {
-          supabase.removeChannel(scheduleChannel);
+          if (scheduleChannel) {
+            try {
+              supabase.removeChannel(scheduleChannel);
+            } catch (error) {
+              // Silently fail on cleanup
+            }
+          }
         };
       } catch (err) {
         devError("Fetch error:", err);

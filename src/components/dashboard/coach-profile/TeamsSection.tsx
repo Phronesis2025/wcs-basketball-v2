@@ -10,7 +10,7 @@ interface TeamsSectionProps {
 export default function TeamsSection({ profileData }: TeamsSectionProps) {
   return (
     <div>
-      <h3 className="text-2xl font-bebas text-white mb-6 uppercase">
+      <h3 className="text-2xl font-semibold text-white mb-6 font-inter">
         Teams & Responsibilities
       </h3>
       {profileData.teams.length > 0 ? (
@@ -18,7 +18,7 @@ export default function TeamsSection({ profileData }: TeamsSectionProps) {
           {profileData.teams.map((team) => (
             <div
               key={team.id}
-              className="bg-gray-800 border border-gray-600 rounded-lg p-4"
+              className="bg-white/5 border border-white/10 rounded-xl p-4"
             >
               <div className="flex items-center space-x-3">
                 {team.logo_url ? (
@@ -30,17 +30,17 @@ export default function TeamsSection({ profileData }: TeamsSectionProps) {
                     className="rounded-full"
                   />
                 ) : (
-                  <div className="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center">
-                    <span className="text-lg font-bebas text-gray-300">
+                  <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center">
+                    <span className="text-lg font-inter text-slate-300">
                       🏀
                     </span>
                   </div>
                 )}
                 <div>
-                  <h4 className="text-lg font-bebas text-white">
+                  <h4 className="text-lg font-semibold text-white font-inter">
                     {team.name}
                   </h4>
-                  <p className="text-sm font-inter text-gray-400">
+                  <p className="text-sm font-inter text-slate-400">
                     {team.age_group} • {team.gender}
                   </p>
                 </div>
@@ -49,7 +49,7 @@ export default function TeamsSection({ profileData }: TeamsSectionProps) {
           ))}
         </div>
       ) : (
-        <p className="text-gray-400 font-inter">No teams assigned</p>
+        <p className="text-slate-400 font-inter">No teams assigned</p>
       )}
     </div>
   );

@@ -537,6 +537,11 @@ export default function Navbar() {
     pathname === "/drills" ||
     pathname === "/teams" ||
     pathname === "/schedules" ||
+    pathname === "/parent/login" ||
+    pathname === "/coaches/login" ||
+    pathname === "/register" ||
+    pathname === "/registration-pending" ||
+    pathname === "/admin/club-management" ||
     pathname.startsWith("/teams/");
 
   return (

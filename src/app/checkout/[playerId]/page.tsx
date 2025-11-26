@@ -13,10 +13,10 @@ export default function CheckoutPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  
+
   const playerId = params?.playerId as string;
   const isNewPlayer = playerId === "new";
-  
+
   // Player information (only for new player mode)
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -65,7 +65,9 @@ export default function CheckoutPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Payment options
-  const [paymentType, setPaymentType] = useState<"annual" | "monthly" | "quarterly" | "custom">("annual");
+  const [paymentType, setPaymentType] = useState<
+    "annual" | "monthly" | "quarterly" | "custom"
+  >("annual");
   const [customAmount, setCustomAmount] = useState("");
   const annualFee = Number(process.env.NEXT_PUBLIC_ANNUAL_FEE_USD || 360);
   const [quarterlyFee, setQuarterlyFee] = useState<number | null>(null);
@@ -106,13 +108,16 @@ export default function CheckoutPage() {
       const monthNum = parseInt(birthMonth);
       const dayNum = parseInt(birthDay);
       const yearNum = parseInt(birthYear);
-      
+
       const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
       const validDay = Math.min(dayNum, daysInMonth);
-      
-      const formattedDate = `${yearNum}-${String(monthNum).padStart(2, "0")}-${String(validDay).padStart(2, "0")}`;
+
+      const formattedDate = `${yearNum}-${String(monthNum).padStart(
+        2,
+        "0"
+      )}-${String(validDay).padStart(2, "0")}`;
       setBirthdate(formattedDate);
-      
+
       if (dayNum !== validDay) {
         setBirthDay(String(validDay));
       }
@@ -128,7 +133,7 @@ export default function CheckoutPage() {
     if (isNaN(monthNum) || isNaN(yearNum)) return 31;
     return new Date(yearNum, monthNum, 0).getDate();
   };
-  
+
   const daysInMonth = getDaysInMonth(birthMonth, birthYear);
 
   // Password validation
@@ -138,7 +143,8 @@ export default function CheckoutPage() {
     if (!/[A-Z]/.test(pwd)) errors.push("At least one uppercase letter");
     if (!/[a-z]/.test(pwd)) errors.push("At least one lowercase letter");
     if (!/[0-9]/.test(pwd)) errors.push("At least one number");
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) errors.push("At least one special character");
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd))
+      errors.push("At least one special character");
     return errors;
   };
 
@@ -163,8 +169,20 @@ export default function CheckoutPage() {
 
   // Simple profanity filter (client-side)
   const PROFANITY_LIST = [
-    "fuck","shit","bitch","asshole","bastard","dick","cunt","slut","whore",
-    "motherfucker","bullshit","cock","prick","twat"
+    "fuck",
+    "shit",
+    "bitch",
+    "asshole",
+    "bastard",
+    "dick",
+    "cunt",
+    "slut",
+    "whore",
+    "motherfucker",
+    "bullshit",
+    "cock",
+    "prick",
+    "twat",
   ];
   const containsProfanity = (value: string | undefined | null) => {
     if (!value) return false;
@@ -183,7 +201,9 @@ export default function CheckoutPage() {
     if (isNewPlayer) {
       // For new player, load parent data only
       try {
-        const response = await fetch(`/api/parent/profile?email=${encodeURIComponent(user!.email!)}`);
+        const response = await fetch(
+          `/api/parent/profile?email=${encodeURIComponent(user!.email!)}`
+        );
         if (response.ok) {
           const profile = await response.json();
           if (profile.parent) {
@@ -200,14 +220,22 @@ export default function CheckoutPage() {
             setMedicalMedications(profile.parent.medical_medications || "");
             setDoctorName(profile.parent.doctor_name || "");
             setDoctorPhone(profile.parent.doctor_phone || "");
-            setConsentPhotoRelease(profile.parent.consent_photo_release || false);
-            setConsentMedicalTreatment(profile.parent.consent_medical_treatment || false);
-            setConsentParticipation(profile.parent.consent_participation || false);
-            
+            setConsentPhotoRelease(
+              profile.parent.consent_photo_release || false
+            );
+            setConsentMedicalTreatment(
+              profile.parent.consent_medical_treatment || false
+            );
+            setConsentParticipation(
+              profile.parent.consent_participation || false
+            );
+
             // Check if user already has a password (has completed checkout before or has multiple children)
             // If checkout_completed is true OR they have more than one child, they likely have a password
-            const hasCompletedCheckout = profile.parent.checkout_completed === true;
-            const hasMultipleChildren = profile.children && profile.children.length > 1;
+            const hasCompletedCheckout =
+              profile.parent.checkout_completed === true;
+            const hasMultipleChildren =
+              profile.children && profile.children.length > 1;
             setNeedsPassword(!hasCompletedCheckout && !hasMultipleChildren);
           }
         }
@@ -225,7 +253,7 @@ export default function CheckoutPage() {
           .select("*")
           .eq("id", playerId)
           .single();
-        
+
         if (!playerError && playerData) {
           setSchoolName(playerData.school_name || "");
           setShirtSize(playerData.shirt_size || "");
@@ -234,7 +262,9 @@ export default function CheckoutPage() {
         }
 
         // Load parent data
-        const parentResponse = await fetch(`/api/parent/profile?email=${encodeURIComponent(user!.email!)}`);
+        const parentResponse = await fetch(
+          `/api/parent/profile?email=${encodeURIComponent(user!.email!)}`
+        );
         if (parentResponse.ok) {
           const profile = await parentResponse.json();
           if (profile.parent) {
@@ -251,13 +281,21 @@ export default function CheckoutPage() {
             setMedicalMedications(profile.parent.medical_medications || "");
             setDoctorName(profile.parent.doctor_name || "");
             setDoctorPhone(profile.parent.doctor_phone || "");
-            setConsentPhotoRelease(profile.parent.consent_photo_release || false);
-            setConsentMedicalTreatment(profile.parent.consent_medical_treatment || false);
-            setConsentParticipation(profile.parent.consent_participation || false);
-            
+            setConsentPhotoRelease(
+              profile.parent.consent_photo_release || false
+            );
+            setConsentMedicalTreatment(
+              profile.parent.consent_medical_treatment || false
+            );
+            setConsentParticipation(
+              profile.parent.consent_participation || false
+            );
+
             // Check if user already has a password (has completed checkout before or has multiple children)
-            const hasCompletedCheckout = profile.parent.checkout_completed === true;
-            const hasMultipleChildren = profile.children && profile.children.length > 1;
+            const hasCompletedCheckout =
+              profile.parent.checkout_completed === true;
+            const hasMultipleChildren =
+              profile.children && profile.children.length > 1;
             setNeedsPassword(!hasCompletedCheckout && !hasMultipleChildren);
           }
         }
@@ -291,7 +329,11 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!consentPhotoRelease || !consentMedicalTreatment || !consentParticipation) {
+    if (
+      !consentPhotoRelease ||
+      !consentMedicalTreatment ||
+      !consentParticipation
+    ) {
       setMessage("Please consent to all required items");
       return;
     }
@@ -299,7 +341,7 @@ export default function CheckoutPage() {
     // Payment validation
     if (paymentType === "custom") {
       const customValue = Number(customAmount || 0);
-      if (!customAmount || isNaN(customValue) || customValue < 0.50) {
+      if (!customAmount || isNaN(customValue) || customValue < 0.5) {
         setMessage("Custom amount must be at least $0.50");
         return;
       }
@@ -320,7 +362,11 @@ export default function CheckoutPage() {
 
       const passwordValidationErrors = validatePassword(password);
       if (passwordValidationErrors.length > 0) {
-        setMessage(`Password must meet the following requirements: ${passwordValidationErrors.join(", ")}`);
+        setMessage(
+          `Password must meet the following requirements: ${passwordValidationErrors.join(
+            ", "
+          )}`
+        );
         return;
       }
     }
@@ -337,14 +383,18 @@ export default function CheckoutPage() {
       { label: "Address line 2", value: addressLine2, when: true },
       { label: "City", value: city, when: true },
       { label: "State", value: state, when: true },
-      { label: "Guardian relationship", value: guardianRelationship, when: true },
+      {
+        label: "Guardian relationship",
+        value: guardianRelationship,
+        when: true,
+      },
       { label: "Emergency contact name", value: emergencyContact, when: true },
       { label: "Medical allergies", value: medicalAllergies, when: true },
       { label: "Medical conditions", value: medicalConditions, when: true },
       { label: "Medical medications", value: medicalMedications, when: true },
       { label: "Doctor name", value: doctorName, when: true },
-    ].filter(f => f.when);
-    const profane = fieldsToCheck.find(f => containsProfanity(f.value));
+    ].filter((f) => f.when);
+    const profane = fieldsToCheck.find((f) => containsProfanity(f.value));
     if (profane) {
       setMessage(`${profane.label} contains inappropriate language.`);
       return;
@@ -360,24 +410,28 @@ export default function CheckoutPage() {
           is_new_player: isNewPlayer,
           user_email: user?.email, // Pass user email for new player lookup
           // Player information (only for new player)
-          player: isNewPlayer ? {
-            first_name: firstName,
-            last_name: lastName,
-            birthdate,
-            grade,
-            gender,
-            school_name: schoolName,
-            shirt_size: shirtSize,
-            position_preference: positionPreference,
-            previous_experience: previousExperience,
-          } : null,
+          player: isNewPlayer
+            ? {
+                first_name: firstName,
+                last_name: lastName,
+                birthdate,
+                grade,
+                gender,
+                school_name: schoolName,
+                shirt_size: shirtSize,
+                position_preference: positionPreference,
+                previous_experience: previousExperience,
+              }
+            : null,
           // Player details (for existing player)
-          ...(!isNewPlayer ? {
-            school_name: schoolName,
-            shirt_size: shirtSize,
-            position_preference: positionPreference,
-            previous_experience: previousExperience,
-          } : {}),
+          ...(!isNewPlayer
+            ? {
+                school_name: schoolName,
+                shirt_size: shirtSize,
+                position_preference: positionPreference,
+                previous_experience: previousExperience,
+              }
+            : {}),
           // Parent detailed information
           address_line1: addressLine1,
           address_line2: addressLine2,
@@ -416,7 +470,8 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             player_id: redirectPlayerId,
             payment_type: paymentType,
-            custom_amount: paymentType === "custom" ? Number(customAmount || 0) : undefined,
+            custom_amount:
+              paymentType === "custom" ? Number(customAmount || 0) : undefined,
             from: "checkout",
           }),
         });
@@ -443,7 +498,7 @@ export default function CheckoutPage() {
 
   if (authLoading || isLoadingData) {
     return (
-      <div className="min-h-screen bg-navy flex items-center justify-center">
+      <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-center text-white">
           <BasketballLoader size={80} />
         </div>
@@ -457,7 +512,9 @@ export default function CheckoutPage() {
         <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-4xl mx-auto">
             <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-6 text-center uppercase">
-              {isNewPlayer ? "Add Another Child" : "Complete Checkout Information"}
+              {isNewPlayer
+                ? "Add Another Child"
+                : "Complete Checkout Information"}
             </h1>
 
             <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-8 mb-8">
@@ -471,7 +528,9 @@ export default function CheckoutPage() {
                       </h2>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm text-gray-300 mb-1">First Name *</label>
+                          <label className="block text-sm text-gray-300 mb-1">
+                            First Name *
+                          </label>
                           <input
                             className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             type="text"
@@ -481,7 +540,9 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-300 mb-1">Last Name *</label>
+                          <label className="block text-sm text-gray-300 mb-1">
+                            Last Name *
+                          </label>
                           <input
                             className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             type="text"
@@ -493,10 +554,14 @@ export default function CheckoutPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm text-gray-300 mb-2">Date of Birth *</label>
+                        <label className="block text-sm text-gray-300 mb-2">
+                          Date of Birth *
+                        </label>
                         <div className="flex gap-2">
                           <div className="flex-1">
-                            <label className="block text-xs text-gray-400 mb-1">Month</label>
+                            <label className="block text-xs text-gray-400 mb-1">
+                              Month
+                            </label>
                             <select
                               className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                               value={birthMonth}
@@ -519,7 +584,9 @@ export default function CheckoutPage() {
                             </select>
                           </div>
                           <div className="flex-1">
-                            <label className="block text-xs text-gray-400 mb-1">Day</label>
+                            <label className="block text-xs text-gray-400 mb-1">
+                              Day
+                            </label>
                             <select
                               className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                               value={birthDay}
@@ -528,7 +595,10 @@ export default function CheckoutPage() {
                               disabled={!birthMonth || !birthYear}
                             >
                               <option value="">Day</option>
-                              {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => (
+                              {Array.from(
+                                { length: daysInMonth },
+                                (_, i) => i + 1
+                              ).map((day) => (
                                 <option key={day} value={String(day)}>
                                   {day}
                                 </option>
@@ -536,7 +606,9 @@ export default function CheckoutPage() {
                             </select>
                           </div>
                           <div className="flex-1">
-                            <label className="block text-xs text-gray-400 mb-1">Year</label>
+                            <label className="block text-xs text-gray-400 mb-1">
+                              Year
+                            </label>
                             <input
                               className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                               type="number"
@@ -558,7 +630,9 @@ export default function CheckoutPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm text-gray-300 mb-1">Grade *</label>
+                          <label className="block text-sm text-gray-300 mb-1">
+                            Grade *
+                          </label>
                           <input
                             className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             type="text"
@@ -568,7 +642,9 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-300 mb-1">Gender *</label>
+                          <label className="block text-sm text-gray-300 mb-1">
+                            Gender *
+                          </label>
                           <select
                             className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                             value={gender}
@@ -593,7 +669,9 @@ export default function CheckoutPage() {
                   </h2>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">School Name</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        School Name
+                      </label>
                       <input
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="text"
@@ -602,7 +680,9 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">Shirt Size</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        Shirt Size
+                      </label>
                       <select
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         value={shirtSize}
@@ -619,7 +699,9 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Position Preference</label>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Position Preference
+                    </label>
                     <input
                       className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       type="text"
@@ -629,7 +711,9 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Previous Experience</label>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Previous Experience
+                    </label>
                     <textarea
                       className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
@@ -648,7 +732,9 @@ export default function CheckoutPage() {
                     Parent Address
                   </h2>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Street Address *</label>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Street Address *
+                    </label>
                     <input
                       className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       type="text"
@@ -658,7 +744,9 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Address Line 2</label>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Address Line 2
+                    </label>
                     <input
                       className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       type="text"
@@ -668,7 +756,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">City *</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        City *
+                      </label>
                       <input
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="text"
@@ -678,7 +768,9 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">State *</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        State *
+                      </label>
                       <input
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="text"
@@ -688,7 +780,9 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">ZIP Code *</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        ZIP Code *
+                      </label>
                       <input
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="text"
@@ -708,7 +802,9 @@ export default function CheckoutPage() {
                     Guardian Information
                   </h2>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Guardian Relationship *</label>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Guardian Relationship *
+                    </label>
                     <select
                       className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={guardianRelationship}
@@ -724,7 +820,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">Emergency Contact Name *</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        Emergency Contact Name *
+                      </label>
                       <input
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="text"
@@ -734,7 +832,9 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">Emergency Contact Phone *</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        Emergency Contact Phone *
+                      </label>
                       <input
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="tel"
@@ -755,7 +855,9 @@ export default function CheckoutPage() {
                     Medical Information
                   </h2>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Allergies</label>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Allergies
+                    </label>
                     <textarea
                       className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
@@ -765,7 +867,9 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Medical Conditions</label>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Medical Conditions
+                    </label>
                     <textarea
                       className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
@@ -775,7 +879,9 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">Medications</label>
+                    <label className="block text-sm text-gray-300 mb-1">
+                      Medications
+                    </label>
                     <textarea
                       className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       rows={3}
@@ -786,7 +892,9 @@ export default function CheckoutPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">Doctor Name</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        Doctor Name
+                      </label>
                       <input
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="text"
@@ -795,7 +903,9 @@ export default function CheckoutPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-300 mb-1">Doctor Phone</label>
+                      <label className="block text-sm text-gray-300 mb-1">
+                        Doctor Phone
+                      </label>
                       <input
                         className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         type="tel"
@@ -817,11 +927,14 @@ export default function CheckoutPage() {
                         Set Your Account Password
                       </h2>
                       <p className="text-sm text-gray-400">
-                        Create a secure password to access your account. This password will be required for future logins.
+                        Create a secure password to access your account. This
+                        password will be required for future logins.
                       </p>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm text-gray-300 mb-1">Password *</label>
+                          <label className="block text-sm text-gray-300 mb-1">
+                            Password *
+                          </label>
                           <div className="relative">
                             <input
                               className="w-full rounded px-3 py-2 pr-10 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -881,11 +994,15 @@ export default function CheckoutPage() {
                             </ul>
                           )}
                           {password && passwordErrors.length === 0 && (
-                            <p className="mt-1 text-xs text-green-400">✓ Password meets all requirements</p>
+                            <p className="mt-1 text-xs text-green-400">
+                              ✓ Password meets all requirements
+                            </p>
                           )}
                         </div>
                         <div>
-                          <label className="block text-sm text-gray-300 mb-1">Confirm Password *</label>
+                          <label className="block text-sm text-gray-300 mb-1">
+                            Confirm Password *
+                          </label>
                           <div className="relative">
                             <input
                               className={`w-full rounded px-3 py-2 pr-10 bg-gray-800 border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
@@ -895,14 +1012,18 @@ export default function CheckoutPage() {
                               }`}
                               type={showConfirmPassword ? "text" : "password"}
                               value={confirmPassword}
-                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              onChange={(e) =>
+                                setConfirmPassword(e.target.value)
+                              }
                               required
                               placeholder="Confirm your password"
                             />
                             <button
                               type="button"
                               className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
                             >
                               {showConfirmPassword ? (
                                 <svg
@@ -942,21 +1063,30 @@ export default function CheckoutPage() {
                             </button>
                           </div>
                           {passwordMismatch && confirmPassword && (
-                            <p className="mt-1 text-xs text-red-400">Passwords do not match</p>
+                            <p className="mt-1 text-xs text-red-400">
+                              Passwords do not match
+                            </p>
                           )}
                           {confirmPassword && !passwordMismatch && password && (
-                            <p className="mt-1 text-xs text-green-400">✓ Passwords match</p>
+                            <p className="mt-1 text-xs text-green-400">
+                              ✓ Passwords match
+                            </p>
                           )}
                         </div>
                       </div>
                       <div className="bg-gray-800/50 border border-gray-700 rounded p-3 text-xs text-gray-400">
-                        <strong className="text-gray-300">Password Requirements:</strong>
+                        <strong className="text-gray-300">
+                          Password Requirements:
+                        </strong>
                         <ul className="mt-1 ml-4 list-disc">
                           <li>At least 8 characters</li>
                           <li>At least one uppercase letter</li>
                           <li>At least one lowercase letter</li>
                           <li>At least one number</li>
-                          <li>At least one special character (!@#$%^&*(),.?":{}|&lt;&gt;)</li>
+                          <li>
+                            At least one special character (!@#$%^&*(),.?":{}
+                            |&lt;&gt;)
+                          </li>
                         </ul>
                       </div>
                     </div>
@@ -975,31 +1105,43 @@ export default function CheckoutPage() {
                       <input
                         type="checkbox"
                         checked={consentPhotoRelease}
-                        onChange={(e) => setConsentPhotoRelease(e.target.checked)}
+                        onChange={(e) =>
+                          setConsentPhotoRelease(e.target.checked)
+                        }
                         className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-blue-500"
                         required
                       />
-                      <span>I consent to photo release for promotional purposes *</span>
+                      <span>
+                        I consent to photo release for promotional purposes *
+                      </span>
                     </label>
                     <label className="inline-flex items-center gap-3 text-gray-300">
                       <input
                         type="checkbox"
                         checked={consentMedicalTreatment}
-                        onChange={(e) => setConsentMedicalTreatment(e.target.checked)}
+                        onChange={(e) =>
+                          setConsentMedicalTreatment(e.target.checked)
+                        }
                         className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-blue-500"
                         required
                       />
-                      <span>I consent to medical treatment in case of emergency *</span>
+                      <span>
+                        I consent to medical treatment in case of emergency *
+                      </span>
                     </label>
                     <label className="inline-flex items-center gap-3 text-gray-300">
                       <input
                         type="checkbox"
                         checked={consentParticipation}
-                        onChange={(e) => setConsentParticipation(e.target.checked)}
+                        onChange={(e) =>
+                          setConsentParticipation(e.target.checked)
+                        }
                         className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-blue-500"
                         required
                       />
-                      <span>I consent to participation in sports activities *</span>
+                      <span>
+                        I consent to participation in sports activities *
+                      </span>
                     </label>
                   </div>
                 </div>

@@ -261,17 +261,17 @@ export default function AdminOverviewContent({
   return (
     <div className="space-y-6">
       {/* Coaches Accordion */}
-      <div className="bg-gray-900/50 border border-gray-700 rounded-lg">
+      <div className="bg-white/5 border border-white/10 rounded-xl">
         <div
-          className="flex items-center justify-between p-6 border-b border-gray-700 cursor-pointer hover:bg-gray-800/50 transition-colors"
+          className="flex items-center justify-between p-6 border-b border-white/10 cursor-pointer hover:bg-white/10 transition-colors"
           onClick={() => toggleSection("coaches")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-bebas font-bold text-white">
+            <h2 className="text-2xl font-semibold text-white font-inter">
               Coaches ({coaches.length})
             </h2>
             <svg
-              className={`w-5 h-5 text-gray-400 transition-transform ml-3 ${
+              className={`w-5 h-5 text-slate-400 transition-transform ml-3 ${
                 expandedSections.coaches ? "rotate-180" : ""
               }`}
               fill="none"
@@ -302,7 +302,7 @@ export default function AdminOverviewContent({
               });
               setShowEditCoachModal(true);
             }}
-            className="bg-[red] text-white font-bebas uppercase py-2 px-4 rounded hover:bg-[#b80000] transition-colors"
+            className="bg-blue-500/20 text-blue-400 border border-blue-500/30 font-inter py-2 px-4 rounded-lg hover:bg-blue-500/30 transition-colors"
           >
             Add Coach
           </button>
@@ -341,13 +341,13 @@ export default function AdminOverviewContent({
               return (
                 <div
                   key={coach.id}
-                  className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 ${
+                  className={`p-4 border-b border-white/10 hover:bg-white/10 ${
                     index === coaches.length - 1 ? "border-b-0" : ""
                   }`}
                 >
                   {/* Desktop Layout */}
                   <div
-                    className="hidden md:grid items-center w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
+                    className="hidden md:grid items-center w-full cursor-pointer hover:bg-white/10 transition-colors"
                     style={{
                       gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr",
                     }}
@@ -362,8 +362,8 @@ export default function AdminOverviewContent({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-700 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">
+                        <div className="w-full h-full bg-white/10 rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm font-inter">
                             {coach.first_name[0]}
                             {coach.last_name[0]}
                           </span>
@@ -373,15 +373,15 @@ export default function AdminOverviewContent({
 
                     {/* Name and Role Badge */}
                     <div className="flex flex-col items-start">
-                      <div className="text-white font-medium">
+                      <div className="text-white font-medium font-inter">
                         {coach.first_name} {coach.last_name}
                       </div>
                       {coach.role && (
                         <span
-                          className={`px-2 py-1 rounded text-xs font-bold mt-1 ${
+                          className={`px-2 py-1 rounded-lg text-xs font-semibold mt-1 font-inter ${
                             coach.role === "admin"
-                              ? "bg-black text-white"
-                              : "bg-blue-600 text-white"
+                              ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                              : "bg-blue-500/20 text-blue-400 border border-blue-500/30"
                           }`}
                         >
                           {coach.role.toUpperCase()}
@@ -390,14 +390,14 @@ export default function AdminOverviewContent({
                     </div>
 
                     {/* Team Count */}
-                    <div className="text-gray-500 text-sm text-center">
+                    <div className="text-slate-400 text-sm text-center font-inter">
                       {assignedTeams.length} team
                       {assignedTeams.length !== 1 ? "s" : ""}
                     </div>
 
                     {/* Team Names */}
-                    <div className="text-gray-400 text-sm text-center">
-                      <div className="font-medium text-gray-300 mb-1">
+                    <div className="text-slate-400 text-sm text-center font-inter">
+                      <div className="font-medium text-slate-300 mb-1 font-inter">
                         Teams
                       </div>
                       <div>
@@ -408,9 +408,9 @@ export default function AdminOverviewContent({
                     </div>
 
                     {/* Loading Status */}
-                    <div className="text-gray-500 text-sm text-center">
+                    <div className="text-slate-400 text-sm text-center">
                       {isLoadingStats && (
-                        <div className="font-medium text-gray-300 mb-1">
+                        <div className="font-medium text-slate-300 mb-1 font-inter">
                           Status
                         </div>
                       )}
@@ -422,13 +422,13 @@ export default function AdminOverviewContent({
                     </div>
 
                     {/* Last Active */}
-                    <div className="text-gray-500 text-sm text-center">
-                      <div className="font-medium text-gray-300 mb-1">
+                    <div className="text-slate-400 text-sm text-center">
+                      <div className="font-medium text-slate-300 mb-1 font-inter">
                         Last Active
                       </div>
                       <div>
                         {isOnline ? (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-900 text-green-300 border border-green-700">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 font-inter">
                             LIVE
                           </span>
                         ) : lastActive ? (
@@ -468,7 +468,7 @@ export default function AdminOverviewContent({
 
                   {/* Mobile Layout */}
                   <div
-                    className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
+                    className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-white/10 transition-colors"
                     onClick={() => handleViewCoach(coach)}
                   >
                     {/* Avatar */}
@@ -480,8 +480,8 @@ export default function AdminOverviewContent({
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-700 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">
+                        <div className="w-full h-full bg-white/10 rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold text-sm font-inter">
                             {coach.first_name[0]}
                             {coach.last_name[0]}
                           </span>
@@ -491,13 +491,13 @@ export default function AdminOverviewContent({
 
                     {/* Coach Info */}
                     <div className="flex-1">
-                      <div className="text-white font-medium">
+                      <div className="text-white font-medium font-inter">
                         {coach.first_name} {coach.last_name}
                       </div>
-                      <div className="text-gray-400 text-sm space-y-1">
+                      <div className="text-slate-400 text-sm space-y-1">
                         {isLoadingStats && (
                           <div>
-                            <span className="font-medium text-gray-300">
+                            <span className="font-medium text-slate-300 font-inter">
                               Status:
                             </span>{" "}
                             Loading... ({loadingProgress.current}/
@@ -505,12 +505,12 @@ export default function AdminOverviewContent({
                           </div>
                         )}
                         <div>
-                          <div className="font-medium text-gray-300">
+                          <div className="font-medium text-slate-300 font-inter">
                             Last Active:
                           </div>
-                          <div className="text-gray-400">
+                          <div className="text-slate-400">
                             {isOnline ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-900 text-green-300 border border-green-700">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/30 font-inter">
                                 LIVE
                               </span>
                             ) : lastActive ? (
@@ -557,17 +557,17 @@ export default function AdminOverviewContent({
       </div>
 
       {/* Teams Accordion */}
-      <div className="bg-gray-900/50 border border-gray-700 rounded-lg">
+      <div className="bg-white/5 border border-white/10 rounded-xl">
         <div
-          className="flex items-center justify-between p-6 border-b border-gray-700 cursor-pointer hover:bg-gray-800/50 transition-colors"
+          className="flex items-center justify-between p-6 border-b border-white/10 cursor-pointer hover:bg-white/10 transition-colors"
           onClick={() => toggleSection("teams")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-bebas font-bold text-white">
+            <h2 className="text-2xl font-semibold text-white font-inter">
               Teams ({teams.length})
             </h2>
             <svg
-              className={`w-5 h-5 text-gray-400 transition-transform ml-3 ${
+              className={`w-5 h-5 text-slate-400 transition-transform ml-3 ${
                 expandedSections.teams ? "rotate-180" : ""
               }`}
               fill="none"
@@ -595,7 +595,7 @@ export default function AdminOverviewContent({
               });
               setShowEditTeamModal(true);
             }}
-            className="bg-[red] text-white font-bebas uppercase py-2 px-4 rounded hover:bg-[#b80000] transition-colors"
+            className="bg-blue-500/20 text-blue-400 border border-blue-500/30 font-inter py-2 px-4 rounded-lg hover:bg-blue-500/30 transition-colors"
           >
             Add Team
           </button>
@@ -614,13 +614,13 @@ export default function AdminOverviewContent({
               return (
                 <div
                   key={team.id}
-                  className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 ${
+                  className={`p-4 border-b border-white/10 hover:bg-white/10 ${
                     index === teams.length - 1 ? "border-b-0" : ""
                   }`}
                 >
                   {/* Desktop Layout */}
                   <div
-                    className="hidden md:grid items-center w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
+                    className="hidden md:grid items-center w-full cursor-pointer hover:bg-white/10 transition-colors"
                     style={{
                       gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr",
                     }}
@@ -647,25 +647,25 @@ export default function AdminOverviewContent({
                     </div>
 
                     {/* Team Name */}
-                    <div className="text-white font-medium">{team.name}</div>
+                    <div className="text-white font-medium font-inter">{team.name}</div>
 
                     {/* Age Group */}
-                    <div className="text-gray-400 text-sm text-center">
+                    <div className="text-slate-400 text-sm text-center">
                       {team.age_group}
                     </div>
 
                     {/* Gender */}
-                    <div className="text-gray-400 text-sm text-center">
+                    <div className="text-slate-400 text-sm text-center">
                       {team.gender}
                     </div>
 
                     {/* Player Count */}
-                    <div className="text-gray-400 text-sm text-center">
+                    <div className="text-slate-400 text-sm text-center">
                       {playerCount} player{playerCount !== 1 ? "s" : ""}
                     </div>
 
                     {/* Coaches */}
-                    <div className="text-gray-400 text-sm text-center">
+                    <div className="text-slate-400 text-sm text-center">
                       {(team as TeamWithCoaches).team_coaches?.length ||
                         team.coaches?.length ||
                         0}{" "}
@@ -704,7 +704,7 @@ export default function AdminOverviewContent({
 
                   {/* Mobile Layout */}
                   <div
-                    className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
+                    className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-white/10 transition-colors"
                     onClick={() => handleViewTeam(team)}
                   >
                     {/* Team Logo */}
@@ -729,8 +729,8 @@ export default function AdminOverviewContent({
 
                     {/* Team Info */}
                     <div className="flex-1">
-                      <div className="text-white font-medium">{team.name}</div>
-                      <div className="text-gray-400 text-sm space-y-1">
+                      <div className="text-white font-medium font-inter">{team.name}</div>
+                      <div className="text-slate-400 text-sm space-y-1">
                         <div>{team.age_group}</div>
                         <div>{team.gender}</div>
                         <div>
@@ -782,17 +782,17 @@ export default function AdminOverviewContent({
       </div>
 
       {/* Players Accordion */}
-      <div className="bg-gray-900/50 border border-gray-700 rounded-lg">
+      <div className="bg-white/5 border border-white/10 rounded-xl">
         <div
-          className="flex items-center justify-between p-6 border-b border-gray-700 cursor-pointer hover:bg-gray-800/50 transition-colors"
+          className="flex items-center justify-between p-6 border-b border-white/10 cursor-pointer hover:bg-white/10 transition-colors"
           onClick={() => toggleSection("players")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-bebas font-bold text-white">
+            <h2 className="text-2xl font-semibold text-white font-inter">
               Players ({filteredPlayers.length})
             </h2>
             <svg
-              className={`w-5 h-5 text-gray-400 transition-transform ml-3 ${
+              className={`w-5 h-5 text-slate-400 transition-transform ml-3 ${
                 expandedSections.players ? "rotate-180" : ""
               }`}
               fill="none"
@@ -825,7 +825,7 @@ export default function AdminOverviewContent({
                 });
                 setShowEditPlayerModal(true);
               }}
-              className="bg-[red] text-white font-bebas uppercase py-2 px-4 rounded hover:bg-[#b80000] transition-colors"
+              className="bg-blue-500/20 text-blue-400 border border-blue-500/30 font-inter py-2 px-4 rounded-lg hover:bg-blue-500/30 transition-colors"
             >
               Add Player
             </button>
@@ -834,7 +834,7 @@ export default function AdminOverviewContent({
                 e.stopPropagation();
                 window.location.href = "/admin/import";
               }}
-              className="hidden md:block bg-blue-600 text-white font-bebas uppercase py-2 px-4 rounded hover:bg-blue-700 transition-colors"
+              className="hidden md:block bg-blue-500/20 text-blue-400 border border-blue-500/30 font-inter py-2 px-4 rounded-lg hover:bg-blue-500/30 transition-colors"
             >
               Import Players
             </button>
@@ -843,13 +843,13 @@ export default function AdminOverviewContent({
         {expandedSections.players && (
           <div>
             {/* Filters */}
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b border-white/10">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Team Filter */}
                 <div>
                   <label
                     htmlFor="team-filter"
-                    className="block text-sm font-inter text-gray-300 mb-2"
+                    className="block text-sm font-inter text-slate-300 mb-2"
                   >
                     Filter by Team
                   </label>
@@ -857,7 +857,7 @@ export default function AdminOverviewContent({
                     id="team-filter"
                     value={selectedTeamFilter}
                     onChange={(e) => setSelectedTeamFilter(e.target.value)}
-                    className="w-full p-2 bg-gray-800 text-white rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red"
+                    className="w-full p-2 bg-white/5 text-white rounded-lg border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50"
                   >
                     <option value="all">All Players</option>
                     <option value="unassigned">Unassigned Players</option>
@@ -873,7 +873,7 @@ export default function AdminOverviewContent({
                 <div>
                   <label
                     htmlFor="player-search"
-                    className="block text-sm font-inter text-gray-300 mb-2"
+                    className="block text-sm font-inter text-slate-300 mb-2"
                   >
                     Search Players
                   </label>
@@ -883,7 +883,7 @@ export default function AdminOverviewContent({
                     placeholder="Type player name..."
                     value={playerSearchTerm}
                     onChange={(e) => setPlayerSearchTerm(e.target.value)}
-                    className="w-full p-2 bg-gray-800 text-white rounded-md border border-gray-600 focus:outline-none focus:ring-2 focus:ring-red placeholder-gray-400"
+                    className="w-full p-2 bg-white/5 text-white rounded-lg border border-white/10 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 placeholder-slate-400"
                   />
                 </div>
               </div>
@@ -899,13 +899,13 @@ export default function AdminOverviewContent({
                 return (
                   <div
                     key={player.id}
-                    className={`p-4 border-b border-gray-800 hover:bg-gray-800/50 ${
+                    className={`p-4 border-b border-white/10 hover:bg-white/10 ${
                       index === filteredPlayers.length - 1 ? "border-b-0" : ""
                     }`}
                   >
                     {/* Desktop Layout */}
                     <div
-                      className="hidden md:grid items-center w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
+                      className="hidden md:grid items-center w-full cursor-pointer hover:bg-white/10 transition-colors"
                       style={{
                         gridTemplateColumns: "auto 1fr 1fr 1fr 1fr 1fr 1fr 1fr",
                       }}
@@ -923,32 +923,32 @@ export default function AdminOverviewContent({
                       </div>
 
                       {/* Name */}
-                      <div className="text-white font-medium">
+                      <div className="text-white font-medium font-inter">
                         {formatPlayerName(player.name)}
                       </div>
 
                       {/* Team */}
-                      <div className="text-gray-400 text-sm">
+                      <div className="text-slate-400 text-sm">
                         {playerTeam?.name || "Unassigned"}
                       </div>
 
                       {/* Jersey Number */}
-                      <div className="text-gray-400 text-sm text-center">
+                      <div className="text-slate-400 text-sm text-center">
                         #{player.jersey_number || "N/A"}
                       </div>
 
                       {/* Grade */}
-                      <div className="text-gray-400 text-sm text-center">
+                      <div className="text-slate-400 text-sm text-center">
                         {player.grade || "N/A"}
                       </div>
 
                       {/* Age */}
-                      <div className="text-gray-400 text-sm text-center">
+                      <div className="text-slate-400 text-sm text-center">
                         {player.age ? `${player.age} years` : "N/A"}
                       </div>
 
                       {/* Gender */}
-                      <div className="text-gray-400 text-sm text-center">
+                      <div className="text-slate-400 text-sm text-center">
                         {player.gender || "N/A"}
                       </div>
 
@@ -979,7 +979,7 @@ export default function AdminOverviewContent({
 
                     {/* Mobile Layout */}
                     <div
-                      className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-gray-800/30 transition-colors"
+                      className="md:hidden flex items-center justify-between w-full cursor-pointer hover:bg-white/10 transition-colors"
                       onClick={() => handleViewPlayer(player)}
                     >
                       {/* Avatar */}
@@ -995,10 +995,10 @@ export default function AdminOverviewContent({
 
                       {/* Player Info */}
                       <div className="flex-1">
-                        <div className="text-white font-medium">
+                        <div className="text-white font-medium font-inter">
                           {formatPlayerName(player.name)}
                         </div>
-                        <div className="text-gray-400 text-sm space-y-1">
+                        <div className="text-slate-400 text-sm space-y-1">
                           <div>{playerTeam?.name || "Unassigned"}</div>
                           <div>#{player.jersey_number || "N/A"}</div>
                         </div>

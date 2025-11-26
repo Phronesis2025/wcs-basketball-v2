@@ -1,5 +1,69 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.29 - Analytics Dashboard Enhancements & Development Activity Modal
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅
+
+---
+
+### ✨ Added
+
+- **Data Source Labels & Explanations**:
+  - Added data source labels to User Statistics, Performance, and System Health sections
+  - Each metric now shows where the data comes from (table/API and time period)
+  - Added brief explanations of what each metric represents
+  - Files Modified:
+    - `src/app/admin/club-management/page.tsx`
+
+- **Commits by Date API Endpoint**:
+  - Created new API endpoint `/api/admin/commits/by-date` to fetch GitHub commits for specific date ranges
+  - Supports both month and day view modes
+  - Returns commit details including message, author, date, and GitHub URL
+  - Files Added:
+    - `src/app/api/admin/commits/by-date/route.ts`
+
+- **CommitsModal Component**:
+  - Created new modal component to display GitHub commits for selected time periods
+  - Shows commit message (subject and body), author info with avatar, date, and link to GitHub
+  - Handles loading and error states gracefully
+  - Files Added:
+    - `src/components/CommitsModal.tsx`
+
+### 🔧 Changed
+
+- **Development Activity Chart**:
+  - Replaced tooltip functionality with clickable bars
+  - Clicking a bar now opens a modal showing all GitHub commits for that period
+  - Added instruction text: "Click on a bar to view commits for that period"
+  - Files Modified:
+    - `src/components/CommitChart.tsx`
+
+- **Analytics Dashboard Sections**:
+  - Updated User Statistics section with data source labels and explanations
+  - Updated Performance section to show API route metrics with source information
+  - Updated System Health section with data source labels and explanations
+  - Files Modified:
+    - `src/app/admin/club-management/page.tsx`
+
+### 🐛 Fixed
+
+- **React DOM Warnings**:
+  - Fixed React warnings about unrecognized props (`tooltipPosition`, `parentViewBox`, `dataKey`) on DOM elements
+  - Updated CustomBar component to filter out Recharts-specific props before passing to SVG rect element
+  - Files Modified:
+    - `src/components/CommitChart.tsx`
+
+### 📝 Documentation
+
+- **Changelog Updates**:
+  - Added version 2.10.29 entries to Supabase changelog table
+  - Updated CHANGELOG.md with detailed change descriptions
+
+---
+
 ## 🚀 Version 2.10.28 - Login Pages Redesign
 
 **Release Date**: January 2025  

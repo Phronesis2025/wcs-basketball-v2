@@ -40,78 +40,102 @@ export default function ClientTeams({ initialTeams, error }: ClientTeamsProps) {
 
   // Set up real-time subscriptions for team changes
   useEffect(() => {
-    devLog("Setting up real-time subscription for teams...");
-    const channel = supabase
-      .channel("teams_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*", // Listen to all events (INSERT, UPDATE, DELETE)
-          schema: "public",
-          table: "teams",
-        },
-        (payload) => {
-          devLog("Team change detected:", payload);
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
-          if (payload.eventType === "INSERT" && payload.new.is_active) {
-            // New team added and is active
-            setTeams((prev) => {
-              const exists = prev.some((team) => team.id === payload.new.id);
-              if (!exists) {
-                return [...prev, payload.new as Team].sort((a, b) =>
-                  a.name.localeCompare(b.name)
-                );
-              }
-              return prev;
-            });
-          } else if (payload.eventType === "UPDATE") {
-            // Team updated - check if it became active or inactive
-            const updatedTeam = payload.new as Team;
-            setTeams((prev) => {
-              if (updatedTeam.is_active) {
-                // Team became active - add it if not already present
-                const exists = prev.some((team) => team.id === updatedTeam.id);
+    try {
+      if (process.env.NODE_ENV === "development") {
+        devLog("Setting up real-time subscription for teams...");
+      }
+      
+      channel = supabase
+        .channel("teams_changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*", // Listen to all events (INSERT, UPDATE, DELETE)
+            schema: "public",
+            table: "teams",
+          },
+          (payload) => {
+            if (process.env.NODE_ENV === "development") {
+              devLog("Team change detected:", payload);
+            }
+
+            if (payload.eventType === "INSERT" && payload.new.is_active) {
+              // New team added and is active
+              setTeams((prev) => {
+                const exists = prev.some((team) => team.id === payload.new.id);
                 if (!exists) {
-                  return [...prev, updatedTeam].sort((a, b) =>
+                  return [...prev, payload.new as Team].sort((a, b) =>
                     a.name.localeCompare(b.name)
                   );
-                } else {
-                  // Update existing team
-                  return prev
-                    .map((team) =>
-                      team.id === updatedTeam.id ? updatedTeam : team
-                    )
-                    .sort((a, b) => a.name.localeCompare(b.name));
                 }
-              } else {
-                // Team became inactive - remove it
-                return prev.filter((team) => team.id !== updatedTeam.id);
-              }
-            });
-          } else if (payload.eventType === "DELETE") {
-            // Team deleted - remove it
-            setTeams((prev) =>
-              prev.filter((team) => team.id !== payload.old.id)
-            );
+                return prev;
+              });
+            } else if (payload.eventType === "UPDATE") {
+              // Team updated - check if it became active or inactive
+              const updatedTeam = payload.new as Team;
+              setTeams((prev) => {
+                if (updatedTeam.is_active) {
+                  // Team became active - add it if not already present
+                  const exists = prev.some((team) => team.id === updatedTeam.id);
+                  if (!exists) {
+                    return [...prev, updatedTeam].sort((a, b) =>
+                      a.name.localeCompare(b.name)
+                    );
+                  } else {
+                    // Update existing team
+                    return prev
+                      .map((team) =>
+                        team.id === updatedTeam.id ? updatedTeam : team
+                      )
+                      .sort((a, b) => a.name.localeCompare(b.name));
+                  }
+                } else {
+                  // Team became inactive - remove it
+                  return prev.filter((team) => team.id !== updatedTeam.id);
+                }
+              });
+            } else if (payload.eventType === "DELETE") {
+              // Team deleted - remove it
+              setTeams((prev) =>
+                prev.filter((team) => team.id !== payload.old.id)
+              );
+            }
           }
-        }
-      )
-      .subscribe((status) => {
-        devLog("Teams subscription status:", status);
-        if (status === "SUBSCRIBED") {
-          devLog("✅ Successfully subscribed to teams changes");
-        } else if (status === "CHANNEL_ERROR") {
-          devError("❌ Error subscribing to teams changes");
-        } else if (status === "TIMED_OUT") {
-          devLog("⏰ Teams subscription timed out");
-        } else if (status === "CLOSED") {
-          devLog("🔒 Teams subscription closed");
-        }
-      });
+        )
+        .subscribe((status) => {
+          // Only log in development - suppress WebSocket errors in production
+          if (process.env.NODE_ENV === "development") {
+            devLog("Teams subscription status:", status);
+            if (status === "SUBSCRIBED") {
+              devLog("✅ Successfully subscribed to teams changes");
+            } else if (status === "TIMED_OUT") {
+              devLog("⏰ Teams subscription timed out");
+            } else if (status === "CLOSED") {
+              devLog("🔒 Teams subscription closed");
+            }
+          }
+          // Silently handle CHANNEL_ERROR in production to avoid console spam
+        });
+    } catch (error) {
+      // Silently fail - realtime is optional and failures shouldn't break the app
+      if (process.env.NODE_ENV === "development") {
+        devLog("Realtime subscription failed, continuing without it");
+      }
+    }
 
     return () => {
-      devLog("Cleaning up teams subscription...");
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          if (process.env.NODE_ENV === "development") {
+            devLog("Cleaning up teams subscription...");
+          }
+          supabase.removeChannel(channel);
+        } catch (error) {
+          // Silently fail on cleanup
+        }
+      }
     };
   }, []);
 

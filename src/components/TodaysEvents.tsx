@@ -259,7 +259,7 @@ export default function TodaysEvents({
         aria-label="Today's Events"
       >
         <div className="w-full">
-          <div className="bg-[#0A0A0A] w-full">
+          <div className="bg-black w-full">
             <div className="flex overflow-x-auto scrollbar-hide h-[80px] items-center justify-center">
               <div className="text-neutral-500 text-xs font-inter">Loading events...</div>
             </div>
@@ -304,10 +304,10 @@ export default function TodaysEvents({
       </div>
       <div className="w-full bg-black py-2 relative z-40">
         {/* Horizontal Scroll Container */}
-        <div className="bg-[#0A0A0A] w-full relative">
+        <div className="bg-black w-full relative">
           <div className="flex h-[80px]">
             {/* Date Column - Fixed on Left (Not Scrollable) */}
-            <div className="flex-shrink-0 w-16 sm:w-20 px-2 py-1 flex flex-col items-center justify-center border-r border-white/10 bg-[#0A0A0A] z-10">
+            <div className="flex-shrink-0 w-16 sm:w-20 px-2 py-1 flex flex-col items-center justify-center border-r border-white/10 bg-black z-10">
               <div className="text-center">
                 <div className="text-white font-bold text-xs uppercase leading-tight font-inter">
                   {dateInfo.dayAbbrev}
@@ -337,7 +337,7 @@ export default function TodaysEvents({
                 return (
                   <div
                     key={`${event.id}-${event.date_time}`}
-                    className="flex-shrink-0 w-48 md:w-52 lg:w-64 bg-[#030303] rounded-lg border border-white/10 p-1.5 md:p-2.5 lg:p-3 flex gap-1.5 md:gap-2.5 lg:gap-3 hover:border-white/20 transition-colors"
+                    className="flex-shrink-0 w-48 md:w-52 lg:w-64 bg-black rounded-lg border border-white/10 p-1.5 md:p-2.5 lg:p-3 flex gap-1.5 md:gap-2.5 lg:gap-3 hover:border-white/20 transition-colors"
                   >
                     {/* Large Logo on Left - Centered horizontally */}
                     <div className="flex-shrink-0 w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16 flex items-center justify-center bg-white/5 rounded-lg self-center relative overflow-hidden">

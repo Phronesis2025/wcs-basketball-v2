@@ -391,13 +391,15 @@ function PaymentSelectContent() {
 
 export default function PaymentSelectPage() {
   return (
-    <Suspense fallback={
-      <div className="bg-navy min-h-screen text-white pt-20 pb-16 px-4 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-lg">Loading...</p>
+    <Suspense
+      fallback={
+        <div className="bg-navy min-h-screen text-white pt-20 pb-16 px-4 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-lg">Loading...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <PaymentSelectContent />
     </Suspense>
   );

@@ -21,8 +21,8 @@ export default function SidebarNavigation({
   onSectionChange,
 }: SidebarNavigationProps) {
   return (
-    <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
-      <h3 className="text-lg font-bebas text-white mb-4 uppercase">
+    <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+      <h3 className="text-lg font-semibold text-white mb-4 font-inter">
         Profile Sections
       </h3>
       <nav className="space-y-2">
@@ -30,10 +30,10 @@ export default function SidebarNavigation({
           <button
             key={section.id}
             onClick={() => onSectionChange(section.id)}
-            className={`w-full text-left px-3 py-2 rounded-md font-inter transition-colors ${
+            className={`w-full text-left px-3 py-2 rounded-lg font-inter transition-colors ${
               activeSection === section.id
-                ? "bg-[red] text-white"
-                : "text-gray-300 hover:text-white hover:bg-gray-700"
+                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                : "text-slate-300 hover:text-white hover:bg-white/5"
             }`}
           >
             <span className="mr-2">{section.icon}</span>

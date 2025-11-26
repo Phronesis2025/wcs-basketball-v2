@@ -10,7 +10,7 @@ function RegistrationSuccessContent() {
   const playerName = searchParams.get("player") || "Your child";
 
   return (
-    <div className="bg-navy min-h-screen text-white pt-20 pb-16 px-4">
+    <div className="bg-black min-h-screen text-white pt-20 pb-16 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
@@ -85,9 +85,7 @@ function RegistrationSuccessContent() {
                   3
                 </div>
                 <div>
-                  <p className="font-medium text-white">
-                    Payment Information
-                  </p>
+                  <p className="font-medium text-white">Payment Information</p>
                   <p className="text-sm text-gray-200">
                     Once approved, you'll receive a payment link to complete
                     your registration and secure your spot.
@@ -114,7 +112,9 @@ function RegistrationSuccessContent() {
                 />
               </svg>
               <div className="text-sm text-gray-200">
-                <p className="font-semibold mb-1 text-white">Check Your Email</p>
+                <p className="font-semibold mb-1 text-white">
+                  Check Your Email
+                </p>
                 <p>
                   Please check the email address you used to register. You
                   should have received a confirmation email that you need to
@@ -126,9 +126,7 @@ function RegistrationSuccessContent() {
 
           {/* Timeline */}
           <div className="border border-gray-700 rounded-lg p-4 bg-gray-900/50">
-            <h3 className="font-semibold text-white mb-2">
-              Typical Timeline
-            </h3>
+            <h3 className="font-semibold text-white mb-2">Typical Timeline</h3>
             <p className="text-sm text-gray-200">
               Our team typically processes registrations within{" "}
               <span className="font-semibold">1-3 business days</span>. You'll
@@ -186,13 +184,13 @@ function RegistrationSuccessContent() {
   );
 }
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export default function RegistrationSuccess() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="min-h-screen bg-black flex items-center justify-center">
           <div className="text-center">
             <BasketballLoader size={80} />
           </div>

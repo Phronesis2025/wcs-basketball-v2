@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, ReactNode } from "react";
-import BasketballLoader from "./BasketballLoader";
 import { supabase } from "@/lib/supabaseClient";
 import { devError } from "@/lib/security";
 
@@ -90,10 +89,71 @@ export default function LocationGate({ children, onVerified }: LocationGateProps
 
   if (isChecking) {
     return (
-      <div className="min-h-screen bg-navy flex items-center justify-center">
-        <div className="text-center">
-          <BasketballLoader size={80} />
-          <p className="text-white mt-4 text-lg">Verifying location...</p>
+      <div className="relative min-h-screen bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-white flex items-center justify-center px-6">
+        <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+          <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]" />
+        </div>
+        <div className="relative z-10 text-center space-y-6">
+          <div className="location-gate-loader" aria-hidden="true">
+            <div className="location-gate-loader-bars">
+              <div className="location-gate-loader-bar">
+                <div className="left" />
+                <div className="center" />
+                <div className="right" />
+                <div className="bottom" />
+              </div>
+              <div className="location-gate-loader-bar">
+                <div className="left" />
+                <div className="center" />
+                <div className="right" />
+                <div className="bottom" />
+              </div>
+              <div className="location-gate-loader-bar">
+                <div className="left" />
+                <div className="center" />
+                <div className="right" />
+                <div className="bottom" />
+              </div>
+              <div className="location-gate-loader-bar">
+                <div className="left" />
+                <div className="center" />
+                <div className="right" />
+                <div className="bottom" />
+              </div>
+              <div className="location-gate-loader-bar">
+                <div className="left" />
+                <div className="center" />
+                <div className="right" />
+                <div className="bottom" />
+              </div>
+              <div className="location-gate-loader-bar">
+                <div className="left" />
+                <div className="center" />
+                <div className="right" />
+                <div className="bottom" />
+              </div>
+              <div className="location-gate-loader-bar">
+                <div className="left" />
+                <div className="center" />
+                <div className="right" />
+                <div className="bottom" />
+              </div>
+              <div className="location-gate-loader-bar">
+                <div className="left" />
+                <div className="center" />
+                <div className="right" />
+                <div className="bottom" />
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-white text-xl font-semibold tracking-wide uppercase">
+              Validating Location
+            </p>
+            <p className="text-slate-400 text-sm">
+              This only takes a moment. Thanks for your patience!
+            </p>
+          </div>
         </div>
       </div>
     );
