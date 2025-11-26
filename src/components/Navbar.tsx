@@ -554,8 +554,8 @@ export default function Navbar() {
         className={`fixed top-0 left-0 right-0 transition-all duration-300 ease-out ${
           // Dark pages (home, about): dark with border; Other pages: white with shadow
           isDarkPage
-            ? "bg-[#030711]/80 backdrop-blur-sm border-b border-white/5 z-40"
-            : "bg-white/95 backdrop-blur-sm shadow-lg z-50"
+            ? "bg-[#030711]/80 backdrop-blur-sm border-b border-white/5 z-40 md:z-40"
+            : "bg-white/95 backdrop-blur-sm shadow-lg z-50 md:z-50"
         }`}
       >
           <div className="max-w-7xl mx-auto px-6">

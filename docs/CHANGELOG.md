@@ -1,11 +1,62 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.30 - Mobile Navigation Improvements & Icon Updates
+
+**Release Date**: January 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (132 pages generated successfully)
+
+---
+
+### ✨ Added
+
+- **React Icons Integration**:
+  - Added react-icons/fa imports for line-style icons
+  - Icons: FaUser (Profile), FaCreditCard (Payments), FaList (Manage), FaBasketballBall (Coach), FaChartBar (Monitor)
+  - Files Modified:
+    - `src/app/admin/club-management/page.tsx`
+
+### 🔧 Changed
+
+- **Mobile Bottom Navigation**:
+  - Moved tab selector to bottom of screen on mobile devices
+  - Made bottom navigation sticky with fixed positioning (z-50)
+  - Replaced emoji icons with line icons from react-icons
+  - Active tab displays with blue icon and text color (text-blue-400)
+  - Removed background shading from active tabs for cleaner look
+  - Added proper padding to content area (pb-20) to prevent overlap
+  - Files Modified:
+    - `src/app/admin/club-management/page.tsx`
+
+- **Desktop Tab Navigation**:
+  - Replaced emoji icons with line icons for consistency
+  - Active tab uses red background (bg-[red]) with white text
+  - Improved icon sizing (w-4 h-4 on mobile, w-5 h-5 on larger screens)
+  - Files Modified:
+    - `src/app/admin/club-management/page.tsx`
+
+- **Navbar Sticky Positioning**:
+  - Ensured navbar is sticky on mobile with proper z-index (z-50)
+  - Adjusted main content padding (pt-20 on mobile, pt-32 on desktop)
+  - Files Modified:
+    - `src/app/admin/club-management/page.tsx`
+    - `src/components/Navbar.tsx`
+
+### 📝 Documentation
+
+- **Changelog Updates**:
+  - Added version 2.10.30 entries to Supabase changelog table
+  - Updated CHANGELOG.md with detailed change descriptions
+
+---
+
 ## 🚀 Version 2.10.29 - Analytics Dashboard Enhancements & Development Activity Modal
 
 **Release Date**: January 2025  
 **Status**: Production Ready ✅  
 **Security Score**: 9/10 (Excellent) 🔒  
-**Build Status**: Clean Build ✅
+**Build Status**: Clean Build ✅ (132 pages generated successfully)
 
 ---
 
