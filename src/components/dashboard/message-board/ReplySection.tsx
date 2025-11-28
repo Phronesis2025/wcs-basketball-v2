@@ -69,8 +69,9 @@ export default function ReplySection({
           className="w-full p-3 border border-gray-300 rounded-md text-base sm:text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
           rows={3}
           maxLength={500}
+          autoFocus={false}
         />
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
           <span className="text-xs text-gray-500">
             {replyText.length}/500 characters
           </span>
@@ -78,7 +79,7 @@ export default function ReplySection({
             <button
               type="button"
               onClick={() => onReplyTextChange("")}
-              className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
+              className="px-4 py-2.5 sm:py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors touch-manipulation min-h-[44px] sm:min-h-0"
               disabled={submitting}
             >
               Cancel
@@ -87,7 +88,7 @@ export default function ReplySection({
               type="button"
               onClick={onSubmitReply}
               disabled={!replyText.trim() || submitting}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2.5 sm:py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[44px] sm:min-h-0"
             >
               {submitting ? "Posting..." : "Post Reply"}
             </button>

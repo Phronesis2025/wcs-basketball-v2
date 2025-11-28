@@ -157,7 +157,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
 
   return (
     <section
-      className="bg-black py-2 sm:py-3 md:py-4 overflow-hidden relative"
+      className="bg-black py-2 sm:py-3 md:py-4 overflow-hidden relative mx-4 sm:mx-6 lg:mx-8"
       aria-label="Team Logos"
     >
       {/* Gradient Masks */}

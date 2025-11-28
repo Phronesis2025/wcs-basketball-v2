@@ -117,13 +117,13 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative pt-20 pb-20 md:pt-32 md:pb-32 px-6 overflow-hidden min-h-screen flex flex-col justify-center bg-black"
+      className="relative pt-20 pb-20 md:pt-32 md:pb-32 mx-4 sm:mx-6 lg:mx-8 overflow-hidden min-h-screen flex flex-col justify-center bg-black"
       aria-label="Hero"
     >
       {/* Background Glow - Removed for pure black background */}
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto text-center flex flex-col items-center z-20 relative">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center z-20 relative">
         {/* Hero Logo Text with Aurora Effect */}
         <div className="mb-8 flex justify-center">
           <p className="hero-aurora-text text-3xl md:text-4xl lg:text-5xl font-normal">

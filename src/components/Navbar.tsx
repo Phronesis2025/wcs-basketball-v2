@@ -531,9 +531,9 @@ export default function Navbar() {
 
   const isHome = pathname === "/";
   // Pages that should use the dark navbar style (matching home page)
-  const isDarkPage = 
-    pathname === "/" || 
-    pathname === "/about" || 
+  const isDarkPage =
+    pathname === "/" ||
+    pathname === "/about" ||
     pathname === "/drills" ||
     pathname === "/teams" ||
     pathname === "/schedules" ||
@@ -541,6 +541,7 @@ export default function Navbar() {
     pathname === "/coaches/login" ||
     pathname === "/register" ||
     pathname === "/registration-pending" ||
+    pathname === "/parent/sign-out" ||
     pathname === "/admin/club-management" ||
     pathname.startsWith("/teams/");
 

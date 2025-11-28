@@ -1,5 +1,75 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.31 - Message Board Mobile Fixes & UI Improvements
+
+**Release Date**: January 11, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (132 pages generated successfully)  
+**Supabase Advisors**: 1 WARN (leaked password protection - manual dashboard config required), 24 INFO (unused indexes - low priority)
+
+---
+
+### 🔧 Fixed
+
+- **Message Board Mobile Responsiveness**:
+  - Increased touch target sizes to minimum 44px for all buttons and icons on mobile devices
+  - Improved modal positioning and keyboard handling for better mobile UX
+  - Disabled auto-focus on textareas for mobile to prevent layout shifts when keyboard appears
+  - Enhanced button spacing and layout for small screens with proper stacking
+  - Added `touch-manipulation` CSS property for better touch responsiveness
+  - Files Modified:
+    - `src/components/dashboard/message-board/MessageItem.tsx`
+    - `src/components/dashboard/message-board/ReplyItem.tsx`
+    - `src/components/dashboard/message-board/ReplySection.tsx`
+    - `src/components/dashboard/message-board/MessageComposer.tsx`
+    - `src/components/dashboard/MessageBoard.tsx`
+
+- **React Key Prop Warnings**:
+  - Fixed missing key props in `renderMessageContent` function
+  - Updated function to wrap all string parts in React.Fragment with unique keys
+  - Added optional `messageId` parameter for unique key generation
+  - Updated all call sites to pass message/reply IDs for proper React reconciliation
+  - Files Modified:
+    - `src/components/dashboard/message-board/utils/messageUtils.tsx`
+    - `src/components/dashboard/message-board/utils/messageUtils.ts`
+    - `src/components/dashboard/message-board/MessageItem.tsx`
+    - `src/components/dashboard/message-board/ReplyItem.tsx`
+    - `src/components/dashboard/message-board/UnreadMentions.tsx`
+
+- **Message Board Error Handling**:
+  - Improved error handling in replies batch loading
+  - Added table existence check to handle missing tables gracefully
+  - Enhanced error serialization with detailed logging (error message, details, hint, code)
+  - Ensured all message IDs get empty arrays on error to prevent undefined state
+  - Files Modified:
+    - `src/components/dashboard/message-board/hooks/useReplies.ts`
+
+### 🎨 Changed
+
+- **Sign-Out Thank You Page**:
+  - Updated sign-out page (`/parent/sign-out`) to match new modern design style
+  - Changed from navy background to black with gradient effects
+  - Updated typography with gradient text for headings
+  - Added modern card styling with borders and transparency
+  - Improved overall visual consistency with rest of site
+  - Files Modified:
+    - `src/app/parent/sign-out/page.tsx`
+
+- **Navbar Dark Page Configuration**:
+  - Added sign-out page (`/parent/sign-out`) to dark navbar pages list
+  - Ensures navbar displays with black background matching the page design
+  - Files Modified:
+    - `src/components/Navbar.tsx`
+
+### 📝 Documentation
+
+- **Changelog Updates**:
+  - Added version 2.10.31 entries to Supabase changelog table
+  - Updated CHANGELOG.md with detailed change descriptions
+
+---
+
 ## 🚀 Version 2.10.30 - Mobile Navigation Improvements & Icon Updates
 
 **Release Date**: January 2025  

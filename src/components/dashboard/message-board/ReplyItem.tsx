@@ -53,12 +53,13 @@ export default function ReplyItem({
               className="w-full p-2 border border-gray-300 rounded-md text-base sm:text-xs font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
               rows={2}
               maxLength={500}
+              autoFocus={false}
             />
-            <div className="flex items-center justify-end space-x-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 sm:gap-2">
               <button
                 type="button"
                 onClick={onCancelEdit}
-                className="px-2 py-1 text-xs font-inter text-gray-600 hover:text-gray-800 transition-colors"
+                className="px-3 py-2 sm:px-2 sm:py-1 text-xs font-inter text-gray-600 hover:text-gray-800 transition-colors touch-manipulation min-h-[44px] sm:min-h-0"
                 disabled={submitting}
               >
                 Cancel
@@ -67,7 +68,7 @@ export default function ReplyItem({
                 type="button"
                 onClick={onSaveEdit}
                 disabled={!editText.trim() || submitting}
-                className="px-2 py-1 bg-blue-600 text-white text-xs font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="px-3 py-2 sm:px-2 sm:py-1 bg-blue-600 text-white text-xs font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[44px] sm:min-h-0"
               >
                 {submitting ? "Saving..." : "Save"}
               </button>
@@ -76,14 +77,14 @@ export default function ReplyItem({
         ) : (
           <>
             <p className="text-gray-700 font-inter text-sm">
-              {renderMessageContent(reply?.content || '')}
+              {renderMessageContent(reply?.content || '', reply?.id)}
             </p>
-            <div className="flex items-center space-x-1 mt-1">
+            <div className="flex items-center space-x-2 sm:space-x-1 mt-1">
               {canEdit(reply.author_id, userId, isAdmin) && (
                 <button
                   type="button"
                   onClick={onStartEdit}
-                  className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
+                  className="text-gray-400 hover:text-gray-600 p-3 sm:p-1 rounded-md hover:bg-gray-100 transition-colors touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
                   aria-label="Edit reply"
                   disabled={submitting}
                 >
@@ -106,7 +107,7 @@ export default function ReplyItem({
                 <button
                   type="button"
                   onClick={onDelete}
-                  className="text-gray-400 hover:text-red-600 p-2 sm:p-1 rounded-md hover:bg-red-50 transition-colors"
+                  className="text-gray-400 hover:text-red-600 p-3 sm:p-1 rounded-md hover:bg-red-50 transition-colors touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
                   aria-label="Delete reply"
                   disabled={submitting}
                 >

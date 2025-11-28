@@ -52,10 +52,10 @@ export default function QuoteSection() {
 
   return (
     <section
-      className="w-full bg-black py-8 sm:py-10 text-white overflow-hidden"
+      className="bg-black py-8 sm:py-10 text-white overflow-hidden mx-4 sm:mx-6 lg:mx-8"
       aria-label="Motivational quotes"
     >
-      <div className="max-w-3xl mx-auto px-6">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center min-h-[80px] flex items-center justify-center relative">
           <AnimatePresence mode="wait">
             <motion.div

@@ -84,10 +84,10 @@ export default function ProgramsSection() {
     <section
       ref={ref}
       id="around-wcs"
-      className="pt-12 pb-12 px-6 bg-black"
+      className="pt-12 pb-12 bg-black mx-4 sm:mx-6 lg:mx-8"
       aria-label="Programs"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div className={`fade-enter ${isVisible ? "fade-enter-active" : ""}`}>

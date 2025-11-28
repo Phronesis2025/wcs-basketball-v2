@@ -29,27 +29,36 @@ export const formatTimestamp = (timestamp: string): string => {
 /**
  * Render message content with mention highlighting
  * @param content - Message content string
+ * @param messageId - Optional message ID for generating unique keys
  * @returns Array of React elements with mentions highlighted
  */
-export const renderMessageContent = (content: string | null | undefined): (string | React.ReactElement)[] => {
+export const renderMessageContent = (
+  content: string | null | undefined,
+  messageId?: string
+): React.ReactElement[] => {
   // Handle null/undefined content gracefully
   if (!content || typeof content !== 'string') {
-    return ['(empty message)'];
+    const key = messageId ? `${messageId}-empty` : 'empty';
+    return [<React.Fragment key={key}>(empty message)</React.Fragment>];
   }
   
   const parts = content.split(/(@[a-zA-Z0-9._-]+)/g);
   return parts.map((part, index) => {
+    // Create a unique key that includes messageId if provided
+    const key = messageId ? `${messageId}-${index}` : `part-${index}`;
+    
     if (part.match(/^@[a-zA-Z0-9._-]+$/)) {
       return (
         <span
-          key={index}
+          key={key}
           className="bg-blue-100 text-blue-800 px-1 py-0.5 rounded text-sm font-medium"
         >
           {part}
         </span>
       );
     }
-    return part;
+    // Wrap strings in fragments with keys so React can track them properly
+    return <React.Fragment key={key}>{part}</React.Fragment>;
   });
 };
 

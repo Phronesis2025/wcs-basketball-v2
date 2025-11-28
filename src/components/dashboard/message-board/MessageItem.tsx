@@ -89,12 +89,13 @@ export default function MessageItem({
                 className="w-full p-3 border border-gray-300 rounded-md text-base sm:text-sm font-inter resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 rows={3}
                 maxLength={1000}
+                autoFocus={false}
               />
-              <div className="flex items-center justify-end space-x-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-end gap-2 sm:gap-2">
                 <button
                   type="button"
                   onClick={onCancelEdit}
-                  className="px-4 py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors"
+                  className="px-4 py-2.5 sm:py-2 text-sm font-inter text-gray-600 hover:text-gray-800 transition-colors touch-manipulation min-h-[44px] sm:min-h-0"
                   disabled={submitting}
                 >
                   Cancel
@@ -103,7 +104,7 @@ export default function MessageItem({
                   type="button"
                   onClick={() => onSaveEdit(message.id)}
                   disabled={!editText.trim() || submitting}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2.5 sm:py-2 bg-blue-600 text-white text-sm font-inter rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors touch-manipulation min-h-[44px] sm:min-h-0"
                 >
                   {submitting ? "Saving..." : "Save"}
                 </button>
@@ -111,7 +112,7 @@ export default function MessageItem({
             </div>
           ) : (
             <p className="text-gray-700 font-inter mb-3 text-sm sm:text-base">
-              {renderMessageContent(message.content)}
+              {renderMessageContent(message.content, message.id)}
             </p>
           )}
 
@@ -119,11 +120,11 @@ export default function MessageItem({
             <button
               type="button"
               onClick={() => onToggleExpanded(message.id)}
-              className="flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-inter self-start"
+              className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 text-sm sm:text-sm font-inter self-start px-3 py-2 sm:px-0 sm:py-0 rounded-md hover:bg-blue-50 sm:hover:bg-transparent transition-colors touch-manipulation min-h-[44px] sm:min-h-0"
               disabled={submitting}
             >
               <svg
-                className="w-4 h-4"
+                className="w-5 h-5 sm:w-4 sm:h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -144,13 +145,13 @@ export default function MessageItem({
             </span>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center space-x-1 mt-2">
+          {/* Action buttons - Mobile-friendly touch targets (min 44px) */}
+          <div className="flex items-center space-x-2 sm:space-x-1 mt-2">
             {canEdit(message.author_id, userId, isAdmin) && !isEditing && (
               <button
                 type="button"
                 onClick={() => onStartEdit(message, "message")}
-                className="text-gray-400 hover:text-gray-600 p-2 sm:p-1 rounded-md hover:bg-gray-100 transition-colors"
+                className="text-gray-400 hover:text-gray-600 p-3 sm:p-1 rounded-md hover:bg-gray-100 transition-colors touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
                 aria-label="Edit message"
                 disabled={submitting}
               >
@@ -173,7 +174,7 @@ export default function MessageItem({
               <button
                 type="button"
                 onClick={() => onDelete(message.id, replies.length)}
-                className={`p-2 sm:p-1 rounded-md transition-colors ${
+                className={`p-3 sm:p-1 rounded-md transition-colors touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center ${
                   !isAdmin && replies.length > 0
                     ? "text-gray-300 cursor-not-allowed"
                     : "text-gray-400 hover:text-red-600 hover:bg-red-50"
@@ -205,7 +206,7 @@ export default function MessageItem({
               <button
                 type="button"
                 onClick={() => onPin(message.id)}
-                className="text-gray-400 hover:text-yellow-600 p-2 sm:p-1 rounded-md hover:bg-yellow-50 transition-colors"
+                className="text-gray-400 hover:text-yellow-600 p-3 sm:p-1 rounded-md hover:bg-yellow-50 transition-colors touch-manipulation min-w-[44px] min-h-[44px] sm:min-w-0 sm:min-h-0 flex items-center justify-center"
                 aria-label={message.is_pinned ? "Unpin message" : "Pin message"}
                 disabled={submitting}
               >

@@ -256,7 +256,7 @@ export default function TeamUpdates({
       <section
         ref={sectionRef}
         aria-labelledby="team-updates-title"
-        className="bg-black mt-8 mb-12 pt-6 sm:pt-8 pb-6 sm:pb-8 px-6"
+        className="bg-black mt-8 mb-12 pt-6 sm:pt-8 pb-6 sm:pb-8 mx-4 sm:mx-6 lg:mx-8"
       >
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h2
@@ -432,7 +432,7 @@ export default function TeamUpdates({
       aria-label="All Team Updates"
       className="bg-[#F6F6F6] mt-8 mb-12 py-12 sm:py-16 mx-4 sm:mx-6 lg:mx-8 space-y-4"
     >
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-2xl font-bebas uppercase text-center text-navy">
           All Team Updates
         </h2>

@@ -287,10 +287,10 @@ export default function TodaysEvents({
 
   return (
     <section
-      className="pt-8 md:pt-12 pb-2 px-6 bg-black"
+      className="pt-8 md:pt-12 pb-2 bg-black mx-4 sm:mx-6 lg:mx-8"
       aria-label="Today's Events"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Title */}
         <motion.h2
           ref={titleRef}

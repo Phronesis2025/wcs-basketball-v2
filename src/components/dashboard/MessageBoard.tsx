@@ -116,15 +116,21 @@ export default function MessageBoard({
         if (messageElement) {
           // Expand the message to show reply
           setExpandedMessage(scrollToMessageId);
-          // Scroll to the message
-          messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Focus on the reply textarea if it exists
-          setTimeout(() => {
-            const replyTextarea = messageElement.querySelector('textarea[placeholder*="reply"], textarea[placeholder*="Reply"], textarea[placeholder*="Write a reply"]') as HTMLTextAreaElement;
-            if (replyTextarea) {
-              replyTextarea.focus();
-            }
-          }, 500);
+          // Scroll to the message - use 'start' on mobile for better UX
+          const isMobile = window.innerWidth < 640;
+          messageElement.scrollIntoView({ 
+            behavior: "smooth", 
+            block: isMobile ? "start" : "center" 
+          });
+          // On mobile, don't auto-focus textarea to avoid keyboard issues
+          if (!isMobile) {
+            setTimeout(() => {
+              const replyTextarea = messageElement.querySelector('textarea[placeholder*="reply"], textarea[placeholder*="Reply"], textarea[placeholder*="Write a reply"]') as HTMLTextAreaElement;
+              if (replyTextarea) {
+                replyTextarea.focus();
+              }
+            }, 500);
+          }
         }
       }, 300);
     }
@@ -238,13 +244,21 @@ export default function MessageBoard({
     setTimeout(() => {
       const messageElement = document.getElementById(`message-${messageId}`);
       if (messageElement) {
-        messageElement.scrollIntoView({ behavior: "smooth", block: "center" });
-        setTimeout(() => {
-          const replyTextarea = messageElement.querySelector('textarea[placeholder*="reply"], textarea[placeholder*="Reply"], textarea[placeholder*="Write a reply"]') as HTMLTextAreaElement;
-          if (replyTextarea) {
-            replyTextarea.focus();
-          }
-        }, 500);
+        // Use 'start' on mobile for better UX
+        const isMobile = window.innerWidth < 640;
+        messageElement.scrollIntoView({ 
+          behavior: "smooth", 
+          block: isMobile ? "start" : "center" 
+        });
+        // On mobile, don't auto-focus textarea to avoid keyboard issues
+        if (!isMobile) {
+          setTimeout(() => {
+            const replyTextarea = messageElement.querySelector('textarea[placeholder*="reply"], textarea[placeholder*="Reply"], textarea[placeholder*="Write a reply"]') as HTMLTextAreaElement;
+            if (replyTextarea) {
+              replyTextarea.focus();
+            }
+          }, 500);
+        }
       }
     }, 100);
   };
@@ -291,7 +305,7 @@ export default function MessageBoard({
           <button
             type="button"
             onClick={messagesHook.loadMessages}
-            className="bg-gray-100 text-gray-700 px-3 py-2 rounded-md text-sm font-inter hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-gray-100 text-gray-700 px-3 py-2.5 sm:py-2 rounded-md text-sm font-inter hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px] sm:min-h-0 flex items-center justify-center"
             disabled={messagesHook.loading}
             title="Refresh messages"
           >
@@ -300,7 +314,7 @@ export default function MessageBoard({
           <button
             type="button"
             onClick={() => setShowNewMessageModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-blue-600 text-white px-4 py-2.5 sm:py-2 rounded-md text-sm font-inter hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[44px] sm:min-h-0"
             disabled={messagesHook.submitting}
           >
             + New Message
@@ -407,8 +421,17 @@ export default function MessageBoard({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto"
+          onClick={(e) => {
+            // Prevent closing on backdrop click for delete confirmation
+            if (e.target === e.currentTarget && !messagesHook.submitting && !repliesHook.submitting) {
+              setShowDeleteConfirm(false);
+              setDeleteTarget(null);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl my-auto">
             <div className="flex items-center mb-4">
               <div className="flex-shrink-0 w-10 h-10 mx-auto bg-red-100 rounded-full flex items-center justify-center">
                 <svg
@@ -446,7 +469,7 @@ export default function MessageBoard({
                 This action cannot be undone. The {deleteTarget?.type} will be
                 permanently removed from the message board.
               </p>
-              <div className="flex space-x-3 justify-center">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 justify-center">
                 <button
                   type="button"
                   onClick={() => {
@@ -454,7 +477,7 @@ export default function MessageBoard({
                     setShowDeleteConfirm(false);
                     setDeleteTarget(null);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  className="px-4 py-2.5 sm:py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors touch-manipulation min-h-[44px] sm:min-h-0"
                   disabled={messagesHook.submitting || repliesHook.submitting}
                 >
                   Cancel
@@ -470,7 +493,8 @@ export default function MessageBoard({
                   disabled={messagesHook.submitting || repliesHook.submitting}
                   style={{
                     minWidth: "100px",
-                    padding: "8px 24px",
+                    minHeight: "44px",
+                    padding: "10px 24px",
                     fontSize: "14px",
                     fontWeight: "600",
                     color: "white",
@@ -483,7 +507,9 @@ export default function MessageBoard({
                     textAlign: "center",
                     boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
                     transition: "all 0.2s ease-in-out",
+                    touchAction: "manipulation",
                   }}
+                  className="sm:min-h-0"
                   onMouseEnter={(e) => {
                     if (!messagesHook.submitting && !repliesHook.submitting) {
                       e.currentTarget.style.backgroundColor = "#b91c1c";
@@ -509,8 +535,17 @@ export default function MessageBoard({
 
       {/* Profanity Validation Modal */}
       {showProfanityModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto"
+          onClick={(e) => {
+            // Close modal when clicking backdrop
+            if (e.target === e.currentTarget) {
+              setShowProfanityModal(false);
+              setProfanityErrors([]);
+            }
+          }}
+        >
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl my-auto">
             <div className="flex items-center mb-4">
               <div className="flex-shrink-0 w-10 h-10 mx-auto bg-yellow-100 rounded-full flex items-center justify-center">
                 <svg
@@ -549,7 +584,7 @@ export default function MessageBoard({
                     setShowProfanityModal(false);
                     setProfanityErrors([]);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                  className="px-4 py-2.5 sm:py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors touch-manipulation min-h-[44px] sm:min-h-0 w-full sm:w-auto"
                 >
                   I&apos;ll Fix This
                 </button>

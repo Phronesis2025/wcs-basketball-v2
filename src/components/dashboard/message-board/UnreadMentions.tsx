@@ -88,7 +88,7 @@ export default function UnreadMentions({
           return (
             <div
               key={mention.id}
-              className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+              className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-blue-200 dark:border-blue-700 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors touch-manipulation min-h-[44px]"
               onClick={handleMentionClick}
             >
               <div className="flex items-start gap-3">
@@ -122,14 +122,14 @@ export default function UnreadMentions({
                         posted:
                       </div>
                       <p className="text-gray-700 dark:text-gray-300 italic">
-                        {renderMessageContent(parentMessage.content || "")}
+                        {renderMessageContent(parentMessage.content || "", `parent-${mention.id}`)}
                       </p>
                     </div>
                   )}
                   {/* Show the actual reply/message that mentions the user */}
                   <div className="bg-blue-50 dark:bg-blue-900/20 p-2 rounded border-l-2 border-blue-400 dark:border-blue-500">
                     <p className="text-sm text-gray-900 dark:text-white font-medium">
-                      {renderMessageContent(actualContent)}
+                      {renderMessageContent(actualContent, mention.id)}
                     </p>
                   </div>
                 </div>

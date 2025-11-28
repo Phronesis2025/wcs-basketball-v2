@@ -141,10 +141,10 @@ export default function StatsSection() {
   return (
     <section
       id="metrics"
-      className="py-16 bg-black relative z-20"
+      className="py-16 bg-black relative z-20 mx-4 sm:mx-6 lg:mx-8"
       aria-label="Key Statistics"
     >
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-3 gap-8 text-center">
           <StatCard 
             targetValue={300} 

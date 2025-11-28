@@ -195,10 +195,10 @@ export default function PlayerTestimonials() {
   return (
     <section
       ref={ref}
-      className="pt-8 md:pt-12 pb-16 md:pb-24 px-6 bg-black"
+      className="pt-8 md:pt-12 pb-16 md:pb-24 bg-black mx-4 sm:mx-6 lg:mx-8"
       aria-label="Player Testimonials"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Title */}
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
