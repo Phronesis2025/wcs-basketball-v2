@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     devLog("Coach team IDs:", teamIds);
 
     // Fetch players for the coach's teams
-    const { data: players, error: playersError } = await supabaseAdmin!
+    let { data: players, error: playersError } = await supabaseAdmin!
       .from("players")
       .select(
         `

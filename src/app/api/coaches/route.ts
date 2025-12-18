@@ -6,7 +6,7 @@ import { DatabaseError, handleApiError, formatSuccessResponse } from "@/lib/erro
 export async function GET(_request: NextRequest) {
   try {
     // Try to fetch coaches with is_active column and role information first
-    const { data: coaches, error } = await supabaseAdmin!
+    let { data: coaches, error } = await supabaseAdmin!
       .from("coaches")
       .select(
         `

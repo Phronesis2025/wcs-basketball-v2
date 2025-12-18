@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const normalizedUsername = username.toLowerCase().trim();
     
     // First try exact match, then try case-insensitive
-    const { data: userData, error: userError } = await supabaseAdmin
+    let { data: userData, error: userError } = await supabaseAdmin
       .from("users")
       .select("id, email, role")
       .eq("email", username)

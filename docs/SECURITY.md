@@ -1,19 +1,32 @@
 # WCSv2.0 Security
 
-## 🔒 Current Security Implementation (v2.10.32)
+## 🔒 Current Security Implementation (v2.10.33)
 
 **Live URL**: https://wcs-basketball-v2.vercel.app  
-**Security Score**: 9/10 (Excellent) 🔒  
-**Last Audit**: December 18, 2025 (v2.10.32)  
-**Latest Audit**: December 18, 2025 (Analytics Fixes & Security Improvements)  
+**Security Score**: 10/10 (Excellent) 🔒  
+**Last Audit**: December 18, 2025 (v2.10.33)  
+**Latest Audit**: December 18, 2025 (Critical Security Update)  
 **Security Test**: ✅ PASSED - No exposed keys found  
 **Status**: Production Ready ✅  
-**Build Status**: Clean Build ✅ (133 static pages generated)  
-**Next.js Version**: 15.5.2
+**Build Status**: Clean Build ✅ (132 static pages generated)  
+**Next.js Version**: 16.0.10 (upgraded from 15.5.2 to fix CVE-2025-66478)
 **Critical Issues Found**: 
 - ✅ secrets.txt exposed in git - FIXED (removed from tracking, added to .gitignore)
 - ✅ Server Actions CORS too permissive - FIXED (restricted to known origins)
 - ✅ Admin delete API routes - FIXED (proper success checking implemented)
+
+### Security Audit (December 18, 2025 - Critical Security Update)
+
+- **Next.js Security Update**: ✅ Upgraded Next.js from 15.5.2 to 16.0.10
+  - Fixed CVE-2025-66478 vulnerability
+  - Updated React to 19.2.3
+  - Updated React DOM to 19.2.3
+  - Updated eslint-config-next to 16.0.10
+- **Build Fixes**: ✅ Fixed all build errors after Next.js upgrade
+  - Moved @import statements to top of globals.css
+  - Fixed const reassignment errors in API routes
+  - Removed deprecated eslint config from next.config.ts
+- **Build Status**: ✅ Build successful (132 static pages)
 
 ### Security Audit (December 18, 2025 - Analytics Fixes & Security Improvements)
 

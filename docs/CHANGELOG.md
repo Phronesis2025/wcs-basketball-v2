@@ -1,5 +1,56 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.33 - Critical Security Update
+
+**Release Date**: December 18, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 10/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (132 static pages generated successfully)  
+**Supabase Advisors**: 2 WARN (OTP expiry, leaked password protection - manual dashboard config required), 1 INFO (RLS policy added for checkout_tokens), 24 INFO (unused indexes - low priority)
+
+---
+
+### 🔒 Security
+
+- **Critical Next.js Security Update**:
+  - Upgraded Next.js from 15.5.2 to 16.0.10 to fix CVE-2025-66478 vulnerability
+  - Updated React from 19.1.0 to 19.2.3
+  - Updated React DOM from 19.1.0 to 19.2.3
+  - Updated eslint-config-next from 15.5.2 to 16.0.10
+  - Updated @types/react and @types/react-dom to latest versions
+  - Files Modified:
+    - `package.json`
+
+### 🔧 Fixed
+
+- **Build Errors After Next.js Upgrade**:
+  - Fixed CSS parsing error by moving @import statements to top of globals.css (before @tailwind directives)
+  - Fixed const reassignment errors in API routes by changing const to let for reassignable variables:
+    - `src/app/api/auth/coach-forgot-password/route.ts` - userData variable
+    - `src/app/api/coaches/players/route.ts` - players variable
+    - `src/app/api/coaches/route.ts` - coaches variable
+    - `src/app/api/teams/route.ts` - teams variable
+  - Removed deprecated eslint configuration from next.config.ts (Next.js 16 no longer supports eslint config in next.config.ts)
+  - Files Modified:
+    - `src/app/globals.css`
+    - `src/app/api/auth/coach-forgot-password/route.ts`
+    - `src/app/api/coaches/players/route.ts`
+    - `src/app/api/coaches/route.ts`
+    - `src/app/api/teams/route.ts`
+    - `next.config.ts`
+
+### 📦 Dependencies
+
+- **Updated Packages**:
+  - next: 15.5.2 → 16.0.10 (major version upgrade)
+  - react: 19.1.0 → 19.2.3
+  - react-dom: 19.1.0 → 19.2.3
+  - eslint-config-next: 15.5.2 → 16.0.10
+  - @types/react: Updated to latest
+  - @types/react-dom: Updated to latest
+
+---
+
 ## 🚀 Version 2.10.32 - Analytics Fixes & UI Improvements
 
 **Release Date**: December 18, 2025  

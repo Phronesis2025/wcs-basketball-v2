@@ -63,9 +63,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true, // STEP 1.4: Temporarily allow builds while fixing issues (will be re-enabled at end)
-  },
   typescript: {
     ignoreBuildErrors: true, // STEP 1.4: Temporarily allow builds while fixing issues (will be re-enabled at end)
   },
