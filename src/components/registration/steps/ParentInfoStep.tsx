@@ -191,7 +191,7 @@ export default function ParentInfoStep({
           </p>
         )}
         {(errors.parent_zip || zipValidationError) && (
-          <p className="text-[#FF0000] text-sm mt-1">
+          <p className="text-red-400 text-sm mt-1 font-medium">
             {zipValidationError || errors.parent_zip?.message}
           </p>
         )}

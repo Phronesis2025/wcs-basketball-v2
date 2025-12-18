@@ -95,7 +95,7 @@ The email body is HTML. Look for the text you want to change:
 
 ```typescript
 // Find this line:
-<a href="mailto:info@wcsbasketball.com">info@wcsbasketball.com</a>
+<a href="mailto:wcsbts@gmail.com">wcsbts@gmail.com</a>
 
 // Change to your actual email:
 <a href="mailto:contact@yourclub.com">contact@yourclub.com</a>
@@ -172,7 +172,7 @@ Add this to the footer section:
 
   <p>
     Questions? Contact us at
-    <a href="mailto:info@wcsbasketball.com">info@wcsbasketball.com</a>
+    <a href="mailto:wcsbts@gmail.com">wcsbts@gmail.com</a>
   </p>
 </div>
 ```

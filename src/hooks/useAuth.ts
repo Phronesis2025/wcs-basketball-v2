@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { devLog, devError } from "@/lib/security";
@@ -37,7 +37,7 @@ export function useAuth() {
     userRole: null,
   });
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       // Prevent overlapping checks which can cause request storms
       if (isCheckingRef.current) {
@@ -45,9 +45,10 @@ export function useAuth() {
       }
       isCheckingRef.current = true;
       // Don't check auth if we're in the process of signing out
-      const isSigningOut = localStorage.getItem("auth.signingOut") === "true" || 
-                          sessionStorage.getItem("auth.justSignedOut") === "true";
-      
+      const isSigningOut =
+        localStorage.getItem("auth.signingOut") === "true" ||
+        sessionStorage.getItem("auth.justSignedOut") === "true";
+
       if (isSigningOut) {
         devLog("Sign-out in progress, skipping auth check");
         setAuthState({
@@ -57,10 +58,12 @@ export function useAuth() {
           isAdmin: false,
           userRole: null,
         });
-        
+
         // Clear sessionStorage flag after confirming sign-out (localStorage flag handled by Navbar)
         // Check timestamp to ensure we keep flag for at least 10 seconds
-        const flagTimestamp = sessionStorage.getItem("auth.justSignedOutTimestamp");
+        const flagTimestamp = sessionStorage.getItem(
+          "auth.justSignedOutTimestamp"
+        );
         if (sessionStorage.getItem("auth.justSignedOut") && flagTimestamp) {
           const now = Date.now();
           const timeSinceSignOut = now - parseInt(flagTimestamp);
@@ -70,7 +73,7 @@ export function useAuth() {
             devLog("useAuth: Cleared sign-out flag after 10 seconds");
           }
         }
-        
+
         isCheckingRef.current = false;
         return false;
       }
@@ -88,11 +91,12 @@ export function useAuth() {
       // If still no session data, check if user is authenticated via Supabase
       if (!sessionData || !isAuthenticated) {
         devLog("No session data found in storage, checking Supabase auth...");
-        
+
         // Don't try to get session from Supabase during sign-out
-        const isSigningOut = localStorage.getItem("auth.signingOut") === "true" || 
-                            sessionStorage.getItem("auth.justSignedOut") === "true";
-        
+        const isSigningOut =
+          localStorage.getItem("auth.signingOut") === "true" ||
+          sessionStorage.getItem("auth.justSignedOut") === "true";
+
         if (isSigningOut) {
           devLog("Sign-out in progress, skipping Supabase session check");
           setAuthState({
@@ -105,7 +109,7 @@ export function useAuth() {
           isCheckingRef.current = false;
           return false;
         }
-        
+
         const {
           data: { session },
           error,
@@ -130,9 +134,10 @@ export function useAuth() {
         }
 
         // Double-check we're not signing out before restoring session
-        const isSigningOutCheck = localStorage.getItem("auth.signingOut") === "true" || 
-                                 sessionStorage.getItem("auth.justSignedOut") === "true";
-        
+        const isSigningOutCheck =
+          localStorage.getItem("auth.signingOut") === "true" ||
+          sessionStorage.getItem("auth.justSignedOut") === "true";
+
         if (isSigningOutCheck) {
           devLog("Sign-out in progress, not restoring session from Supabase");
           setAuthState({
@@ -208,8 +213,9 @@ export function useAuth() {
       }
 
       // Double-check we're not signing out before making API calls
-      const isSigningOutFinalCheck = localStorage.getItem("auth.signingOut") === "true" || 
-                                     sessionStorage.getItem("auth.justSignedOut") === "true";
+      const isSigningOutFinalCheck =
+        localStorage.getItem("auth.signingOut") === "true" ||
+        sessionStorage.getItem("auth.justSignedOut") === "true";
       if (isSigningOutFinalCheck) {
         devLog("useAuth: Sign-out detected before API call, aborting");
         setAuthState({
@@ -271,9 +277,10 @@ export function useAuth() {
         return true;
       } else {
         // Check if we're signing out before trying to refresh
-        const isSigningOut = localStorage.getItem("auth.signingOut") === "true" || 
-                            sessionStorage.getItem("auth.justSignedOut") === "true";
-        
+        const isSigningOut =
+          localStorage.getItem("auth.signingOut") === "true" ||
+          sessionStorage.getItem("auth.justSignedOut") === "true";
+
         if (isSigningOut) {
           devLog("Sign-out in progress, skipping token refresh");
           setAuthState({
@@ -286,21 +293,22 @@ export function useAuth() {
           isCheckingRef.current = false;
           return false;
         }
-        
+
         // Token might be expired - try to refresh
         const errorText = await response.text();
-        
+
         // Only log error if it's not an expected expired token during sign-out
         if (!errorText.includes("expired")) {
           devError("Error loading user data: ", errorText);
         }
-        
+
         // Try to refresh the session
         try {
           // Double-check we're not signing out before attempting refresh
-          const isSigningOut = localStorage.getItem("auth.signingOut") === "true" || 
-                              sessionStorage.getItem("auth.justSignedOut") === "true";
-          
+          const isSigningOut =
+            localStorage.getItem("auth.signingOut") === "true" ||
+            sessionStorage.getItem("auth.justSignedOut") === "true";
+
           if (isSigningOut) {
             devLog("Sign-out in progress, skipping session refresh");
             localStorage.removeItem("supabase.auth.token");
@@ -317,22 +325,28 @@ export function useAuth() {
             isCheckingRef.current = false;
             return false;
           }
-          
-          const { data: { session: newSession }, error: refreshError } = await supabase.auth.refreshSession(session);
-          
+
+          const {
+            data: { session: newSession },
+            error: refreshError,
+          } = await supabase.auth.refreshSession(session);
+
           if (!refreshError && newSession) {
             // Update stored session with refreshed token
-            localStorage.setItem("supabase.auth.token", JSON.stringify(newSession));
+            localStorage.setItem(
+              "supabase.auth.token",
+              JSON.stringify(newSession)
+            );
             localStorage.setItem("auth.authenticated", "true");
-            
+
             // Retry the request with new token
             const retryResponse = await fetch("/api/auth/user", {
               headers: { Authorization: `Bearer ${newSession.access_token}` },
             });
-            
+
             if (retryResponse.ok) {
               const userData = await retryResponse.json();
-              
+
               // Fetch user role
               let userRole = null;
               try {
@@ -341,7 +355,7 @@ export function useAuth() {
                     "x-user-id": userData.user?.id,
                   },
                 });
-                
+
                 if (roleResponse.ok) {
                   const roleData = await roleResponse.json();
                   userRole = roleData.role;
@@ -349,7 +363,7 @@ export function useAuth() {
               } catch (roleError) {
                 devError("Failed to fetch user role:", roleError);
               }
-              
+
               setAuthState({
                 isAuthenticated: true,
                 user: userData.user,
@@ -357,7 +371,7 @@ export function useAuth() {
                 isAdmin: userData.user?.user_metadata?.role === "admin",
                 userRole,
               });
-              
+
               devLog("Session refreshed successfully");
               isCheckingRef.current = false;
               return true;
@@ -365,17 +379,20 @@ export function useAuth() {
           }
         } catch (refreshErr) {
           // Only log error if it's not a rate limit error during sign-out
-          const isRateLimitError = refreshErr instanceof Error && 
-                                  (refreshErr.message?.includes("429") || 
-                                   refreshErr.message?.includes("rate limit"));
-          
+          const isRateLimitError =
+            refreshErr instanceof Error &&
+            (refreshErr.message?.includes("429") ||
+              refreshErr.message?.includes("rate limit"));
+
           if (!isRateLimitError) {
             devError("Failed to refresh session:", refreshErr);
           } else {
-            devLog("Rate limit encountered during session refresh - clearing auth state");
+            devLog(
+              "Rate limit encountered during session refresh - clearing auth state"
+            );
           }
         }
-        
+
         // If refresh failed, clear auth state
         localStorage.removeItem("supabase.auth.token");
         localStorage.removeItem("auth.authenticated");
@@ -396,14 +413,17 @@ export function useAuth() {
       isCheckingRef.current = false;
       return false;
     }
-  };
+  }, []);
 
   useEffect(() => {
     checkAuth();
 
     // Listen for authentication state changes
     const handleAuthStateChange = (event: CustomEvent) => {
-      if (event.detail.authenticated === false) {
+      if (event.detail?.authenticated) {
+        devLog("useAuth: Received authenticated event, re-checking auth state");
+        checkAuth();
+      } else if (event.detail?.authenticated === false) {
         setAuthState({
           isAuthenticated: false,
           user: null,
@@ -426,7 +446,7 @@ export function useAuth() {
         handleAuthStateChange as EventListener
       );
     };
-  }, [router]);
+  }, [router, checkAuth]);
 
   return {
     ...authState,

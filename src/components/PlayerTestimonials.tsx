@@ -64,7 +64,6 @@ const TestimonialCard: React.FC<{ testimonials: Testimonial[]; delay: number; in
   glimmerDelay
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isHovered, setIsHovered] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.2 });
 
@@ -97,10 +96,8 @@ const TestimonialCard: React.FC<{ testimonials: Testimonial[]; delay: number; in
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.6, delay }}
       className="testimonial-card-wrapper"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`testimonial-card-container ${isHovered || isFlipped ? 'hover' : ''}`}>
+      <div className={`testimonial-card-container ${isFlipped ? 'hover' : ''}`}>
         {/* Front Side - Dark Gray - Full Testimonial */}
         <div className="testimonial-card-front">
           <div className="testimonial-card-inner">

@@ -86,7 +86,7 @@ export default function PlayerInfoStep({
             type="date"
             min={getMaxDate()}
             max={getMinDate()}
-            className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] min-h-[48px]"
+            className="w-full max-w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] min-h-[48px] box-border"
             aria-invalid={!!errors.player_birthdate}
             aria-label="Player date of birth"
             autoComplete="bday"
@@ -122,14 +122,21 @@ export default function PlayerInfoStep({
 
       <div>
         <label className="block text-sm text-gray-300 mb-2">
-          Grade (Optional)
+          Grade <span className="text-[#FF0000]">*</span>
         </label>
         <input
           {...methods.register("player_grade")}
           type="text"
-          className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red"
+          className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF0000] min-h-[48px]"
           placeholder="5th, 6th, etc."
+          aria-invalid={!!errors.player_grade}
+          aria-label="Player grade"
         />
+        {errors.player_grade && (
+          <p className="text-red-400 text-sm mt-1 font-medium">
+            {errors.player_grade.message}
+          </p>
+        )}
       </div>
 
       <div>
@@ -207,7 +214,7 @@ export default function PlayerInfoStep({
           disabled={!isValid}
           className="flex-1 bg-red text-white font-bold py-3 rounded disabled:opacity-50 hover:bg-red/90 transition-colors min-h-[48px]"
         >
-          Next: Review & Submit
+          Review & Submit
         </button>
       </div>
     </div>

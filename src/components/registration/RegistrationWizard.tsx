@@ -57,10 +57,8 @@ export default function RegistrationWizard({
   const playerBirthdate = watch("player_birthdate");
   const calculatedAge = calculateAge(playerBirthdate || "");
 
-  // Watch checkbox values for submit button state
+  // Watch checkbox value for submit button state
   const coppaConsent = watch("coppa_consent");
-  const waiverSigned = watch("waiver_signed");
-  const bothCheckboxesChecked = coppaConsent && waiverSigned;
 
   // Use submission hook
   const submissionHook = useRegistrationSubmission({
@@ -118,7 +116,7 @@ export default function RegistrationWizard({
               methods={methods}
               errors={errors}
               isValid={isValid}
-              bothCheckboxesChecked={bothCheckboxesChecked}
+              coppaConsentChecked={coppaConsent}
               loading={submissionHook.loading}
               submitted={submissionHook.submitted}
               onBack={handleBack}

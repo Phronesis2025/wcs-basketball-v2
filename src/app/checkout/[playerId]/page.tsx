@@ -5,8 +5,9 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
-import { devError } from "@/lib/security";
+import { devError, devLog } from "@/lib/security";
 import BasketballLoader from "@/components/BasketballLoader";
+import HandleAuthRedirect from "@/components/auth/HandleAuthRedirect";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -75,6 +76,25 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const [playerName, setPlayerName] = useState<string>("");
+  const [teamName, setTeamName] = useState<string>("");
+
+  // Safety timeout - if page is stuck loading for more than 15 seconds, stop loading
+  useEffect(() => {
+    const safetyTimeout = setTimeout(() => {
+      if (isLoadingData) {
+        devError("Checkout: Loading timeout - stopping load after 15 seconds", {
+          authLoading,
+          isAuthenticated,
+          hasUser: !!user,
+          hasEmail: !!user?.email,
+        });
+        setIsLoadingData(false);
+      }
+    }, 15000); // Increased to 15 seconds to give more time for auth flow
+
+    return () => clearTimeout(safetyTimeout);
+  }, [isLoadingData, authLoading, isAuthenticated, user]);
 
   // Fetch quarterly price on component mount
   useEffect(() => {
@@ -82,25 +102,210 @@ export default function CheckoutPage() {
       try {
         const response = await fetch("/api/get-price?type=quarterly");
         if (response.ok) {
-          const data = await response.json();
-          if (data.amount) {
-            setQuarterlyFee(data.amount);
+          const result = await response.json();
+          devLog("Checkout: Quarterly price API response", { result });
+
+          // The API returns { success: true, data: { amount: ... } }
+          const amount = result?.data?.amount || result?.amount;
+
+          if (amount && typeof amount === "number" && amount > 0) {
+            devLog("Checkout: Quarterly price fetched successfully", {
+              amount,
+            });
+            setQuarterlyFee(amount);
+          } else {
+            devError("Checkout: Invalid quarterly price in response", {
+              result,
+              amount,
+              hasData: !!result?.data,
+              hasAmount: !!result?.data?.amount,
+            });
+            // Set a default quarterly price (annual fee / 4)
+            const defaultQuarterly = annualFee / 4;
+            devLog("Checkout: Using default quarterly price", {
+              amount: defaultQuarterly,
+            });
+            setQuarterlyFee(defaultQuarterly);
           }
+        } else {
+          // If API returns error, use default
+          const errorData = await response.json().catch(() => ({}));
+          devError("Checkout: Failed to fetch quarterly price from API", {
+            status: response.status,
+            error: errorData,
+          });
+          // Set a default quarterly price (annual fee / 4)
+          const defaultQuarterly = annualFee / 4;
+          devLog("Checkout: Using default quarterly price after API error", {
+            amount: defaultQuarterly,
+          });
+          setQuarterlyFee(defaultQuarterly);
         }
       } catch (error) {
         // If endpoint doesn't exist or fails, use default
-        devError("Failed to fetch quarterly price", error);
+        devError("Checkout: Failed to fetch quarterly price", error);
+        // Set a default quarterly price (annual fee / 4)
+        const defaultQuarterly = annualFee / 4;
+        devLog("Checkout: Using default quarterly price after exception", {
+          amount: defaultQuarterly,
+        });
+        setQuarterlyFee(defaultQuarterly);
       }
     };
     fetchQuarterlyPrice();
+  }, [annualFee]);
+
+  // Check for expired link error in URL hash
+  const [linkExpired, setLinkExpired] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (
+        hash &&
+        (hash.includes("error=access_denied") || hash.includes("otp_expired"))
+      ) {
+        devLog("Checkout: Detected expired or invalid link in URL hash");
+        setLinkExpired(true);
+        // Clean up the error from URL
+        const cleanUrl = window.location.pathname + window.location.search;
+        window.history.replaceState({}, document.title, cleanUrl);
+      }
+    }
   }, []);
 
-  // Authentication check
+  // Authentication check - wait for session to be established from email link
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push("/parent/login");
+    // If link is expired, don't redirect immediately - allow user to see the page
+    // They'll need to log in, but we can still show player/team info
+    if (linkExpired) {
+      devLog(
+        "Checkout: Link expired, allowing page to load but user will need to authenticate"
+      );
+      // Don't redirect immediately for expired links - let them see the form
+      return;
     }
-  }, [authLoading, isAuthenticated, router]);
+
+    let redirectTimeout: NodeJS.Timeout | null = null;
+    let checkCount = 0;
+    const maxChecks = 5; // Maximum number of auth checks before redirecting
+
+    // Give HandleAuthRedirect time to process hash fragments
+    const hasHashFragments =
+      typeof window !== "undefined" &&
+      window.location.hash &&
+      window.location.hash.includes("access_token");
+
+    // Check if we're coming from a magic link (check referrer or URL params)
+    const isFromMagicLink =
+      typeof window !== "undefined" &&
+      (window.location.search.includes("type=magiclink") ||
+        document.referrer.includes("supabase") ||
+        hasHashFragments);
+
+    // Listen for auth state changes from HandleAuthRedirect
+    const handleAuthStateChanged = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.authenticated) {
+        devLog(
+          "Checkout: Auth state changed to authenticated, session should be ready"
+        );
+        // Clear any pending redirect
+        if (redirectTimeout) {
+          clearTimeout(redirectTimeout);
+          redirectTimeout = null;
+        }
+        return;
+      }
+    };
+
+    window.addEventListener("authStateChanged", handleAuthStateChanged);
+
+    const checkAuth = async () => {
+      checkCount++;
+
+      // Check Supabase session directly as a fallback
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        devLog("Checkout: Session found in Supabase, user is authenticated");
+        if (redirectTimeout) {
+          clearTimeout(redirectTimeout);
+          redirectTimeout = null;
+        }
+        return; // Session exists, don't redirect
+      }
+
+      // Also check useAuth state
+      if (isAuthenticated) {
+        devLog("Checkout: User is authenticated via useAuth");
+        if (redirectTimeout) {
+          clearTimeout(redirectTimeout);
+          redirectTimeout = null;
+        }
+        return; // User is authenticated, don't redirect
+      }
+
+      // If we're coming from a magic link, wait longer before redirecting
+      // Supabase might need time to establish the session
+      if (isFromMagicLink && checkCount < maxChecks) {
+        devLog(
+          `Checkout: Coming from magic link, waiting for session... (check ${checkCount}/${maxChecks})`
+        );
+        // Wait additional time for Supabase to establish session
+        redirectTimeout = setTimeout(() => {
+          checkAuth();
+        }, 2000); // Check every 2 seconds
+        return;
+      }
+
+      // If no session and auth is done loading, and we've checked enough times, redirect
+      // But only if link is not expired (expired links handled separately)
+      if (
+        !linkExpired &&
+        !authLoading &&
+        !isAuthenticated &&
+        !session &&
+        (checkCount >= maxChecks || !isFromMagicLink)
+      ) {
+        devLog(
+          "Checkout: No session found after multiple checks, redirecting to login",
+          {
+            checkCount,
+            isFromMagicLink,
+            authLoading,
+          }
+        );
+        router.push("/parent/login");
+      }
+    };
+
+    // Determine initial delay based on context
+    let initialDelay = 2000; // Default 2 seconds
+    if (hasHashFragments) {
+      initialDelay = 5000; // 5 seconds if hash fragments present
+      devLog(
+        "Checkout: Hash fragments detected, waiting for HandleAuthRedirect to process"
+      );
+    } else if (isFromMagicLink) {
+      initialDelay = 4000; // 4 seconds if coming from magic link
+      devLog(
+        "Checkout: Coming from magic link, waiting for session to be established"
+      );
+    }
+
+    redirectTimeout = setTimeout(() => {
+      checkAuth();
+    }, initialDelay);
+
+    return () => {
+      if (redirectTimeout) {
+        clearTimeout(redirectTimeout);
+      }
+      window.removeEventListener("authStateChanged", handleAuthStateChanged);
+    };
+  }, [authLoading, isAuthenticated, router, linkExpired]);
 
   // Combine day, month, year into birthdate format (YYYY-MM-DD)
   useEffect(() => {
@@ -125,6 +330,13 @@ export default function CheckoutPage() {
       setBirthdate("");
     }
   }, [birthMonth, birthDay, birthYear]);
+
+  // Update player name for new players when firstName or lastName changes
+  useEffect(() => {
+    if (isNewPlayer && firstName && lastName) {
+      setPlayerName(`${firstName} ${lastName}`);
+    }
+  }, [isNewPlayer, firstName, lastName]);
 
   const getDaysInMonth = (month: string, year: string) => {
     if (!month || !year) return 31;
@@ -190,11 +402,182 @@ export default function CheckoutPage() {
     return PROFANITY_LIST.some((w) => v.includes(w));
   };
 
+  // Load player and team data immediately (even if not authenticated) since we have playerId
+  useEffect(() => {
+    if (!isNewPlayer && playerId) {
+      const loadPlayerAndTeam = async () => {
+        try {
+          devLog("Checkout: Loading player and team data immediately", {
+            playerId,
+          });
+
+          // Load player data directly from Supabase (no auth required for reading)
+          const { data: playerData, error: playerError } = await supabase
+            .from("players")
+            .select("*, team_id")
+            .eq("id", playerId)
+            .single();
+
+          if (playerError) {
+            devError("Checkout: Error loading player data", playerError);
+            return;
+          }
+
+          if (playerData) {
+            // Set player name
+            if (playerData.name) {
+              setPlayerName(playerData.name);
+              devLog("Checkout: Player name loaded", { name: playerData.name });
+            } else {
+              devError("Checkout: Player data missing name field", {
+                playerData,
+              });
+            }
+
+            // Load team name if team_id exists
+            if (playerData.team_id) {
+              devLog("Checkout: Loading team data", {
+                team_id: playerData.team_id,
+              });
+              const { data: teamData, error: teamError } = await supabase
+                .from("teams")
+                .select("name")
+                .eq("id", playerData.team_id)
+                .maybeSingle(); // Use maybeSingle instead of single to handle case where team might not exist
+
+              if (teamError) {
+                devError("Checkout: Error loading team data", {
+                  error: teamError,
+                  team_id: playerData.team_id,
+                });
+              } else if (teamData?.name) {
+                setTeamName(teamData.name);
+                devLog("Checkout: Team name loaded successfully", {
+                  teamName: teamData.name,
+                  team_id: playerData.team_id,
+                });
+              } else {
+                devLog("Checkout: Team not found or missing name", {
+                  team_id: playerData.team_id,
+                  teamData,
+                });
+              }
+            } else {
+              devLog("Checkout: Player has no team_id assigned", {
+                playerId,
+                playerName: playerData.name,
+              });
+            }
+          } else {
+            devError("Checkout: No player data returned", { playerId });
+          }
+        } catch (error) {
+          devError("Checkout: Exception loading player/team data", error);
+        }
+      };
+
+      loadPlayerAndTeam();
+    }
+  }, [playerId, isNewPlayer]);
+
   // Load existing parent/player data
   useEffect(() => {
-    if (!authLoading && isAuthenticated && user?.email) {
-      loadExistingData();
+    // Don't do anything while auth is still loading
+    if (authLoading) {
+      devLog("Checkout: Auth still loading, waiting...");
+      return;
     }
+
+    // If already authenticated and user is ready, load data immediately
+    // (This handles the case where user is already logged in and navigates directly to checkout)
+    if (isAuthenticated && user?.email) {
+      // Check if we're in the initial loading state
+      const shouldLoad = isLoadingData;
+      if (shouldLoad) {
+        devLog(
+          "Checkout: Already authenticated on mount, loading data immediately"
+        );
+        loadExistingData().catch((error) => {
+          devError("Checkout: Error loading data on mount", error);
+          setIsLoadingData(false);
+        });
+        return;
+      }
+    }
+
+    // Listen for auth state changes (e.g., from HandleAuthRedirect)
+    const handleAuthStateChanged = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.authenticated) {
+        devLog("Checkout: Auth state changed to authenticated, will load data");
+        // Wait a bit for useAuth to update, then check again
+        setTimeout(() => {
+          if (isAuthenticated && user?.email) {
+            devLog("Checkout: Loading data after auth state change");
+            loadExistingData().catch((error) => {
+              devError("Checkout: Error loading data after auth change", error);
+              setIsLoadingData(false);
+            });
+          } else {
+            devLog("Checkout: Auth state changed but user not ready yet");
+            setIsLoadingData(false);
+          }
+        }, 500);
+      }
+    };
+
+    window.addEventListener("authStateChanged", handleAuthStateChanged);
+
+    // Check if we have hash fragments (session being established)
+    const hasHashFragments =
+      typeof window !== "undefined" &&
+      window.location.hash &&
+      window.location.hash.includes("access_token");
+
+    if (hasHashFragments) {
+      // Wait for HandleAuthRedirect to process hash fragments before loading data
+      devLog(
+        "Checkout: Hash fragments detected, waiting for session establishment"
+      );
+      const timeoutId = setTimeout(() => {
+        if (isAuthenticated && user?.email) {
+          devLog("Checkout: Authenticated after hash processing, loading data");
+          loadExistingData().catch((error) => {
+            devError(
+              "Checkout: Error loading data after hash processing",
+              error
+            );
+            setIsLoadingData(false);
+          });
+        } else {
+          // If still not authenticated after waiting, stop loading
+          devLog("Checkout: Not authenticated after hash processing timeout");
+          setIsLoadingData(false);
+        }
+      }, 3000); // Wait 3 seconds for HandleAuthRedirect to process
+
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener("authStateChanged", handleAuthStateChanged);
+      };
+    } else {
+      // Normal flow - load data when authenticated
+      if (isAuthenticated && user?.email) {
+        devLog("Checkout: Authenticated, loading data");
+        loadExistingData().catch((error) => {
+          devError("Checkout: Error loading data", error);
+          setIsLoadingData(false);
+        });
+      } else {
+        // Not authenticated and no hash fragments - stop loading
+        devLog("Checkout: Not authenticated, stopping load");
+        setIsLoadingData(false);
+      }
+    }
+
+    return () => {
+      window.removeEventListener("authStateChanged", handleAuthStateChanged);
+    };
   }, [authLoading, isAuthenticated, user, playerId]);
 
   const loadExistingData = async () => {
@@ -259,6 +642,24 @@ export default function CheckoutPage() {
           setShirtSize(playerData.shirt_size || "");
           setPositionPreference(playerData.position_preference || "");
           setPreviousExperience(playerData.previous_experience || "");
+
+          // Set player name
+          if (playerData.name) {
+            setPlayerName(playerData.name);
+          }
+
+          // Load team name if team_id exists
+          if (playerData.team_id) {
+            const { data: teamData, error: teamError } = await supabase
+              .from("teams")
+              .select("name")
+              .eq("id", playerData.team_id)
+              .single();
+
+            if (!teamError && teamData?.name) {
+              setTeamName(teamData.name);
+            }
+          }
         }
 
         // Load parent data
@@ -499,7 +900,7 @@ export default function CheckoutPage() {
   if (authLoading || isLoadingData) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center text-white">
+        <div className="text-center text-slate-200">
           <BasketballLoader size={80} />
         </div>
       </div>
@@ -507,747 +908,816 @@ export default function CheckoutPage() {
   }
 
   return (
-    <div className="bg-navy min-h-screen text-white">
-      <section className="pt-20 pb-12 sm:pt-24">
-        <div className="container max-w-[75rem] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-4xl mx-auto">
-            <h1 className="text-[clamp(2.25rem,5vw,3rem)] font-bebas font-bold mb-6 text-center uppercase">
-              {isNewPlayer
-                ? "Add Another Child"
-                : "Complete Checkout Information"}
-            </h1>
+    <main className="relative pt-32 pb-24 bg-black text-slate-300 antialiased selection:bg-blue-600 selection:text-slate-200 min-h-screen">
+      {/* Background Gradients */}
+      <div className="pointer-events-none absolute inset-0 flex justify-center overflow-hidden">
+        <div className="mt-[-10%] h-[500px] w-[600px] rounded-full bg-blue-900/20 blur-[100px]"></div>
+      </div>
 
-            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-8 mb-8">
-              <form onSubmit={onSubmit} className="space-y-8">
-                {/* Player Information Section (only for new player) */}
-                {isNewPlayer && (
-                  <>
-                    <div className="space-y-4">
-                      <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                        Player Information
-                      </h2>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm text-gray-300 mb-1">
-                            First Name *
-                          </label>
-                          <input
-                            className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            type="text"
-                            value={firstName}
-                            onChange={(e) => setFirstName(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-300 mb-1">
-                            Last Name *
-                          </label>
-                          <input
-                            className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            type="text"
-                            value={lastName}
-                            onChange={(e) => setLastName(e.target.value)}
-                            required
-                          />
-                        </div>
+      <HandleAuthRedirect />
+      <section className="relative mx-auto max-w-4xl px-6">
+        <div className="relative z-10">
+          <h1 className="mb-8 text-4xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/50 md:text-6xl font-inter text-center">
+            {isNewPlayer
+              ? "Add Another Child"
+              : "Complete Checkout Information"}
+          </h1>
+
+          {/* Expired link message */}
+          {linkExpired && (
+            <div className="mb-6 max-w-3xl mx-auto">
+              <div className="bg-yellow-900/50 border border-yellow-700/50 rounded-lg p-4 text-yellow-200">
+                <p className="font-semibold mb-2">⚠️ Email Link Expired</p>
+                <p className="text-sm">
+                  The email link you used has expired. Please log in to continue
+                  with the checkout process.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Information paragraph */}
+          <div className="mb-6 text-center max-w-3xl mx-auto">
+            <p className="text-slate-300 text-lg leading-relaxed font-inter mb-6">
+              Congratulations! Your player has been assigned to a team. To
+              complete the registration process, please fill out the form below
+              with your contact information, medical details, and payment
+              preferences. Once you submit the form and complete payment, your
+              player's registration will be finalized.
+            </p>
+
+            {/* Player and Team Information */}
+            {(playerName || teamName) && (
+              <div className="bg-slate-800/50 border border-slate-700/50 rounded-lg p-4 md:p-6 mb-8">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 text-slate-200">
+                  {playerName && (
+                    <div className="text-center sm:text-left">
+                      <span className="text-slate-400 text-sm font-inter uppercase tracking-wider block mb-1">
+                        Player
+                      </span>
+                      <span className="text-xl font-semibold font-inter">
+                        {playerName}
+                      </span>
+                    </div>
+                  )}
+                  {teamName && (
+                    <>
+                      {playerName && (
+                        <div className="hidden sm:block w-px h-12 bg-slate-700"></div>
+                      )}
+                      <div className="text-center sm:text-left">
+                        <span className="text-slate-400 text-sm font-inter uppercase tracking-wider block mb-1">
+                          Team
+                        </span>
+                        <span className="text-xl font-semibold font-inter">
+                          {teamName}
+                        </span>
                       </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
+          <div className="bg-slate-900/50 backdrop-blur-sm border border-slate-700/50 rounded-lg p-6 md:p-8 mb-8 shadow-xl">
+            <form onSubmit={onSubmit} className="space-y-8">
+              {/* Player Information Section (only for new player) */}
+              {isNewPlayer && (
+                <>
+                  <div className="space-y-4">
+                    <h2 className="font-semibold text-xl font-inter tracking-wide uppercase border-b border-slate-700 pb-2 text-slate-200">
+                      Player Information
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm text-gray-300 mb-2">
-                          Date of Birth *
+                        <label className="block text-sm text-slate-300 mb-1 font-inter">
+                          First Name *
                         </label>
-                        <div className="flex gap-2">
-                          <div className="flex-1">
-                            <label className="block text-xs text-gray-400 mb-1">
-                              Month
-                            </label>
-                            <select
-                              className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              value={birthMonth}
-                              onChange={(e) => setBirthMonth(e.target.value)}
-                              required
-                            >
-                              <option value="">Select Month</option>
-                              <option value="1">January</option>
-                              <option value="2">February</option>
-                              <option value="3">March</option>
-                              <option value="4">April</option>
-                              <option value="5">May</option>
-                              <option value="6">June</option>
-                              <option value="7">July</option>
-                              <option value="8">August</option>
-                              <option value="9">September</option>
-                              <option value="10">October</option>
-                              <option value="11">November</option>
-                              <option value="12">December</option>
-                            </select>
-                          </div>
-                          <div className="flex-1">
-                            <label className="block text-xs text-gray-400 mb-1">
-                              Day
-                            </label>
-                            <select
-                              className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              value={birthDay}
-                              onChange={(e) => setBirthDay(e.target.value)}
-                              required
-                              disabled={!birthMonth || !birthYear}
-                            >
-                              <option value="">Day</option>
-                              {Array.from(
-                                { length: daysInMonth },
-                                (_, i) => i + 1
-                              ).map((day) => (
-                                <option key={day} value={String(day)}>
-                                  {day}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="flex-1">
-                            <label className="block text-xs text-gray-400 mb-1">
-                              Year
-                            </label>
-                            <input
-                              className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              type="number"
-                              min="2000"
-                              max={new Date().getFullYear()}
-                              placeholder="YYYY"
-                              value={birthYear}
-                              onChange={(e) => {
-                                const year = e.target.value;
-                                if (year.length <= 4) {
-                                  setBirthYear(year);
-                                }
-                              }}
-                              required
-                            />
-                          </div>
-                        </div>
+                        <input
+                          className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:border-blue-500 transition-colors font-inter"
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          required
+                        />
                       </div>
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1 font-inter">
+                          Last Name *
+                        </label>
+                        <input
+                          className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:border-blue-500 transition-colors font-inter"
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm text-gray-300 mb-1">
-                            Grade *
-                          </label>
-                          <input
-                            className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            type="text"
-                            value={grade}
-                            onChange={(e) => setGrade(e.target.value)}
-                            required
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm text-gray-300 mb-1">
-                            Gender *
+                    <div>
+                      <label className="block text-sm text-slate-300 mb-2 font-inter">
+                        Date of Birth *
+                      </label>
+                      <div className="flex gap-2">
+                        <div className="flex-1">
+                          <label className="block text-xs text-slate-400 mb-1 font-inter">
+                            Month
                           </label>
                           <select
-                            className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={gender}
-                            onChange={(e) => setGender(e.target.value)}
+                            className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:border-blue-500 transition-colors font-inter"
+                            value={birthMonth}
+                            onChange={(e) => setBirthMonth(e.target.value)}
                             required
                           >
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
+                            <option value="">Select Month</option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
                           </select>
                         </div>
+                        <div className="flex-1">
+                          <label className="block text-xs text-slate-400 mb-1 font-inter">
+                            Day
+                          </label>
+                          <select
+                            className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:border-blue-500 transition-colors font-inter"
+                            value={birthDay}
+                            onChange={(e) => setBirthDay(e.target.value)}
+                            required
+                            disabled={!birthMonth || !birthYear}
+                          >
+                            <option value="">Day</option>
+                            {Array.from(
+                              { length: daysInMonth },
+                              (_, i) => i + 1
+                            ).map((day) => (
+                              <option key={day} value={String(day)}>
+                                {day}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs text-slate-400 mb-1 font-inter">
+                            Year
+                          </label>
+                          <input
+                            className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:border-blue-500 transition-colors font-inter"
+                            type="number"
+                            min="2000"
+                            max={new Date().getFullYear()}
+                            placeholder="YYYY"
+                            value={birthYear}
+                            onChange={(e) => {
+                              const year = e.target.value;
+                              if (year.length <= 4) {
+                                setBirthYear(year);
+                              }
+                            }}
+                            required
+                          />
+                        </div>
                       </div>
                     </div>
 
-                    <hr className="my-6 border-gray-700" />
-                  </>
-                )}
-
-                {/* Player Details Section */}
-                <div className="space-y-4">
-                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                    Player Details
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        School Name
-                      </label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="text"
-                        value={schoolName}
-                        onChange={(e) => setSchoolName(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        Shirt Size
-                      </label>
-                      <select
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        value={shirtSize}
-                        onChange={(e) => setShirtSize(e.target.value)}
-                      >
-                        <option value="">Select Size</option>
-                        <option value="XS">XS</option>
-                        <option value="S">S</option>
-                        <option value="M">M</option>
-                        <option value="L">L</option>
-                        <option value="XL">XL</option>
-                        <option value="XXL">XXL</option>
-                      </select>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1 font-inter">
+                          Grade *
+                        </label>
+                        <input
+                          className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:border-blue-500 transition-colors font-inter"
+                          type="text"
+                          value={grade}
+                          onChange={(e) => setGrade(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1 font-inter">
+                          Gender *
+                        </label>
+                        <select
+                          className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors focus:border-blue-500 transition-colors font-inter"
+                          value={gender}
+                          onChange={(e) => setGender(e.target.value)}
+                          required
+                        >
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
+
+                  <hr className="my-6 border-slate-700" />
+                </>
+              )}
+
+              {/* Player Details Section */}
+              <div className="space-y-4">
+                <h2 className="font-semibold text-xl font-inter tracking-wide uppercase border-b border-slate-700 pb-2 text-slate-200">
+                  Player Details
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Position Preference
+                    <label className="block text-sm text-slate-300 mb-1 font-inter">
+                      School Name
                     </label>
                     <input
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                       type="text"
-                      value={positionPreference}
-                      onChange={(e) => setPositionPreference(e.target.value)}
-                      placeholder="e.g., Point Guard, Striker, etc."
+                      value={schoolName}
+                      onChange={(e) => setSchoolName(e.target.value)}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Previous Experience
-                    </label>
-                    <textarea
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={3}
-                      value={previousExperience}
-                      onChange={(e) => setPreviousExperience(e.target.value)}
-                      placeholder="Describe any previous sports experience..."
-                    />
-                  </div>
-                </div>
-
-                <hr className="my-6 border-gray-700" />
-
-                {/* Parent Address Section */}
-                <div className="space-y-4">
-                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                    Parent Address
-                  </h2>
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Street Address *
-                    </label>
-                    <input
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      type="text"
-                      value={addressLine1}
-                      onChange={(e) => setAddressLine1(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Address Line 2
-                    </label>
-                    <input
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      type="text"
-                      value={addressLine2}
-                      onChange={(e) => setAddressLine2(e.target.value)}
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        City *
-                      </label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="text"
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        State *
-                      </label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="text"
-                        value={state}
-                        onChange={(e) => setState(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        ZIP Code *
-                      </label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="text"
-                        value={zip}
-                        onChange={(e) => setZip(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <hr className="my-6 border-gray-700" />
-
-                {/* Guardian Information Section */}
-                <div className="space-y-4">
-                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                    Guardian Information
-                  </h2>
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Guardian Relationship *
+                    <label className="block text-sm text-slate-300 mb-1 font-inter">
+                      Shirt Size
                     </label>
                     <select
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      value={guardianRelationship}
-                      onChange={(e) => setGuardianRelationship(e.target.value)}
-                      required
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors [&>option]:bg-white [&>option]:text-black"
+                      value={shirtSize}
+                      onChange={(e) => setShirtSize(e.target.value)}
                     >
-                      <option value="">Select Relationship</option>
-                      <option value="Mother">Mother</option>
-                      <option value="Father">Father</option>
-                      <option value="Guardian">Guardian</option>
-                      <option value="Other">Other</option>
+                      <option value="">Select Size</option>
+                      <option value="XS">XS</option>
+                      <option value="S">S</option>
+                      <option value="M">M</option>
+                      <option value="L">L</option>
+                      <option value="XL">XL</option>
+                      <option value="XXL">XXL</option>
                     </select>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        Emergency Contact Name *
-                      </label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="text"
-                        value={emergencyContact}
-                        onChange={(e) => setEmergencyContact(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        Emergency Contact Phone *
-                      </label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="tel"
-                        value={emergencyPhone}
-                        onChange={(e) => setEmergencyPhone(e.target.value)}
-                        placeholder="(555) 123-4567"
-                        required
-                      />
-                    </div>
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1 font-inter">
+                    Position Preference
+                  </label>
+                  <input
+                    className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    type="text"
+                    value={positionPreference}
+                    onChange={(e) => setPositionPreference(e.target.value)}
+                    placeholder="e.g., Point Guard, Striker, etc."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1 font-inter">
+                    Previous Experience
+                  </label>
+                  <textarea
+                    className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    rows={3}
+                    value={previousExperience}
+                    onChange={(e) => setPreviousExperience(e.target.value)}
+                    placeholder="Describe any previous sports experience..."
+                  />
+                </div>
+              </div>
+
+              <hr className="my-6 border-slate-700" />
+
+              {/* Parent Address Section */}
+              <div className="space-y-4">
+                <h2 className="font-semibold text-xl font-inter tracking-wide uppercase border-b border-slate-700 pb-2 text-slate-200">
+                  Parent Address
+                </h2>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">
+                    Street Address *
+                  </label>
+                  <input
+                    className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    type="text"
+                    value={addressLine1}
+                    onChange={(e) => setAddressLine1(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">
+                    Address Line 2
+                  </label>
+                  <input
+                    className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    type="text"
+                    value={addressLine2}
+                    onChange={(e) => setAddressLine2(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-300 mb-1">
+                      City *
+                    </label>
+                    <input
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-300 mb-1">
+                      State *
+                    </label>
+                    <input
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      type="text"
+                      value={state}
+                      onChange={(e) => setState(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-300 mb-1">
+                      ZIP Code *
+                    </label>
+                    <input
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      type="text"
+                      value={zip}
+                      onChange={(e) => setZip(e.target.value)}
+                      required
+                    />
                   </div>
                 </div>
+              </div>
 
-                <hr className="my-6 border-gray-700" />
+              <hr className="my-6 border-slate-700" />
 
-                {/* Medical Information Section */}
-                <div className="space-y-4">
-                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                    Medical Information
-                  </h2>
+              {/* Guardian Information Section */}
+              <div className="space-y-4">
+                <h2 className="font-semibold text-xl font-inter tracking-wide uppercase border-b border-slate-700 pb-2 text-slate-200">
+                  Guardian Information
+                </h2>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">
+                    Guardian Relationship *
+                  </label>
+                  <select
+                    className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors [&>option]:bg-white [&>option]:text-black"
+                    value={guardianRelationship}
+                    onChange={(e) => setGuardianRelationship(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Relationship</option>
+                    <option value="Mother">Mother</option>
+                    <option value="Father">Father</option>
+                    <option value="Guardian">Guardian</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Allergies
+                    <label className="block text-sm text-slate-300 mb-1">
+                      Emergency Contact Name *
                     </label>
-                    <textarea
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={3}
-                      value={medicalAllergies}
-                      onChange={(e) => setMedicalAllergies(e.target.value)}
-                      placeholder="List any known allergies..."
+                    <input
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      type="text"
+                      value={emergencyContact}
+                      onChange={(e) => setEmergencyContact(e.target.value)}
+                      required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Medical Conditions
+                    <label className="block text-sm text-slate-300 mb-1">
+                      Emergency Contact Phone *
                     </label>
-                    <textarea
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={3}
-                      value={medicalConditions}
-                      onChange={(e) => setMedicalConditions(e.target.value)}
-                      placeholder="List any medical conditions..."
+                    <input
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      type="tel"
+                      value={emergencyPhone}
+                      onChange={(e) => setEmergencyPhone(e.target.value)}
+                      placeholder="(555) 123-4567"
+                      required
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-300 mb-1">
-                      Medications
-                    </label>
-                    <textarea
-                      className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={3}
-                      value={medicalMedications}
-                      onChange={(e) => setMedicalMedications(e.target.value)}
-                      placeholder="List any current medications..."
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        Doctor Name
-                      </label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="text"
-                        value={doctorName}
-                        onChange={(e) => setDoctorName(e.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm text-gray-300 mb-1">
-                        Doctor Phone
-                      </label>
-                      <input
-                        className="w-full rounded px-3 py-2 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        type="tel"
-                        value={doctorPhone}
-                        onChange={(e) => setDoctorPhone(e.target.value)}
-                        placeholder="(555) 123-4567"
-                      />
-                    </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Account Password Section - Only show if user needs to set password */}
-                {needsPassword && (
-                  <>
-                    <hr className="my-6 border-gray-700" />
+              <hr className="my-6 border-slate-700" />
 
-                    <div className="space-y-4">
-                      <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                        Set Your Account Password
-                      </h2>
-                      <p className="text-sm text-gray-400">
-                        Create a secure password to access your account. This
-                        password will be required for future logins.
-                      </p>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm text-gray-300 mb-1">
-                            Password *
-                          </label>
-                          <div className="relative">
-                            <input
-                              className="w-full rounded px-3 py-2 pr-10 bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              type={showPassword ? "text" : "password"}
-                              value={password}
-                              onChange={(e) => setPassword(e.target.value)}
-                              required
-                              placeholder="Enter your password"
-                            />
-                            <button
-                              type="button"
-                              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? (
-                                <svg
-                                  className="w-5 h-5 text-gray-400 hover:text-gray-300"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
-                                  />
-                                </svg>
-                              ) : (
-                                <svg
-                                  className="w-5 h-5 text-gray-400 hover:text-gray-300"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                  />
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                  />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
-                          {passwordErrors.length > 0 && (
-                            <ul className="mt-1 text-xs text-yellow-400 list-disc list-inside">
-                              {passwordErrors.map((error, idx) => (
-                                <li key={idx}>{error}</li>
-                              ))}
-                            </ul>
-                          )}
-                          {password && passwordErrors.length === 0 && (
-                            <p className="mt-1 text-xs text-green-400">
-                              ✓ Password meets all requirements
-                            </p>
-                          )}
+              {/* Medical Information Section */}
+              <div className="space-y-4">
+                <h2 className="font-semibold text-xl font-inter tracking-wide uppercase border-b border-slate-700 pb-2 text-slate-200">
+                  Medical Information
+                </h2>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">
+                    Allergies
+                  </label>
+                  <textarea
+                    className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    rows={3}
+                    value={medicalAllergies}
+                    onChange={(e) => setMedicalAllergies(e.target.value)}
+                    placeholder="List any known allergies..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">
+                    Medical Conditions
+                  </label>
+                  <textarea
+                    className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    rows={3}
+                    value={medicalConditions}
+                    onChange={(e) => setMedicalConditions(e.target.value)}
+                    placeholder="List any medical conditions..."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm text-slate-300 mb-1">
+                    Medications
+                  </label>
+                  <textarea
+                    className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                    rows={3}
+                    value={medicalMedications}
+                    onChange={(e) => setMedicalMedications(e.target.value)}
+                    placeholder="List any current medications..."
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm text-slate-300 mb-1">
+                      Doctor Name
+                    </label>
+                    <input
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      type="text"
+                      value={doctorName}
+                      onChange={(e) => setDoctorName(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-slate-300 mb-1">
+                      Doctor Phone
+                    </label>
+                    <input
+                      className="w-full rounded px-3 py-2 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      type="tel"
+                      value={doctorPhone}
+                      onChange={(e) => setDoctorPhone(e.target.value)}
+                      placeholder="(555) 123-4567"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Account Password Section - Only show if user needs to set password */}
+              {needsPassword && (
+                <>
+                  <hr className="my-6 border-slate-700" />
+
+                  <div className="space-y-4">
+                    <h2 className="font-semibold text-xl font-inter tracking-wide uppercase border-b border-slate-700 pb-2 text-slate-200">
+                      Set Your Account Password
+                    </h2>
+                    <p className="text-sm text-slate-400">
+                      Create a secure password to access your account. This
+                      password will be required for future logins.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1">
+                          Password *
+                        </label>
+                        <div className="relative">
+                          <input
+                            className="w-full rounded px-3 py-2 pr-10 bg-slate-800/50 border border-slate-700 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            placeholder="Enter your password"
+                          />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? (
+                              <svg
+                                className="w-5 h-5 text-slate-400 hover:text-slate-300"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-5 h-5 text-slate-400 hover:text-slate-300"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </svg>
+                            )}
+                          </button>
                         </div>
-                        <div>
-                          <label className="block text-sm text-gray-300 mb-1">
-                            Confirm Password *
-                          </label>
-                          <div className="relative">
-                            <input
-                              className={`w-full rounded px-3 py-2 pr-10 bg-gray-800 border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                                passwordMismatch && confirmPassword
-                                  ? "border-red-500"
-                                  : "border-gray-700"
-                              }`}
-                              type={showConfirmPassword ? "text" : "password"}
-                              value={confirmPassword}
-                              onChange={(e) =>
-                                setConfirmPassword(e.target.value)
-                              }
-                              required
-                              placeholder="Confirm your password"
-                            />
-                            <button
-                              type="button"
-                              className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                              onClick={() =>
-                                setShowConfirmPassword(!showConfirmPassword)
-                              }
-                            >
-                              {showConfirmPassword ? (
-                                <svg
-                                  className="w-5 h-5 text-gray-400 hover:text-gray-300"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
-                                  />
-                                </svg>
-                              ) : (
-                                <svg
-                                  className="w-5 h-5 text-gray-400 hover:text-gray-300"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                  />
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                  />
-                                </svg>
-                              )}
-                            </button>
-                          </div>
-                          {passwordMismatch && confirmPassword && (
-                            <p className="mt-1 text-xs text-red-400">
-                              Passwords do not match
-                            </p>
-                          )}
-                          {confirmPassword && !passwordMismatch && password && (
-                            <p className="mt-1 text-xs text-green-400">
-                              ✓ Passwords match
-                            </p>
-                          )}
-                        </div>
+                        {passwordErrors.length > 0 && (
+                          <ul className="mt-1 text-xs text-yellow-400 list-disc list-inside">
+                            {passwordErrors.map((error, idx) => (
+                              <li key={idx}>{error}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {password && passwordErrors.length === 0 && (
+                          <p className="mt-1 text-xs text-green-400">
+                            ✓ Password meets all requirements
+                          </p>
+                        )}
                       </div>
-                      <div className="bg-gray-800/50 border border-gray-700 rounded p-3 text-xs text-gray-400">
-                        <strong className="text-gray-300">
-                          Password Requirements:
-                        </strong>
-                        <ul className="mt-1 ml-4 list-disc">
-                          <li>At least 8 characters</li>
-                          <li>At least one uppercase letter</li>
-                          <li>At least one lowercase letter</li>
-                          <li>At least one number</li>
-                          <li>
-                            At least one special character (!@#$%^&*(),.?":{}
-                            |&lt;&gt;)
-                          </li>
-                        </ul>
+                      <div>
+                        <label className="block text-sm text-slate-300 mb-1">
+                          Confirm Password *
+                        </label>
+                        <div className="relative">
+                          <input
+                            className={`w-full rounded px-3 py-2 pr-10 bg-slate-800/50 border text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                              passwordMismatch && confirmPassword
+                                ? "border-red-500"
+                                : "border-slate-700"
+                            }`}
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            required
+                            placeholder="Confirm your password"
+                          />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                            onClick={() =>
+                              setShowConfirmPassword(!showConfirmPassword)
+                            }
+                          >
+                            {showConfirmPassword ? (
+                              <svg
+                                className="w-5 h-5 text-slate-400 hover:text-slate-300"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21"
+                                />
+                              </svg>
+                            ) : (
+                              <svg
+                                className="w-5 h-5 text-slate-400 hover:text-slate-300"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                                />
+                              </svg>
+                            )}
+                          </button>
+                        </div>
+                        {passwordMismatch && confirmPassword && (
+                          <p className="mt-1 text-xs text-red-400">
+                            Passwords do not match
+                          </p>
+                        )}
+                        {confirmPassword && !passwordMismatch && password && (
+                          <p className="mt-1 text-xs text-green-400">
+                            ✓ Passwords match
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </>
-                )}
-
-                <hr className="my-6 border-gray-700" />
-
-                {/* Consent Checkboxes Section */}
-                <div className="space-y-4">
-                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                    Consent & Agreement
-                  </h2>
-                  <div className="space-y-3">
-                    <label className="inline-flex items-center gap-3 text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={consentPhotoRelease}
-                        onChange={(e) =>
-                          setConsentPhotoRelease(e.target.checked)
-                        }
-                        className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                      <span>
-                        I consent to photo release for promotional purposes *
-                      </span>
-                    </label>
-                    <label className="inline-flex items-center gap-3 text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={consentMedicalTreatment}
-                        onChange={(e) =>
-                          setConsentMedicalTreatment(e.target.checked)
-                        }
-                        className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                      <span>
-                        I consent to medical treatment in case of emergency *
-                      </span>
-                    </label>
-                    <label className="inline-flex items-center gap-3 text-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={consentParticipation}
-                        onChange={(e) =>
-                          setConsentParticipation(e.target.checked)
-                        }
-                        className="w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                      <span>
-                        I consent to participation in sports activities *
-                      </span>
-                    </label>
+                    <div className="bg-slate-800/50 border border-slate-700 rounded p-3 text-xs text-slate-400">
+                      <strong className="text-slate-300">
+                        Password Requirements:
+                      </strong>
+                      <ul className="mt-1 ml-4 list-disc">
+                        <li>At least 8 characters</li>
+                        <li>At least one uppercase letter</li>
+                        <li>At least one lowercase letter</li>
+                        <li>At least one number</li>
+                        <li>
+                          At least one special character (!@#$%^&*(),.?":{}
+                          |&lt;&gt;)
+                        </li>
+                      </ul>
+                    </div>
                   </div>
+                </>
+              )}
+
+              <hr className="my-6 border-slate-700" />
+
+              {/* Consent Checkboxes Section */}
+              <div className="space-y-4">
+                <h2 className="font-semibold text-xl font-inter tracking-wide uppercase border-b border-slate-700 pb-2 text-slate-200">
+                  Consent & Agreement
+                </h2>
+                <div className="space-y-3">
+                  <label className="inline-flex items-center gap-3 text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={consentPhotoRelease}
+                      onChange={(e) => setConsentPhotoRelease(e.target.checked)}
+                      className="w-5 h-5 rounded border-slate-700 bg-slate-800/50 text-red-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                    <span>
+                      I consent to photo release for promotional purposes *
+                    </span>
+                  </label>
+                  <label className="inline-flex items-center gap-3 text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={consentMedicalTreatment}
+                      onChange={(e) =>
+                        setConsentMedicalTreatment(e.target.checked)
+                      }
+                      className="w-5 h-5 rounded border-slate-700 bg-slate-800/50 text-red-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                    <span>
+                      I consent to medical treatment in case of emergency *
+                    </span>
+                  </label>
+                  <label className="inline-flex items-center gap-3 text-slate-300">
+                    <input
+                      type="checkbox"
+                      checked={consentParticipation}
+                      onChange={(e) =>
+                        setConsentParticipation(e.target.checked)
+                      }
+                      className="w-5 h-5 rounded border-slate-700 bg-slate-800/50 text-red-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                      required
+                    />
+                    <span>
+                      I consent to participation in sports activities *
+                    </span>
+                  </label>
                 </div>
+              </div>
 
-                <hr className="my-6 border-gray-700" />
+              <hr className="my-6 border-slate-700" />
 
-                {/* Payment Options Section */}
-                <div className="space-y-4">
-                  <h2 className="font-semibold text-lg font-bebas tracking-wide uppercase border-b border-gray-700 pb-2">
-                    Choose Payment Option
-                  </h2>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
+              {/* Payment Options Section */}
+              <div className="space-y-4">
+                <h2 className="font-semibold text-lg font-inter tracking-wide uppercase border-b border-slate-700 pb-2">
+                  Choose Payment Option
+                </h2>
+                <div className="space-y-3">
+                  <label className="flex items-center gap-3 text-slate-300 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentPlan"
+                      checked={paymentType === "annual"}
+                      onChange={() => setPaymentType("annual")}
+                      className="w-5 h-5 text-red-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-slate-800/50 border-slate-700"
+                    />
+                    <span>Annual – ${annualFee.toFixed(2)}</span>
+                  </label>
+                  <label className="flex items-center gap-3 text-slate-300 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentPlan"
+                      checked={paymentType === "monthly"}
+                      onChange={() => setPaymentType("monthly")}
+                      className="w-5 h-5 text-red-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-slate-800/50 border-slate-700"
+                    />
+                    <span>Monthly – $30.00</span>
+                  </label>
+                  {quarterlyFee !== null && quarterlyFee > 0 ? (
+                    <label className="flex items-center gap-3 text-slate-300 cursor-pointer">
                       <input
                         type="radio"
                         name="paymentPlan"
-                        checked={paymentType === "annual"}
-                        onChange={() => setPaymentType("annual")}
-                        className="w-5 h-5 text-red focus:ring-2 focus:ring-blue-500 bg-gray-800 border-gray-700"
+                        checked={paymentType === "quarterly"}
+                        onChange={() => setPaymentType("quarterly")}
+                        className="w-5 h-5 text-red-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-slate-800/50 border-slate-700"
                       />
-                      <span>Annual – ${annualFee.toFixed(2)}</span>
+                      <span>Quarterly – ${quarterlyFee.toFixed(2)}</span>
                     </label>
-                    <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
+                  ) : (
+                    <label className="flex items-center gap-3 text-slate-300 cursor-pointer opacity-50">
                       <input
                         type="radio"
                         name="paymentPlan"
-                        checked={paymentType === "monthly"}
-                        onChange={() => setPaymentType("monthly")}
-                        className="w-5 h-5 text-red focus:ring-2 focus:ring-blue-500 bg-gray-800 border-gray-700"
+                        checked={paymentType === "quarterly"}
+                        onChange={() => setPaymentType("quarterly")}
+                        disabled
+                        className="w-5 h-5 text-red-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-slate-800/50 border-slate-700"
                       />
-                      <span>Monthly – $30.00</span>
+                      <span>Quarterly – Loading price...</span>
                     </label>
-                    {quarterlyFee !== null && (
-                      <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="paymentPlan"
-                          checked={paymentType === "quarterly"}
-                          onChange={() => setPaymentType("quarterly")}
-                          className="w-5 h-5 text-red focus:ring-2 focus:ring-blue-500 bg-gray-800 border-gray-700"
-                        />
-                        <span>Quarterly – ${quarterlyFee.toFixed(2)}</span>
-                      </label>
-                    )}
-                    <label className="flex items-center gap-3 text-gray-300 cursor-pointer">
+                  )}
+                  <label className="flex items-center gap-3 text-slate-300 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentPlan"
+                      checked={paymentType === "custom"}
+                      onChange={() => setPaymentType("custom")}
+                      className="w-5 h-5 text-red-600 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-slate-800/50 border-slate-700"
+                    />
+                    <span className="flex items-center gap-2">
+                      Custom Amount:
                       <input
-                        type="radio"
-                        name="paymentPlan"
-                        checked={paymentType === "custom"}
-                        onChange={() => setPaymentType("custom")}
-                        className="w-5 h-5 text-red focus:ring-2 focus:ring-blue-500 bg-gray-800 border-gray-700"
+                        className="ml-2 border border-gray-600 bg-slate-800/50 text-slate-200 rounded px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        type="number"
+                        step="0.01"
+                        min="0.50"
+                        value={customAmount}
+                        onChange={(e) => setCustomAmount(e.target.value)}
+                        disabled={paymentType !== "custom"}
+                        placeholder="0.00"
                       />
-                      <span className="flex items-center gap-2">
-                        Custom Amount:
-                        <input
-                          className="ml-2 border border-gray-600 bg-gray-800 text-white rounded px-3 py-2 w-32 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          type="number"
-                          step="0.01"
-                          min="0.50"
-                          value={customAmount}
-                          onChange={(e) => setCustomAmount(e.target.value)}
-                          disabled={paymentType !== "custom"}
-                          placeholder="0.00"
-                        />
-                      </span>
-                    </label>
-                  </div>
+                    </span>
+                  </label>
                 </div>
+              </div>
 
-                {message && (
-                  <div
-                    className={`p-3 rounded text-sm ${
-                      message.startsWith("Success")
-                        ? "bg-green-900/40 text-green-200 border border-green-500/40"
-                        : "bg-red-900/40 text-red-200 border border-red-500/40"
-                    }`}
-                  >
-                    {message}
-                  </div>
-                )}
-
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => router.back()}
-                    className="flex-1 px-6 py-3 bg-gray-800 text-white rounded hover:bg-gray-700 transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="flex-1 px-6 py-3 bg-red text-white rounded disabled:opacity-60 hover:bg-red/90 transition"
-                  >
-                    {loading
-                      ? "Submitting..."
-                      : isNewPlayer
-                      ? "Submit Registration"
-                      : "Continue to Payment"}
-                  </button>
+              {message && (
+                <div
+                  className={`p-3 rounded text-sm ${
+                    message.startsWith("Success")
+                      ? "bg-green-900/40 text-green-200 border border-green-500/40"
+                      : "bg-red-900/40 text-red-200 border border-red-500/40"
+                  }`}
+                >
+                  {message}
                 </div>
-              </form>
-            </div>
+              )}
+
+              <div className="flex gap-4 pt-4">
+                <button
+                  type="button"
+                  onClick={() => router.back()}
+                  className="flex-1 px-6 py-3 bg-slate-800/50 text-slate-200 rounded hover:bg-slate-700/50 transition-colors font-inter"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-6 py-3 bg-red text-white rounded disabled:opacity-60 hover:bg-red-700 transition-colors font-inter font-semibold"
+                >
+                  {loading
+                    ? "Submitting..."
+                    : isNewPlayer
+                    ? "Submit Registration"
+                    : "Continue to Payment"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </section>
-    </div>
+    </main>
   );
 }

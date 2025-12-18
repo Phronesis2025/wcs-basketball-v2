@@ -154,25 +154,36 @@ export async function POST(req: Request) {
     
     // Send parent confirmation email for all registrations
     // Note: New parents will also receive Supabase's confirmation email via the auth flow
-    const parentEmailData = getPlayerRegistrationEmail({
-      playerFirstName: first_name,
-      playerLastName: last_name,
-      parentFirstName: body.parent_first_name,
-      parentLastName: body.parent_last_name,
-      grade,
-      gender,
-    });
+    // Wrap in try-catch so email failure doesn't break registration
+    try {
+      const parentEmailData = getPlayerRegistrationEmail({
+        playerFirstName: first_name,
+        playerLastName: last_name,
+        parentFirstName: body.parent_first_name,
+        parentLastName: body.parent_last_name,
+        grade,
+        gender,
+      });
 
-    await sendEmail(
-      parent_email,
-      parentEmailData.subject,
-      parentEmailData.html
-    );
+      await sendEmail(
+        parent_email,
+        parentEmailData.subject,
+        parentEmailData.html
+      );
 
-    devLog("register-player: parent confirmation sent", {
-      to: parent_email,
-      isExistingParent,
-    });
+      devLog("register-player: parent confirmation sent", {
+        to: parent_email,
+        isExistingParent,
+      });
+    } catch (emailError) {
+      // Log error but don't fail registration if email fails
+      devError("register-player: Failed to send parent confirmation email", {
+        error: emailError,
+        to: parent_email,
+        isExistingParent,
+        note: "Registration completed successfully, but confirmation email failed to send",
+      });
+    }
 
     // Notify admin(s) about new registration
     // Supports single email (for testing) or multiple emails (comma-separated)
@@ -187,29 +198,39 @@ export async function POST(req: Request) {
         .filter((email) => email.length > 0);
 
       if (adminEmails.length > 0) {
-        const adminEmailData = getAdminPlayerRegistrationEmail({
-          playerFirstName: first_name,
-          playerLastName: last_name,
-          parentName: `${parentRecord.first_name} ${parentRecord.last_name}`.trim(),
-          parentEmail: parent_email,
-          parentPhone: parent_phone || "",
-          grade,
-          gender,
-          playerId: player.id,
-        });
+        try {
+          const adminEmailData = getAdminPlayerRegistrationEmail({
+            playerFirstName: first_name,
+            playerLastName: last_name,
+            parentName: `${parentRecord.first_name} ${parentRecord.last_name}`.trim(),
+            parentEmail: parent_email,
+            parentPhone: parent_phone || "",
+            grade,
+            gender,
+            playerId: player.id,
+          });
 
-        // Send email to admin(s)
-        // If only one admin: sends directly to that email
-        // If multiple admins: sends to first email, BCC to others (so they don't see each other's emails)
-        await sendEmail(adminEmails[0], adminEmailData.subject, adminEmailData.html, {
-          bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
-        });
+          // Send email to admin(s)
+          // If only one admin: sends directly to that email
+          // If multiple admins: sends to first email, BCC to others (so they don't see each other's emails)
+          await sendEmail(adminEmails[0], adminEmailData.subject, adminEmailData.html, {
+            bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
+          });
 
-        devLog("register-player: admin notification sent", {
-          to: adminEmails[0],
-          bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
-          totalAdmins: adminEmails.length,
-        });
+          devLog("register-player: admin notification sent", {
+            to: adminEmails[0],
+            bcc: adminEmails.length > 1 ? adminEmails.slice(1) : undefined,
+            totalAdmins: adminEmails.length,
+          });
+        } catch (adminEmailError) {
+          // Log error but don't fail registration if admin email fails
+          devError("register-player: Failed to send admin notification email", {
+            error: adminEmailError,
+            to: adminEmails[0],
+            totalAdmins: adminEmails.length,
+            note: "Registration completed successfully, but admin notification email failed to send",
+          });
+        }
       }
     }
 

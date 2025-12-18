@@ -481,7 +481,7 @@ export default function AddPlayerModal({
                   onChange={(e) =>
                     handleInputChange("dateOfBirth", e.target.value)
                   }
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                  className={`w-full max-w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 box-border ${
                     errors.dateOfBirth ? "border-red-500" : "border-gray-300"
                   }`}
                 />

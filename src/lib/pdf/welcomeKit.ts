@@ -300,7 +300,7 @@ export async function generateWelcomeKitPDF(data: WelcomeKitData): Promise<Uint8
 
   yPosition -= 30;
 
-  page.drawText("Questions? Contact us at info@wcsbasketball.com", {
+  page.drawText("Questions? Contact us at wcsbts@gmail.com", {
     x: 50,
     y: yPosition,
     size: 11,

@@ -831,7 +831,7 @@ export default function PaymentPage() {
                   className="text-[10px] mt-1"
                   style={{ fontFamily: "Arial, sans-serif" }}
                 >
-                  Contact: info@wcsbasketball.com • (785) 123-4567
+                  Contact: wcsbts@gmail.com • (785) 123-4567
                 </p>
               </div>
 
@@ -912,7 +912,7 @@ export default function PaymentPage() {
                     className="text-[10px]"
                     style={{ fontFamily: "Arial, sans-serif" }}
                   >
-                    Email: info@wcsbasketball.com | Phone: (785) 123-4567
+                    Email: wcsbts@gmail.com | Phone: (785) 123-4567
                   </p>
                 </div>
                 <div>

@@ -127,8 +127,8 @@ export function getPlayerRegistrationEmail(data: {
       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
     .header {
-      background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
-      color: #000 !important;
+      background: #000000;
+      color: #ffffff !important;
       padding: 40px 30px;
       text-align: center;
       position: relative;
@@ -156,11 +156,11 @@ export function getPlayerRegistrationEmail(data: {
       font-weight: 700;
       margin: 15px 0 8px 0;
       letter-spacing: -0.5px;
-      color: #000000 !important; /* ensure title stays white on mobile/dark mode */
+      color: #ffffff !important; /* white text on black background */
     }
     .header-subtitle {
       font-size: 16px;
-      color: #404041 !important;
+      color: #ffffff !important;
       font-weight: 500;
       margin: 0;
     }
@@ -506,8 +506,8 @@ export function getWelcomePendingEmail(data: {
           padding: 20px;
         }
         .header {
-          background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
-          color: white;
+          background: #000000;
+          color: #ffffff !important;
           padding: 30px 20px;
           text-align: center;
           border-radius: 8px 8px 0 0;
@@ -547,8 +547,8 @@ export function getWelcomePendingEmail(data: {
     <body>
       <div class="header">
         <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
-        <h1 style="margin: 0; font-size: 32px;">🏀 Welcome!</h1>
-        <p style="margin: 10px 0 0 0; font-size: 18px;">Your Registration is Pending Review</p>
+        <h1 style="margin: 0; font-size: 32px; color: #ffffff !important;">🏀 Welcome!</h1>
+        <p style="margin: 10px 0 0 0; font-size: 18px; color: #ffffff !important;">Your Registration is Pending Review</p>
       </div>
 
       <div class="content">
@@ -604,9 +604,10 @@ export function getWelcomePendingEmail(data: {
 export function getPlayerApprovalEmail(data: {
   playerName: string;
   teamName?: string;
+  teamLogoUrl?: string;
   paymentLink: string;
 }): { subject: string; html: string } {
-  const { playerName, teamName, paymentLink } = data;
+  const { playerName, teamName, teamLogoUrl, paymentLink } = data;
 
   const subject = "🎉 Player Approved! Complete Your Payment";
 
@@ -615,126 +616,418 @@ export function getPlayerApprovalEmail(data: {
 
   const html = `
     <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 20px;
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <meta name="supported-color-schemes" content="light">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1f2937 !important;
+      background-color: #f3f4f6 !important;
+      padding: 20px;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #ffffff !important;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .header {
+      background: #000000;
+      color: #ffffff !important;
+      padding: 40px 30px;
+      text-align: center;
+      position: relative;
+    }
+    .header::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #f59e0b 0%, #ef4444 100%);
+    }
+    .logo-container {
+      margin-bottom: 20px;
+    }
+    .logo {
+      max-width: 70px;
+      height: auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin: 15px 0 8px 0;
+      letter-spacing: -0.5px;
+      color: #ffffff !important;
+    }
+    .header-subtitle {
+      font-size: 16px;
+      color: #ffffff !important;
+      font-weight: 500;
+      margin: 0;
+    }
+    .content {
+      padding: 40px 30px;
+      background: #ffffff !important;
+      color: #111827 !important;
+    }
+    .greeting {
+      font-size: 20px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 20px;
+    }
+    .intro-text {
+      font-size: 16px;
+      color: #1f2937 !important;
+      margin-bottom: 25px;
+    }
+    .success-banner {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-left: 4px solid #10b981;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 25px 0;
+    }
+    .success-banner-title {
+      color: #065f46;
+      font-weight: 700;
+      font-size: 16px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .success-banner-text {
+      color: #047857;
+      font-size: 14px;
+      margin: 0;
+    }
+    .player-card {
+      background: #ffffff !important;
+      border: 1px solid #e2e8f0;
+      padding: 25px;
+      border-radius: 12px;
+      margin: 30px 0;
+    }
+    .player-card-title {
+      color: #0f172a !important;
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 15px 0;
+    }
+    .info-row {
+      display: flex;
+      padding: 8px 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .info-row:last-child {
+      border-bottom: none;
+    }
+    .info-label {
+      font-weight: 600;
+      color: #374151 !important;
+      min-width: 100px;
+    }
+    .info-value {
+      color: #111827 !important;
+    }
+    .status-badge {
+      display: inline-block;
+      background: #d1fae5;
+      color: #065f46;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .section-title {
+      color: #0f172a !important;
+      font-size: 20px;
+      font-weight: 700;
+      margin: 35px 0 20px 0;
+    }
+    .steps-container {
+      margin: 25px 0;
+    }
+    .step {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+      align-items: start;
+    }
+    .step-number {
+      background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+      color: white;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 36px;
+      font-weight: 700;
+      font-size: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      display: block;
+    }
+    .step-content {
+      flex: 1;
+      padding-top: 2px;
+    }
+    .step-title {
+      font-weight: 700;
+      color: #0f172a !important;
+      font-size: 16px;
+      margin-bottom: 5px;
+    }
+    .step-description {
+      color: #1f2937 !important;
+      font-size: 14px;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .timeline-box {
+      background: #fff3cd !important;
+      border: 2px solid #f59e0b !important;
+      color: #7c2d12 !important;
+      padding: 20px;
+      border-radius: 10px;
+      margin: 30px 0;
+      text-align: center;
+    }
+    .timeline-box strong {
+      color: #7c2d12 !important;
+      font-size: 16px;
+    }
+    .button {
+      display: inline-block;
+      background: #dc2626;
+      color: white !important;
+      padding: 14px 28px;
+      text-decoration: none;
+      border-radius: 8px;
+      margin: 20px 0;
+      font-weight: 600;
+      font-size: 16px;
+      text-align: center;
+    }
+    .button:hover {
+      background: #b91c1c;
+    }
+    .closing-text {
+      color: #1f2937 !important;
+      font-size: 15px;
+      margin: 25px 0;
+    }
+    .signature {
+      margin-top: 35px;
+      padding-top: 25px;
+      border-top: 2px solid #e2e8f0;
+    }
+    .signature-title {
+      font-weight: 700;
+      color: #0f172a !important;
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+    .signature-team {
+      color: #1f2937 !important;
+      font-size: 15px;
+    }
+    .footer {
+      background: #f9fafb;
+      padding: 20px;
+      text-align: center;
+      border-radius: 0 0 8px 8px;
+      border: 1px solid #e5e7eb;
+      border-top: none;
+    }
+    .footer-title {
+      font-weight: 700;
+      color: #0f172a !important;
+      margin-bottom: 15px;
+    }
+    .social-links {
+      margin: 15px 0;
+    }
+    .social-link {
+      color: #3b82f6 !important;
+      text-decoration: none;
+      margin: 0 8px;
+    }
+    .divider {
+      color: #9ca3af;
+      margin: 0 4px;
+    }
+    .contact-text {
+      color: #6b7280 !important;
+      font-size: 14px;
+      margin: 10px 0;
+    }
+    .contact-link {
+      color: #3b82f6 !important;
+      text-decoration: none;
+    }
+    .disclaimer {
+      color: #9ca3af !important;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background-color: #f3f4f6 !important; color: #1f2937 !important; }
+      .email-container, .content, .player-card { background: #ffffff !important; color: #111827 !important; }
+      .info-label { color: #374151 !important; }
+      .info-value { color: #111827 !important; }
+    }
+    @media only screen and (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      .content {
+        padding: 25px 20px;
+      }
+      .header {
+        padding: 30px 20px;
+      }
+      .header h1 {
+        font-size: 26px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-container">
+    <div class="header">
+      <div class="logo-container">
+        <img src="${logoUrl}" alt="WCS Basketball Logo" class="logo" style="max-width: 80px; height: auto; display: block; margin: 0 auto; width: 80px;">
+      </div>
+      <h1>WCS Basketball</h1>
+      <p class="header-subtitle">Player Approved</p>
+    </div>
+
+    <div class="content">
+      <div class="greeting">Congratulations!</div>
+
+      <p class="intro-text">Great news! <strong>${playerName}</strong> has been approved and assigned${
+    teamName ? ` to <strong>${teamName}</strong>` : " to a team"
+  }! We're excited to have them join our championship development program.</p>
+
+      <div class="success-banner">
+        <div class="success-banner-title">
+          <span>✅</span>
+          <span>Team Assignment Complete</span>
+        </div>
+        <p class="success-banner-text">Your player has been successfully assigned to a team. Complete payment to finalize enrollment.</p>
+        ${
+          teamLogoUrl
+            ? `<div style="text-align: center; margin-top: 15px;">
+          <img src="${teamLogoUrl}" alt="${teamName || 'Team'} Logo" style="max-width: 120px; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+        </div>`
+            : ""
         }
-        .header {
-          background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
-          color: white;
-          padding: 30px 20px;
-          text-align: center;
-          border-radius: 8px 8px 0 0;
-        }
-        .content {
-          background: #ffffff;
-          padding: 30px;
-          border: 1px solid #e5e7eb;
-        }
-        .success-box {
-          background: #f0fdf4;
-          border-left: 4px solid #22c55e;
-          padding: 20px;
-          margin: 20px 0;
-          border-radius: 4px;
-          text-align: center;
-        }
-        .button {
-          display: inline-block;
-          background: #3b82f6;
-          color: white;
-          padding: 14px 28px;
-          text-decoration: none;
-          border-radius: 6px;
-          margin: 20px 0;
-          font-weight: 600;
-          font-size: 16px;
-        }
-        .button:hover {
-          background: #2563eb;
-        }
-        .footer {
-          background: #f9fafb;
-          padding: 20px;
-          text-align: center;
-          border-radius: 0 0 8px 8px;
-          border: 1px solid #e5e7eb;
-          border-top: none;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="header">
-        <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
-        <h1 style="margin: 0; font-size: 32px;">🎉 Congratulations!</h1>
-        <p style="margin: 10px 0 0 0; font-size: 18px;">Your Player Has Been Approved</p>
       </div>
 
-      <div class="content">
-        <div class="success-box">
-          <h2 style="margin: 0 0 10px 0; color: #16a34a;">✅ Team Assignment Complete</h2>
-          <p style="margin: 0; font-size: 18px;"><strong>${playerName}</strong> has been assigned${
-    teamName ? ` to <strong>${teamName}</strong>` : ""
-  }!</p>
+      <div class="player-card">
+        <h2 class="player-card-title">Player Information</h2>
+        <div class="info-row">
+          <span class="info-label">Name:</span>
+          <span class="info-value">${playerName}</span>
         </div>
-
-        <h3 style="color: #1e40af;">Next Step: Complete Payment</h3>
-        <p>To finalize ${playerName}'s enrollment and secure their spot on the team, please complete the payment using the secure link below.</p>
-
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${paymentLink}" class="button">Complete Payment Now →</a>
+        ${
+          teamName
+            ? `<div class="info-row">
+          <span class="info-label">Team:</span>
+          <span class="info-value">${teamName}</span>
+        </div>`
+            : ""
+        }
+        <div class="info-row">
+          <span class="info-label">Status:</span>
+          <span class="status-badge">Approved - Payment Pending</span>
         </div>
-
-        <div style="background: #fef3c7; padding: 20px; border-radius: 8px; border: 1px solid #fbbf24; margin: 25px 0;">
-          <h4 style="margin: 0 0 10px 0; color: #92400e;">⏰ Important Payment Information</h4>
-          <ul style="margin: 10px 0; padding-left: 20px; color: #92400e;">
-            <li><strong>Deadline:</strong> Complete payment within <strong>7 days</strong> to secure ${playerName}'s spot</li>
-            <li><strong>Payment Methods:</strong> Credit card, debit card, or PayPal accepted</li>
-            <li><strong>Security:</strong> All payments are processed securely through Stripe</li>
-            <li><strong>Receipt:</strong> You'll receive an email confirmation after payment</li>
-          </ul>
-        </div>
-
-        <div style="background: #f0f9ff; padding: 20px; border-radius: 8px; border-left: 4px solid #3b82f6; margin: 25px 0;">
-          <h4 style="margin: 0 0 15px 0; color: #1e40af;">📋 What You'll Receive After Payment</h4>
-          <ul style="margin: 0; padding-left: 20px; color: #1e40af;">
-            <li><strong>Practice Schedule:</strong> Weekly practice times and locations</li>
-            <li><strong>Coach Information:</strong> Direct contact details for your team's coach</li>
-            <li><strong>Team Roster:</strong> Meet your teammates and their families</li>
-            <li><strong>Game Schedule:</strong> Upcoming games and tournaments</li>
-            <li><strong>Equipment List:</strong> What ${playerName} needs to bring</li>
-            <li><strong>Parent Handbook:</strong> Important policies and procedures</li>
-          </ul>
-        </div>
-
-        <p style="margin-top: 30px;">
-          <strong>Thank you for joining WCS Basketball!</strong><br>
-          We look forward to developing ${playerName} into a champion on and off the court!
-        </p>
       </div>
 
-      <div class="footer">
-        <p style="margin: 5px 0;"><strong>WCS Basketball - Where Champions Start</strong></p>
-        <p style="margin: 15px 0;">
-          <a href="https://facebook.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">Facebook</a>
-          |
-          <a href="https://instagram.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">Instagram</a>
-          |
-          <a href="https://twitter.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">Twitter</a>
-          |
-          <a href="https://youtube.com/wcsbasketball" style="margin: 0 8px; color: #3b82f6; text-decoration: none;">YouTube</a>
-        </p>
-        <p style="margin: 5px 0;">Questions? Contact us at <a href="mailto:info@wcsbasketball.com" style="color: #3b82f6;">info@wcsbasketball.com</a></p>
+      <h2 class="section-title">What Happens Next?</h2>
+      
+      <div class="steps-container">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; margin-bottom: 20px;">
+          <tr>
+            <td style="width: 36px; vertical-align: top; padding-right: 15px;">
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: #0f172a; color: white; text-align: center; line-height: 36px; font-weight: 700; font-size: 16px;">1</div>
+            </td>
+            <td style="vertical-align: top;">
+              <div class="step-title">Complete Registration Form</div>
+              <p class="step-description">Click the payment link below to complete a form with necessary information about ${playerName}.</p>
+            </td>
+          </tr>
+        </table>
+
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; margin-bottom: 20px;">
+          <tr>
+            <td style="width: 36px; vertical-align: top; padding-right: 15px;">
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: #0f172a; color: white; text-align: center; line-height: 36px; font-weight: 700; font-size: 16px;">2</div>
+            </td>
+            <td style="vertical-align: top;">
+              <div class="step-title">Select Payment Option</div>
+              <p class="step-description">Choose your preferred payment method and complete the secure payment.</p>
+            </td>
+          </tr>
+        </table>
+
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; margin-bottom: 20px;">
+          <tr>
+            <td style="width: 36px; vertical-align: top; padding-right: 15px;">
+              <div style="width: 36px; height: 36px; border-radius: 50%; background: #0f172a; color: white; text-align: center; line-height: 36px; font-weight: 700; font-size: 16px;">3</div>
+            </td>
+            <td style="vertical-align: top;">
+              <div class="step-title">Receive Welcome Materials</div>
+              <p class="step-description">After payment, you'll receive practice schedules, coach information, game schedules, equipment lists, and the parent handbook.</p>
+            </td>
+          </tr>
+        </table>
       </div>
-    </body>
-    </html>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${paymentLink}" class="button">Complete Payment Now →</a>
+      </div>
+
+      <div class="timeline-box">
+        <strong>⏱️ Deadline:</strong> Complete payment within <strong>7 days</strong> to secure ${playerName}'s spot on the team.
+      </div>
+
+      <p class="closing-text">If you have any questions or concerns, please don't hesitate to reach out to us.</p>
+
+      <div class="signature">
+        <div class="signature-title">Where Champions Start!</div>
+        <div class="signature-team">The WCS Basketball Team</div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-title">WCS Basketball - Where Champions Start</div>
+      
+      <p class="contact-text">Questions? Contact us at <a href="mailto:wcsbts@gmail.com" class="contact-link">wcsbts@gmail.com</a></p>
+      <p class="disclaimer">This is an automated message from WCS Basketball registration system.</p>
+    </div>
+  </div>
+</body>
+</html>
+
   `;
 
   return { subject, html };
@@ -768,8 +1061,8 @@ export function getPlayerOnHoldEmail(data: {
           padding: 20px;
         }
         .header {
-          background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%);
-          color: white;
+          background: #000000;
+          color: #ffffff !important;
           padding: 30px 20px;
           text-align: center;
           border-radius: 8px 8px 0 0;
@@ -799,7 +1092,7 @@ export function getPlayerOnHoldEmail(data: {
     <body>
       <div class="header">
         <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
-        <h1 style="margin: 0; font-size: 32px;">⏸️ Registration On Hold</h1>
+        <h1 style="margin: 0; font-size: 32px; color: #ffffff !important;">⏸️ Registration On Hold</h1>
       </div>
 
       <div class="content">
@@ -869,8 +1162,8 @@ export function getPlayerRejectedEmail(data: {
           padding: 20px;
         }
         .header {
-          background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
-          color: white;
+          background: #000000;
+          color: #ffffff !important;
           padding: 30px 20px;
           text-align: center;
           border-radius: 8px 8px 0 0;
@@ -907,7 +1200,7 @@ export function getPlayerRejectedEmail(data: {
     <body>
       <div class="header">
         <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
-        <h1 style="margin: 0; font-size: 32px;">Registration Status Update</h1>
+        <h1 style="margin: 0; font-size: 32px; color: #ffffff !important;">Registration Status Update</h1>
       </div>
 
       <div class="content">
@@ -995,8 +1288,8 @@ export function getAdminPlayerRegistrationEmail(data: {
           padding: 20px;
         }
         .header {
-          background: #1e40af;
-          color: white;
+          background: #000000;
+          color: #ffffff !important;
           padding: 20px;
           border-radius: 8px 8px 0 0;
         }
@@ -1052,8 +1345,8 @@ export function getAdminPlayerRegistrationEmail(data: {
     <body>
       <div class="header">
         <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 60px; height: auto; display: block; margin: 0 auto 10px auto; width: 60px;">
-        <h2 style="margin: 0;">🏀 WCS Basketball - New Player Registration</h2>
-        <p style="margin: 5px 0 0 0; opacity: 0.9;">Action Required: Team Assignment</p>
+        <h2 style="margin: 0; color: #ffffff !important;">🏀 WCS Basketball - New Player Registration</h2>
+        <p style="margin: 5px 0 0 0; opacity: 0.9; color: #ffffff !important;">Action Required: Team Assignment</p>
       </div>
 
       <div class="content">
@@ -1235,8 +1528,8 @@ export function getPaymentConfirmationEmail(data: {
           padding: 20px;
         }
         .header {
-          background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
-          color: white;
+          background: #000000;
+          color: #ffffff !important;
           padding: 30px 20px;
           text-align: center;
           border-radius: 8px 8px 0 0;
@@ -1244,6 +1537,7 @@ export function getPaymentConfirmationEmail(data: {
         .header h1 {
           margin: 0;
           font-size: 28px;
+          color: #ffffff !important;
         }
         .content {
           background: #ffffff;
@@ -1369,8 +1663,8 @@ export function getPaymentConfirmationEmail(data: {
     <body>
       <div class="header">
         <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 80px; height: auto; display: block; margin: 0 auto 15px auto; width: 80px;">
-        <h1>✅ Payment Received!</h1>
-        <p style="margin: 10px 0 0 0; font-size: 16px;">${
+        <h1 style="color: #ffffff !important;">✅ Payment Received!</h1>
+        <p style="margin: 10px 0 0 0; font-size: 16px; color: #ffffff !important;">${
           isFirstPayment
             ? "Your child is now officially enrolled"
             : "Thank you for your continued support"
@@ -1714,8 +2008,8 @@ export function getAdminPaymentConfirmationEmail(data: {
           padding: 20px;
         }
         .header {
-          background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
-          color: white;
+          background: #000000;
+          color: #ffffff !important;
           padding: 20px;
           border-radius: 8px 8px 0 0;
         }
@@ -1790,8 +2084,8 @@ export function getAdminPaymentConfirmationEmail(data: {
     <body>
       <div class="header">
         <img src="${logoUrl}" alt="WCS Basketball" style="max-width: 60px; height: auto; display: block; margin: 0 auto 10px auto; width: 60px;">
-        <h2 style="margin: 0;">💰 Payment Received</h2>
-        <p style="margin: 5px 0 0 0; opacity: 0.9;">New Payment Confirmation</p>
+        <h2 style="margin: 0; color: #ffffff !important;">💰 Payment Received</h2>
+        <p style="margin: 5px 0 0 0; opacity: 0.9; color: #ffffff !important;">New Payment Confirmation</p>
       </div>
 
       <div class="content">

@@ -635,7 +635,7 @@ export default function ChildDetailsCard({ child }: ChildDetailsCardProps) {
                     type="date"
                     value={formData.date_of_birth}
                     onChange={(e) => handleInputChange("date_of_birth", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    className="w-full max-w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 box-border"
                   />
                 </div>
 

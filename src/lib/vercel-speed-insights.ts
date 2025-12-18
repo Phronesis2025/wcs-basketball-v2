@@ -67,9 +67,9 @@ export async function getAverageWebVitals(
     };
 
     return {
-      lcp: calculateAverage(metrics.LCP) || 2500,
-      fid: calculateAverage(metrics.FID) || 100,
-      inp: calculateAverage(metrics.INP) || 100, // INP replaces FID
+      lcp: metrics.LCP.length > 0 ? calculateAverage(metrics.LCP) : 2500,
+      fid: metrics.FID.length > 0 ? calculateAverage(metrics.FID) : 100,
+      inp: metrics.INP.length > 0 ? calculateAverage(metrics.INP) : 200, // INP replaces FID - default 200ms
       cls: metrics.CLS.length > 0
         ? Number(
             (metrics.CLS.reduce((a, b) => a + b, 0) / metrics.CLS.length).toFixed(
@@ -77,8 +77,8 @@ export async function getAverageWebVitals(
             )
           )
         : 0.1,
-      fcp: calculateAverage(metrics.FCP) || 1800,
-      ttfb: calculateAverage(metrics.TTFB) || 600,
+      fcp: metrics.FCP.length > 0 ? calculateAverage(metrics.FCP) : 1800,
+      ttfb: metrics.TTFB.length > 0 ? calculateAverage(metrics.TTFB) : 600,
     };
   } catch (err) {
     devError("Failed to get average web vitals:", err);

@@ -37,6 +37,19 @@ export default function MessageBoard({
     devLog("MessageBoard - isAdmin type:", typeof isAdmin);
   }, [userId, isAdmin]);
 
+  // Guard: Don't load if userId is missing
+  if (!userId || userId.trim() === "") {
+    return (
+      <div className="bg-white rounded-lg p-4 sm:p-6 shadow-sm border border-gray-100">
+        <div className="text-center py-8 text-gray-500">
+          <p className="text-sm">
+            Loading user information...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Use custom hooks for state management
   const messagesHook = useMessages({
     userId,

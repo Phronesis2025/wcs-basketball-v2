@@ -62,10 +62,10 @@ export default function ChangelogModal({ isOpen, onClose, userId, editing, onSav
             <label className="block text-sm text-gray-300 mb-1">Version</label>
             <input name="version" value={form.version} onChange={onChange} className="w-full bg-gray-800 text-white border border-gray-600 rounded px-3 py-2" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-300 mb-1">Release Date</label>
-              <input type="date" name="release_date" value={form.release_date} onChange={onChange} className="w-full bg-gray-800 text-white border border-gray-600 rounded px-3 py-2" />
+              <input type="date" name="release_date" value={form.release_date} onChange={onChange} className="w-full max-w-full bg-gray-800 text-white border border-gray-600 rounded px-3 py-2 box-border" />
             </div>
             <div>
               <label className="block text-sm text-gray-300 mb-1">Category</label>

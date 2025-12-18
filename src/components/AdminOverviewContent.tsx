@@ -267,9 +267,14 @@ export default function AdminOverviewContent({
           onClick={() => toggleSection("coaches")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-semibold text-white font-inter">
-              Coaches ({coaches.length})
-            </h2>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tighter text-white mb-2 font-inter uppercase">
+                Coaches ({coaches.length})
+              </h2>
+              <p className="text-slate-400 text-sm font-inter uppercase tracking-wider">
+                COACH MANAGEMENT
+              </p>
+            </div>
             <svg
               className={`w-5 h-5 text-slate-400 transition-transform ml-3 ${
                 expandedSections.coaches ? "rotate-180" : ""
@@ -563,9 +568,14 @@ export default function AdminOverviewContent({
           onClick={() => toggleSection("teams")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-semibold text-white font-inter">
-              Teams ({teams.length})
-            </h2>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tighter text-white mb-2 font-inter uppercase">
+                Teams ({teams.length})
+              </h2>
+              <p className="text-slate-400 text-sm font-inter uppercase tracking-wider">
+                TEAM MANAGEMENT
+              </p>
+            </div>
             <svg
               className={`w-5 h-5 text-slate-400 transition-transform ml-3 ${
                 expandedSections.teams ? "rotate-180" : ""
@@ -788,9 +798,14 @@ export default function AdminOverviewContent({
           onClick={() => toggleSection("players")}
         >
           <div className="flex items-center">
-            <h2 className="text-2xl font-semibold text-white font-inter">
-              Players ({filteredPlayers.length})
-            </h2>
+            <div>
+              <h2 className="text-2xl md:text-3xl font-semibold tracking-tighter text-white mb-2 font-inter uppercase">
+                Players ({filteredPlayers.length})
+              </h2>
+              <p className="text-slate-400 text-sm font-inter uppercase tracking-wider">
+                PLAYER MANAGEMENT
+              </p>
+            </div>
             <svg
               className={`w-5 h-5 text-slate-400 transition-transform ml-3 ${
                 expandedSections.players ? "rotate-180" : ""

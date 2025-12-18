@@ -51,7 +51,7 @@ const CNCAd = () => {
           color: #00a8ff !important;
           -webkit-text-stroke: 1px #00d4ff !important;
           text-stroke: 1px #00d4ff !important;
-          font-family: 'IntegralCF Bold Oblique', sans-serif !important;
+          font-family: 'IntegralCF Bold Oblique', 'Arial Black', 'Impact', sans-serif !important;
           font-weight: 400 !important;
           letter-spacing: 0.05em !important;
           white-space: nowrap !important;
@@ -61,6 +61,8 @@ const CNCAd = () => {
             0 0 5px rgba(0, 168, 255, 0.5),
             0 0 10px rgba(0, 168, 255, 0.3),
             0 0 15px rgba(0, 168, 255, 0.2);
+          /* Ensure font loads on mobile */
+          font-display: swap !important;
         }
         .text-glow {
           filter: drop-shadow(0 0 10px rgba(0, 168, 255, 0.4)) 
@@ -149,8 +151,8 @@ const CNCAd = () => {
             <div className="relative text-center">
               {/* Coach Nate Classic - One Line */}
               <h2
-                className="neon-outline-text text-glow text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl 2xl:text-8xl mb-2 sm:mb-3 md:mb-4 leading-tight"
-                style={{ fontFamily: "'IntegralCF Bold Oblique', sans-serif" }}
+                className="neon-outline-text text-glow text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl mb-2 sm:mb-3 md:mb-4 leading-tight"
+                style={{ fontFamily: "'IntegralCF Bold Oblique', 'Arial Black', 'Impact', sans-serif" }}
               >
                 Coach Nate Classic
               </h2>

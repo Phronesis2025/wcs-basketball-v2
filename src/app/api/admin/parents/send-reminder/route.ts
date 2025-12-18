@@ -205,7 +205,7 @@ export async function POST(request: NextRequest) {
               <strong>WCS Basketball</strong><br>
               Where Champions Start<br>
               <br>
-              For questions about payments, please contact us at info@wcsbasketball.com
+              For questions about payments, please contact us at wcsbts@gmail.com
             </p>
           </div>
         </div>

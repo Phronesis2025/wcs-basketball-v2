@@ -25,8 +25,17 @@ export async function GET(request: NextRequest) {
 
       // Fetch comprehensive analytics data
       const stats = await fetchAnalyticsStats();
+      
+      devLog("Analytics stats fetched:", {
+        hasTrafficMetrics: !!stats.trafficMetrics,
+        pageViews: stats.trafficMetrics?.totalPageViews,
+        uniqueVisitors: stats.trafficMetrics?.uniqueVisitors,
+        mobilePercentage: stats.trafficMetrics?.deviceBreakdown?.mobile,
+      });
 
-      return formatSuccessResponse({ data: stats });
+      // formatSuccessResponse already wraps in { success: true, data: ... }
+      // So we pass stats directly, not { data: stats }
+      return formatSuccessResponse(stats);
     } catch (error) {
       return handleApiError(error, request);
     }

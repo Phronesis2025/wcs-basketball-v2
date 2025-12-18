@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { AuthPersistence } from "@/lib/authPersistence";
@@ -13,66 +13,75 @@ import { devLog, devError } from "@/lib/security";
 export default function HandleAuthRedirect() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const hasProcessedRef = useRef(false);
 
   useEffect(() => {
     const processAuthRedirect = async () => {
       // Check if we're on a callback URL with hash fragments
       if (typeof window === "undefined") return;
+      
+      // Prevent double processing
+      if (hasProcessedRef.current) return;
 
       const hash = window.location.hash;
       
       if (hash && hash.includes("access_token")) {
+        hasProcessedRef.current = true;
         devLog("HandleAuthRedirect: Found access_token in URL hash, processing...");
 
-        // IMPORTANT: Clear any old/expired tokens from storage before processing new ones
-        // This prevents conflicts with expired tokens from previous sessions
         try {
-          localStorage.removeItem("supabase.auth.token");
-          localStorage.removeItem("auth.authenticated");
-          sessionStorage.removeItem("supabase.auth.token");
-          sessionStorage.removeItem("auth.authenticated");
-          devLog("HandleAuthRedirect: Cleared old tokens from storage");
-        } catch (e) {
-          devError("HandleAuthRedirect: Error clearing old tokens", e);
-        }
+          // FIRST: Extract tokens from hash BEFORE clearing anything
+          const hashParams = new URLSearchParams(hash.substring(1)); // Remove #
+          const accessToken = hashParams.get("access_token");
+          const refreshToken = hashParams.get("refresh_token");
 
-        try {
-          // Supabase should automatically detect and process hash fragments
-          // But we'll explicitly get the session to ensure it's set
-          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-
-          if (sessionError) {
-            devError("HandleAuthRedirect: Error getting session", sessionError);
+          if (!accessToken || !refreshToken) {
+            devError("HandleAuthRedirect: Missing tokens in hash");
+            hasProcessedRef.current = false;
             return;
           }
 
-          if (session) {
-            devLog("HandleAuthRedirect: Session detected", {
-              userId: session.user?.id,
-              email: session.user?.email,
+          devLog("HandleAuthRedirect: Extracted tokens from URL hash");
+
+          // NOW clear old tokens (after we've extracted the new ones)
+          try {
+            localStorage.removeItem("supabase.auth.token");
+            localStorage.removeItem("auth.authenticated");
+            sessionStorage.removeItem("supabase.auth.token");
+            sessionStorage.removeItem("auth.authenticated");
+            devLog("HandleAuthRedirect: Cleared old tokens from storage");
+          } catch (e) {
+            devError("HandleAuthRedirect: Error clearing old tokens", e);
+          }
+
+          // Set session with extracted tokens
+          const { data: sessionData, error: setError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (setError) {
+            devError("HandleAuthRedirect: Error setting session from hash", setError);
+            hasProcessedRef.current = false;
+            return;
+          }
+
+          if (sessionData.session) {
+            devLog("HandleAuthRedirect: Session established from hash", {
+              userId: sessionData.session.user?.id,
+              email: sessionData.session.user?.email,
             });
 
-            // Store session
-            await AuthPersistence.storeSession(session);
-
-            // Set session in Supabase client (ensure it's active)
-            const { error: setError } = await supabase.auth.setSession({
-              access_token: session.access_token,
-              refresh_token: session.refresh_token,
-            });
-
-            if (setError) {
-              devError("HandleAuthRedirect: Error setting session", setError);
-            } else {
-              devLog("HandleAuthRedirect: Session set successfully");
-            }
+            // Store session in our persistence layer
+            await AuthPersistence.storeSession(sessionData.session);
+            devLog("HandleAuthRedirect: Session stored in persistence layer");
 
             // Dispatch auth state change event
             window.dispatchEvent(
               new CustomEvent("authStateChanged", {
                 detail: {
                   authenticated: true,
-                  user: session.user,
+                  user: sessionData.session.user,
                 },
               })
             );
@@ -80,88 +89,30 @@ export default function HandleAuthRedirect() {
             // Clean up URL - remove hash fragments
             const currentUrl = window.location.pathname + window.location.search;
             if (window.history && window.history.replaceState) {
-              window.history.replaceState(
-                {},
-                document.title,
-                currentUrl
-              );
+              window.history.replaceState({}, document.title, currentUrl);
             }
+
+            devLog("HandleAuthRedirect: Auth redirect processing complete");
 
             // Check if this is a new user (OAuth signup) and redirect to registration
             // If we're on the root path with hash fragments, it's likely an OAuth redirect
             if (window.location.pathname === "/" || window.location.pathname === "") {
               devLog("HandleAuthRedirect: OAuth redirect detected, redirecting to registration");
-              // Redirect to registration wizard for new users
-              router.push(`/register?oauth=success&email=${encodeURIComponent(session.user.email || "")}`);
-            } else {
-              // Small delay to ensure state is updated
-              setTimeout(() => {
-                router.refresh();
-              }, 100);
+              router.push(`/register?oauth=success&email=${encodeURIComponent(sessionData.session.user.email || "")}`);
             }
           } else {
-            devLog("HandleAuthRedirect: No session found in hash, trying to extract from URL");
-            
-            // Try to extract tokens from hash manually
-            const hashParams = new URLSearchParams(hash.substring(1)); // Remove #
-            const accessToken = hashParams.get("access_token");
-            const refreshToken = hashParams.get("refresh_token");
-            const tokenType = hashParams.get("token_type") || "bearer";
-
-            if (accessToken && refreshToken) {
-              devLog("HandleAuthRedirect: Extracted tokens from URL hash");
-              
-              // Set session with extracted tokens
-              const { data: sessionData, error: setError } = await supabase.auth.setSession({
-                access_token: accessToken,
-                refresh_token: refreshToken,
-              });
-
-              if (setError) {
-                devError("HandleAuthRedirect: Error setting session from hash", setError);
-              } else if (sessionData.session) {
-                devLog("HandleAuthRedirect: Session established from hash");
-                await AuthPersistence.storeSession(sessionData.session);
-                
-                window.dispatchEvent(
-                  new CustomEvent("authStateChanged", {
-                    detail: {
-                      authenticated: true,
-                      user: sessionData.session.user,
-                    },
-                  })
-                );
-
-                // Clean up URL
-                const currentUrl = window.location.pathname + window.location.search;
-                if (window.history && window.history.replaceState) {
-                  window.history.replaceState({}, document.title, currentUrl);
-                }
-
-                // Check if this is a new user (OAuth signup) and redirect to registration
-                // If we're on the root path with hash fragments, it's likely an OAuth redirect
-                if (window.location.pathname === "/" || window.location.pathname === "") {
-                  devLog("HandleAuthRedirect: OAuth redirect detected, redirecting to registration");
-                  // Redirect to registration wizard for new users
-                  router.push(`/register?oauth=success&email=${encodeURIComponent(sessionData.session.user.email || "")}`);
-                } else {
-                  router.refresh();
-                }
-              }
-            }
+            devError("HandleAuthRedirect: No session returned from setSession");
+            hasProcessedRef.current = false;
           }
         } catch (error) {
           devError("HandleAuthRedirect: Exception processing auth redirect", error);
+          hasProcessedRef.current = false;
         }
       }
     };
 
-    // Small delay to ensure page is fully loaded
-    const timer = setTimeout(() => {
-      processAuthRedirect();
-    }, 100);
-
-    return () => clearTimeout(timer);
+    // Process immediately - no delay needed
+    processAuthRedirect();
   }, [router, searchParams]);
 
   return null; // This component doesn't render anything

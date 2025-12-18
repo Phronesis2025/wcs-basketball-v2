@@ -7,7 +7,7 @@ interface ReviewConsentStepProps {
   methods: UseFormReturn<any>;
   errors: any;
   isValid: boolean;
-  bothCheckboxesChecked: boolean;
+  coppaConsentChecked: boolean;
   loading: boolean;
   submitted: boolean;
   onBack: () => void;
@@ -17,7 +17,7 @@ export default function ReviewConsentStep({
   methods,
   errors,
   isValid,
-  bothCheckboxesChecked,
+  coppaConsentChecked,
   loading,
   submitted,
   onBack,
@@ -102,21 +102,6 @@ export default function ReviewConsentStep({
         )}
       </div>
 
-      {/* Waiver */}
-      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            {...methods.register("waiver_signed")}
-            type="checkbox"
-            className="mt-1 w-5 h-5 rounded border-gray-700 bg-gray-800 text-red focus:ring-2 focus:ring-red"
-          />
-          <span className="text-sm text-gray-300">
-            I have read and agree to the liability waiver (will be
-            completed during approval process)
-          </span>
-        </label>
-      </div>
-
       <div className="flex gap-4 pt-4">
         <button
           type="button"
@@ -128,7 +113,7 @@ export default function ReviewConsentStep({
         <button
           type="submit"
           disabled={
-            loading || submitted || !isValid || !bothCheckboxesChecked
+            loading || submitted || !isValid || !coppaConsentChecked
           }
           className="flex-1 bg-red text-white font-bold py-3 rounded disabled:opacity-50 hover:bg-red/90 transition-colors min-h-[48px]"
         >

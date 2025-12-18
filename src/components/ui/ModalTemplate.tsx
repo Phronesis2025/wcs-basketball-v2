@@ -694,7 +694,7 @@ export default function ModalTemplate({
                 name="startDate"
                 value={formData.startDate}
                 onChange={(e) => handleInputChange("startDate", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full max-w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 box-border"
               />
             </div>
 
@@ -708,7 +708,7 @@ export default function ModalTemplate({
                 name="endDate"
                 value={formData.endDate}
                 onChange={(e) => handleInputChange("endDate", e.target.value)}
-                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 ${
+                className={`w-full max-w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 box-border ${
                   errors.endDate ? "border-red-500" : "border-gray-300"
                 }`}
               />
@@ -729,7 +729,7 @@ export default function ModalTemplate({
                 name="birthDate"
                 value={formData.birthDate}
                 onChange={(e) => handleInputChange("birthDate", e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                className="w-full max-w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 box-border"
               />
             </div>
 

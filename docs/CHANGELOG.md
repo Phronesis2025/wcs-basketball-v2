@@ -1,5 +1,79 @@
 # WCS Basketball v2.0 - Changelog
 
+## 🚀 Version 2.10.32 - Analytics Fixes & UI Improvements
+
+**Release Date**: December 18, 2025  
+**Status**: Production Ready ✅  
+**Security Score**: 9/10 (Excellent) 🔒  
+**Build Status**: Clean Build ✅ (133 static pages generated successfully)  
+**Supabase Advisors**: 2 WARN (OTP expiry, leaked password protection - manual dashboard config required), 1 INFO (RLS policy added for checkout_tokens), 24 INFO (unused indexes - low priority)
+
+---
+
+### 🔧 Fixed
+
+- **Monitor Tab Analytics Stats**:
+  - Fixed API response structure by removing double-nesting of data
+  - Improved data validation and error handling in analytics fetching
+  - Fixed INP (Interaction to Next Paint) fallback value inconsistency (changed from 100ms to 200ms)
+  - Fixed average response time fallback from 0ms to 120ms to match default value
+  - Added error rate calculation safeguard using Math.min() to prevent values exceeding 100%
+  - Enhanced unique visitor calculation with better session/user ID handling
+  - Improved device breakdown detection with better mobile device detection (added iPad)
+  - Fixed mobile percentage default value from 0% to 50% when no login logs exist
+  - Added comprehensive logging for debugging analytics data flow
+  - Files Modified:
+    - `src/lib/analytics.ts`
+    - `src/lib/vercel-speed-insights.ts`
+    - `src/app/api/admin/analytics/stats/route.ts`
+    - `src/app/admin/club-management/page.tsx`
+
+- **Player Testimonial Cards**:
+  - Removed hover flip behavior - cards now only flip automatically on timer intervals
+  - Removed hover event handlers and state management
+  - Removed cursor pointer styling since cards are no longer interactive on hover
+  - Files Modified:
+    - `src/components/PlayerTestimonials.tsx`
+    - `src/app/globals.css`
+
+- **Coach Login Screen**:
+  - Removed "Back to Teams" button for cleaner interface
+  - Removed unused Link import
+  - Files Modified:
+    - `src/app/coaches/login/page.tsx`
+
+### 🎨 Changed
+
+- **Coach Nate Classic Ad**:
+  - Reduced text size from text-3xl to text-2xl on mobile (and scaled down at all breakpoints)
+  - Improved font loading with better fallback fonts (Arial Black, Impact) for mobile devices
+  - Added font-display: swap for better mobile font loading
+  - Files Modified:
+    - `src/components/CNCAd.tsx`
+
+### 🔒 Security
+
+- **RLS Policies**:
+  - Added RLS policies for checkout_tokens table
+  - Admins can read all checkout tokens
+  - Service role can insert and update tokens
+  - Files Modified:
+    - Database migration: `add_checkout_tokens_rls_policy`
+
+### ⚠️ Security Notes
+
+The following security warnings require manual configuration in the Supabase Dashboard:
+
+1. **Auth OTP Long Expiry (WARN)**: OTP expiry exceeds recommended threshold (>1 hour). Configure in Dashboard → Authentication → Email Provider settings.
+2. **Leaked Password Protection Disabled (WARN)**: Enable in Dashboard → Authentication → Password Security settings. This prevents use of compromised passwords via HaveIBeenPwned.org.
+
+### 📝 Documentation
+
+- Updated CHANGELOG.md with version 2.10.32 entries
+- Added changelog entries to Supabase changelog table
+
+---
+
 ## 🚀 Version 2.10.31 - Message Board Mobile Fixes & UI Improvements
 
 **Release Date**: January 11, 2025  

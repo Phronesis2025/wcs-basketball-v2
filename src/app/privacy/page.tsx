@@ -34,8 +34,8 @@ export default function Privacy() {
           <h2 className="text-2xl font-bebas text-white mb-4">Contact Us</h2>
           <p className="text-gray-300">
             If you have any questions about this Privacy Policy, please contact us at 
-            <a href="mailto:info@wcsbasketball.com" className="text-red-600 hover:underline">
-              info@wcsbasketball.com
+            <a href="mailto:wcsbts@gmail.com" className="text-red-600 hover:underline">
+              wcsbts@gmail.com
             </a>
           </p>
         </div>

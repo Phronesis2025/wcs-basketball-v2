@@ -140,7 +140,7 @@ export default function RecurringScheduleConfig({
                   type="date"
                   value={recurringEndDate}
                   onChange={(e) => onRecurringEndDateChange(e.target.value)}
-                  className="p-2 border border-gray-300 rounded-md text-gray-900"
+                  className="w-full max-w-full p-2 border border-gray-300 rounded-md text-gray-900 box-border"
                 />
               </label>
             </div>

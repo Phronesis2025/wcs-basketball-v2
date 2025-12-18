@@ -46,8 +46,31 @@ function getLogoUrl(): string {
 }
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM =
-  process.env.RESEND_FROM || "WCS Basketball <onboarding@resend.dev>";
+
+/**
+ * Normalize the RESEND_FROM value to ensure it always uses "WCS Basketball" as the sender name
+ */
+function normalizeSenderName(fromValue: string | undefined): string {
+  const defaultFrom = "WCS Basketball <onboarding@resend.dev>";
+  
+  if (!fromValue) {
+    return defaultFrom;
+  }
+  
+  // If the value already includes "WCS Basketball", return as-is
+  if (fromValue.includes("WCS Basketball")) {
+    return fromValue;
+  }
+  
+  // Extract email address from the value (format: "Name <email>" or just "email")
+  const emailMatch = fromValue.match(/<([^>]+)>/) || fromValue.match(/([^\s<>]+@[^\s<>]+)/);
+  const email = emailMatch ? emailMatch[1] : fromValue.trim();
+  
+  // Return normalized format with "WCS Basketball" as the sender name
+  return `WCS Basketball <${email}>`;
+}
+
+const RESEND_FROM = normalizeSenderName(process.env.RESEND_FROM);
 
 export async function POST(request: NextRequest) {
   try {

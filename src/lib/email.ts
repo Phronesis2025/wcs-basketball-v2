@@ -1,9 +1,36 @@
 import { devError, devLog } from "@/lib/security";
+import { validateEmail, validateEmails, type EmailValidationResult } from "@/lib/emailValidation";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const RESEND_FROM =
-  process.env.RESEND_FROM || "WCS Basketball <onboarding@resend.dev>";
 const RESEND_DEV_TO = process.env.RESEND_DEV_TO || "phronesis700@gmail.com"; // 👈 add this in .env.local
+
+/**
+ * Normalize the RESEND_FROM value to ensure it always uses "WCS Basketball" as the sender name
+ * @param fromValue - The RESEND_FROM value from environment variable
+ * @returns Normalized sender string with "WCS Basketball" as the name
+ */
+function normalizeSenderName(fromValue: string | undefined): string {
+  const defaultFrom = "WCS Basketball <onboarding@resend.dev>";
+  
+  if (!fromValue) {
+    return defaultFrom;
+  }
+  
+  // If the value already includes "WCS Basketball", return as-is
+  if (fromValue.includes("WCS Basketball")) {
+    return fromValue;
+  }
+  
+  // Extract email address from the value (format: "Name <email>" or just "email")
+  const emailMatch = fromValue.match(/<([^>]+)>/) || fromValue.match(/([^\s<>]+@[^\s<>]+)/);
+  const email = emailMatch ? emailMatch[1] : fromValue.trim();
+  
+  // Return normalized format with "WCS Basketball" as the sender name
+  return `WCS Basketball <${email}>`;
+}
+
+// Ensure all emails come from "WCS Basketball" regardless of environment variable format
+const RESEND_FROM = normalizeSenderName(process.env.RESEND_FROM);
 
 /**
  * Send an email using Resend
@@ -32,6 +59,62 @@ export async function sendEmail(
 
   // Normalize 'to' to an array
   const toArray = Array.isArray(to) ? to : [to];
+
+  // Validate email addresses before sending
+  try {
+    const validationResults = await validateEmails(toArray, {
+      skipDomainCheck: false, // Perform DNS lookup to verify domains
+      timeout: 5000, // 5 second timeout for DNS lookups
+    });
+
+    // Check for validation errors
+    const invalidEmails: string[] = [];
+    const warnings: string[] = [];
+
+    for (const [email, result] of validationResults.entries()) {
+      if (!result.isValid) {
+        invalidEmails.push(email);
+        devError("sendEmail: Invalid email address", {
+          email,
+          errors: result.errors,
+        });
+      } else if (result.warnings.length > 0) {
+        warnings.push(...result.warnings.map((w) => `${email}: ${w}`));
+        devLog("sendEmail: Email validation warnings", {
+          email,
+          warnings: result.warnings,
+        });
+      }
+    }
+
+    // If any emails are invalid, throw error before sending
+    if (invalidEmails.length > 0) {
+      throw new Error(
+        `Invalid email address(es): ${invalidEmails.join(", ")}. ${validationResults.get(invalidEmails[0])?.errors.join(", ")}`
+      );
+    }
+
+    // Log warnings but continue (domain might exist but DNS propagation delay)
+    if (warnings.length > 0) {
+      devLog("sendEmail: Email validation warnings (continuing)", {
+        warnings,
+        note: "Domain verification warnings - email will still be sent, but may bounce if domain is invalid",
+      });
+    }
+  } catch (validationError: any) {
+    // If validation itself fails (e.g., DNS timeout), log but continue
+    // This prevents validation from blocking legitimate emails due to network issues
+    if (validationError.message?.includes("Invalid email address")) {
+      // Format validation failed - don't send
+      throw validationError;
+    } else {
+      // DNS lookup failed or timed out - log warning but continue
+      devLog("sendEmail: Email validation check failed (continuing anyway)", {
+        error: validationError.message,
+        note: "DNS lookup failed or timed out - email will still be sent",
+      });
+    }
+  }
 
   // Resend sandbox limitation: @resend.dev sender only allows sending to account owner email
   // Solution: Verify a domain in Resend and use that domain in RESEND_FROM

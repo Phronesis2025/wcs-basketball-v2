@@ -57,13 +57,19 @@ export function useMessages({
 
   // Set up real-time subscriptions
   useEffect(() => {
+    // Don't set up subscription if userId is missing
+    if (!userId || userId.trim() === "") {
+      devLog("Skipping real-time subscription setup - userId is missing");
+      return;
+    }
+
     devLog("Setting up real-time subscription for user:", userId);
 
     const channel = supabase
       .channel("coach-messages", {
         config: {
           broadcast: { self: true },
-          presence: { key: userId || "anonymous" },
+          presence: { key: userId },
         },
       })
       .on(

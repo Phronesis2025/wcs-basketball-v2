@@ -531,6 +531,7 @@ export default function Navbar() {
 
   const isHome = pathname === "/";
   // Pages that should use the dark navbar style (matching home page)
+  // Includes all pages with dark backgrounds (bg-black, bg-gray-900, bg-navy)
   const isDarkPage =
     pathname === "/" ||
     pathname === "/about" ||
@@ -541,8 +542,30 @@ export default function Navbar() {
     pathname === "/coaches/login" ||
     pathname === "/register" ||
     pathname === "/registration-pending" ||
+    pathname === "/registration-success" ||
     pathname === "/parent/sign-out" ||
+    pathname === "/parent/profile" ||
+    pathname === "/parent/reset-password" ||
+    pathname === "/coaches/reset-password" ||
+    pathname === "/coaches/setup-password" ||
+    pathname === "/auth/setup-session" ||
+    pathname === "/add-child" ||
+    pathname === "/payment/select" ||
+    pathname === "/payment/success" ||
+    pathname.startsWith("/payment/") ||
+    pathname.startsWith("/checkout/") ||
+    pathname === "/code-of-conduct" ||
+    pathname === "/terms" ||
+    pathname === "/privacy" ||
+    pathname === "/refund-policy" ||
+    pathname === "/club-registration" ||
+    pathname === "/coach-volunteer-signup" ||
+    pathname === "/tournament-signup" ||
+    pathname === "/news" ||
+    pathname === "/shop" ||
     pathname === "/admin/club-management" ||
+    pathname === "/admin/parents" ||
+    pathname === "/admin/import" ||
     pathname.startsWith("/teams/");
 
   return (

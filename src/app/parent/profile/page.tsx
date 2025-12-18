@@ -75,42 +75,36 @@ function ParentProfilePageInner() {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, []);
 
-  // Authentication check - give more time for session to be established
+  // Authentication check - simplified and more reliable
   useEffect(() => {
-    const checkAuthAndRedirect = async () => {
-      // Wait for auth to finish loading
-      if (loading) return;
+    // Wait for auth loading to complete
+    if (loading) return;
 
-      // If authenticated, proceed
-      if (isAuthenticated) return;
+    // If authenticated, we're good
+    if (isAuthenticated) return;
 
-      // If not authenticated, double-check with Supabase directly
-      // This handles cases where session exists but useAuth hasn't picked it up yet
-      try {
-        const {
-          data: { session },
-          error,
-        } = await supabase.auth.getSession();
+    // Not authenticated - redirect to home after a short delay
+    // This gives time for any pending auth state changes to process
+    const timeoutId = setTimeout(() => {
+      devLog("Profile: Not authenticated, redirecting to homepage");
+      router.push("/");
+    }, 1000);
 
-        if (session && !error) {
-          // Session exists but useAuth didn't catch it - refresh the page
-          // This will trigger useAuth to re-check
-          devLog("Profile: Found session that useAuth missed, refreshing");
-          window.location.reload();
-          return;
-        }
-
-        // No session found - redirect to homepage
-        devLog("Profile: No session found, redirecting to homepage");
-        router.push("/");
-      } catch (err) {
-        devError("Profile: Error checking session", err);
-        // On error, redirect to homepage
-        router.push("/");
+    // Listen for auth state changes (e.g., from HandleAuthRedirect)
+    const handleAuthStateChanged = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      if (customEvent.detail?.authenticated) {
+        devLog("Profile: Auth state changed to authenticated");
+        clearTimeout(timeoutId);
       }
     };
 
-    checkAuthAndRedirect();
+    window.addEventListener("authStateChanged", handleAuthStateChanged);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("authStateChanged", handleAuthStateChanged);
+    };
   }, [loading, isAuthenticated, router]);
 
   const fetchProfile = async (email: string) => {

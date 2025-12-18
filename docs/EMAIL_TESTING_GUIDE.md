@@ -13,7 +13,7 @@
 ✅ **Approval Email** - Team assignment notification with payment link  
 ✅ **Admin Notification** - Alert for new player registrations  
 ✅ **Social Media Links** - Facebook, Instagram, Twitter, YouTube  
-✅ **Contact Information** - info@wcsbasketball.com  
+✅ **Contact Information** - wcsbts@gmail.com  
 ✅ **Branding** - "WCS Basketball - Where Champions Start"
 
 ---
@@ -87,7 +87,7 @@ NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 - 3-step "What Happens Next" process
 - Timeline: "1-2 business days"
 - Social media links (Facebook, Instagram, Twitter, YouTube)
-- Contact: info@wcsbasketball.com
+- Contact: wcsbts@gmail.com
 - Footer: "WCS Basketball - Where Champions Start"
 
 ### **2. Approval Email**
@@ -124,7 +124,7 @@ NEXT_PUBLIC_BASE_URL="http://localhost:3000"
 
 - [ ] Subject lines are correct
 - [ ] Player names appear correctly
-- [ ] Contact email is info@wcsbasketball.com
+- [ ] Contact email is wcsbts@gmail.com
 - [ ] Social media links work
 - [ ] Branding is consistent
 - [ ] Timeline is "1-2 business days"

@@ -8,6 +8,7 @@ import {
   getPlayerRejectedEmail,
 } from "@/lib/emailTemplates";
 import { ValidationError, ApiError, DatabaseError, NotFoundError, handleApiError, formatSuccessResponse } from "@/lib/errorHandler";
+import { checkoutTokens } from "@/lib/checkoutTokens";
 
 export async function POST(req: Request) {
   try {
@@ -58,15 +59,17 @@ export async function POST(req: Request) {
       throw new DatabaseError("Failed to update player status", error);
     }
 
-    // Get team name for emails/notifications
+    // Get team name and logo for emails/notifications
     let teamName = null;
+    let teamLogoUrl = null;
     if (updated.team_id) {
       const { data: team } = await supabaseAdmin!
         .from("teams")
-        .select("name")
+        .select("name, logo_url")
         .eq("id", updated.team_id)
         .single();
       teamName = team?.name || null;
+      teamLogoUrl = team?.logo_url || null;
     }
 
     // Fix: Get the correct parent email address
@@ -135,8 +138,8 @@ export async function POST(req: Request) {
     
     if (emailToUse) {
       if (status === "approved") {
-        // Generate a magic link that redirects to checkout page
-        // This ensures the parent is authenticated when they click the link
+        // Generate a custom long-lived token (30-day expiration) for checkout
+        // This replaces the short-lived Supabase magic link
         let baseUrl: string;
         if (process.env.VERCEL) {
           // Production on Vercel: Always use new custom domain
@@ -145,25 +148,44 @@ export async function POST(req: Request) {
           // Development (local)
           baseUrl = 'http://localhost:3000';
         }
-        const checkoutUrl = `${baseUrl}/checkout/${updated.id}`;
-        
-        // Generate magic link with redirect to checkout
-        // Use the resolved email address (Gmail account for Gmail sign-ups)
-        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
-          type: 'magiclink',
-          email: emailToUse,
-          options: {
-            redirectTo: checkoutUrl,
-          },
-        });
 
-        if (linkError || !linkData?.properties?.action_link) {
-          devError("approve-player: Failed to generate magic link", linkError);
+        try {
+          // Create custom checkout token with 30-day expiration
+          const token = await checkoutTokens.createCheckoutToken(
+            updated.id,
+            emailToUse
+          );
+
+          // Construct checkout URL using custom token
+          const payLink = `${baseUrl}/api/checkout/verify-token?token=${token}`;
+
+          const approvalEmailData = getPlayerApprovalEmail({
+            playerName: updated.name,
+            teamName: teamName || undefined,
+            teamLogoUrl: teamLogoUrl || undefined,
+            paymentLink: payLink,
+          });
+
+          await sendEmail(
+            emailToUse,
+            approvalEmailData.subject,
+            approvalEmailData.html
+          );
+
+          devLog("approve-player: Custom checkout token generated and sent", {
+            email: emailToUse,
+            playerId: updated.id,
+            tokenPreview: token.substring(0, 10) + "...",
+          });
+        } catch (tokenError) {
+          devError("approve-player: Failed to create checkout token", tokenError);
           // Fallback to direct checkout link (user will need to log in first)
+          const checkoutUrl = `${baseUrl}/checkout/${updated.id}`;
           const payLink = checkoutUrl;
           const approvalEmailData = getPlayerApprovalEmail({
             playerName: updated.name,
             teamName: teamName || undefined,
+            teamLogoUrl: teamLogoUrl || undefined,
             paymentLink: payLink,
           });
 
@@ -172,25 +194,10 @@ export async function POST(req: Request) {
             approvalEmailData.subject,
             approvalEmailData.html
           );
-        } else {
-          // Use the magic link that redirects to checkout
-          const payLink = linkData.properties.action_link;
-          
-          const approvalEmailData = getPlayerApprovalEmail({
-            playerName: updated.name,
-            teamName: teamName || undefined,
-            paymentLink: payLink,
-          });
 
-          await sendEmail(
-            emailToUse,
-            approvalEmailData.subject,
-            approvalEmailData.html
-          );
-          
-          devLog("approve-player: Magic link generated and sent", {
+          devLog("approve-player: Fallback to direct checkout link", {
             email: emailToUse,
-            redirectTo: checkoutUrl,
+            checkoutUrl,
           });
         }
       } else if (status === "on_hold") {

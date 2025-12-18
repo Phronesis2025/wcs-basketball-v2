@@ -162,8 +162,8 @@ export default function ScheduleModal({
                         formState.setGameDateTime(e.target.value)
                       }
                       placeholder="mm/dd/yyyy --:-- --"
-                      className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
-                      style={{ width: "100%", maxWidth: "100%" }}
+                      className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none box-border"
+                      style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
                       required
                     />
                   </div>
@@ -181,12 +181,12 @@ export default function ScheduleModal({
                           formState.setGameEndDateTime(e.target.value)
                         }
                         placeholder="mm/dd/yyyy --:-- --"
-                        className={`block w-full max-w-full p-3 border rounded-md focus:outline-none focus:ring-2 text-gray-900 appearance-none overflow-hidden ${
+                        className={`block w-full max-w-full p-3 border rounded-md focus:outline-none focus:ring-2 text-gray-900 appearance-none box-border ${
                           formState.dateValidationError
                             ? "border-red-500 focus:ring-red-500"
                             : "border-gray-300 focus:ring-blue-500"
                         }`}
-                        style={{ width: "100%", maxWidth: "100%" }}
+                        style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
                         required
                       />
                       {formState.dateValidationError && (
@@ -265,8 +265,8 @@ export default function ScheduleModal({
                         formState.setPracticeDateTime(e.target.value)
                       }
                       placeholder="mm/dd/yyyy --:-- --"
-                      className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
-                      style={{ width: "100%", maxWidth: "100%" }}
+                      className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none box-border"
+                      style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
                       required
                     />
                   </div>
@@ -358,8 +358,8 @@ export default function ScheduleModal({
                         formState.setUpdateDateTime(e.target.value)
                       }
                       placeholder="mm/dd/yyyy --:-- --"
-                      className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none overflow-hidden"
-                      style={{ width: "100%", maxWidth: "100%" }}
+                      className="block w-full max-w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 appearance-none box-border"
+                      style={{ width: "100%", maxWidth: "100%", boxSizing: "border-box" }}
                     />
                   </div>
                   <p className="text-xs text-gray-500 mt-1">

@@ -39,7 +39,7 @@ function RegistrationPendingContent() {
                 </svg>
               </div>
               <h1 className="mb-4 text-4xl font-semibold uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-green-400 to-green-600 md:text-5xl font-inter">
-                Magic Link Sent!
+                Confirmation Email Sent!
               </h1>
               <p className="text-lg text-slate-300 mb-2 font-inter">
                 We've sent a confirmation email to your inbox.

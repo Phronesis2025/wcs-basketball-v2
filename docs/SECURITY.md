@@ -1,19 +1,41 @@
 # WCSv2.0 Security
 
-## 🔒 Current Security Implementation (v2.10.26)
+## 🔒 Current Security Implementation (v2.10.32)
 
 **Live URL**: https://wcs-basketball-v2.vercel.app  
 **Security Score**: 9/10 (Excellent) 🔒  
-**Last Audit**: January 2025 (v2.10.26)  
-**Latest Audit**: January 2025 (Team Detail Page Enhancements)  
-**Security Test**: ✅ PASSED - No exposed keys found (January 2025)  
+**Last Audit**: December 18, 2025 (v2.10.32)  
+**Latest Audit**: December 18, 2025 (Analytics Fixes & Security Improvements)  
+**Security Test**: ✅ PASSED - No exposed keys found  
 **Status**: Production Ready ✅  
-**Build Status**: Clean Build ✅  
+**Build Status**: Clean Build ✅ (133 static pages generated)  
 **Next.js Version**: 15.5.2
 **Critical Issues Found**: 
 - ✅ secrets.txt exposed in git - FIXED (removed from tracking, added to .gitignore)
 - ✅ Server Actions CORS too permissive - FIXED (restricted to known origins)
 - ✅ Admin delete API routes - FIXED (proper success checking implemented)
+
+### Security Audit (December 18, 2025 - Analytics Fixes & Security Improvements)
+
+- **RLS Policies**: ✅ Added RLS policies for checkout_tokens table
+  - Admins can read all checkout tokens
+  - Service role can insert and update tokens
+  - Migration: `add_checkout_tokens_rls_policy`
+- **Supabase Advisors**:
+  - **Security**: 2 WARN, 1 INFO
+    - ⚠️ **RLS Enabled No Policy (INFO)**: checkout_tokens - FIXED (RLS policies added)
+    - ⚠️ **Auth OTP Long Expiry (WARN)**: OTP expiry exceeds recommended threshold (>1 hour)
+      - **Remediation**: Configure in Dashboard → Authentication → Email Provider settings
+      - **Status**: Documented for manual configuration
+    - ⚠️ **Leaked Password Protection Disabled (WARN)**: HaveIBeenPwned integration not enabled
+      - **Remediation**: Enable in Dashboard → Authentication → Password Security settings
+      - **Status**: Documented for manual configuration
+  - **Performance**: 24 unused indexes (INFO level, not critical)
+    - Various indexes on multiple tables
+    - **Risk Level**: None (performance optimization opportunity)
+    - **Status**: Documented for future cleanup
+- **Build Status**: ✅ Build successful (133 static pages)
+- **Linting**: ✅ No linting errors found
 
 ### Security Audit (January 2025 - Team Detail Page Enhancements)
 

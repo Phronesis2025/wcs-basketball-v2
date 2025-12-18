@@ -309,11 +309,21 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
+    devLog(`Fetching web vitals traffic data from ${thirtyDaysAgo.toISOString()} to now`);
     const { data: webVitalsTrafficData, error: webVitalsError } = await supabaseAdmin
       .from("web_vitals")
       .select("page, session_id, user_id, metric_name, created_at")
       .gte("created_at", thirtyDaysAgo.toISOString())
       .eq("metric_name", "LCP"); // Use LCP as it's always sent per page load
+    
+    if (webVitalsError) {
+      devError("Error fetching web vitals for traffic metrics:", webVitalsError);
+    } else {
+      devLog(`Fetched ${webVitalsTrafficData?.length || 0} LCP entries from web_vitals table`);
+      if (webVitalsTrafficData && webVitalsTrafficData.length > 0) {
+        devLog(`Sample data: first entry has session_id=${webVitalsTrafficData[0]?.session_id}, page=${webVitalsTrafficData[0]?.page}`);
+      }
+    }
 
     // Calculate real traffic metrics from web_vitals
     let totalPageViews = 0;
@@ -321,16 +331,18 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
     const topPagesMap = new Map<string, number>();
     const uniqueSessions = new Set<string>();
 
-    if (webVitalsTrafficData && !webVitalsError) {
+    if (webVitalsError) {
+      devError("Error fetching web vitals traffic data:", webVitalsError);
+    } else if (webVitalsTrafficData && Array.isArray(webVitalsTrafficData) && webVitalsTrafficData.length > 0) {
       // Count page views (each LCP entry = 1 page view)
       totalPageViews = webVitalsTrafficData.length;
 
       // Count unique visitors (distinct session_ids or user_ids)
       webVitalsTrafficData.forEach((vital: any) => {
-        if (vital.session_id) {
-          uniqueSessions.add(vital.session_id);
-        } else if (vital.user_id) {
-          uniqueSessions.add(vital.user_id);
+        // Use session_id if available, otherwise fall back to user_id
+        const identifier = vital.session_id || vital.user_id;
+        if (identifier) {
+          uniqueSessions.add(String(identifier));
         }
 
         // Count page views per page
@@ -339,6 +351,9 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
       });
 
       uniqueVisitors = uniqueSessions.size;
+      devLog(`Traffic metrics calculated: ${totalPageViews} page views, ${uniqueVisitors} unique visitors from ${uniqueSessions.size} unique sessions`);
+    } else {
+      devLog(`No web vitals traffic data found. Data type: ${typeof webVitalsTrafficData}, Is Array: ${Array.isArray(webVitalsTrafficData)}, Length: ${webVitalsTrafficData?.length || 'N/A'}`);
     }
 
     // Calculate device breakdown from login logs (fallback if no web_vitals data)
@@ -346,10 +361,10 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
     let desktopCount = 0;
     let mobilePercentage = 50; // Default 50/50 split
     
-    if (loginLogsData?.data && loginLogsData.data.length > 0) {
+    if (loginLogsData?.data && Array.isArray(loginLogsData.data) && loginLogsData.data.length > 0) {
       loginLogsData.data.forEach((log: any) => {
         const userAgent = (log.user_agent || "").toLowerCase();
-        if (userAgent.includes("mobile") || userAgent.includes("android") || userAgent.includes("iphone")) {
+        if (userAgent.includes("mobile") || userAgent.includes("android") || userAgent.includes("iphone") || userAgent.includes("ipad")) {
           mobileCount++;
         } else {
           desktopCount++;
@@ -358,6 +373,9 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
       
       const totalLogs = loginLogsData.data.length;
       mobilePercentage = totalLogs > 0 ? Math.round((mobileCount / totalLogs) * 100) : 50;
+      devLog(`Device breakdown calculated: ${mobilePercentage}% mobile, ${100 - mobilePercentage}% desktop from ${totalLogs} login logs`);
+    } else {
+      devLog("No login logs data found, using default 50/50 split for device breakdown");
     }
 
     // Get top pages sorted by views
@@ -367,8 +385,9 @@ export async function fetchAnalyticsStats(): Promise<AnalyticsStats> {
       .slice(0, 5); // Top 5 pages
 
     // Calculate performance metrics
+    // Ensure error rate is calculated correctly and doesn't exceed 100%
     const errorRatePercent = errorStats.total_errors > 0
-      ? (errorStats.unresolved_errors / errorStats.total_errors) * 100
+      ? Math.min((errorStats.unresolved_errors / errorStats.total_errors) * 100, 100)
       : 0;
     
     // Use real average response time from performance metrics

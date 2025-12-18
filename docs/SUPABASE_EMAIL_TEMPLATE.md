@@ -43,8 +43,8 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
       }
       .header {
-        background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
-        color: #000 !important;
+        background: #000000;
+        color: #ffffff !important;
         padding: 40px 30px;
         text-align: center;
         position: relative;
@@ -72,11 +72,11 @@
         font-weight: 700;
         margin: 15px 0 8px 0;
         letter-spacing: -0.5px;
-        color: #000000 !important;
+        color: #ffffff !important;
       }
       .header-subtitle {
         font-size: 16px;
-        color: #404041 !important;
+        color: #ffffff !important;
         font-weight: 500;
         margin: 0;
       }
@@ -547,11 +547,25 @@ The template uses the following variables from `user_metadata` (stored when `inv
 
 ## How to Apply
 
+### Step 1: Update Email Template
+
 1. Go to **Supabase Dashboard** → Your Project → **Authentication** → **Email Templates**
 2. Select **"Invite User"** template (or "Confirm Signup" if using signUp flow)
 3. Copy the HTML template above into the template editor
 4. Update the **Subject** field to: `🏀 Welcome to WCS Basketball! Registration Received`
 5. Click **Save**
+
+### Step 2: Change Sender Name to "WCS Basketball"
+
+The sender name is controlled in Supabase's email settings, not the template:
+
+1. Go to **Supabase Dashboard** → Your Project → **Authentication** → **Settings**
+2. Scroll down to **"SMTP Settings"** or **"Email"** section
+3. Look for **"Sender Name"** or **"From Name"** field
+4. Change it from "Supabase Auth" to **"WCS Basketball"**
+5. Click **Save**
+
+**Note:** If you're using Supabase's default email service (not custom SMTP), the sender name may be limited. For full control over the sender name, you may need to configure custom SMTP settings in Supabase.
 
 ## Notes
 

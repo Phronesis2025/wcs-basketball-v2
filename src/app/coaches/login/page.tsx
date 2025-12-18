@@ -2,7 +2,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabaseClient";
 import {
   devLog,
@@ -482,15 +481,6 @@ export default function CoachesLogin() {
           </form>
               </div>
             </div>
-            <div className="text-center mt-6">
-            <Link
-              href="/teams"
-                className="text-blue-400 hover:text-blue-300 hover:underline font-inter transition-colors"
-              aria-label="Back to teams"
-            >
-              ← Back to Teams
-            </Link>
-          </div>
         </div>
         </section>
       </main>

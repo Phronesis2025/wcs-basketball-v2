@@ -56,7 +56,10 @@ export const playerInfoSchema = z.object({
       },
       "Player must be between 6 and 18 years old"
     ),
-  player_grade: z.string().optional(),
+  player_grade: z
+    .string()
+    .min(1, "Grade is required")
+    .max(20, "Grade must be less than 20 characters"),
   player_gender: z.enum(["Male", "Female", "Other"], {
     required_error: "Gender is required",
   }),

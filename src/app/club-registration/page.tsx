@@ -74,7 +74,7 @@ export default function ClubRegistration() {
                       <input
                         type="date"
                         id="birth-date"
-                        className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none"
+                        className="w-full max-w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none box-border"
                         disabled
                       />
                     </div>

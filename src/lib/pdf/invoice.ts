@@ -493,7 +493,7 @@ export async function generateInvoicePDF(
     color: black,
   });
   fy -= 12;
-  page.drawText("Email: info@wcsbasketball.com | Phone: (785) 123-4567", {
+  page.drawText("Email: wcsbts@gmail.com | Phone: (785) 123-4567", {
     x: M,
     y: fy,
     size: 8,
