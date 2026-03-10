@@ -32,28 +32,30 @@ export default function TodaysEvents({
     let retryCount = 0;
     const MAX_RETRIES = 2;
 
+    const FETCH_TIMEOUT_MS = 12_000;
+
     const fetchData = async (attempt = 1) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
       try {
         setIsLoading(true);
         setError(null);
 
         // Use a timestamp to bust any potential cache
         const timestamp = Date.now();
+        const fetchOpts = {
+          cache: "no-store" as RequestCache,
+          signal: controller.signal,
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+          },
+        };
+
         const [eventsResponse, teamsResponse] = await Promise.all([
-          fetch(`/api/schedules?t=${timestamp}`, { 
-            cache: "no-store",
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-            }
-          }),
-          fetch(`/api/teams?t=${timestamp}`, { 
-            cache: "no-store",
-            headers: {
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache',
-            }
-          }),
+          fetch(`/api/schedules?t=${timestamp}`, fetchOpts),
+          fetch(`/api/teams?t=${timestamp}`, fetchOpts),
         ]);
 
         if (!eventsResponse.ok) {
@@ -84,7 +86,8 @@ export default function TodaysEvents({
         setTeams(teamsList);
       } catch (err) {
         devError("Error fetching today's events:", err);
-        
+        clearTimeout(timeoutId);
+
         // Retry logic - only retry on network errors or 5xx errors
         if (isMounted && retryCount < MAX_RETRIES && attempt < MAX_RETRIES) {
           retryCount++;
@@ -104,6 +107,7 @@ export default function TodaysEvents({
           setTeams([]);
         }
       } finally {
+        clearTimeout(timeoutId);
         if (isMounted) {
           setIsLoading(false);
         }

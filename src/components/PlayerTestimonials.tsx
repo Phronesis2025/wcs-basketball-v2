@@ -14,7 +14,7 @@ interface Testimonial {
 
 const allTestimonials: Testimonial[] = [
   {
-    quote: "WCS completely transformed my son's game. The coaches care about the player, not just the player. Highly recommended.",
+    quote: "WCS completely transformed my son's game. The coaches care about the whole player, not just their stats. Highly recommended.",
     name: "Michael J.",
     role: "Parent, WCS",
     initials: "MJ",

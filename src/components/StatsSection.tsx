@@ -82,7 +82,15 @@ const StatCard: React.FC<StatCardProps> = ({ targetValue, description, delay, su
       }
     }
 
+    // Fallback: start animation after a short delay if ref was null or observer didn't fire
+    const fallbackId = setTimeout(() => {
+      if (!hasStartedRef.current) {
+        startAnimation();
+      }
+    }, 400);
+
     return () => {
+      clearTimeout(fallbackId);
       if (ref.current) {
         observer.unobserve(ref.current);
       }

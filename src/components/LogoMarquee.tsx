@@ -34,15 +34,20 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
     "/logos/logo-warriors.png",
   ];
 
+  const LOGO_FETCH_TIMEOUT_MS = 10_000;
+
   useEffect(() => {
     const fetchAllLogos = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), LOGO_FETCH_TIMEOUT_MS);
+
       try {
         const allLogos: Team[] = [];
         const logoUrls = new Set<string>(); // Track URLs to avoid duplicates
 
         // 1. Fetch logos from Supabase storage bucket via API route (PRIMARY SOURCE)
         try {
-          const response = await fetch('/api/logos');
+          const response = await fetch("/api/logos", { signal: controller.signal });
           
           if (response.ok) {
             const { logos: storageLogos } = await response.json();
@@ -70,8 +75,8 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
         }
 
         // 2. Fetch team logos from database via API route (avoids CORS issues)
-      try {
-          const response = await fetch("/api/teams");
+        try {
+          const response = await fetch("/api/teams", { signal: controller.signal });
           if (response.ok) {
             const { data: teamData } = await response.json();
             if (teamData && Array.isArray(teamData)) {
@@ -106,7 +111,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
         }
       } catch (error) {
         devError("Error fetching logos:", error);
-        // Use fallback logos if there's an error
+        // Use fallback logos on error or timeout
         setTeams(
           fallbackLogos.map((logo, index) => ({
             id: `fallback-${index}`,
@@ -115,6 +120,7 @@ export default function LogoMarquee({ middleContent }: LogoMarqueeProps) {
           }))
         );
       } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
       }
     };
