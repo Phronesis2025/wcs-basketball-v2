@@ -1,0 +1,33 @@
+When you finish the task, return your summary in this exact structure:
+
+1. What changed
+- Files changed:
+- Short description of each change:
+
+2. Commands run
+- List each command exactly as run
+
+3. Result
+- Build result:
+- Test result:
+- QA result:
+
+4. Issues encountered
+- None
+or
+- List each issue clearly
+
+5. Stop conditions
+- State whether any stop condition was hit
+
+6. Recommended worker_result.json fields
+{
+  "status": "worker_complete",
+  "summary": "...",
+  "files_changed": ["..."],
+  "commands_run": ["..."],
+  "issues_encountered": [],
+  "notes": "..."
+}
+
+Do not add extra sections. Do not give broad advice unless asked.
