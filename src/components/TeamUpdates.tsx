@@ -346,8 +346,9 @@ export default function TeamUpdates({
               })}
             </div>
           ) : (
-            <div className="bg-black/50 border border-white/10 rounded-lg p-4 text-center">
-              <p className="text-neutral-400 font-inter">No updates available</p>
+            <div className="bg-black/50 border border-white/10 rounded-lg p-6 sm:p-8 text-center">
+              <p className="text-neutral-400 font-inter">No news right now.</p>
+              <p className="text-neutral-500 font-inter text-sm mt-2">Check back soon for team updates and announcements.</p>
             </div>
           )}
           </div>
