@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test tests/e2e/home.spec.ts",
+    "test:e2e:smoke:page": "playwright test tests/e2e/route_smoke.spec.ts",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
