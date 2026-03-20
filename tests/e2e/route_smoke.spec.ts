@@ -1,13 +1,15 @@
 // tests/e2e/route_smoke.spec.ts
-// Task-scoped page smoke: visits E2E_SMOKE_PAGE (default /) and asserts load.
-// Used by run_one_task_full_cycle when task scope maps to a non-home route.
+// Route-scoped smoke test. Route from E2E_SMOKE_PAGE env (e.g. /about, /schedules, /drills).
+// Used by run_one_task_full_cycle for non-home task scope.
 import { test, expect } from "@playwright/test";
 
-const path = process.env.E2E_SMOKE_PAGE || "/";
+const route = process.env.E2E_SMOKE_PAGE || "/";
+const routePath = route.startsWith("/") ? route : `/${route}`;
 
-test.describe(`Route smoke: ${path}`, () => {
-  test(`${path} loads and body is visible`, async ({ page }) => {
-    await page.goto(path);
+test.describe(`Route smoke: ${routePath}`, () => {
+  test(`${routePath} loads and body is visible`, async ({ page }) => {
+    await page.goto(routePath);
     await expect(page.locator("body")).toBeVisible();
+    await expect(page).toHaveTitle(/WCS|Basketball|Champions/i);
   });
 });
