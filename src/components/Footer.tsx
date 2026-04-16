@@ -1,10 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+import { useState, FormEvent } from "react";
+
+/** Bounded client-side signup: no backend; same mailto pattern as historical WCS-005 intent. */
+const NEWSLETTER_MAILTO = "info@wcsbasketball.com";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+
+  const handleNewsletterSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const trimmed = newsletterEmail.trim();
+    const subject = encodeURIComponent("WCS newsletter signup");
+    const body = trimmed
+      ? encodeURIComponent(
+          `Please add this address to newsletter updates: ${trimmed}`
+        )
+      : encodeURIComponent(
+          "I would like to receive WCS newsletter updates (visitor did not type an email in the footer field)."
+        );
+    window.location.href = `mailto:${NEWSLETTER_MAILTO}?subject=${subject}&body=${body}`;
+  };
 
   const navLinks = [
     { name: "Home", href: "/" },
@@ -56,15 +74,25 @@ export default function Footer() {
             <h3 className="text-2xl text-white font-medium mb-6 font-inter">
               Join the legacy today.
             </h3>
-            <form className="flex gap-2 max-w-xs">
+            <form
+              className="flex gap-2 max-w-xs"
+              onSubmit={handleNewsletterSubmit}
+              aria-label="Newsletter email signup"
+            >
               <input
+                id="footer-newsletter-email"
                 type="email"
+                name="newsletter-email"
+                autoComplete="email"
                 placeholder="Email address"
+                value={newsletterEmail}
+                onChange={(ev) => setNewsletterEmail(ev.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-white/30 transition-colors font-inter placeholder:text-neutral-500"
               />
               <button
                 type="submit"
                 className="bg-white text-black px-4 py-2 rounded-lg text-sm font-medium hover:bg-neutral-200 transition-colors"
+                aria-label="Open email to sign up for newsletter"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
@@ -90,7 +118,7 @@ export default function Footer() {
               <li>
                 <Link href="/drills" className="hover:text-white transition-colors font-inter">
                   Drills
-            </Link>
+                </Link>
               </li>
             </ul>
           </div>
@@ -112,7 +140,7 @@ export default function Footer() {
               <li>
                 <Link href="/tournament-signup" className="hover:text-white transition-colors font-inter">
                   Tournaments
-              </Link>
+                </Link>
               </li>
             </ul>
           </div>
