@@ -7,12 +7,6 @@ import Link from "next/link";
 export default function ClubRegistration() {
   // const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: Implement club registration logic
-    alert("Club registration functionality coming soon!");
-  };
-
   return (
     <div className="bg-navy min-h-screen text-white">
       <section className="pt-20 pb-12 sm:pt-24" aria-label="Club Registration">
@@ -22,8 +16,12 @@ export default function ClubRegistration() {
               Club Registration
             </h1>
             
-            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-8 mb-8">
-              <div className="text-center mb-8">
+            <div className="relative bg-gray-900/50 border border-red-500/50 rounded-lg p-8 mb-8 overflow-hidden">
+              <div
+                className="pointer-events-none select-none opacity-40 blur-[1px]"
+                aria-hidden="true"
+              >
+                <div className="text-center mb-8">
                 <h2 className="text-2xl font-bebas font-bold mb-4 text-red">
                   Join World Class Sports
                 </h2>
@@ -33,7 +31,7 @@ export default function ClubRegistration() {
               </div>
 
               {/* Placeholder form structure */}
-              <form onSubmit={handleSubmit} className="space-y-6">
+                <form className="space-y-6">
                 {/* Player Information */}
                 <div className="border-b border-gray-700 pb-6">
                   <h3 className="text-xl font-bebas font-bold mb-4 text-red">Player Information</h3>
@@ -245,7 +243,43 @@ export default function ClubRegistration() {
                     Registration Coming Soon
                   </button>
                 </div>
-              </form>
+                </form>
+              </div>
+
+              {/* Honest temporary-state layer: preserves in-progress form code without presenting a live flow. */}
+              <div className="absolute inset-0 flex items-center justify-center p-6">
+                <div className="max-w-2xl bg-black/85 border border-white/20 rounded-xl p-6 sm:p-8 text-center shadow-2xl">
+                  <p className="text-xs sm:text-sm uppercase tracking-[0.2em] text-red font-inter mb-3">
+                    Registration status
+                  </p>
+                  <h2 className="text-2xl sm:text-3xl font-bebas font-bold text-white mb-4">
+                    Online Club Registration Is Temporarily Unavailable
+                  </h2>
+                  <p className="text-gray-200 font-inter text-sm sm:text-base leading-relaxed mb-4">
+                    This page is being rebuilt so families do not submit incomplete
+                    information. Please do not use the form preview shown behind
+                    this notice.
+                  </p>
+                  <p className="text-gray-300 font-inter text-sm leading-relaxed mb-6">
+                    For current registration help, use the active player signup flow
+                    or contact WCS staff directly.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center justify-center bg-red text-white px-5 py-2.5 rounded-lg font-bebas uppercase tracking-wide hover:bg-red-700 transition-colors"
+                    >
+                      Go to Active Registration
+                    </Link>
+                    <a
+                      href="mailto:info@wcsbasketball.com?subject=Club%20registration%20help"
+                      className="inline-flex items-center justify-center border border-white/30 text-white px-5 py-2.5 rounded-lg font-bebas uppercase tracking-wide hover:bg-white/10 transition-colors"
+                    >
+                      Contact WCS
+                    </a>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="text-center">
