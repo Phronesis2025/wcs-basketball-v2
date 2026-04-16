@@ -82,7 +82,7 @@ const CNCAd = () => {
         }}
         role="button"
         tabIndex={0}
-        aria-label="Coach Nate Classic - Click to sign up for tournament"
+        aria-label="Coach Nate Classic — tournament concluded — view tournament information"
         className="relative w-full overflow-hidden cursor-pointer group transition-transform duration-300 hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent bg-transparent"
       >
         {/* Background Image Container */}
@@ -157,9 +157,9 @@ const CNCAd = () => {
                 Coach Nate Classic
               </h2>
 
-              {/* Date and Event Info */}
+              {/* Concluded event — matches /tournament-signup posture */}
               <p className="text-white font-bebas text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl uppercase tracking-wide drop-shadow-lg">
-                Jan 31 • Boys | Feb 1 • Girls
+                Tournament concluded · view information
               </p>
             </div>
           </div>
