@@ -34,10 +34,10 @@ export default function TournamentSignup() {
                     Registration Deadline
                   </div>
                   <div className="text-white font-inter text-lg">
-                    January 30, 2026
+                    Registration closed
                   </div>
                   <div className="text-gray-400 font-inter text-sm mt-1">
-                    Don't miss out!
+                    Event concluded
                   </div>
                 </div>
 
@@ -68,41 +68,15 @@ export default function TournamentSignup() {
 
               <div className="mt-6 pt-6 border-t border-gray-700">
                 <p className="text-center text-gray-400 font-inter text-sm">
-                  Ready to compete? Complete your registration below to secure
-                  your team's spot in this prestigious tournament.
+                  This tournament has concluded. Online registration is not available on this page.
                 </p>
               </div>
             </div>
 
-            {/* Tourneymachine Registration Form */}
-            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-4 sm:p-8 mb-8 overflow-hidden">
-              {/* Wrapper to hide the top ad section */}
-              <div
-                className="w-full overflow-hidden"
-                style={{ maxHeight: "3000px" }}
-              >
-                <div
-                  className="w-full -mt-[85px] md:-mt-[250px]"
-                  style={{
-                    height: "3200px", // Increased height to compensate for the negative margin
-                  }}
-                >
-                  <iframe
-                    style={{
-                      display: "block",
-                      overflow: "scroll",
-                    }}
-                    src="https://tourneymachine.com/Public/Results/TournamentEmbed.aspx?IDTournament=h2025110322180881499b2c2309fc540"
-                    height="3200px"
-                    width="100%"
-                    allowFullScreen
-                    frameBorder="0"
-                    scrolling="yes"
-                    className="min-h-[3200px]"
-                    title="Tournament Registration Form"
-                  />
-                </div>
-              </div>
+            {/* Registration closed: external link only (no embedded signup UI). */}
+            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-6 sm:p-8 mb-8 text-center text-sm text-gray-300" role="status">
+              Tournament concluded.{" "}
+              <a href="https://tourneymachine.com/Public/Results/TournamentEmbed.aspx?IDTournament=h2025110322180881499b2c2309fc540" target="_blank" rel="noopener noreferrer" className="text-red hover:underline">Host site (external)</a>
             </div>
 
             <div className="text-center">
