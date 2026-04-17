@@ -22,7 +22,7 @@ export default function ClubRegistration() {
               Club Registration
             </h1>
             
-            <div className="bg-gray-900/50 border border-red-500/50 rounded-lg p-8 mb-8">
+            <div className="relative bg-gray-900/50 border border-red-500/50 rounded-lg p-8 mb-8 overflow-hidden">
               <div className="text-center mb-8">
                 <h2 className="text-2xl font-bebas font-bold mb-4 text-red">
                   Join World Class Sports
@@ -246,6 +246,17 @@ export default function ClubRegistration() {
                   </button>
                 </div>
               </form>
+
+              <div className="absolute inset-0 flex items-center justify-center bg-black/70 p-6">
+                <div className="max-w-xl text-center border border-white/20 rounded-xl bg-black/85 p-6">
+                  <h2 className="text-2xl font-bebas font-bold text-white mb-3">Club Registration Is Temporarily Unavailable</h2>
+                  <p className="text-gray-200 font-inter text-sm leading-relaxed mb-4">This page is in progress. Please use the active registration flow or contact WCS for help.</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link href="/register" className="bg-red text-white px-5 py-2.5 rounded-lg font-bebas uppercase">Go to Active Registration</Link>
+                    <a href="mailto:info@wcsbasketball.com?subject=Club%20registration%20help" className="border border-white/30 text-white px-5 py-2.5 rounded-lg font-bebas uppercase">Contact WCS</a>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="text-center">
