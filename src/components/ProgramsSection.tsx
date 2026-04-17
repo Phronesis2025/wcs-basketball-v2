@@ -102,7 +102,7 @@ export default function ProgramsSection() {
             href="/teams"
             className="text-sm text-white border-b border-white/30 pb-1 hover:border-white transition-colors inline-block font-inter"
           >
-            View All Divisions
+            View Teams
           </Link>
         </div>
 
