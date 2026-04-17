@@ -148,7 +148,7 @@ export default function Hero() {
         {/* CTA Button */}
         <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
           <Link
-            href="/register"
+            href="/#around-wcs"
             className="w-auto sm:w-auto h-12 px-8 rounded-full bg-gradient-to-b from-[#003d70] to-[#002C51] text-white font-medium text-sm flex items-center justify-center gap-2 font-inter relative overflow-hidden group shadow-lg shadow-[#002C51]/50 hover:shadow-xl hover:shadow-[#002C51]/60 hover:scale-[1.02] transition-all duration-300"
             style={{
               boxShadow: '0 4px 14px 0 rgba(0, 44, 81, 0.39), inset 0 1px 0 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 0 rgba(0, 0, 0, 0.2)'
