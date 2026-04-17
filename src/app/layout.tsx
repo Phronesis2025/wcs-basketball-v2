@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   title: "WCS Basketball - Where Champions Start",
   description:
     "World Class Sports Basketball - Developing champions on and off the court",
-  keywords: "basketball, youth sports, Christian school, athletics, WCS",
+  keywords: "basketball, youth sports, youth basketball, athletics, WCS",
   authors: [{ name: "WCS Basketball" }],
   robots: "index, follow",
   icons: {
