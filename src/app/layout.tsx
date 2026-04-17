@@ -45,6 +45,13 @@ export const metadata: Metadata = {
       "World Class Sports Basketball - Developing champions on and off the court",
     type: "website",
     locale: "en_US",
+    siteName: "WCS Basketball",
+  },
+  twitter: {
+    card: "summary",
+    title: "WCS Basketball - Where Champions Start",
+    description:
+      "World Class Sports Basketball - Developing champions on and off the court",
   },
 };
 
