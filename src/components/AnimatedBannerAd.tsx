@@ -119,7 +119,7 @@ const AnimatedBannerAd = () => {
   }>({});
 
   const handleClick = () => {
-    router.push("/register");
+    router.push("/tournament-signup");
   };
 
   useEffect(() => {
@@ -360,7 +360,7 @@ const AnimatedBannerAd = () => {
       }}
       role="button"
       tabIndex={0}
-      aria-label="World Class Sports - Click to register"
+      aria-label="World Class Sports — tournament concluded — view tournament information"
       className="relative w-full overflow-hidden cursor-pointer group transition-transform duration-300 hover:scale-[1.01] focus:outline-none focus:ring-4 focus:ring-white focus:ring-offset-2 focus:ring-offset-transparent"
     >
       {/* Three.js Canvas Container */}
@@ -377,7 +377,7 @@ const AnimatedBannerAd = () => {
             World Class Sports
           </h2>
           <p className="inline-block px-2 sm:px-4 md:px-6 lg:px-8 py-1 sm:py-1.5 md:py-2 lg:py-2.5 bg-[#D91E18] text-white font-bebas text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg uppercase tracking-wide drop-shadow-lg rounded-full mt-0.5 sm:mt-1 md:mt-1.5">
-            Register Now
+            Tournament concluded · view information
           </p>
         </div>
       </div>
