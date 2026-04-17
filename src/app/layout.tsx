@@ -46,6 +46,12 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
   },
+  twitter: {
+    card: "summary",
+    title: "WCS Basketball - Where Champions Start",
+    description:
+      "World Class Sports Basketball - Developing champions on and off the court",
+  },
 };
 
 export const viewport: Viewport = {
