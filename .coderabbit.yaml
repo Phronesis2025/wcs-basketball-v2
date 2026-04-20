@@ -1,0 +1,101 @@
+# CodeRabbit Configuration for WCS Basketball v2.0
+# This file configures CodeRabbit's review behavior for your codebase
+
+# Language settings
+language: typescript
+
+# Review instructions for different file paths
+path_instructions:
+  # TypeScript/React components
+  - path: "src/**/*.tsx"
+    instructions: |
+      Review React components for:
+      - Proper TypeScript types and interfaces
+      - Accessibility (ARIA labels, keyboard navigation)
+      - Performance optimizations (memo, useMemo, useCallback where appropriate)
+      - Security: XSS prevention, input sanitization
+      - Error handling and loading states
+      - Responsive design considerations
+
+  # TypeScript server code
+  - path: "src/**/*.ts"
+    instructions: |
+      Review server-side code for:
+      - Type safety and proper error handling
+      - Security: authentication, authorization, input validation
+      - SQL injection prevention (use parameterized queries)
+      - Rate limiting and CSRF protection
+      - Proper error messages (no sensitive data exposure)
+      - Database query optimization
+
+  # API routes
+  - path: "src/app/api/**/*.ts"
+    instructions: |
+      Review API routes for:
+      - Authentication and authorization checks
+      - Input validation and sanitization
+      - Error handling (proper HTTP status codes)
+      - Rate limiting implementation
+      - CORS configuration
+      - Security headers
+      - No sensitive data in error responses
+
+  # Server Actions
+  - path: "src/app/**/actions.ts"
+    instructions: |
+      Review server actions for:
+      - Authentication and role-based access control
+      - Input validation using Zod or similar
+      - Database transaction safety
+      - Error handling and user-friendly messages
+      - CSRF protection
+
+  # Configuration files
+  - path: "*.config.{ts,js}"
+    instructions: |
+      Review configuration for:
+      - Security settings (CORS, headers, etc.)
+      - Environment variable usage (no hardcoded secrets)
+      - Performance optimizations
+      - Proper TypeScript types
+
+  # Database migrations
+  - path: "supabase/migrations/**/*.sql"
+    instructions: |
+      Review SQL migrations for:
+      - Row Level Security (RLS) policies
+      - Proper indexes for performance
+      - Foreign key constraints
+      - Data migration safety (backup considerations)
+
+# General review guidelines
+review:
+  # Focus areas
+  focus:
+    - security
+    - performance
+    - type_safety
+    - error_handling
+    - accessibility
+    - code_quality
+
+  # Ignore certain patterns
+  ignore:
+    - "node_modules/**"
+    - ".next/**"
+    - "*.test.ts"
+    - "*.test.tsx"
+    - "coverage/**"
+    - "playwright-report/**"
+    - "test-results/**"
+
+# Code quality standards
+standards:
+  - "Follow Next.js 15 best practices"
+  - "Use TypeScript strict mode"
+  - "Implement proper error boundaries"
+  - "Ensure all user inputs are validated and sanitized"
+  - "Use Supabase RLS for database security"
+  - "Follow React best practices (hooks, component structure)"
+  - "Ensure accessibility (WCAG 2.1 AA compliance)"
+
